@@ -25,11 +25,6 @@ from utils.utils import set_settings, set_seed
 global log
 torch.set_default_dtype(torch.double)
 
-
-
-
-
-
 class Model(torch.torch.nn.Module):
     def __init__(self, args):
         super(Model, self).__init__()

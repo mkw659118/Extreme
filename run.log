@@ -1,0 +1,5 @@
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 50, 'dataset': 'weather'}
+Running at 2025-02-16 17:41: python train_model.py --exp_name MLPConfig --retrain 0 --rank 50 --dataset weather

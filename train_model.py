@@ -9,6 +9,7 @@ import collections
 import numpy as np
 from tqdm import *
 
+from baselines.mlp import MLP
 from utils.metrics import ErrorMetrics
 from utils.monitor import EarlyStopping
 from utils.trainer import get_loss_function, get_optimizer
@@ -23,14 +24,16 @@ def get_experiment_name(config):
     return log_filename
 
 class Model(torch.nn.Module):
-    def __init__(self, input_size, config):
+    def __init__(self, datamodule, config):
         super().__init__()
         self.config = config
-        self.input_size = input_size
+        self.input_size = datamodule.train_x.shape[-1]
         self.hidden_size = config.rank
 
         if config.model == 'ours':
             self.model = Backbone(config)
+        elif config.model == 'mlp':
+            self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=3, init_method='xavier')
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 

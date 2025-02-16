@@ -40,11 +40,14 @@ def Our_model(hyper=None):
 def experiment_run():
     hyper_dict = {
         'rank': [50],
-        'dataset': ['now'],
+        'dataset': ['weather'],
         # 'try_exp': [i + 1 for i in range(4)],
     }
-    best_hyper = hyper_search('TestConfig', hyper_dict, grid_search=0, retrain=1, debug=0)
-    only_once_experiment('TestConfig', best_hyper)
+    best_hyper = hyper_search('MLPConfig', hyper_dict, grid_search=0, retrain=1, debug=0)
+    only_once_experiment('MLPConfig', best_hyper)
+
+    # best_hyper = hyper_search('TestConfig', hyper_dict, grid_search=0, retrain=1, debug=0)
+    # only_once_experiment('TestConfig', best_hyper)
     return True
 
 

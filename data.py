@@ -3,7 +3,8 @@
 import torch
 import os
 import numpy as np
-from modules.load_data.get_iris import get_iris
+
+from modules.load_data.get_ts import get_ts
 from utils.logger import Logger
 from utils.plotter import MetricsPlotter
 from utils.utils import set_settings
@@ -18,7 +19,7 @@ class experiment:
         self.config = config
 
     def load_data(self, config):
-        all_x, all_y = get_iris()
+        all_x, all_y = get_ts(config.dataset, config)
         return all_x, all_y
 
 
@@ -49,13 +50,14 @@ class DataModule:
 
 
     def preprocess_data(self, x, y, config):
-
+        x = np.array(x)
+        y = np.array(y)
         return x, y
 
     def get_train_valid_test_dataset(self, x, y, config):
         x, y = self.preprocess_data(x, y, config)
-        indices = np.random.permutation(len(x))
-        x, y = x[indices], y[indices]
+        # indices = np.random.permutation(len(x))
+        # x, y = x[indices], y[indices]
         if not config.classification:
             max_value = y.max()
             y /= max_value
@@ -112,14 +114,14 @@ class TensorDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         x = self.x[idx]
         y = self.y[idx]
+        # x, y = torch.from_numpy(x), torch.from_numpy(y)
         return x, y
 
 
-import dgl
 def custom_collate_fn(batch, config):
     from torch.utils.data.dataloader import default_collate
     x, y = zip(*batch)
-    x, y = torch.as_tensor(x, dtype=torch.float32), torch.as_tensor(y, dtype=torch.long)
+    x, y = default_collate(x), default_collate(y)
     return x, y
 
 

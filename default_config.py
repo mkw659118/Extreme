@@ -50,6 +50,6 @@ class TrainingConfig:
 
 @dataclass
 class OtherConfig:
-    classification: bool = True
+    classification: bool = False
     ablation: int = 0
     try_exp: int = -1
