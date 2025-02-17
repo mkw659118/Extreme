@@ -34,4 +34,20 @@ class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     patience: int = 50
     verbose: int = 1
 
+@dataclass
+class LSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'lstm'
+    bs: int = 128
+    rank: int = 50
+    epochs: int = 200
+    patience: int = 50
+    verbose: int = 1
 
+@dataclass
+class GRUConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'gru'
+    bs: int = 128
+    rank: int = 50
+    epochs: int = 200
+    patience: int = 50
+    verbose: int = 1
