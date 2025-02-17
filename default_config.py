@@ -38,6 +38,9 @@ class DatasetInfo:
     eval_set: bool = True
     time_interval: int = 10
 
+    seq_len: int = 96
+    pred_len: int = 96
+
 
 @dataclass
 class TrainingConfig:

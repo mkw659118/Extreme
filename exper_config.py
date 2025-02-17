@@ -15,23 +15,23 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 50
     verbose: int = 10
     try_exp: int = 1
-    # density: float = 0.8
-
-    seq_len: int = 96
-    pred_len: int = 96
-
-
 
 @dataclass
 class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mlp'
-    device: str = 'mps'
     bs: int = 32
     rank: int = 50
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
 
-    seq_len: int = 96
-    pred_len: int = 96
+@dataclass
+class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'rnn'
+    bs: int = 128
+    rank: int = 50
+    epochs: int = 200
+    patience: int = 50
+    verbose: int = 1
+
 

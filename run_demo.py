@@ -43,22 +43,23 @@ def experiment_run():
         'dataset': ['weather'],
         # 'try_exp': [i + 1 for i in range(4)],
     }
-    best_hyper = hyper_search('MLPConfig', hyper_dict, grid_search=0, retrain=1, debug=0)
-    only_once_experiment('MLPConfig', best_hyper)
-
-    # best_hyper = hyper_search('TestConfig', hyper_dict, grid_search=0, retrain=1, debug=0)
-    # only_once_experiment('TestConfig', best_hyper)
+    # once_experiment('MLPConfig', hyper_dict)
+    once_experiment('RNNConfig', hyper_dict)
+    # once_experiment('TestConfig', best_hyper)
     return True
 
 
-# 采用最佳的参数做最后一次复现实验
-def only_once_experiment(exper_name, hyper=None):
+# 搜索最佳超参数然后取最佳
+def once_experiment(exper_name, hyper_dict, grid_search=0, retrain=1, debug=0):
+    # 先进行超参数探索
+    best_hyper = hyper_search(exper_name, hyper_dict, grid_search=grid_search, retrain=retrain, debug=debug)
+
+    # 再跑最佳参数实验
     commands = []
     command = f"python train_model.py --exp_name {exper_name} --retrain 0"
     commands.append(command)
 
-    if hyper:
-        commands = [add_parameter(command, hyper) for command in commands]
+    commands = [add_parameter(command, best_hyper) for command in commands]
 
     # 执行所有命令
     for command in commands:

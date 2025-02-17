@@ -10,6 +10,7 @@ import numpy as np
 from tqdm import *
 
 from baselines.mlp import MLP
+from baselines.rnn import RNN
 from utils.metrics import ErrorMetrics
 from utils.monitor import EarlyStopping
 from utils.trainer import get_loss_function, get_optimizer
@@ -34,6 +35,8 @@ class Model(torch.nn.Module):
             self.model = Backbone(config)
         elif config.model == 'mlp':
             self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=3, init_method='xavier')
+        elif config.model == 'rnn':
+            self.model = RNN(input_dim=self.input_size, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layers=2)
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
