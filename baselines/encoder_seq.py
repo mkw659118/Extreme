@@ -67,15 +67,13 @@ class SeqEncoder(torch.nn.Module):
         self.seq_encoder = torch.nn.ModuleList(
             [SeqLayer(d_model, seq_method, bidirectional) for _ in range(num_layers)]
         )
-        self.aggregator = torch.nn.Linear(seq_len * d_model, d_model)
-        self.fc = torch.nn.Linear(d_model, pred_len)
+        self.fc = torch.nn.Linear(seq_len * d_model, pred_len)
 
     def forward(self, x):
         out = self.seq_transfer(x)
         for i in range(self.num_layers):
             out = out + self.seq_encoder[i](out)
         out = out.reshape(out.shape[0], -1)
-        out = self.aggregator(out)
         out = self.fc(out)
         return out
 

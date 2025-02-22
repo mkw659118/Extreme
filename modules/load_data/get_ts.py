@@ -31,8 +31,10 @@ def create_window_dataset(data, target, window_size, forecast_size):
 
 def get_ts(dataset, config):
     df = pd.read_csv(f'./datasets/{dataset}/{dataset}.csv').to_numpy()
-    x, y = df[:, 1:-1], df[:, -1]
-    x = MinMaxScaler().fit_transform(x).astype(np.float32)
+    x, y = df[:, -1], df[:, -1]
+    # print(x.shape, y.shape)
+    x = x.astype(np.float32).reshape(-1, 1)
+    # x = MinMaxScaler().fit_transform(x)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     return X_window, y_window
