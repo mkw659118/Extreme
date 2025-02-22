@@ -3,6 +3,7 @@
 import torch
 import os
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 from modules.load_data.get_ts import get_ts
 from utils.logger import Logger
@@ -59,8 +60,10 @@ class DataModule:
         # indices = np.random.permutation(len(x))
         # x, y = x[indices], y[indices]
         if not config.classification:
-            max_value = y.max()
-            y /= max_value
+            # 2025年2月23日00:48:26
+            # max_value = y.max()
+            # y /= max_value
+            max_value = 1
         else:
             max_value = 1
         train_size = int(len(x) * config.density)
@@ -68,8 +71,16 @@ class DataModule:
             valid_size = int(len(x) * 0.10)
         else:
             valid_size = 0
+
+        train_y = y[:train_size]
+        df_mean = np.mean(train_y)
+        df_std = np.std(train_y)
+        x = (x - df_mean) / df_std
+        y = (y - df_mean) / df_std
+
         train_x = x[:train_size]
         train_y = y[:train_size]
+
         valid_x = x[train_size:train_size + valid_size]
         valid_y = y[train_size:train_size + valid_size]
         test_x = x[train_size + valid_size:]

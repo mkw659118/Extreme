@@ -34,9 +34,9 @@ class Model(torch.nn.Module):
         if config.model == 'ours':
             self.model = Backbone(config)
         elif config.model == 'mlp':
-            self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=3, init_method='xavier')
+            self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=config.num_layers, init_method='xavier')
         elif config.model in ['rnn', 'lstm', 'gru']:
-            self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=3, seq_method=config.model, bidirectional=True)
+            self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=config.num_layers, seq_method=config.model, bidirectional=True)
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 

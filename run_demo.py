@@ -39,12 +39,15 @@ def Our_model(hyper=None):
 # 在这里写执行顺序
 def experiment_run():
     hyper_dict = {
-        'rank': [50],
-        'dataset': ['weather'],
+        'rank': [32, 64],
+        'num_layers': [1, 2, 3, 4],
+        'dataset': ['weather'],  # weather electricity
         # 'try_exp': [i + 1 for i in range(4)],
     }
-    # once_experiment('MLPConfig', hyper_dict)
+    once_experiment('MLPConfig', hyper_dict)
     once_experiment('RNNConfig', hyper_dict)
+    once_experiment('LSTMConfig', hyper_dict)
+    once_experiment('GRUConfig', hyper_dict)
     # once_experiment('TestConfig', best_hyper)
     return True
 
@@ -103,7 +106,7 @@ def hyper_search(exp_name, hyper_dict, grid_search=0, retrain=1, debug=0):
         # 更新 config 中的超参数
         print(cmd_str)
         config.__dict__.update(chosen_hyper)
-        log_filename = f"Model_{config.model}_Dataset_{config.dataset}_W{config.flow_length_limit:d}_R{config.rank}"
+        log_filename = get_experiment_name(config)
         # 运行命令
         if debug:
             print(log_filename, chosen_hyper)
