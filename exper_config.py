@@ -52,3 +52,13 @@ class GRUConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
+
+@dataclass
+class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'crossformer'  
+    bs: int = 256
+    rank: int = 50  
+    epochs: int = 200  #
+    patience: int = 50  
+    verbose: int = 1  
+    seg_len: int = 6 

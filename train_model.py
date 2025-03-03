@@ -11,6 +11,7 @@ from tqdm import *
 
 from baselines.encoder_seq import SeqEncoder
 from baselines.mlp import MLP
+from baselines.cross_former import Crossformer
 from utils.metrics import ErrorMetrics
 from utils.monitor import EarlyStopping
 from utils.trainer import get_loss_function, get_optimizer
@@ -37,6 +38,19 @@ class Model(torch.nn.Module):
             self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=config.num_layers, init_method='xavier')
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=config.num_layers, seq_method=config.model, bidirectional=True)
+        elif config.model == 'crossformer':  # 添加 Crossformer 支持
+            self.model = Crossformer(
+                data_dim=self.input_size,
+                in_len=config.seq_len,
+                out_len=config.pred_len,
+                seg_len=config.seg_len,  # 使用 config.seg_len
+                win_size=4,
+                d_model=self.hidden_size,
+                n_heads=8,
+                e_layers=config.num_layers,
+                dropout=0.1,
+                device=config.device
+            )
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
@@ -59,8 +73,14 @@ class Model(torch.nn.Module):
         for train_batch in (dataModule.train_loader):
             all_item = [item.to(config.device) for item in train_batch]
             inputs, label = all_item[:-1], all_item[-1]
+            # pred = self.forward(*inputs)
+            # loss = self.loss_function(pred, label)
+            # 修改后
             pred = self.forward(*inputs)
+            # print(f"Pred shape: {pred.shape}, Label shape: {label.shape}")  # 打印形状
+            # pred = pred.squeeze(-1)  # 去掉最后一个维度
             loss = self.loss_function(pred, label)
+            # 有所修改
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -76,6 +96,8 @@ class Model(torch.nn.Module):
             all_item = [item.to(config.device) for item in batch]
             inputs, label = all_item[:-1], all_item[-1]
             pred = self.forward(*inputs)
+            # 修改后
+            # pred = pred.squeeze(-1)  # 去掉最后一个维度
             if mode == 'valid':
                 val_loss += self.loss_function(pred, label)
             if self.config.classification:

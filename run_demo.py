@@ -45,9 +45,10 @@ def experiment_run():
         # 'try_exp': [i + 1 for i in range(4)],
     }
     once_experiment('MLPConfig', hyper_dict)
-    once_experiment('RNNConfig', hyper_dict)
-    once_experiment('LSTMConfig', hyper_dict)
-    once_experiment('GRUConfig', hyper_dict)
+    # once_experiment('RNNConfig', hyper_dict)
+    # once_experiment('LSTMConfig', hyper_dict)
+    # once_experiment('GRUConfig', hyper_dict)
+    # once_experiment('CrossformerConfig', hyper_dict)
     # once_experiment('TestConfig', best_hyper)
     return True
 
