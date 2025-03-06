@@ -9,10 +9,7 @@ from modules.load_data.get_ts import get_ts
 from utils.logger import Logger
 from utils.plotter import MetricsPlotter
 from utils.utils import set_settings
-from tqdm import *
-import pickle
 from utils.config import get_config
-
 
 
 class experiment:
@@ -72,6 +69,7 @@ class DataModule:
         else:
             valid_size = 0
 
+        # 需要根据训练集来归一化整个dataset，你只见过这些
         train_y = y[:train_size]
         df_mean = np.mean(train_y)
         df_std = np.std(train_y)
@@ -80,7 +78,6 @@ class DataModule:
 
         train_x = x[:train_size]
         train_y = y[:train_size]
-
         valid_x = x[train_size:train_size + valid_size]
         valid_y = y[train_size:train_size + valid_size]
         test_x = x[train_size + valid_size:]
@@ -195,12 +192,11 @@ if __name__ == '__main__':
     config.log = log
     log(str(config.__dict__))
 
-
     exper = experiment(config)
     datamodule = DataModule(exper, config)
     for train_batch in datamodule.train_loader:
         all_item = [item.to(config.device) for item in train_batch]
         inputs, label = all_item[:-1], all_item[-1]
-        print(num_windowss.shape, value.shape)
+        print(inputs.shape, label.shape)
         # break
     print('Done!')

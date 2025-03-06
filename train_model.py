@@ -33,7 +33,7 @@ class Model(torch.nn.Module):
         self.hidden_size = config.rank
 
         if config.model == 'ours':
-            self.model = Backbone(config)
+            self.model = Backbone(self.input_size, config)
         elif config.model == 'mlp':
             self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=config.num_layers, init_method='xavier')
         elif config.model in ['rnn', 'lstm', 'gru']:
@@ -71,16 +71,10 @@ class Model(torch.nn.Module):
         torch.set_grad_enabled(True)
         t1 = time.time()
         for train_batch in (dataModule.train_loader):
-            all_item = [item.to(config.device) for item in train_batch]
+            all_item = [item.to(self.config.device) for item in train_batch]
             inputs, label = all_item[:-1], all_item[-1]
-            # pred = self.forward(*inputs)
-            # loss = self.loss_function(pred, label)
-            # 修改后
             pred = self.forward(*inputs)
-            # print(f"Pred shape: {pred.shape}, Label shape: {label.shape}")  # 打印形状
-            # pred = pred.squeeze(-1)  # 去掉最后一个维度
             loss = self.loss_function(pred, label)
-            # 有所修改
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -93,11 +87,9 @@ class Model(torch.nn.Module):
         dataloader = dataModule.valid_loader if mode == 'valid' and len(dataModule.valid_loader.dataset) != 0 else dataModule.test_loader
         preds, reals, val_loss = [], [], 0.
         for batch in (dataloader):
-            all_item = [item.to(config.device) for item in batch]
+            all_item = [item.to(self.config.device) for item in batch]
             inputs, label = all_item[:-1], all_item[-1]
             pred = self.forward(*inputs)
-            # 修改后
-            # pred = pred.squeeze(-1)  # 去掉最后一个维度
             if mode == 'valid':
                 val_loss += self.loss_function(pred, label)
             if self.config.classification:

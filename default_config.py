@@ -10,7 +10,7 @@ class LoggerConfig:
 @dataclass
 class ExperimentConfig:
     seed: int = 0
-    rounds: int = 2
+    rounds: int = 1
     epochs: int = 200
     patience: int = 20
 
@@ -33,7 +33,7 @@ class BaseModelConfig:
 @dataclass
 class DatasetInfo:
     path: str = './datasets/'
-    dataset: str = 'a'
+    dataset: str = 'weather'
     train_size: int = 500
     density: float = 0.70
     eval_set: bool = True
