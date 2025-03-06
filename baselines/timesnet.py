@@ -187,8 +187,7 @@ class TimesBlock(nn.Module):
             period = period_list[i]
             # padding
             if (self.seq_len + self.pred_len) % period != 0:
-                length = (
-                                 ((self.seq_len + self.pred_len) // period) + 1) * period
+                length = (((self.seq_len + self.pred_len) // period) + 1) * period
                 padding = torch.zeros([x.shape[0], (length - (self.seq_len + self.pred_len)), x.shape[2]]).to(x.device)
                 out = torch.cat([x, padding], dim=1)
             else:
@@ -217,18 +216,18 @@ class TimesNet(nn.Module):
     Paper link: https://openreview.net/pdf?id=ju_Uqw384Oq
     """
 
-    def __init__(self, configs):
+    def __init__(self, enc_in, configs):
         super(TimesNet, self).__init__()
         self.configs = configs
         self.seq_len = configs.seq_len
         self.label_len = configs.label_len
         self.pred_len = configs.pred_len
         self.model = nn.ModuleList([TimesBlock(configs) for _ in range(configs.e_layers)])
-        self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq, configs.dropout)
+        self.enc_embedding = DataEmbedding(enc_in, configs.d_model, configs.embed, configs.freq, configs.dropout)
         self.layer = configs.e_layers
         self.layer_norm = nn.LayerNorm(configs.d_model)
         self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
-        self.projection = nn.Linear(configs.d_model, configs.c_out, bias=True)
+        self.projection = nn.Linear(configs.d_model, 1, bias=True)
 
     def forward(self, x_enc):
         enc_out = self.enc_embedding(x_enc, None)  # [B,T,C]

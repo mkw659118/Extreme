@@ -16,9 +16,11 @@ class DecoderLayer(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
-        self.MLP1 = nn.Sequential(nn.Linear(d_model, d_model),
-                                nn.GELU(),
-                                nn.Linear(d_model, d_model))
+        self.MLP1 = nn.Sequential(
+            nn.Linear(d_model, d_model),
+            nn.GELU(),
+            nn.Linear(d_model, d_model)
+        )
         self.linear_pred = nn.Linear(d_model, seg_len)
 
     def forward(self, x, cross):
@@ -30,7 +32,6 @@ class DecoderLayer(nn.Module):
         batch = x.shape[0]
         x = self.self_attention(x)
         x = rearrange(x, 'b ts_d out_seg_num d_model -> (b ts_d) out_seg_num d_model')
-        
         cross = rearrange(cross, 'b ts_d in_seg_num d_model -> (b ts_d) in_seg_num d_model')
         tmp = self.cross_attention(
             x, cross, cross,
@@ -57,13 +58,11 @@ class Decoder(nn.Module):
         self.router = router
         self.decode_layers = nn.ModuleList()
         for i in range(d_layers):
-            self.decode_layers.append(DecoderLayer(seg_len, d_model, n_heads, d_ff, dropout, \
-                                        out_seg_num, factor))
+            self.decode_layers.append(DecoderLayer(seg_len, d_model, n_heads, d_ff, dropout, out_seg_num, factor))
 
     def forward(self, x, cross):
         final_predict = None
         i = 0
-
         ts_d = x.shape[1]
         for layer in self.decode_layers:
             cross_enc = cross[i]
@@ -73,7 +72,6 @@ class Decoder(nn.Module):
             else:
                 final_predict = final_predict + layer_predict
             i += 1
-        
         final_predict = rearrange(final_predict, 'b (out_d seg_num) seg_len -> b (seg_num seg_len) out_d', out_d = ts_d)
 
         return final_predict

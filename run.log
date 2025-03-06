@@ -298,3 +298,281 @@ Experiment Start!!!
 
 Hyper: rank, Values: [32, 64]
 COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 15:44: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+NMAE - -1.0504    NRMSE - 1.0813    MAE - 2.1171    RMSE - 21.9732    Acc_10 - 0.0000    train_time - 42.5589    
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 15:49: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 15:49: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 15:49: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:03: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+NMAE - -0.9552    NRMSE - 0.9663    MAE - 1.9252    RMSE - 19.6353    Acc_10 - 0.0000    train_time - 0.0210    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:03: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:05: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+NMAE - -0.9552    NRMSE - 0.9663    MAE - 1.9252    RMSE - 19.6353    Acc_10 - 0.0000    train_time - 0.0210    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:05: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:05: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:05: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:05: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:05: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:06: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+NMAE - -0.9552    NRMSE - 0.9663    MAE - 1.9252    RMSE - 19.6353    Acc_10 - 0.0000    train_time - 0.0210    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:06: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:06: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 4.3398    NRMSE - 4.5609    MAE - 0.2959    RMSE - 3.5883    Acc_10 - 0.0185    train_time - 0.0319    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:06: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:06: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:06: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:07: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:07: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.6435    NRMSE - 0.7368    MAE - 0.0439    RMSE - 0.5796    Acc_10 - 0.0633    train_time - 84.6482    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:10: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:10: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:10: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:10: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:10: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:11: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:12: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:12: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-06 16:12: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-06 16:14: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:15: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:16: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:16: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:16: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:16: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:24: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:24: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:25: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:29: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:30: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:31: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:31: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:31: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:31: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:32: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:33: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:33: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:34: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:36: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:36: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:36: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:36: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:37: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:37: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:37: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:37: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Retrying at 2025-03-06 16:38: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Command failed, retrying in 3 seconds: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:38: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather', 'debug': '1'}
+Running at 2025-03-06 16:39: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather --debug 1

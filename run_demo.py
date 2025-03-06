@@ -42,14 +42,15 @@ def experiment_run():
         'rank': [32],
         'num_layers': [2],
         'dataset': ['weather'],  # weather electricity
+        # 'debug': ['1'],  # weather electricity
         # 'try_exp': [i + 1 for i in range(4)],
     }
     # once_experiment('MLPConfig', hyper_dict)
     # once_experiment('RNNConfig', hyper_dict)
     # once_experiment('LSTMConfig', hyper_dict)
     # once_experiment('GRUConfig', hyper_dict)
-    # once_experiment('CrossformerConfig', hyper_dict)
-    once_experiment('TimesNetConfig', hyper_dict)
+    once_experiment('CrossformerConfig', hyper_dict)
+    # once_experiment('TimesNetConfig', hyper_dict)
     # once_experiment('TestConfig', best_hyper)
     return True
 

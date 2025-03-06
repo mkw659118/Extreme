@@ -2,7 +2,7 @@
 # Author : yuxiang Zeng
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 def create_window_dataset(data, target, window_size, forecast_size):
@@ -31,10 +31,12 @@ def create_window_dataset(data, target, window_size, forecast_size):
 
 def get_ts(dataset, config):
     df = pd.read_csv(f'./datasets/{dataset}/{dataset}.csv').to_numpy()
-    x, y = df[:, -1], df[:, -1]
-    # print(x.shape, y.shape)
-    x = x.astype(np.float32).reshape(-1, 1)
-    # x = MinMaxScaler().fit_transform(x)
+    x, y = df[:, 1:], df[:, -1]
+    # 根据训练集对input进行特征归一化
+    train_x = x[:int(len(x) * config.density)]
+    scaler = StandardScaler()
+    scaler.fit(train_x)
+    x = scaler.transform(x).astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     return X_window, y_window

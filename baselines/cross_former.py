@@ -20,9 +20,7 @@ class Crossformer(nn.Module):
         self.out_len = out_len
         self.seg_len = seg_len
         self.merge_win = win_size
-
         self.baseline = baseline
-
         self.device = device
 
         # The padding operation to handle invisible sgemnet length
@@ -41,30 +39,21 @@ class Crossformer(nn.Module):
         
         # Decoder
         self.dec_pos_embedding = nn.Parameter(torch.randn(1, data_dim, (self.pad_out_len // seg_len), d_model))
-        self.decoder = Decoder(seg_len, e_layers + 1, d_model, n_heads, d_ff, dropout, \
-                                    out_seg_num = (self.pad_out_len // seg_len), factor = factor)
-        
+        self.decoder = Decoder(seg_len, e_layers + 1, d_model, n_heads, d_ff, dropout, out_seg_num = (self.pad_out_len // seg_len), factor = factor)
+        self.fc = nn.Linear(data_dim, 1)
+
+
     def forward(self, x_seq):
-        if (self.baseline):
-            base = x_seq.mean(dim = 1, keepdim = True)
-            base = base.squeeze(-1)  # 去掉最后一个维度，使其形状为 [batch_size, 1]
-        else:
-            base = 0
         batch_size = x_seq.shape[0]
         if (self.in_len_add != 0):
             x_seq = torch.cat((x_seq[:, :1, :].expand(-1, self.in_len_add, -1), x_seq), dim = 1)
-
         x_seq = self.enc_value_embedding(x_seq)
         x_seq += self.enc_pos_embedding
         x_seq = self.pre_norm(x_seq)
-        
         enc_out = self.encoder(x_seq)
-
         dec_in = repeat(self.dec_pos_embedding, 'b ts_d l d -> (repeat b) ts_d l d', repeat = batch_size)
         predict_y = self.decoder(dec_in, enc_out)
-        
-         # 去掉最后一个维度
-        predict_y = predict_y.squeeze(-1)
-        return base + predict_y[:, :self.out_len]
-    
-        # return base + predict_y[:, :self.out_len, :]
+        predict_y = predict_y[:, :self.out_len, :]
+        # print(predict_y.shape)
+        predict_y = self.fc(predict_y).reshape(-1, self.out_len)
+        return predict_y

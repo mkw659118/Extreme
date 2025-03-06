@@ -53,7 +53,7 @@ class Model(torch.nn.Module):
                 device=config.device
             )
         elif config.model == 'timesnet':
-            self.model = TimesNet(configs=config)
+            self.model = TimesNet(enc_in=self.input_size, configs=config)
 
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
