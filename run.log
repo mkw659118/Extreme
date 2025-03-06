@@ -256,3 +256,45 @@ Experiment Start!!!
 Hyper: rank, Values: [32, 64]
 COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
 NMAE - 0.5382    NRMSE - 0.6509    MAE - 0.0367    RMSE - 0.5121    Acc_10 - 0.1260    train_time - 9.3327    
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name TimesNetConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 

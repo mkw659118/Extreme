@@ -39,16 +39,17 @@ def Our_model(hyper=None):
 # 在这里写执行顺序
 def experiment_run():
     hyper_dict = {
-        'rank': [32, 64],
-        'num_layers': [1, 2, 3, 4],
+        'rank': [32],
+        'num_layers': [2],
         'dataset': ['weather'],  # weather electricity
         # 'try_exp': [i + 1 for i in range(4)],
     }
-    once_experiment('MLPConfig', hyper_dict)
+    # once_experiment('MLPConfig', hyper_dict)
     # once_experiment('RNNConfig', hyper_dict)
     # once_experiment('LSTMConfig', hyper_dict)
     # once_experiment('GRUConfig', hyper_dict)
     # once_experiment('CrossformerConfig', hyper_dict)
+    once_experiment('TimesNetConfig', hyper_dict)
     # once_experiment('TestConfig', best_hyper)
     return True
 

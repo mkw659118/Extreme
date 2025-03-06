@@ -12,6 +12,7 @@ from tqdm import *
 from baselines.encoder_seq import SeqEncoder
 from baselines.mlp import MLP
 from baselines.cross_former import Crossformer
+from baselines.timesnet import TimesNet
 from utils.metrics import ErrorMetrics
 from utils.monitor import EarlyStopping
 from utils.trainer import get_loss_function, get_optimizer
@@ -51,6 +52,9 @@ class Model(torch.nn.Module):
                 dropout=0.1,
                 device=config.device
             )
+        elif config.model == 'timesnet':
+            self.model = TimesNet(configs=config)
+
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
