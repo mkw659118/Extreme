@@ -67,6 +67,10 @@ def predict(model, data_input, label, config):
 def save_figure(inputs, label, pred, cnt, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
+    if inputs.shape[-1] != 1:
+        inputs = inputs[:, -1]
+
+    # exit()
     # 确保inputs和label/pred都是1维
     input_seq = inputs.cpu().reshape(-1).numpy()
     if label is not None:
@@ -79,7 +83,6 @@ def save_figure(inputs, label, pred, cnt, config):
 
     input_time = np.arange(input_len)  # inputs对应的时间
     future_time = np.arange(input_len, input_len + future_len)  # 预测区间时间
-
     # 画图：前面是inputs，后面是label和pred
     plt.plot(input_time, input_seq, label='Input', linestyle='-.', marker='s', markersize=3)
     if label is not None:
@@ -131,8 +134,8 @@ def RunOnce(config, runId, log):
     except Exception as e:
         log.only_print(f'Error: {str(e)}')
     # results = model.evaluate_one_epoch(datamodule, 'test')
-    # results = predict(model, datamodule.test_set.x, datamodule.test_set.y, config)
-    results = predict(model, datamodule.test_set.x[0], None, config)
+    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, config)
+    # results = predict(model, datamodule.test_set.x[0], None, config)
     return results
 
 

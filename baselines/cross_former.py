@@ -54,6 +54,5 @@ class Crossformer(nn.Module):
         dec_in = repeat(self.dec_pos_embedding, 'b ts_d l d -> (repeat b) ts_d l d', repeat = batch_size)
         predict_y = self.decoder(dec_in, enc_out)
         predict_y = predict_y[:, :self.out_len, :]
-        # print(predict_y.shape)
         predict_y = self.fc(predict_y).reshape(-1, self.out_len)
         return predict_y

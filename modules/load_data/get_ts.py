@@ -33,7 +33,13 @@ def create_window_dataset(data, target, window_size, forecast_size):
 
 def get_ts(dataset, config):
     df = pd.read_csv(f'./datasets/{dataset}/{dataset}.csv').to_numpy()
-    x, y = df[:, 1:], df[:, -1]
+    # x, y = df[:, 1:], df[:, -1]
+    if config.ts_var == 1:
+        x, y = df[:, 1:], df[:, -1]
+    else:
+        x, y = df[:, -1].reshape(-1, 1), df[:, -1]
+
+    print(x.shape, y.shape)
     # 根据训练集对input进行特征归一化
     train_x = x[:int(len(x) * config.density)]
     scaler = StandardScaler()

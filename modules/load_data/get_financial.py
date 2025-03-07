@@ -4,11 +4,10 @@ import json
 import os
 import numpy as np
 import pandas as pd
+import pickle
 from sqlalchemy import create_engine, text
 
 def save_data(df, groupid):
-    import os
-    import pickle
     df = df.to_numpy()
     unique_values = np.unique(df[:, 0])
     all_data = {}
@@ -19,6 +18,9 @@ def save_data(df, groupid):
         idx = index_mapping[df[i][0]]
         dates[idx].append([df[i][1].year, df[i][1].month, df[i][1].day, df[i][1].weekday()])
         values[idx].append(df[i][2])
+
+    for i in range(len(values)):
+        print(len(dates[i]))
 
     os.makedirs(f'./datasets/financial/{groupid}', exist_ok=True)
     for key, value in index_mapping.items():

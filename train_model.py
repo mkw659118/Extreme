@@ -157,7 +157,7 @@ def RunOnce(config, runId, log):
                 break
             train_loss, time_cost = model.train_one_epoch(datamodule)
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')
-            monitor.track_one_epoch(epoch, model, valid_error, 'NRMSE' if not config.classification else 'AC')
+            monitor.track_one_epoch(epoch, model, valid_error, 'NMAE' if not config.classification else 'AC')
             log.show_epoch_error(runId, epoch, monitor, train_loss, valid_error, train_time)
             train_time.append(time_cost)
             log.plotter.append_epochs(train_loss, valid_error)

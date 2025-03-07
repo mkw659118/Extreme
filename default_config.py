@@ -41,6 +41,7 @@ class DatasetInfo:
 
     seq_len: int = 96
     pred_len: int = 96
+    ts_var: int = 0
 
 
 @dataclass

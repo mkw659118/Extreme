@@ -49,8 +49,8 @@ def experiment_run():
     # once_experiment('RNNConfig', hyper_dict)
     # once_experiment('LSTMConfig', hyper_dict)
     # once_experiment('GRUConfig', hyper_dict)
-    once_experiment('CrossformerConfig', hyper_dict)
-    # once_experiment('TimesNetConfig', hyper_dict)
+    # once_experiment('CrossformerConfig', hyper_dict)
+    once_experiment('TimesNetConfig', hyper_dict)
     # once_experiment('TestConfig', best_hyper)
     return True
 
