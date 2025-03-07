@@ -1,5 +1,7 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+# coding : utf-8
+# Author : yuxiang Zeng
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
