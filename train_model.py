@@ -48,7 +48,7 @@ class Model(torch.nn.Module):
                 win_size=4,
                 d_model=self.hidden_size,
                 n_heads=8,
-                e_layers=config.num_layers,
+                e_layers=2,
                 dropout=0.1,
                 device=config.device
             )

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'ours'
     bs: int = 32
-    rank: int = 50
+    rank: int = 32
     device: str = 'cuda'
     epochs: int = 200
     patience: int = 50
@@ -21,16 +21,17 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
 class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mlp'
     bs: int = 32
-    rank: int = 50
+    rank: int = 32
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
+    num_layers: int = 2
 
 @dataclass
 class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'rnn'
     bs: int = 128
-    rank: int = 50
+    rank: int = 32
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
@@ -39,7 +40,7 @@ class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
 class LSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'lstm'
     bs: int = 128
-    rank: int = 50
+    rank: int = 32
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
@@ -57,10 +58,8 @@ class GRUConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
 class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'crossformer'  
     bs: int = 256
-    rank: int = 50  
-    epochs: int = 200  #
-    patience: int = 50  
-    verbose: int = 1  
+    rank: int = 32
+    verbose: int = 1
     seg_len: int = 6
 
 

@@ -27,52 +27,43 @@ def data_to_dataloader(data_input, label):
     pred_dataloader = DataLoader(
         data_set,
         batch_size=bs,
+        shuffle=False,
         pin_memory=True,
         collate_fn=lambda batch: custom_collate_fn(batch, config),
     )
     return pred_dataloader, flag
 
 
-
 def predict(model, data_input, label, config):
     dataloader, flag = data_to_dataloader(data_input, label)
-    os.makedirs('./figs', exist_ok=True)
-
+    os.makedirs(f'./figs/{config.model}', exist_ok=True)
+    model.setup_optimizer(config)
     cnt = 0
     for batch in tqdm(dataloader):
         all_item = [item.to(config.device) for item in batch]
         inputs, label = all_item[:-1], all_item[-1]
         pred = model.forward(*inputs)
-
         for j in range(len(pred)):
             if flag == 'test':
                 save_figure(inputs[0][j], label[j], pred[j], cnt, config)
             elif flag == 'pred':
                 save_figure(inputs[0][j], None, pred[j], cnt, config)
             cnt += 1
-
-        # # 多线程并行画图和保存
-        # with ThreadPoolExecutor(max_workers=20) as executor:
-        #     futures = []
-        #     for j in range(len(pred)):
-        #         futures.append(executor.submit(save_figure, inputs[0][j], label[j], pred[j], cnt, config))
-        #         cnt += 1
-        #     # 等待所有图保存完成
-        #     for future in futures:
-        #         future.result()
-
     return True
 
 
 def save_figure(inputs, label, pred, cnt, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
-    if inputs.shape[-1] != 1:
-        inputs = inputs[:, -1]
+    # if inputs.shape[-1] != 1:
+    #     inputs = inputs[:, -1]
 
     # exit()
     # 确保inputs和label/pred都是1维
     input_seq = inputs.cpu().reshape(-1).numpy()
+    # print(input_seq)
+    # print(pred)
+    # exit()
     if label is not None:
         real_seq = label.cpu().reshape(-1).numpy()
     pred_seq = pred.cpu().reshape(-1).detach().numpy()
@@ -94,23 +85,11 @@ def save_figure(inputs, label, pred, cnt, config):
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
-    plt.savefig(f'./figs/{cnt}.jpg')
+    plt.savefig(f'./figs/{config.model}/{cnt}.jpg')
     plt.close()
 
     print(f"Figure {cnt} has done!")
 
-def predict_the_future(label, pred, cnt, config):
-    plt.figure(figsize=(12, 6), dpi=300)
-    plt.plot(label.cpu().reshape(-1, ).numpy(), label='Real', linestyle='--', marker='o', markersize=3)
-    plt.plot(pred.cpu().reshape(-1, ).detach().numpy(), label='Pred', linestyle='-', marker='x', markersize=3)
-    plt.legend()
-    plt.title(f'Prediction vs Real - Sample {cnt}')
-    plt.xlabel('Sample Index')
-    plt.ylabel('Value' if not config.classification else 'Class Label')
-    plt.grid(True)
-    plt.savefig(f'./figs/{cnt}.jpg')
-    plt.close()
-    print(f"Figure {cnt} has done!")
 
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
@@ -154,5 +133,8 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.config import get_config
-    config = get_config()
+    # config = get_config()
+    # config = get_config('MLPConfig')
+    config = get_config('CrossformerConfig')
+    # config = get_config('TimesNetConfig')
     run(config)

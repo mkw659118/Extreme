@@ -31,20 +31,30 @@ def create_window_dataset(data, target, window_size, forecast_size):
     return np.array(X), np.array(y)
 
 
+def norm(x):
+    return np.mean(x), np.std(x)
+
 def get_ts(dataset, config):
     df = pd.read_csv(f'./datasets/{dataset}/{dataset}.csv').to_numpy()
     # x, y = df[:, 1:], df[:, -1]
+
     if config.ts_var == 1:
         x, y = df[:, 1:], df[:, -1]
     else:
         x, y = df[:, -1].reshape(-1, 1), df[:, -1]
 
     print(x.shape, y.shape)
+
     # 根据训练集对input进行特征归一化
-    train_x = x[:int(len(x) * config.density)]
-    scaler = StandardScaler()
-    scaler.fit(train_x)
-    x = scaler.transform(x).astype(np.float32)
+    scaler = y[:int(len(x) * config.density)]
+    # scaler = StandardScaler()
+    # scaler.fit(train_x)
+    # x = scaler.transform(x)
+    # y = scaler.transform(y)
+    x = (x - np.mean(scaler)) / np.std(scaler)
+    y = (y - np.mean(scaler)) / np.std(scaler)
+
+    x = x.astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     return X_window, y_window

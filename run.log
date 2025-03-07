@@ -244,6 +244,128 @@ Hyper: rank, Values: [32, 64]
 COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
 Experiment Start!!!
 Experiment Start!!!
+NMAE - 0.3191    NRMSE - 0.3906    MAE - 0.0218    RMSE - 0.3073    Acc_10 - 0.2120    train_time - 42.1344    
+NMAE - 0.3233    NRMSE - 0.3922    MAE - 0.0220    RMSE - 0.3086    Acc_10 - 0.1969    train_time - 14.3621    
+NMAE - 0.3191    NRMSE - 0.3906    MAE - 0.0218    RMSE - 0.3073    Acc_10 - 0.2120    train_time - 40.8162    
+NMAE - 0.3294    NRMSE - 0.4010    MAE - 0.0225    RMSE - 0.3155    Acc_10 - 0.2078    train_time - 13.1757    
+NMAE - 0.3338    NRMSE - 0.4025    MAE - 0.0228    RMSE - 0.3167    Acc_10 - 0.2083    train_time - 6.8097    
+NMAE - 0.3567    NRMSE - 0.4311    MAE - 0.0243    RMSE - 0.3392    Acc_10 - 0.1852    train_time - 9.7230    
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Value: 32, Metric: 0.021761116089274897
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 
+Value: 64, Metric: 0.022049701871202858
+==> Best rank: 32, local_best_metric: 0.021761116089274897
+
+Hyper: num_layers, Values: [1, 2, 3, 4]
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 1 
+Value: 1, Metric: 0.021761116089274897
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 2 
+Value: 2, Metric: 0.022462997552210814
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 3 
+Value: 3, Metric: 0.02276448137237287
+COMMAND: python train_model.py --exp_name MLPConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 4 
+Value: 4, Metric: 0.024326456665383266
+==> Best num_layers: 1, local_best_metric: 0.021761116089274897
+The Best Hyperparameters: {'num_layers': 1, 'dataset': 'weather', 'rank': 32}
+Running at 2025-02-23 01:49: python train_model.py --exp_name MLPConfig --retrain 0 --num_layers 1 --dataset weather --rank 32
+NMAE - 0.3375    NRMSE - 0.4156    MAE - 0.0230    RMSE - 0.3270    Acc_10 - 0.1881    train_time - 8.9409    
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --num_layers 1 --dataset weather --rank 32
+Retrying at 2025-02-23 01:51: python train_model.py --exp_name MLPConfig --retrain 0 --num_layers 1 --dataset weather --rank 32
+NMAE - 0.3375    NRMSE - 0.4156    MAE - 0.0230    RMSE - 0.3270    Acc_10 - 0.1881    train_time - 8.9409    
+NMAE - 0.3262    NRMSE - 0.3986    MAE - 0.0222    RMSE - 0.3136    Acc_10 - 0.2029    train_time - 25.0986    
+NMAE - 0.3184    NRMSE - 0.3894    MAE - 0.0217    RMSE - 0.3064    Acc_10 - 0.2157    train_time - 22.0860    
+NMAE - 0.3184    NRMSE - 0.3894    MAE - 0.0217    RMSE - 0.3064    Acc_10 - 0.2157    train_time - 22.0968    
+NMAE - 0.3252    NRMSE - 0.3969    MAE - 0.0222    RMSE - 0.3123    Acc_10 - 0.2181    train_time - 48.2299    
+NMAE - 0.3289    NRMSE - 0.4005    MAE - 0.0224    RMSE - 0.3151    Acc_10 - 0.2060    train_time - 70.7124    
+NMAE - 0.3480    NRMSE - 0.4332    MAE - 0.0237    RMSE - 0.3408    Acc_10 - 0.1894    train_time - 62.7826    
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Value: 32, Metric: 0.022246168856468726
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 
+Value: 64, Metric: 0.02170979903235018
+==> Best rank: 64, local_best_metric: 0.02170979903235018
+
+Hyper: num_layers, Values: [1, 2, 3, 4]
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 1 
+Value: 1, Metric: 0.02170979903235018
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 2 
+Value: 2, Metric: 0.0221785338424908
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 3 
+Value: 3, Metric: 0.02242917720912792
+COMMAND: python train_model.py --exp_name RNNConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 4 
+Value: 4, Metric: 0.02373060192748109
+==> Best num_layers: 1, local_best_metric: 0.02170979903235018
+The Best Hyperparameters: {'num_layers': 1, 'dataset': 'weather', 'rank': 64}
+Running at 2025-02-23 02:09: python train_model.py --exp_name RNNConfig --retrain 0 --num_layers 1 --dataset weather --rank 64
+NMAE - 0.3372    NRMSE - 0.4118    MAE - 0.0230    RMSE - 0.3240    Acc_10 - 0.2023    train_time - 12.8080    
+NMAE - 0.3479    NRMSE - 0.4222    MAE - 0.0237    RMSE - 0.3322    Acc_10 - 0.1880    train_time - 39.3019    
+NMAE - 0.3394    NRMSE - 0.4174    MAE - 0.0231    RMSE - 0.3284    Acc_10 - 0.2049    train_time - 30.9638    
+NMAE - 0.3394    NRMSE - 0.4174    MAE - 0.0231    RMSE - 0.3284    Acc_10 - 0.2049    train_time - 30.8390    
+NMAE - 0.3494    NRMSE - 0.4244    MAE - 0.0238    RMSE - 0.3339    Acc_10 - 0.1919    train_time - 39.2991    
+NMAE - 0.3569    NRMSE - 0.4358    MAE - 0.0243    RMSE - 0.3429    Acc_10 - 0.1920    train_time - 49.4869    
+NMAE - 0.3610    NRMSE - 0.4340    MAE - 0.0246    RMSE - 0.3414    Acc_10 - 0.1840    train_time - 69.8305    
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Value: 32, Metric: 0.023727022389144876
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 
+Value: 64, Metric: 0.023144971176018637
+==> Best rank: 64, local_best_metric: 0.023144971176018637
+
+Hyper: num_layers, Values: [1, 2, 3, 4]
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 1 
+Value: 1, Metric: 0.023144971176018637
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 2 
+Value: 2, Metric: 0.02382939849258261
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 3 
+Value: 3, Metric: 0.024340250603026428
+COMMAND: python train_model.py --exp_name LSTMConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 --num_layers 4 
+Value: 4, Metric: 0.024619350014867095
+==> Best num_layers: 1, local_best_metric: 0.023144971176018637
+The Best Hyperparameters: {'num_layers': 1, 'dataset': 'weather', 'rank': 64}
+Running at 2025-02-23 02:32: python train_model.py --exp_name LSTMConfig --retrain 0 --num_layers 1 --dataset weather --rank 64
+NMAE - 0.3803    NRMSE - 0.4532    MAE - 0.0259    RMSE - 0.3565    Acc_10 - 0.1695    train_time - 7.3822    
+NMAE - 0.3322    NRMSE - 0.4080    MAE - 0.0227    RMSE - 0.3210    Acc_10 - 0.2090    train_time - 18.2080    
+NMAE - 0.3469    NRMSE - 0.4239    MAE - 0.0237    RMSE - 0.3335    Acc_10 - 0.1996    train_time - 28.4002    
+NMAE - 0.3322    NRMSE - 0.4080    MAE - 0.0227    RMSE - 0.3210    Acc_10 - 0.2090    train_time - 18.2237    
+NMAE - 0.3375    NRMSE - 0.4070    MAE - 0.0230    RMSE - 0.3202    Acc_10 - 0.1946    train_time - 16.8334    
+NMAE - 0.3409    NRMSE - 0.4151    MAE - 0.0233    RMSE - 0.3266    Acc_10 - 0.1860    train_time - 64.1229    
+NMAE - 0.3481    NRMSE - 0.4254    MAE - 0.0237    RMSE - 0.3347    Acc_10 - 0.1904    train_time - 86.2584    
+
+=== Sequential Hyper Search ===
+
+Hyper: rank, Values: [32, 64]
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --rank 32 --num_layers 1 --dataset weather 
+Value: 32, Metric: 0.0226555077702048
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 64 
+Value: 64, Metric: 0.023656995483410773
+==> Best rank: 32, local_best_metric: 0.0226555077702048
+
+Hyper: num_layers, Values: [1, 2, 3, 4]
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 1 
+Value: 1, Metric: 0.0226555077702048
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 2 
+Value: 2, Metric: 0.02301227539568111
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 3 
+Value: 3, Metric: 0.023250851496726867
+COMMAND: python train_model.py --exp_name GRUConfig --hyper_search 1 --retrain 1 --num_layers 1 --dataset weather --rank 32 --num_layers 4 
+Value: 4, Metric: 0.02373831315747644
+==> Best num_layers: 1, local_best_metric: 0.0226555077702048
+The Best Hyperparameters: {'num_layers': 1, 'dataset': 'weather', 'rank': 32}
+Running at 2025-02-23 02:52: python train_model.py --exp_name GRUConfig --retrain 0 --num_layers 1 --dataset weather --rank 32
+NMAE - 0.3554    NRMSE - 0.4255    MAE - 0.0242    RMSE - 0.3347    Acc_10 - 0.1902    train_time - 4.6004    
+All commands executed successfully.
+
+Experiment Start!!!
 
 === Sequential Hyper Search ===
 
@@ -639,3 +761,156 @@ Experiment Start!!!
 === Sequential Hyper Search ===
 The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
 Running at 2025-03-07 22:33: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:37: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.6459    NRMSE - 0.7387    MAE - 0.0440    RMSE - 0.5812    Acc_10 - 0.0626    train_time - 27.3179    
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:48: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 22:48: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:48: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.9635    NRMSE - 1.1025    MAE - 0.0657    RMSE - 0.8674    Acc_10 - 0.0484    train_time - 27.3179    
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:49: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:50: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3235    NRMSE - 0.3981    MAE - 0.0221    RMSE - 0.3132    Acc_10 - 0.2114    train_time - 27.3179    
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:50: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:51: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:52: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:54: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:56: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:58: python train_model.py --exp_name TimesNetConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:58: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3434    NRMSE - 0.4173    MAE - 0.0234    RMSE - 0.3283    Acc_10 - 0.1755    train_time - 27.3179    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 22:58: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3573    NRMSE - 0.4321    MAE - 0.0244    RMSE - 0.3400    Acc_10 - 0.1959    train_time - 26.1495    
+All commands executed successfully.
+
+NMAE - 0.5584    NRMSE - 0.6721    MAE - 0.0381    RMSE - 0.5288    Acc_10 - 0.1152    train_time - 18.1336    
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Command failed, retrying in 3 seconds: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Retrying at 2025-03-07 23:15: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:16: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:19: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3378    NRMSE - 0.4136    MAE - 0.0230    RMSE - 0.3253    Acc_10 - 0.1975    train_time - 27.3179    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:19: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:20: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3270    NRMSE - 0.3996    MAE - 0.0223    RMSE - 0.3143    Acc_10 - 0.2104    train_time - 10.8109    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:21: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3551    NRMSE - 0.4293    MAE - 0.0242    RMSE - 0.3376    Acc_10 - 0.1923    train_time - 26.1495    
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:25: python train_model.py --exp_name TestConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.5669    NRMSE - 0.6796    MAE - 0.0386    RMSE - 0.5344    Acc_10 - 0.1112    train_time - 17.7256    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:26: python train_model.py --exp_name MLPConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3270    NRMSE - 0.3996    MAE - 0.0223    RMSE - 0.3143    Acc_10 - 0.2104    train_time - 10.8109    
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:26: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3551    NRMSE - 0.4293    MAE - 0.0242    RMSE - 0.3376    Acc_10 - 0.1923    train_time - 26.1495    
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:34: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather
+NMAE - 0.3551    NRMSE - 0.4293    MAE - 0.0242    RMSE - 0.3376    Acc_10 - 0.1923    train_time - 26.1495    
+All commands executed successfully.
+
+Experiment Start!!!
+
+=== Sequential Hyper Search ===
+The Best Hyperparameters: {'rank': 32, 'num_layers': 2, 'dataset': 'weather'}
+Running at 2025-03-07 23:34: python train_model.py --exp_name CrossformerConfig --retrain 0 --rank 32 --num_layers 2 --dataset weather

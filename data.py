@@ -71,10 +71,10 @@ class DataModule:
 
         # 需要根据训练集来归一化整个dataset，你只见过这些
         train_y = y[:train_size]
-        df_mean = np.mean(train_y)
-        df_std = np.std(train_y)
-        x = (x - df_mean) / df_std
-        y = (y - df_mean) / df_std
+        # df_mean = np.mean(train_y)
+        # df_std = np.std(train_y)
+        # x = (x - df_mean) / df_std
+        # y = (y - df_mean) / df_std
 
         train_x = x[:train_size]
         train_y = y[:train_size]
