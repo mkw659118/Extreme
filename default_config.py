@@ -39,6 +39,8 @@ class DatasetInfo:
     eval_set: bool = True
     time_interval: int = 10
 
+    data_scaler: bool = False
+
     seq_len: int = 96
     pred_len: int = 96
     ts_var: int = 0

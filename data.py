@@ -5,6 +5,7 @@ import os
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
+from modules.load_data.get_financial import get_financial_data
 from modules.load_data.get_ts import get_ts
 from utils.logger import Logger
 from utils.plotter import MetricsPlotter
@@ -17,7 +18,10 @@ class experiment:
         self.config = config
 
     def load_data(self, config):
-        all_x, all_y = get_ts(config.dataset, config)
+        if config.model == 'ours':
+            all_x, all_y = get_financial_data('2021-07-13', '2024-07-13', config)
+        else:
+            all_x, all_y = get_ts(config.dataset, config)
         return all_x, all_y
 
 

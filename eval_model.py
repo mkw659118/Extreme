@@ -55,8 +55,8 @@ def predict(model, data_input, label, config):
 def save_figure(inputs, label, pred, cnt, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
-    # if inputs.shape[-1] != 1:
-    #     inputs = inputs[:, -1]
+    if inputs.shape[-1] != 1:
+        inputs = inputs[:, -1]
 
     # exit()
     # 确保inputs和label/pred都是1维
@@ -133,8 +133,8 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.config import get_config
-    # config = get_config()
+    config = get_config()
     # config = get_config('MLPConfig')
-    config = get_config('CrossformerConfig')
+    # config = get_config('CrossformerConfig')
     # config = get_config('TimesNetConfig')
     run(config)
