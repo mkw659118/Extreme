@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+# 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月9日17:47:08）
 
 import os
 import time
@@ -18,8 +19,6 @@ def set_settings(config):
 
     if config.classification:
         config.loss_func = 'CrossEntropyLoss'
-    else:
-        config.num_classes = 1
 
     # 检查操作系统
     if platform.system() == "Darwin":  # "Darwin" 是 macOS 的系统标识
@@ -42,16 +41,6 @@ def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     t.backends.cudnn.deterministic = True
     t.backends.cudnn.benchmark = False
-
-
-def makedir(path):
-    path = path.strip()
-    path = path.rstrip("\\")
-    isExists = os.path.exists(path)
-    if not isExists:
-        os.makedirs(path)
-        return True
-    return False
 
 
 def computer_info():

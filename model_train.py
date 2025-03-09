@@ -13,13 +13,14 @@ from baselines.encoder_seq import SeqEncoder
 from baselines.mlp import MLP
 from baselines.cross_former import Crossformer
 from baselines.timesnet import TimesNet
-from utils.metrics import ErrorMetrics
-from utils.monitor import EarlyStopping
-from utils.trainer import get_loss_function, get_optimizer
+from utils.exp_metrics import ErrorMetrics
+from utils.model_monitor import EarlyStopping
+from utils.model_trainer import get_loss_function, get_optimizer
 from utils.utils import set_seed
-from utils.efficiency import get_efficiency
+from utils.model_efficiency import get_efficiency
 from modules.backbone import Backbone
 torch.set_default_dtype(torch.float32)
+
 
 # 每次开展新实验都改一下这里
 def get_experiment_name(config):
@@ -63,6 +64,7 @@ class Model(torch.nn.Module):
         y = self.model(x)
         return y
 
+    # 2025年3月9日17:45:11 这行及以下的全部代码几乎可以不用动了，几乎固定
     def setup_optimizer(self, config):
         self.to(config.device)
         self.loss_function = get_loss_function(config).to(config.device)
@@ -97,14 +99,15 @@ class Model(torch.nn.Module):
             if mode == 'valid':
                 val_loss += self.loss_function(pred, label)
             if self.config.classification:
-                pred = torch.max(pred, 1)[1]  # 获取预测的类别标签
+                pred = torch.max(pred, 1)[1]
             reals.append(label)
             preds.append(pred)
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
+        reals, preds = dataModule.scaler.inverse_transform(reals), dataModule.scaler.inverse_transform(preds)
         if mode == 'valid':
             self.scheduler.step(val_loss)
-        metrics_error = ErrorMetrics(reals * dataModule.max_value, preds * dataModule.max_value, self.config)
+        metrics_error = ErrorMetrics(reals, preds, self.config)
         return metrics_error
 
 
@@ -113,7 +116,7 @@ def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
 
     # Initialize the data and the model
-    from data import experiment, DataModule
+    from data_center import experiment, DataModule
     exper = experiment(config)
     datamodule = DataModule(exper, config)
     model = Model(datamodule, config)
@@ -157,7 +160,7 @@ def RunOnce(config, runId, log):
                 break
             train_loss, time_cost = model.train_one_epoch(datamodule)
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')
-            monitor.track_one_epoch(epoch, model, valid_error, 'NMAE' if not config.classification else 'AC')
+            monitor.track_one_epoch(epoch, model, valid_error, 'MAE' if not config.classification else 'AC')
             log.show_epoch_error(runId, epoch, monitor, train_loss, valid_error, train_time)
             train_time.append(time_cost)
             log.plotter.append_epochs(train_loss, valid_error)
@@ -211,8 +214,8 @@ def RunExperiments(log, config):
 
 
 def run(config):
-    from utils.logger import Logger
-    from utils.plotter import MetricsPlotter
+    from utils.exp_logger import Logger
+    from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings
     set_settings(config)
     log_filename = get_experiment_name(config)
@@ -232,6 +235,6 @@ def run(config):
 
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
-    from utils.config import get_config
+    from utils.exp_config import get_config
     config = get_config()
     run(config)

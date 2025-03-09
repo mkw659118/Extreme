@@ -37,7 +37,7 @@ class DatasetInfo:
     train_size: int = 500
     density: float = 0.70
     eval_set: bool = True
-    time_interval: int = 10
+    shuffle: bool = False
 
     data_scaler: bool = False
 

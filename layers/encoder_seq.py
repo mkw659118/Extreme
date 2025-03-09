@@ -73,8 +73,8 @@ class SeqEncoder(torch.nn.Module):
         out = self.seq_transfer(x)
         for i in range(self.num_layers):
             out = out + self.seq_encoder[i](out)
-        out = out.reshape(out.shape[0], -1)
-        out = self.aggregator(out)
+        # out = out.reshape(out.shape[0], -1)
+        # out = self.aggregator(out)
         return out
 
 

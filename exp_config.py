@@ -1,7 +1,7 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 
-from default_config import *
+from utils.exp_default_config import *
 from dataclasses import dataclass
 
 
@@ -15,6 +15,7 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 50
     verbose: int = 10
     try_exp: int = 1
+    num_layers: int = 2
 
 
 @dataclass
@@ -26,6 +27,35 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     patience: int = 50
     verbose: int = 1
     num_layers: int = 2
+
+
+@dataclass
+class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'crossformer'  
+    bs: int = 256
+    rank: int = 32
+    verbose: int = 1
+    seg_len: int = 6
+
+
+@dataclass
+class TimesNetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'timesnet'  # 模型类型
+    bs: int = 32  # 批大小
+    epochs: int = 10  # 训练周期
+    d_model: int = 32
+    d_ff: int = 32  # 前馈层大小
+    dropout: float = 0.1  # Dropout 比例
+    enc_in: int = 1  # 输入特征数目
+    c_out: int = 1  # 输出特征数目
+    embed: str = 'fixed'  # 嵌入类型
+    freq: str = 'h'  # 时间序列的频率
+    top_k: int = 5  # 高频成分数量
+    e_layers: int = 2  # 网络层数
+    num_kernels: int = 8
+    label_len: int = 24
+
+
 
 @dataclass
 class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
@@ -53,29 +83,3 @@ class GRUConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
-
-@dataclass
-class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'crossformer'  
-    bs: int = 256
-    rank: int = 32
-    verbose: int = 1
-    seg_len: int = 6
-
-
-@dataclass
-class TimesNetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'timesnet'  # 模型类型
-    bs: int = 32  # 批大小
-    epochs: int = 10  # 训练周期
-    d_model: int = 32
-    d_ff: int = 32  # 前馈层大小
-    dropout: float = 0.1  # Dropout 比例
-    enc_in: int = 1  # 输入特征数目
-    c_out: int = 1  # 输出特征数目
-    embed: str = 'fixed'  # 嵌入类型
-    freq: str = 'h'  # 时间序列的频率
-    top_k: int = 5  # 高频成分数量
-    e_layers: int = 2  # 网络层数
-    num_kernels: int = 8
-    label_len: int = 24
