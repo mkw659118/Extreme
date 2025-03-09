@@ -7,8 +7,7 @@ import time
 import logging
 import numpy as np
 
-from utils.efficiency import get_efficiency
-from utils.utils import makedir
+from utils.model_efficiency import get_efficiency
 
 class Logger:
     def __init__(
@@ -49,7 +48,7 @@ class Logger:
 
     def save_result(self, metrics):
         import pickle
-        makedir('./results/metrics/')
+        os.makedirs('./results/metrics/', exist_ok=True)
         config_copy = self.config.__dict__.copy()
         if 'log' in config_copy:
             del config_copy['log']  # 移除无法序列化的 log 对象

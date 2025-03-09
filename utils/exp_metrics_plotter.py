@@ -9,7 +9,7 @@ class MetricsPlotter:
     def __init__(self, filename, config):
         self.config = config
         self.fileroot = f'./results/{config.model}/' + time.strftime('%Y%m%d', time.localtime(time.time())) + '/fig/'
-        makedir(self.fileroot)
+        os.makedirs(self.fileroot, exist_ok=True)
         exper_time = time.strftime('%H_%M_%S', time.localtime(time.time())) + '_'
         self.filename = filename
         self.exper_filename = self.fileroot + exper_time + self.filename

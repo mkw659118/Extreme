@@ -39,7 +39,8 @@ def get_data(code_idx):
 
 def generate_data(start_date, end_date, code_idx):
     # 数据库配置
-    DB_URI = 'mysql+pymysql://root:qilai123@123.57.74.222:3306/fund'
+    with open('./datasets/sql_token.pkl', 'rb') as f:
+        DB_URI = pickle.load(f)
     engine = create_engine(DB_URI)
     DATA_JSON_PATH = './datasets/data.json'
 

@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
-from data import TensorDataset, custom_collate_fn
-from train_model import Model, get_experiment_name
+
+from data_dataset import custom_collate_fn, TensorDataset
+from model_train import Model, get_experiment_name
 from utils.utils import set_seed
 from concurrent.futures import ThreadPoolExecutor
 torch.set_default_dtype(torch.float32)
@@ -94,7 +95,7 @@ def save_figure(inputs, label, pred, cnt, config):
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
 
-    from data import experiment, DataModule
+    from data_center import experiment, DataModule
     exper = experiment(config)
     datamodule = DataModule(exper, config)
     model = Model(datamodule, config)
@@ -119,8 +120,8 @@ def RunOnce(config, runId, log):
 
 
 def run(config):
-    from utils.logger import Logger
-    from utils.plotter import MetricsPlotter
+    from utils.exp_logger import Logger
+    from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings
     set_settings(config)
     log_filename = get_experiment_name(config)
@@ -132,7 +133,7 @@ def run(config):
 
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
-    from utils.config import get_config
+    from utils.exp_config import get_config
     config = get_config()
     # config = get_config('MLPConfig')
     # config = get_config('CrossformerConfig')

@@ -1,5 +1,7 @@
 # coding:utf-8
 # Author: yuxiang Zeng
+# 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月9日17:47:08）
+
 import torch as t
 import torch.optim
 

@@ -27,12 +27,11 @@ def calculate_inference_time(model, sample_input, config):
 
 
 def only_run():
-    # Experiment Settings, logger, plotter
-    from utils.config import get_config
-    from utils.logger import Logger
-    from utils.plotter import MetricsPlotter
+    from utils.exp_config import get_config
+    from utils.exp_logger import Logger
+    from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings, set_seed
-    from train_model import Model
+    from model_train import Model
 
     config = get_config()
     set_settings(config)
@@ -40,7 +39,7 @@ def only_run():
     plotter = MetricsPlotter(log_filename, config)
     log = Logger(log_filename, plotter, config)
 
-    from data import experiment, DataModule
+    from data_center import experiment, DataModule
 
     exper = experiment(config)
     datamodule = DataModule(exper, config)
@@ -56,8 +55,8 @@ def only_run():
 
 
 def get_efficiency(config):
-    from train_model import Model
-    from data import experiment, DataModule
+    from model_train import Model
+    from data_center import experiment, DataModule
     exper = experiment(config)
     datamodule = DataModule(exper, config)
     model = Model(datamodule, config)

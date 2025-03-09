@@ -1,11 +1,7 @@
 import numpy as np
 
 
-class MinMaxScaler:
-    """
-    Min-Max 归一化类，用于将数据缩放到指定范围（默认为 [0, 1]）。
-    支持反归一化操作。
-    """
+class DataScaler:
 
     def __init__(self, feature_range=(0, 1)):
         self.min_val = None
