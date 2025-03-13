@@ -13,9 +13,9 @@ hyper_dict = {
 ######################################################################################################
 # 这里是总执行实验顺序！！！！！！！！
 def experiment_run():
-    # Baselines()
+    Baselines()
     # Ablation()
-    Our_model()
+    # Our_model()
     return True
 
 def Baselines():

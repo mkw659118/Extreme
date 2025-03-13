@@ -7,28 +7,8 @@ import pandas as pd
 import pickle
 from sqlalchemy import create_engine, text
 
-def create_window_dataset(data, target, window_size, forecast_size):
-    """
-    将时间序列数据转换为窗口数据集
-    :param data: 特征数据（numpy数组）
-    :param target: 目标数据（numpy数组）
-    :param window_size: 输入窗口大小（历史时间步数）
-    :param forecast_size: 预测窗口大小（未来时间步数）
-    :return: 窗口化的特征数据和目标数据
-    """
-    X, y = [], []
-    total_samples = len(data) - window_size - forecast_size + 1
-
-    for i in range(total_samples):
-        # 获取当前窗口的特征数据
-        X_window = data[i:i + window_size]
-        # 获取对应的未来窗口目标数据
-        y_window = target[i + window_size: i + window_size + forecast_size]
-
-        X.append(X_window)
-        y.append(y_window)
-
-    return np.array(X), np.array(y)
+from modules.load_data.create_window_dataset import create_window_dataset
+from utils.data_scaler import get_scaler
 
 
 def get_data(code_idx):
@@ -92,14 +72,15 @@ def get_financial_data(start_date, end_date, config):
 
     # print(data)
     x, y = data, data[:, -1].astype(np.float32)
-    scaler = y[:int(len(x) * config.density)].astype(np.float32)
-    y = (y - np.mean(scaler)) / np.std(scaler)
-    # print(scaler.shape)
+    scaler = get_scaler(y, config)
+    y = scaler.transform(y)
+
     x[:, -1] = x[:, -1].astype(np.float32)
     temp = x[:, -1].astype(np.float32)
-    x[:, -1] = (temp - np.mean(scaler)) / np.std(scaler)
+    x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
+
     x = x.astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
-    return X_window, y_window
+    return X_window, y_window, scaler
 

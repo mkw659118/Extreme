@@ -218,3 +218,122 @@ Running at 2025-03-13 15:52: python model_train.py --exp_name TestConfig --retra
 NMAE - -1.6807    NRMSE - 1.7199    MAE - 1.4306    RMSE - 17.0228    Acc_10 - 0.0001    train_time - 0.3456    
 [2025-03-13 15:52:35] All commands executed successfully.
 
+[2025-03-13 15:55:27] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:55: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 15:55:36] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:55: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.0236    NRMSE - 1.0805    MAE - 0.8713    RMSE - 10.6946    Acc_10 - 0.0001    train_time - 0.2608    
+[2025-03-13 15:55:46] All commands executed successfully.
+
+[2025-03-13 15:57:08] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:57: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.9101    NRMSE - 0.9659    MAE - 0.7746    RMSE - 9.5598    Acc_10 - 0.0014    train_time - 1.2125    
+[2025-03-13 15:57:22] All commands executed successfully.
+
+[2025-03-13 15:58:27] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:58: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -4.5828    NRMSE - 4.5521    MAE - 3.9008    RMSE - 45.0559    Acc_10 - 0.0001    train_time - 0.4297    
+[2025-03-13 15:58:37] All commands executed successfully.
+
+[2025-03-13 15:58:43] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:58: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 15:58: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 15:58: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 15:58: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 15:59:04] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:59: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.0236    NRMSE - 1.0805    MAE - 0.8713    RMSE - 10.6946    Acc_10 - 0.0001    train_time - 0.2654    
+[2025-03-13 15:59:14] All commands executed successfully.
+
+[2025-03-13 16:00:23] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:00:59] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:00: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.3238    NRMSE - 1.3406    MAE - 1.1268    RMSE - 13.2690    Acc_10 - 0.0001    train_time - 16.7868    
+[2025-03-13 16:01:35] All commands executed successfully.
+
+[2025-03-13 16:02:04] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:02: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:09:08] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:09: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:12:30] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:12: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:12:55] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:12: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:18:50] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:18: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:18:54] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:18: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:18: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:19: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:19: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:19: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:19: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:19: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:29:11] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:29: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:30:08] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:30: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Command failed, retrying in 3 seconds: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+Retrying at 2025-03-13 16:30: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 16:30:15] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 16:30: python model_train.py --exp_name MLPConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather

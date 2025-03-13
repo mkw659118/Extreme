@@ -12,25 +12,21 @@ from utils.exp_metrics_plotter import MetricsPlotter
 from utils.utils import set_settings
 from utils.exp_config import get_config
 
-class experiment:
-    def __init__(self, config):
-        self.config = config
 
-    def load_data(self, config):
-        if config.model == 'ours':
-            all_x, all_y = get_financial_data('2020-07-13', '2025-03-8', config)
-        else:
-            all_x, all_y = get_ts(config.dataset, config)
-        return all_x, all_y
+def load_data(config):
+    if config.model == 'ours':
+        all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config)
+    else:
+        all_x, all_y, scaler = get_ts(config.dataset, config)
+    return all_x, all_y, scaler
 
 
 # 数据集定义
 class DataModule:
-    def __init__(self, exper_type, config):
+    def __init__(self, config):
         self.config = config
         self.path = config.path
-        self.x, self.y = exper_type.load_data(config)
-        self.scaler = get_scaler(self.y, config)
+        self.x, self.y, self.scaler = load_data(config)
         if config.debug:
             self.x, self.y = self.x[:300], self.y[:300]
         self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y = get_split_dataset(self.x, self.y, config)
@@ -59,7 +55,6 @@ if __name__ == '__main__':
     config.log = log
     log(str(config.__dict__))
 
-    exper = experiment(config)
     datamodule = DataModule(exper, config)
     for train_batch in datamodule.train_loader:
         all_item = [item.to(config.device) for item in train_batch]

@@ -95,9 +95,8 @@ def save_figure(inputs, label, pred, cnt, config):
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
 
-    from data_center import experiment, DataModule
-    exper = experiment(config)
-    datamodule = DataModule(exper, config)
+    from data_center import DataModule
+    datamodule = DataModule(config)
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
     try:
