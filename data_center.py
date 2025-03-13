@@ -1,7 +1,6 @@
 # coding : utf-8
-# Author : yuxiang Zeng
+# Author : Yuxiang Zeng
 import numpy as np
-from sklearn.preprocessing import StandardScaler
 from data_dataset import TensorDataset
 from modules.load_data.get_financial import get_financial_data
 from modules.load_data.get_ts import get_ts
@@ -12,7 +11,6 @@ from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
 from utils.utils import set_settings
 from utils.exp_config import get_config
-
 
 class experiment:
     def __init__(self, config):

@@ -22,7 +22,7 @@ def once_experiment(exper_name, hyper_dict, grid_search=0, retrain=1, debug=0):
 
     # 再跑最佳参数实验
     commands = []
-    command = f"python model_train.py --exp_name {exper_name} --retrain 0"
+    command = f"python model_train.py --exp_name {exper_name} --retrain 1"
     commands.append(command)
 
     commands = [add_parameter(command, best_hyper) for command in commands]
@@ -81,7 +81,7 @@ def grid_search_hyperparameters(exp_name, hyper_dict, retrain, debug):
     best_combo = None
 
     with open(log_file, 'a') as f:
-        f.write("\n=== Grid Search ===\n")
+        f.write("================== Grid Search ==================\n")
         for combo in product(*hyper_values_list):
             combo_dict = dict(zip(hyper_keys, combo))
 
@@ -119,7 +119,7 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
     best_hyper = {}
 
     with open(log_file, 'a') as f:
-        f.write("\n=== Sequential Hyper Search ===\n")
+        f.write("================== Sequential Hyper Search ==================\n")
 
         for hyper_name, hyper_values in hyper_dict.items():
             if len(hyper_values) == 1:
@@ -153,9 +153,6 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
 
         f.write(f"The Best Hyperparameters: {best_hyper}\n")
     return best_hyper
-
-
-
 
 
 

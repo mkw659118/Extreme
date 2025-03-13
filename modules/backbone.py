@@ -2,7 +2,7 @@
 # Author : Yuxiang Zeng
 import torch
 
-from layers.encoder_seq import SeqEncoder
+from layers.seq_enc import SeqEncoder
 from modules.temporal_enc import TemporalEmbedding
 
 
@@ -14,7 +14,7 @@ class Backbone(torch.nn.Module):
         self.projection = torch.nn.Linear(1, config.rank)
 
         self.fund_embedding = torch.nn.Embedding(100000, config.rank)
-        self.seq_encoder = SeqEncoder(input_size=config.rank, d_model=config.rank, seq_len=config.seq_len, num_layers=config.num_layers, seq_method='gru', bidirectional=True)
+        self.seq_encoder = SeqEncoder(input_size=config.rank, d_model=config.rank, seq_len=config.seq_len, num_layers=config.num_layers, seq_method='gru', bidirectional=False)
         self.lstm = torch.nn.LSTM(config.rank, config.rank)
         self.temporal_embedding = TemporalEmbedding(self.rank, 'embeds')
 

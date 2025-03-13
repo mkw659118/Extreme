@@ -64,6 +64,11 @@ class Model(torch.nn.Module):
         y = self.model(x)
         return y
 
+    # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
+    def compute_loss(self, pred, label):
+        loss = self.loss_function(pred, label)
+        return loss
+
     # 2025年3月9日17:45:11 这行及以下的全部代码几乎可以不用动了，几乎固定
     def setup_optimizer(self, config):
         self.to(config.device)
@@ -80,7 +85,7 @@ class Model(torch.nn.Module):
             all_item = [item.to(self.config.device) for item in train_batch]
             inputs, label = all_item[:-1], all_item[-1]
             pred = self.forward(*inputs)
-            loss = self.loss_function(pred, label)
+            loss = self.compute_loss(pred, label)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
