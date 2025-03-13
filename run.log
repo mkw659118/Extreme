@@ -136,3 +136,85 @@ Running at 2025-03-10 01:08: python model_train.py --exp_name TestConfig --retra
 NMAE - -0.0863    NRMSE - 0.1030    MAE - 0.1319    RMSE - 1.5488    Acc_10 - 0.0000    train_time - 70.3394    
 NMAE - -0.0863    NRMSE - 0.1030    MAE - 0.1319    RMSE - 1.5488    Acc_10 - 0.0000    train_time - 70.5408    
 NMAE - -0.0863    NRMSE - 0.1030    MAE - 0.1319    RMSE - 1.5488    Acc_10 - 0.0000    train_time - 70.6197    
+NMAE - -1.1705    NRMSE - 1.1279    MAE - 0.9963    RMSE - 11.1636    Acc_10 - 0.0004    train_time - 0.5555    
+[2025-03-13 15:45:00] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:45: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.9896    NRMSE - 0.9816    MAE - 0.8424    RMSE - 9.7158    Acc_10 - 0.0015    train_time - 1.0066    
+[2025-03-13 15:45:13] All commands executed successfully.
+
+[2025-03-13 15:45:22] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:45: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.9922    NRMSE - 1.0368    MAE - 0.8445    RMSE - 10.2621    Acc_10 - 0.0005    train_time - 0.5184    
+[2025-03-13 15:45:36] All commands executed successfully.
+
+[2025-03-13 15:48:03] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:48: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.3288    NRMSE - 1.3836    MAE - 1.1311    RMSE - 13.6950    Acc_10 - 0.0003    train_time - 0.5154    
+[2025-03-13 15:48:15] All commands executed successfully.
+
+[2025-03-13 15:48:29] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:48: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.1880    NRMSE - 1.2123    MAE - 1.0112    RMSE - 11.9995    Acc_10 - 0.0001    train_time - 0.5313    
+[2025-03-13 15:48:46] All commands executed successfully.
+
+[2025-03-13 15:49:15] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:49: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.9290    NRMSE - 0.9649    MAE - 0.7907    RMSE - 9.5505    Acc_10 - 0.0003    train_time - 0.4796    
+[2025-03-13 15:49:30] All commands executed successfully.
+
+[2025-03-13 15:49:43] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:49: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.3393    NRMSE - 1.4237    MAE - 1.1400    RMSE - 14.0917    Acc_10 - 0.0004    train_time - 0.3027    
+[2025-03-13 15:49:58] All commands executed successfully.
+
+[2025-03-13 15:50:30] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:50: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.2229    NRMSE - 1.2978    MAE - 1.0409    RMSE - 12.8454    Acc_10 - 0.0003    train_time - 0.2863    
+[2025-03-13 15:50:44] All commands executed successfully.
+
+[2025-03-13 15:51:12] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:51: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+[2025-03-13 15:51:26] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:51: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.0000    NRMSE - 1.0216    MAE - 0.8512    RMSE - 10.1113    Acc_10 - 0.0009    train_time - 0.3499    
+[2025-03-13 15:51:38] All commands executed successfully.
+
+[2025-03-13 15:51:47] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:51: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.9906    NRMSE - 1.0251    MAE - 0.8432    RMSE - 10.1463    Acc_10 - 0.0007    train_time - 0.3071    
+[2025-03-13 15:51:58] All commands executed successfully.
+
+[2025-03-13 15:52:08] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:52: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -0.8507    NRMSE - 0.8947    MAE - 0.7241    RMSE - 8.8559    Acc_10 - 0.0017    train_time - 0.3140    
+[2025-03-13 15:52:19] All commands executed successfully.
+
+[2025-03-13 15:52:24] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 32, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 15:52: python model_train.py --exp_name TestConfig --retrain 1 --rank 32 --num_layers 3 --dataset weather
+NMAE - -1.6807    NRMSE - 1.7199    MAE - 1.4306    RMSE - 17.0228    Acc_10 - 0.0001    train_time - 0.3456    
+[2025-03-13 15:52:35] All commands executed successfully.
+

@@ -8,11 +8,11 @@ from layers.feedforward.moe import MoE
 from layers.att.self_attention import SelfAttention
 
 def get_norm(d_model, method):
-    if method == 'batchnorm':
+    if method == 'batch':
         return torch.nn.BatchNorm1d(d_model)
-    elif method == 'layernorm':
+    elif method == 'layer':
         return torch.nn.LayerNorm(d_model)
-    elif method == 'rmsnorm':
+    elif method == 'rms':
         return torch.nn.RMSNorm(d_model)
 
 def get_ffn(d_model, method):
@@ -28,7 +28,7 @@ def get_att(d_model, num_heads, method):
         return ExternalAttention(d_model, S=d_model*2)
 
 class Transformer(torch.nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, norm_method='rmsnorm', ffn_method='ffn', att_method='external'):
+    def __init__(self, d_model, num_heads, num_layers, norm_method='rmsnorm', ffn_method='moe', att_method='self'):
         super().__init__()
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):
