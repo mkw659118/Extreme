@@ -23,7 +23,7 @@ class BertEmbedding(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=max_len, embedding_dim=d_model)
 
     def forward(self, x):
-        pos_idx = torch.arange(0, x.size(1)).view(1, -1).repeat(x.size(0), 1).long()
+        pos_idx = torch.arange(0, x.size(1)).view(1, -1).repeat(x.size(0), 1).long().to(x.device)
         return self.embedding(pos_idx)
 
 class PositionEncoding(nn.Module):

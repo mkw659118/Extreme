@@ -5,7 +5,7 @@ from datetime import datetime
 
 # 在这里写下超参数探索空间
 hyper_dict = {
-    'rank': [32],
+    'rank': [128],
     'num_layers': [3],
     'dataset': ['weather'],  # weather electricity
 }
@@ -13,14 +13,14 @@ hyper_dict = {
 ######################################################################################################
 # 这里是总执行实验顺序！！！！！！！！
 def experiment_run():
-    Baselines()
+    # Baselines()
     # Ablation()
-    # Our_model()
+    Our_model()
     return True
 
 def Baselines():
-    once_experiment('MLPConfig', hyper_dict)
-    # once_experiment('RNNConfig', hyper_dict)
+    # once_experiment('MLPConfig', hyper_dict)
+    once_experiment('RNNConfig', hyper_dict)
     # once_experiment('LSTMConfig', hyper_dict)
     # once_experiment('GRUConfig', hyper_dict)
     # once_experiment('CrossformerConfig', hyper_dict)

@@ -35,7 +35,7 @@ def data_to_dataloader(data_input, label):
     return pred_dataloader, flag
 
 
-def predict(model, data_input, label, config):
+def predict(model, data_input, label, scaler, config):
     dataloader, flag = data_to_dataloader(data_input, label)
     os.makedirs(f'./figs/{config.model}', exist_ok=True)
     model.setup_optimizer(config)
@@ -44,20 +44,23 @@ def predict(model, data_input, label, config):
         all_item = [item.to(config.device) for item in batch]
         inputs, label = all_item[:-1], all_item[-1]
         pred = model.forward(*inputs)
+
         for j in range(len(pred)):
             if flag == 'test':
-                save_figure(inputs[0][j], label[j], pred[j], cnt, config)
+                save_figure(inputs[0][j], label[j], pred[j], cnt, scaler, config)
             elif flag == 'pred':
-                save_figure(inputs[0][j], None, pred[j], cnt, config)
+                save_figure(inputs[0][j], None, pred[j], cnt, scaler, config)
             cnt += 1
     return True
 
 
-def save_figure(inputs, label, pred, cnt, config):
+def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
     if inputs.shape[-1] != 1:
         inputs = inputs[:, -1]
+
+    inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
 
     # exit()
     # 确保inputs和label/pred都是1维
@@ -113,7 +116,7 @@ def RunOnce(config, runId, log):
     except Exception as e:
         log.only_print(f'Error: {str(e)}')
     # results = model.evaluate_one_epoch(datamodule, 'test')
-    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, config)
+    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.scaler, config)
     # results = predict(model, datamodule.test_set.x[0], None, config)
     return results
 

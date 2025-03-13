@@ -9,7 +9,7 @@ from dataclasses import dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'ours'
     bs: int = 32
-    rank: int = 32
+    rank: int = 64
     device: str = 'cuda'
     epochs: int = 200
     patience: int = 50

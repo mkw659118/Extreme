@@ -66,11 +66,9 @@ def generate_data(start_date, end_date, code_idx):
 def get_financial_data(start_date, end_date, config):
     try:
         data = get_data(0)
-        # print(data)
     except Exception as e:
         data = generate_data(start_date, end_date, 0)
 
-    # print(data)
     x, y = data, data[:, -1].astype(np.float32)
     scaler = get_scaler(y, config)
     y = scaler.transform(y)
