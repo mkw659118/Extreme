@@ -101,3 +101,25 @@ Running at 2025-03-13 17:26: python model_train.py --exp_name TestConfig --retra
 NMAE - 0.0589    NRMSE - 0.0769    MAE - 0.0661    RMSE - 0.8474    Acc_10 - 0.7743    train_time - 4.2123    
 [2025-03-13 17:26:43] All commands executed successfully.
 
+[2025-03-13 20:27:11] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rank': 128, 'num_layers': 3, 'dataset': 'weather'}
+Running at 2025-03-13 20:27: python model_train.py --exp_name TestConfig --retrain 1 --rank 128 --num_layers 3 --dataset weather
+NMAE - 0.0679    NRMSE - 0.0902    MAE - 0.0763    RMSE - 0.9936    Acc_10 - 0.7472    train_time - 9.6287    
+NMAE - 0.0665    NRMSE - 0.0854    MAE - 0.0747    RMSE - 0.9416    Acc_10 - 0.7740    train_time - 3.4935    
+NMAE - 0.0671    NRMSE - 0.0894    MAE - 0.0753    RMSE - 0.9856    Acc_10 - 0.7335    train_time - 4.7543    
+NMAE - 0.0679    NRMSE - 0.0902    MAE - 0.0763    RMSE - 0.9936    Acc_10 - 0.7472    train_time - 9.3972    
+NMAE - 0.0525    NRMSE - 0.0702    MAE - 0.0590    RMSE - 0.7739    Acc_10 - 0.7924    train_time - 6.5818    
+NMAE - 0.0580    NRMSE - 0.0750    MAE - 0.0652    RMSE - 0.8266    Acc_10 - 0.7937    train_time - 15.2060    
+NMAE - 0.0595    NRMSE - 0.0802    MAE - 0.0668    RMSE - 0.8838    Acc_10 - 0.7726    train_time - 27.3907    
+NMAE - 0.0547    NRMSE - 0.0712    MAE - 0.0615    RMSE - 0.7848    Acc_10 - 0.8262    train_time - 6.1454    
+NMAE - 0.0637    NRMSE - 0.0831    MAE - 0.0716    RMSE - 0.9159    Acc_10 - 0.7553    train_time - 8.6637    
+NMAE - 0.0716    NRMSE - 0.0912    MAE - 0.0804    RMSE - 1.0046    Acc_10 - 0.7339    train_time - 18.2605    
+NMAE - 0.0525    NRMSE - 0.0702    MAE - 0.0590    RMSE - 0.7739    Acc_10 - 0.7924    train_time - 6.5851    
+NMAE - 0.0641    NRMSE - 0.0830    MAE - 0.0720    RMSE - 0.9148    Acc_10 - 0.7621    train_time - 0.7962    
+NMAE - 0.0658    NRMSE - 0.0843    MAE - 0.0739    RMSE - 0.9288    Acc_10 - 0.7670    train_time - 16.8655    
+NMAE - 0.0707    NRMSE - 0.0898    MAE - 0.0794    RMSE - 0.9899    Acc_10 - 0.7214    train_time - 3.4695    
+NMAE - 0.0544    NRMSE - 0.0731    MAE - 0.0611    RMSE - 0.8053    Acc_10 - 0.7814    train_time - 9.1468    
+NMAE - 0.0564    NRMSE - 0.0747    MAE - 0.0634    RMSE - 0.8233    Acc_10 - 0.7742    train_time - 6.8221    
+NMAE - 0.0619    NRMSE - 0.0821    MAE - 0.0695    RMSE - 0.9045    Acc_10 - 0.7467    train_time - 3.4713    
+NMAE - 0.0544    NRMSE - 0.0731    MAE - 0.0611    RMSE - 0.8053    Acc_10 - 0.7814    train_time - 8.7523    

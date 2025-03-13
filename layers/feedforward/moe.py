@@ -76,14 +76,21 @@ class MoE(nn.Module):
         output = shared_outputs + routed_outputs  # (batch, seq_len, d_out)
         return output
 
-    def load_balancing_loss(self):
-        """
-        计算负熵负载均衡损失，鼓励专家均匀使用
-        """
-        expert_probs = self.all_weights.mean(dim=(0, 1))  # 在 batch 和 seq_len 维度上取平均
-        load_balancing_loss = (expert_probs * torch.log(expert_probs + 1e-10)).sum()
-        return -load_balancing_loss  # 负熵，用于均衡专家使用
+    # def load_balancing_loss(self):
+    #     """
+    #     计算负熵负载均衡损失，鼓励专家均匀使用
+    #     """
+    #     expert_probs = self.all_weights.mean(dim=(0, 1))  # 在 batch 和 seq_len 维度上取平均
+    #     load_balancing_loss = (expert_probs * torch.log(expert_probs + 1e-10)).sum()
+    #     return -load_balancing_loss  # 负熵，用于均衡专家使用
 
+    def load_balancing_loss(self):
+        expert_probs = self.all_weights.mean(dim=(0, 1))  # shape: (num_experts,)
+        num_experts = expert_probs.shape[0]
+        # KL 散度：sum( p_i * log(p_i / (1/N)) ) = sum( p_i * (log(p_i) + log(N)) )
+        # 当 p_i = 1/N 时，loss 为0
+        loss = (expert_probs * (torch.log(expert_probs + 1e-10) + torch.log(torch.tensor(num_experts, dtype=torch.float)))).sum()
+        return loss
 
 # 示例用法
 if __name__ == "__main__":

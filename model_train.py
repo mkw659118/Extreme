@@ -67,6 +67,12 @@ class Model(torch.nn.Module):
     # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
     def compute_loss(self, pred, label):
         loss = self.loss_function(pred, label)
+        if self.config.model == 'ours':
+            temp = 0
+            for i in range(len(self.model.encoder.layers)):
+                temp += self.model.encoder.layers[i][3].load_balancing_loss()
+            loss += 0.01 * temp / len(self.model.encoder.layers)
+            # loss += temp
         return loss
 
     # 2025年3月9日17:45:11 这行及以下的全部代码几乎可以不用动了，几乎固定

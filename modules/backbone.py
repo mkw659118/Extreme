@@ -21,7 +21,7 @@ class Backbone(torch.nn.Module):
 
         # self.lstm = torch.nn.LSTM(config.rank, config.rank)
         # self.encoder = SeqEncoder(input_size=config.rank, d_model=config.rank, seq_len=config.seq_len, num_layers=config.num_layers, seq_method='gru', bidirectional=True)
-        self.encoder = Transformer(self.rank, num_heads=8, num_layers=8, norm_method='rms', ffn_method='moe', att_method='self')
+        self.encoder = Transformer(self.rank, num_heads=8, num_layers=16, norm_method='rms', ffn_method='moe', att_method='self')
 
         self.fc = torch.nn.Linear(config.rank * config.seq_len, config.pred_len)
 
@@ -36,6 +36,7 @@ class Backbone(torch.nn.Module):
         x_enc += self.position_embedding(x_enc)
 
         x_enc = self.encoder(x_enc)
+
         # x_enc += self.fund_embedding(code_idx)
         y = self.fc(x_enc.reshape(x_enc.size(0), -1))
 
