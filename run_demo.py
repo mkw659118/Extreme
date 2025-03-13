@@ -1,20 +1,21 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 from utils.exp_sh import once_experiment
+from datetime import datetime
 
 # 在这里写下超参数探索空间
 hyper_dict = {
     'rank': [32],
-    'num_layers': [2],
+    'num_layers': [3],
     'dataset': ['weather'],  # weather electricity
 }
 
 ######################################################################################################
 # 这里是总执行实验顺序！！！！！！！！
 def experiment_run():
-    Baselines()
+    # Baselines()
     # Ablation()
-    # Our_model()
+    Our_model()
     return True
 
 def Baselines():
@@ -40,12 +41,15 @@ def Our_model(hyper=None):
     return True
 
 
-if __name__ == "__main__":
+def log_message(message):
     log_file = "run.log"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(log_file, 'a') as f:
-        f.write(f"Experiment Start!!!\n")
+        f.write(f"[{timestamp}] {message}\n")
+
+if __name__ == "__main__":
+    log_message("Experiment Start!!!")
     experiment_run()
-    with open(log_file, 'a') as f:
-        f.write(f"All commands executed successfully.\n\n")
+    log_message("All commands executed successfully.\n")
 
 
