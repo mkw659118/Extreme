@@ -17,6 +17,10 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     try_exp: int = 1
     num_layers: int = 2
 
+    ffn_method: str = 'moe'
+    att_method: str = 'self'
+    norm_method: str = 'rms'
+
 
 @dataclass
 class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):

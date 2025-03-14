@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+
 from utils.exp_sh import once_experiment
 from datetime import datetime
 
@@ -8,6 +9,9 @@ hyper_dict = {
     'rank': [128],
     'num_layers': [3],
     'dataset': ['weather'],  # weather electricity
+    'att': ['mla', 'self', 'external', 'gqa', 'mqa'],  # weather electricity
+    'norm': ['rms', 'layer', 'batch'],  # weather electricity
+    'ffn': ['ffn', 'moe'],  # weather electricity
 }
 
 ######################################################################################################
@@ -37,7 +41,7 @@ def Ablation():
 
 
 def Our_model(hyper=None):
-    once_experiment('TestConfig', hyper_dict)
+    once_experiment('TestConfig', hyper_dict, grid_search=1)
     return True
 
 

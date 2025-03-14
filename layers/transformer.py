@@ -26,6 +26,12 @@ def get_att(d_model, num_heads, method):
         return SelfAttention(d_model, num_heads, dropout=0.10)
     elif method == 'external':
         return ExternalAttention(d_model, S=d_model*2)
+    elif method == 'mla':
+        return ExternalAttention(d_model, S=d_model*2)
+    elif method == 'gqa':
+        return ExternalAttention(d_model, S=d_model*2)
+    elif method == 'mqa':
+        return ExternalAttention(d_model, S=d_model*2)
 
 class Transformer(torch.nn.Module):
     def __init__(self, d_model, num_heads, num_layers, norm_method='rmsnorm', ffn_method='moe', att_method='self'):

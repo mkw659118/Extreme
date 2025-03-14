@@ -31,13 +31,13 @@ class Backbone(torch.nn.Module):
         temporal_idx = x[:, :, 1:5]
         x_seq = x[:, :, -1].unsqueeze(-1)
 
+        # x_enc += self.fund_embedding(code_idx)
+
         x_enc = self.projection(x_seq)
         x_enc += self.temporal_embedding(temporal_idx)
         x_enc += self.position_embedding(x_enc)
 
         x_enc = self.encoder(x_enc)
-
-        # x_enc += self.fund_embedding(code_idx)
         y = self.fc(x_enc.reshape(x_enc.size(0), -1))
 
         return y

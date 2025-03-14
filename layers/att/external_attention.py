@@ -39,8 +39,8 @@ class ExternalAttention(nn.Module):
 
 
 if __name__ == '__main__':
-    input = torch.randn(50, 49, 512)
-    ea = ExternalAttention(d_model=512, S=8)
+    input = torch.randn(128, 49, 50)
+    ea = ExternalAttention(d_model=50, S=8)
     output = ea(input)
     print(output.shape)
 
