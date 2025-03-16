@@ -19,7 +19,7 @@ def get_ffn(d_model, method):
     if method == 'ffn':
         return FeedForward(d_model, d_ff=d_model * 2, dropout=0.10)
     elif method == 'moe':
-        return MoE(d_model=d_model, d_ff=d_model * 2, d_out=d_model, num_shared_experts=2, num_routed_experts=4, topk=2, noise_std=0.1)
+        return MoE(d_model=d_model, d_ff=d_model / 2, d_out=d_model, num_shared_experts=2, num_routed_experts=4, topk=2, noise_std=0.1)
 
 def get_att(d_model, num_heads, method):
     if method == 'self':
