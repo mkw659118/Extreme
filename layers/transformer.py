@@ -19,7 +19,7 @@ def get_ffn(d_model, method):
     if method == 'ffn':
         return FeedForward(d_model, d_ff=d_model * 2, dropout=0.10)
     elif method == 'moe':
-        return MoE(d_model=d_model, d_ff=d_model * 2, d_out=d_model, num_shared_experts=2, num_routed_experts=4, topk=2, noise_std=0.1)
+        return MoE(d_model=d_model, d_ff=d_model, num_m=2, num_router_experts=8, num_share_experts=1, num_k=3, loss_coef=0.01)
 
 def get_att(d_model, num_heads, method):
     if method == 'self':
@@ -34,7 +34,7 @@ def get_att(d_model, num_heads, method):
         return ExternalAttention(d_model, S=d_model*2)
 
 class Transformer(torch.nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, norm_method='rmsnorm', ffn_method='moe', att_method='self'):
+    def __init__(self, d_model, num_heads, num_layers, norm_method='rms', ffn_method='moe', att_method='self'):
         super().__init__()
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):

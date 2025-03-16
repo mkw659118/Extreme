@@ -1,101 +1,119 @@
+# coding : utf-8
+# Author : yuxiang Zeng
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
-
-class Expert(nn.Module):
-    def __init__(self, d_model, d_ff, output_dim):
-        super().__init__()
-        self.layer = nn.Sequential(
-            nn.Linear(d_model, d_ff),
-            nn.ReLU(),
-            nn.Linear(d_ff, output_dim)
+class Expert(torch.nn.Module):
+    def __init__(self, d_model, d_ff):
+        super(Expert, self).__init__()
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.layers = torch.nn.Sequential(
+            torch.nn.Linear(d_model, d_ff),
+            torch.nn.GELU(),
+            torch.nn.Linear(d_ff, d_model),
         )
 
     def forward(self, x):
-        return self.layer(x)  # x 形状: (batch, seq_len, d_model)
+        return self.layers(x)
 
-
-class GatingNetwork(nn.Module):
-    def __init__(self, d_model, num_experts, k=2, noise_std=0.1):
-        super().__init__()
-        self.num_experts = num_experts
-        self.k = k  # Top-k 选择
-        self.noise_std = noise_std  # 训练时添加噪声
-        self.gate = nn.Linear(d_model, num_experts)  # (batch, seq_len, num_experts)
-
-    def forward(self, x):
-        logits = self.gate(x)  # (batch, seq_len, num_experts)
-        if self.training:
-            noise = torch.randn_like(logits) * self.noise_std  # 训练时加入噪声
-            logits += noise
-        weights = F.softmax(logits, dim=-1)  # 转化为概率 (batch, seq_len, num_experts)
-        topk_weights, topk_indices = torch.topk(weights, self.k, dim=-1)  # 选择 top-k (batch, seq_len, k)
-        return topk_weights, topk_indices, weights
-
-
-class MoE(nn.Module):
-    def __init__(self, d_model, d_ff, d_out, num_shared_experts=2, num_routed_experts=4, topk=2, noise_std=0.1):
-        super().__init__()
-        self.topk = topk
-        self.num_shared_experts = num_shared_experts
-        self.num_routed_experts = num_routed_experts
-        self.shared_expert_modules = nn.ModuleList([Expert(d_model, d_ff, d_out) for _ in range(num_shared_experts)])
-        self.routed_expert_modules = nn.ModuleList([Expert(d_model, d_ff, d_out) for _ in range(num_routed_experts)])
-        self.gating_network = GatingNetwork(d_model, num_routed_experts, topk, noise_std)
+class Gating(torch.nn.Module):
+    def __init__(self, d_model, num_router_experts, num_k, loss_coef):
+        super(Gating, self).__init__()
+        self.num_k = num_k
+        self.loss_coef = loss_coef
+        self.gates = torch.nn.Linear(d_model, num_router_experts)
+        self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x):
-        batch_size, seq_len, d_model = x.shape
-        # (batch, seq_len, k), (batch, seq_len, k), (batch, seq_len, num_experts)
-        topk_weights, topk_indices, all_weights = self.gating_network(x)
-        self.all_weights = all_weights  # 记录专家权重
+        weights = self.softmax(self.gates(x))
+        topk_values, topk_indices = torch.topk(weights, self.num_k, dim=-1)  # 取 top-k
+        gated_output = torch.zeros_like(weights).scatter_(-1, topk_indices, topk_values) # 取前k个权重
+        return gated_output.permute(2, 0, 1), weights.permute(2, 0, 1)  # [num_expets, bs, seq_len]
 
-        # 计算共享专家输出
-        shared_outputs = sum(expert(x) for expert in self.shared_expert_modules) / self.num_shared_experts  # (batch, seq_len, d_out)
 
-        # 计算 routed expert 输出（优化）
-        # (batch, seq_len, k) -> (batch, seq_len, k, d_model)
-        expanded_x = x.unsqueeze(2).expand(-1, -1, self.topk, -1)  # 复制 x 以匹配 k 个专家
+# DeepSeek MoE ：细粒度专家 + 共享专家
+class MoE(torch.nn.Module):
+    def __init__(self, d_model, d_ff, num_m, num_router_experts, num_share_experts, num_k, loss_coef):
+        super(MoE, self).__init__()
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.num_m = num_m
+        self.num_router_experts = num_router_experts
+        self.num_share_experts = num_share_experts
+        self.num_k = num_k
+        self.loss_coef = loss_coef
 
-        # 获取专家索引
-        expert_indices = topk_indices.view(batch_size, seq_len, self.topk)  # (batch, seq_len, k)
+        self.shared_experts = torch.nn.ModuleList(
+            Expert(self.d_model, self.d_ff) for _ in range(self.num_share_experts)
+        )
 
-        # 转换专家索引为 one-hot 向量
-        expert_one_hot = F.one_hot(expert_indices, num_classes=self.num_routed_experts).float()  # (batch, seq_len, k, num_experts)
+        # N' = mN - ks
+        self.num_router_experts = num_router_experts * num_m - self.num_share_experts
+        self.router_experts = torch.nn.ModuleList(
+            Expert(self.d_model, self.d_ff // num_m) for _ in range(self.num_router_experts)
+        )
+        # K' = mk - ks
+        self.router_num_k = num_m * num_k - num_share_experts
+        self.router_gates = Gating(self.d_model, self.num_router_experts, self.router_num_k, self.loss_coef)
+        # print(self)
 
-        # 批量处理专家计算
-        expert_outputs = torch.stack([expert(expanded_x) for expert in self.routed_expert_modules], dim=-2)  # (batch, seq_len, num_experts, d_out)
 
-        # 根据 top-k 选择相应专家的输出
-        routed_outputs = (expert_outputs * expert_one_hot.unsqueeze(-1)).sum(dim=-2)  # (batch, seq_len, k, d_out)
+    def forward(self, x):
+        x = self.__checkinput(x)
+        bs, seq_len, d_model = x.shape
+        shared_enc = torch.stack([self.shared_experts[i](x) for i in range(self.num_share_experts)], dim=0).sum(0)
 
-        # 按权重加权求和
-        routed_outputs = (routed_outputs * topk_weights.unsqueeze(-1)).sum(dim=2)  # (batch, seq_len, d_out)
+        router_enc = []
+        router_weights, raw_weights = self.router_gates(x)
+        self.aux_loss = self.get_aux_loss(router_weights, raw_weights)
 
-        # 最终输出
-        output = shared_outputs + routed_outputs  # (batch, seq_len, d_out)
-        return output
+        for i in range(self.num_router_experts):
+            now_out = self.router_experts[i](x)
+            now_weights = router_weights[i].unsqueeze(-1).expand(-1, -1, d_model)  # 变成 [batch_size, seq_len, 1]，广播成系数 [batch_size, seq_len, d_model]
+            now_enc = now_out * now_weights
+            router_enc.append(now_enc)
+        router_enc = torch.stack(router_enc).sum(0)
 
-    # def load_balancing_loss(self):
-    #     """
-    #     计算负熵负载均衡损失，鼓励专家均匀使用
-    #     """
-    #     expert_probs = self.all_weights.mean(dim=(0, 1))  # 在 batch 和 seq_len 维度上取平均
-    #     load_balancing_loss = (expert_probs * torch.log(expert_probs + 1e-10)).sum()
-    #     return -load_balancing_loss  # 负熵，用于均衡专家使用
+        final_enc = shared_enc + router_enc + x
+        final_enc = self.__checkoutput(final_enc)
 
-    def load_balancing_loss(self):
-        expert_probs = self.all_weights.mean(dim=(0, 1))  # shape: (num_experts,)
-        num_experts = expert_probs.shape[0]
-        # KL 散度：sum( p_i * log(p_i / (1/N)) ) = sum( p_i * (log(p_i) + log(N)) )
-        # 当 p_i = 1/N 时，loss 为0
-        loss = (expert_probs * (torch.log(expert_probs + 1e-10) + torch.log(torch.tensor(num_experts, dtype=torch.float)))).sum()
-        return loss
+        return final_enc
 
-# 示例用法
-if __name__ == "__main__":
-    model = MoE(d_model=10, d_ff=512, d_out=5, num_shared_experts=2, num_routed_experts=4, topk=2, noise_std=0.1)
-    x = torch.rand(4, 20, 10)  # batch_size=4, seq_len=20, d_model=10
-    output = model(x)
-    print(output.shape)  # 输出应为 (4, 20, 5)
-    print("Load balancing loss:", model.load_balancing_loss().item())
+    def get_aux_loss(self, router_weights, raw_weights):
+        # shape = [num_experts, bs, seq]
+        N_prime = self.num_router_experts  # N' = mN - Ks
+        K_prime = self.router_num_k  # K' = mK - Ks
+        T = raw_weights.shape[-1]  # Token length
+        p = torch.sum(raw_weights, dim=-1) / T                          # \sum_i^T [num_experts, bs]
+        f = N_prime / (K_prime * T) * torch.sum(router_weights, dim=-1) # \sum_i^T  [num_experts, bs]
+        aux_loss = torch.sum(self.loss_coef * f * p)
+        return aux_loss
+
+    def __checkinput(self, x):
+        if len(x.shape) == 2:
+            self.flag = 1
+            return x.unsqueeze(1)
+        elif len(x.shape) == 3:
+            self.flag = 2
+            return x
+        else:
+            raise ValueError
+
+    def __checkoutput(self, x):
+        if self.flag == 1:
+            return x.squeeze(1)
+        elif self.flag == 2:
+            return x
+        else:
+            raise ValueError
+
+if __name__ == '__main__':
+    inputs = torch.randn(1, 2, 50)
+    expert = MoE(50, 25, 2, 6, 1, 3, 0.01)
+    output, aux_loss = expert(inputs)
+    print(output.size())
+
+    inputs = torch.randn(1, 50)
+    expert = MoE(50, 25, 2, 6, 1, 3, 0.01)
+    output, aux_loss = expert(inputs)
+    print(output.size())
