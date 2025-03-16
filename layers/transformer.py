@@ -5,7 +5,8 @@ import torch
 from layers.att.external_attention import ExternalAttention
 from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
-from layers.att.self_attention import SelfAttention
+from layers.att.self_attention import SelfAttention, Attention
+
 
 def get_norm(d_model, method):
     if method == 'batch':
@@ -19,11 +20,13 @@ def get_ffn(d_model, method):
     if method == 'ffn':
         return FeedForward(d_model, d_ff=d_model * 2, dropout=0.10)
     elif method == 'moe':
-        return MoE(d_model=d_model, d_ff=d_model, num_m=2, num_router_experts=8, num_share_experts=1, num_k=3, loss_coef=0.01)
+        return MoE(d_model=d_model, d_ff=d_model, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
 
 def get_att(d_model, num_heads, method):
     if method == 'self':
-        return SelfAttention(d_model, num_heads, dropout=0.10)
+        # return torch.nn.MultiheadAttention(d_model, num_heads, 0.10)
+        # return SelfAttention(d_model, num_heads, dim_head = d_model, dropout=0.10)
+        return Attention(d_model, num_heads, dropout=0.10)
     elif method == 'external':
         return ExternalAttention(d_model, S=d_model*2)
     elif method == 'mla':

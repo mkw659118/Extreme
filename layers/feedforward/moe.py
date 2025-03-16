@@ -61,7 +61,11 @@ class MoE(torch.nn.Module):
     def forward(self, x):
         x = self.__checkinput(x)
         bs, seq_len, d_model = x.shape
-        shared_enc = torch.stack([self.shared_experts[i](x) for i in range(self.num_share_experts)], dim=0).sum(0)
+
+        if self.num_share_experts > 0:
+            shared_enc = sum(self.shared_experts[i](x) for i in range(self.num_share_experts))
+        else:
+            shared_enc = torch.zeros_like(x)
 
         router_enc = []
         router_weights, raw_weights = self.router_gates(x)

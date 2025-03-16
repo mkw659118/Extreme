@@ -15,11 +15,11 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 50
     verbose: int = 10
     try_exp: int = 1
-    num_layers: int = 2
+    num_layers: int = 12
 
+    norm_method: str = 'rms'
     ffn_method: str = 'moe'
     att_method: str = 'self'
-    norm_method: str = 'rms'
 
 
 @dataclass

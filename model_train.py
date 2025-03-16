@@ -69,10 +69,13 @@ class Model(torch.nn.Module):
         loss = self.loss_function(pred, label)
         if self.config.model == 'ours':
             temp = 0
-            for i in range(len(self.model.encoder.layers)):
-                temp += self.model.encoder.layers[i][3].load_balancing_loss()
-            loss += 0.01 * temp / len(self.model.encoder.layers)
-            # loss += temp
+            try:
+                for i in range(len(self.model.encoder.layers)):
+                    temp += self.model.encoder.layers[i][3].aux_loss
+                loss += temp
+            except:
+                pass
+
         return loss
 
     # 2025年3月9日17:45:11 这行及以下的全部代码几乎可以不用动了，几乎固定

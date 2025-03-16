@@ -31,6 +31,15 @@ class SelfAttention(torch.nn.Module):
         out = rearrange(out, 'b h n d -> b n (h d)')
         return self.to_out(out)
 
+class Attention(torch.nn.Module):
+    def __init__(self, d_model, num_heads, dropout=0.10):
+        super().__init__()
+        self.att = torch.nn.MultiheadAttention(d_model, num_heads, dropout)
+
+    def forward(self, x):
+        out, weights = self.att(x, x, x)
+        return out
+
 if __name__ == '__main__':
     inputs = torch.randn(1, 10, 50)
     model = SelfAttention(dim = 50, heads = 8, dim_head = 64)
