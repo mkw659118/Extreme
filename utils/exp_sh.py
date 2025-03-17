@@ -85,7 +85,7 @@ def grid_search_hyperparameters(exp_name, hyper_dict, retrain, debug):
         for combo in product(*hyper_values_list):
             combo_dict = dict(zip(hyper_keys, combo))
 
-            command = f"python train_model.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
+            command = f"python model_train.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
             command += " ".join([f"--{k} {v}" for k, v in combo_dict.items()])
 
             # 运行并获取结果
@@ -130,7 +130,7 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
             current_best_value = None
 
             for value in hyper_values:
-                command = f"python train_model.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
+                command = f"python model_train.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
                 command += " ".join([f"--{k} {v}" for k, v in best_hyper.items()])
                 command += f" --{hyper_name} {value}"
 

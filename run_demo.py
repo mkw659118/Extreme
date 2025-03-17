@@ -6,12 +6,14 @@ from datetime import datetime
 
 # 在这里写下超参数探索空间
 hyper_dict = {
+    'rounds': [2],
     'rank': [32, 64, 128],
     'num_layers': [2, 3, 4, 5, 8, 12, 16, 32],
     'dataset': ['weather'],  # weather electricity
     'att': ['self'],  # weather electricity
     'norm': ['rms', 'layer'],  # weather electricity
-    'ffn': ['ffn', 'moe'],  # weather electricity
+    'ffn': ['moe', 'ffn'],  # weather electricity
+    'loss_coef': [0.001, 0.0001, 0.01, 0.1, 1],  # weather electricity
 }
 
 ######################################################################################################
@@ -41,7 +43,7 @@ def Ablation():
 
 
 def Our_model(hyper=None):
-    once_experiment('TestConfig', hyper_dict, grid_search=1)
+    once_experiment('TestConfig', hyper_dict, grid_search=0)
     return True
 
 
