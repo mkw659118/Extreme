@@ -9,7 +9,7 @@ class DataScaler:
         scaler = y[:int(len(y) * self.config.density)].astype(np.float32)
         self.y_mean = scaler.mean()
         self.y_std = scaler.std()
-        print(self.y_mean, self.y_std)
+        # print(self.y_mean, self.y_std)
 
     def transform(self, y):
         return (y - self.y_mean) / self.y_std if self.y_std != 0 else y - self.y_mean

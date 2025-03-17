@@ -2,7 +2,7 @@
 # Author : Yuxiang Zeng
 import numpy as np
 from data_dataset import TensorDataset
-from modules.load_data.get_financial import get_financial_data
+from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders
 from utils.data_scaler import get_scaler
@@ -14,8 +14,8 @@ from utils.exp_config import get_config
 
 
 def load_data(config):
-    if config.model == 'ours':
-        all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config)
+    if config.dataset == 'financial':
+        all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config.idx, config)
     else:
         all_x, all_y, scaler = get_ts(config.dataset, config)
     return all_x, all_y, scaler
@@ -23,7 +23,7 @@ def load_data(config):
 
 # 数据集定义
 class DataModule:
-    def __init__(self, config):
+    def __init__(self, config, verbose=False):
         self.config = config
         self.path = config.path
         self.x, self.y, self.scaler = load_data(config)
@@ -31,8 +31,14 @@ class DataModule:
             self.x, self.y = self.x[:300], self.y[:300]
         self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y = get_split_dataset(self.x, self.y, config)
         self.train_set, self.valid_set, self.test_set = self.get_dataset(self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, config)
-        self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
-        config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)} Max_value : {np.max(self.y):.2f}')
+
+        if config.dataset == 'financial' and config.multi_dataset:
+            self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, self.scaler = multi_dataset(config)
+            self.train_set, self.valid_set, self.test_set = self.get_dataset(self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, config)
+            self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
+
+        if verbose:
+            config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)} Max_value : {np.max(self.y):.2f}')
 
     def get_dataset(self, train_x, train_y, valid_x, valid_y, test_x, test_y, config):
         return (
@@ -55,7 +61,7 @@ if __name__ == '__main__':
     config.log = log
     log(str(config.__dict__))
 
-    datamodule = DataModule(exper, config)
+    datamodule = DataModule(config)
     for train_batch in datamodule.train_loader:
         all_item = [item.to(config.device) for item in train_batch]
         inputs, label = all_item[:-1], all_item[-1]

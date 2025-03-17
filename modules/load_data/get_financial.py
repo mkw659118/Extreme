@@ -7,8 +7,8 @@ import pandas as pd
 import pickle
 from sqlalchemy import create_engine, text
 
+import data_center
 from modules.load_data.create_window_dataset import create_window_dataset
-from utils.data_scaler import get_scaler
 
 
 def get_data(code_idx):
@@ -63,22 +63,95 @@ def generate_data(start_date, end_date, code_idx):
     return data
 
 
-def get_financial_data(start_date, end_date, config):
+def get_financial_data(start_date, end_date, idx, config):
     try:
-        data = get_data(0)
+        data = get_data(idx)
     except Exception as e:
-        data = generate_data(start_date, end_date, 0)
+        data = generate_data(start_date, end_date, idx)
+    # 过滤掉数据库存储数据异常 2025年3月17日10:30:47
+    data = np.stack([df for df in data if int(df[1]) <= int(end_date.split('-')[0])])
+    data = data.astype(np.float32)
+
+    for i in range(len(data)):
+        if int(data[i][1]) > 2025:
+            print(data[i])
 
     x, y = data, data[:, -1].astype(np.float32)
-    scaler = get_scaler(y, config)
-    y = scaler.transform(y)
-
-    x[:, -1] = x[:, -1].astype(np.float32)
-    temp = x[:, -1].astype(np.float32)
-    x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
+    scaler = None
+    if not config.multi_dataset:
+        scaler = get_scaler(y, config)
+        y = scaler.transform(y)
+        x[:, -1] = x[:, -1].astype(np.float32)
+        temp = x[:, -1].astype(np.float32)
+        x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
 
     x = x.astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
+    for i in range(len(X_window)):
+        if X_window[i][0][1] > 2025:
+            print(X_window[i][0])
     return X_window, y_window, scaler
+
+
+from utils.data_scaler import get_scaler
+
+def normorlize(data, value_mean, value_std):
+    # print(data.shape)
+    data[:, :, -1] = data[:, :, -1].astype(np.float32)
+    temp = data[:, :, -1].astype(np.float32)
+    data[:, :, -1] = (temp - value_mean) / value_std
+    return data
+
+def check_data():
+    return
+
+def multi_dataset(config):
+    all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
+    for i in range(100):
+        config.idx = i
+        config.multi_dataset = False
+        datamodule = data_center.DataModule(config)
+        if len(datamodule.train_set.x) == 0:
+            continue
+        all_train_x.append(datamodule.train_set.x)
+        all_train_y.append(datamodule.train_set.y)
+
+        all_valid_x.append(datamodule.valid_set.x)
+        all_valid_y.append(datamodule.valid_set.y)
+
+        all_test_x.append(datamodule.test_set.x)
+        all_test_y.append(datamodule.test_set.y)
+        del datamodule
+
+    all_train_x = np.concatenate(all_train_x, axis=0)
+    all_train_y = np.concatenate(all_train_y, axis=0)
+
+    all_valid_x = np.concatenate(all_valid_x, axis=0)
+    all_valid_y = np.concatenate(all_valid_y, axis=0)
+
+    all_test_x = np.concatenate(all_test_x, axis=0)
+    all_test_y = np.concatenate(all_test_y, axis=0)
+
+    for i in range(len(all_train_x)):
+        if all_train_x[i][0][1] > 2025:
+            print(all_train_x[i][0])
+            # exit()
+
+    y_mean = np.mean(all_train_y)
+    y_std = np.std(all_train_y)
+
+    all_train_y = (all_train_y - y_mean) / y_std
+    all_valid_y = (all_valid_y - y_mean) / y_std
+    all_test_y = (all_test_y - y_mean) / y_std
+
+    all_train_x = normorlize(all_train_x, y_mean, y_std)
+    all_valid_x = normorlize(all_valid_x, y_mean, y_std)
+    all_test_x = normorlize(all_test_x, y_mean, y_std)
+
+    scaler = get_scaler(all_train_y, config)
+    scaler.y_mean, scaler.y_std = y_mean, y_std
+    print(all_train_x.shape, all_train_y.shape)
+    return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler
+
 

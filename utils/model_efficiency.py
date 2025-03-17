@@ -2,6 +2,12 @@
 # Author : yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年1月17日19:47:38）
 
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.append(project_root)
+
 def calculate_flops_params(model, sample_input, config):
     from thop import profile
     sample_input = tuple([item.to(config.device) for item in sample_input][:-1])
@@ -27,22 +33,19 @@ def calculate_inference_time(model, sample_input, config):
 
 
 def only_run():
+    from model_train import Model
     from utils.exp_config import get_config
     from utils.exp_logger import Logger
     from utils.exp_metrics_plotter import MetricsPlotter
-    from utils.utils import set_settings, set_seed
-    from model_train import Model
-
+    from utils.utils import set_settings
+    from data_center import DataModule
     config = get_config()
     set_settings(config)
     log_filename = f'Model_{config.model}_{config.dataset}_S{config.train_size}_R{config.rank}_Ablation{config.Ablation}'
     plotter = MetricsPlotter(log_filename, config)
     log = Logger(log_filename, plotter, config)
 
-    from data_center import experiment, DataModule
-
-    exper = experiment(config)
-    datamodule = DataModule(exper, config)
+    datamodule = DataModule(config)
     model = Model(datamodule, config).to(config.device)
 
     sample_inputs = next(iter(datamodule.train_loader))
@@ -56,9 +59,8 @@ def only_run():
 
 def get_efficiency(config):
     from model_train import Model
-    from data_center import experiment, DataModule
-    exper = experiment(config)
-    datamodule = DataModule(exper, config)
+    from data_center import DataModule
+    datamodule = DataModule(config)
     model = Model(datamodule, config)
     sample_inputs = next(iter(datamodule.train_loader))
     flops, params = calculate_flops_params(model, sample_inputs, config)

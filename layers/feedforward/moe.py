@@ -113,11 +113,11 @@ class MoE(torch.nn.Module):
 
 if __name__ == '__main__':
     inputs = torch.randn(1, 2, 50)
-    expert = MoE(50, 25, 2, 6, 1, 3, 0.01)
-    output, aux_loss = expert(inputs)
+    expert = MoE(50, 50, 1, 8, 1, 3, 0.01)
+    output = expert(inputs)
     print(output.size())
 
     inputs = torch.randn(1, 50)
-    expert = MoE(50, 25, 2, 6, 1, 3, 0.01)
-    output, aux_loss = expert(inputs)
+    expert = MoE(50, 50, 1, 8, 1, 3, 0.01)
+    output = expert(inputs)
     print(output.size())

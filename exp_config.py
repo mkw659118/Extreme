@@ -15,11 +15,15 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 50
     verbose: int = 10
     try_exp: int = 1
-    num_layers: int = 12
+    num_layers: int = 32
 
     norm_method: str = 'rms'
     ffn_method: str = 'moe'
     att_method: str = 'self'
+
+    dataset: str = 'financial'
+    multi_dataset: bool = True
+    idx: int = 0
 
 
 @dataclass

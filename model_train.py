@@ -131,7 +131,7 @@ def RunOnce(config, runId, log):
 
     # Initialize the data and the model
     from data_center import DataModule
-    datamodule = DataModule(config)
+    datamodule = DataModule(config, True)
     model = Model(datamodule, config)
     try:
         model.compile()
