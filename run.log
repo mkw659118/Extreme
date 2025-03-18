@@ -207,3 +207,7 @@ python model_train.py --exp_name TestConfig --retrain 1 --rounds 2 --rank 64 --n
 NMAE - 0.0504    NRMSE - 0.0653    MAE - 0.0566    RMSE - 0.7196    Acc_10 - 0.8539    train_time - 130.3022    
 [2025-03-17 01:37:56] All commands executed successfully.
 
+NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.0144    train_time - 354.1660    
+NMAE - -0.8649    NRMSE - 0.5765    MAE - 0.6823    RMSE - 8.3504    Acc_10 - 0.0125    train_time - 190.8525    
+NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.0144    train_time - 353.2981    
+NMAE - -0.9049    NRMSE - 0.6433    MAE - 0.7138    RMSE - 9.3180    Acc_10 - 0.0137    train_time - 351.1703    

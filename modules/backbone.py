@@ -41,12 +41,16 @@ class Backbone(torch.nn.Module):
         x_seq = x[:, :, -1].unsqueeze(-1)
         x_enc = self.projection(x_seq)
 
-        x_enc += self.fund_embedding(code_idx)
         x_enc += self.temporal_embedding(temporal_idx)
         x_enc += self.position_embedding(x_enc)
+        x_enc += self.fund_embedding(code_idx)
+
 
         x_enc = self.predict_linear(x_enc.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
         x_enc = self.encoder(x_enc)
+
+        # x_enc += torch.cat([self.fund_embedding(code_idx), self.fund_embedding(code_idx)], dim=1)
+
         x_enc = self.fc(x_enc)
         y = x_enc[:, -self.pred_len:, :].squeeze(-1)  # [B, L, D]
         # y = self.fc(x_enc.reshape(x_enc.size(0), -1))

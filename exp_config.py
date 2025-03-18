@@ -13,9 +13,9 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     device: str = 'cuda'
     epochs: int = 200
     patience: int = 50
-    verbose: int = 10
+    verbose: int = 1
     try_exp: int = 1
-    num_layers: int = 32
+    num_layers: int = 5
 
     norm_method: str = 'rms'
     ffn_method: str = 'moe'

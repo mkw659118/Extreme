@@ -108,11 +108,11 @@ def check_data():
 
 def multi_dataset(config):
     all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
-    for i in range(100):
+    for i in range(50):
         config.idx = i
         config.multi_dataset = False
         datamodule = data_center.DataModule(config)
-        if len(datamodule.train_set.x) == 0:
+        if len(datamodule.train_set.x) == 0 or len(datamodule.y) <= config.seq_len:
             continue
         all_train_x.append(datamodule.train_set.x)
         all_train_y.append(datamodule.train_set.y)
