@@ -13,6 +13,7 @@ class ExperimentConfig:
     rounds: int = 1
     epochs: int = 200
     patience: int = 20
+    monitor_metrics: str = 'NMAE'
 
     verbose: int = 10
     device: str = 'cuda'
@@ -35,10 +36,10 @@ class DatasetInfo:
     path: str = './datasets/'
     dataset: str = 'weather'
     train_size: int = 500
+    use_train_size: bool = False
     density: float = 0.70
     eval_set: bool = True
     shuffle: bool = False
-
     data_scaler: bool = False
 
     seq_len: int = 96

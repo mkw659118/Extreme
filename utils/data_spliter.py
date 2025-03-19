@@ -14,7 +14,11 @@ def get_train_valid_test_dataset(x, y, config):
     if config.shuffle:
         indices = np.random.permutation(len(x))
         x, y = x[indices], y[indices]
-    train_size = int(len(x) * config.density)
+    if config.use_train_size:
+        train_size = int(config.train_size)
+    else:
+        train_size = int(len(x) * config.density)
+
     if config.eval_set:
         valid_size = int(len(x) * 0.10)
     else:
@@ -41,7 +45,10 @@ def get_train_valid_test_classification_dataset(x, y, config):
     test_x, test_y = [], []
     for label, now_x in class_data.items():
         random.shuffle(now_x)
-        train_size = int(len(now_x) * config.density)
+        if config.use_train_size:
+            train_size = int(config.train_size)
+        else:
+            train_size = int(len(x) * config.density)
         valid_size = int(len(now_x) * 0.10) if config.eval_set else 0
         train_x.extend(now_x[:train_size])
         train_y.extend([label] * len(now_x[:train_size]))
