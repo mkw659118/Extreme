@@ -211,3 +211,624 @@ NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.
 NMAE - -0.8649    NRMSE - 0.5765    MAE - 0.6823    RMSE - 8.3504    Acc_10 - 0.0125    train_time - 190.8525    
 NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.0144    train_time - 353.2981    
 NMAE - -0.9049    NRMSE - 0.6433    MAE - 0.7138    RMSE - 9.3180    Acc_10 - 0.0137    train_time - 351.1703    
+NMAE - -1.6813    NRMSE - 0.6909    MAE - 0.9878    RMSE - 13.5120    Acc_10 - 0.0153    train_time - 13.0046    
+NMAE - -0.9049    NRMSE - 0.6433    MAE - 0.7138    RMSE - 9.3180    Acc_10 - 0.0137    train_time - 325.9153    
+NMAE - -0.9068    NRMSE - 0.6539    MAE - 0.7154    RMSE - 9.4721    Acc_10 - 0.0092    train_time - 54.5503    
+[2025-03-25 11:38:05] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:38: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:39:15] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:39:30] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:39:54] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:39: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:40: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:41:28] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:41: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:42:05] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:42:18] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:42:32] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:42:50] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:42: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:43:58] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:43: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:44:09] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:44:26] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 11:44:39] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 11:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 12:17:46] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 12:17: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 12:22:58] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 12:22: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 12:24:39] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 12:24: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 12:27:23] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 12:27: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+NMAE - -0.9818    NRMSE - 0.6759    MAE - 0.7746    RMSE - 9.7901    Acc_10 - 0.0094    train_time - 381.0077    
+[2025-03-25 12:36:58] All commands executed successfully.
+
+[2025-03-25 13:09:13] Experiment Start!!!
+[2025-03-25 13:09:39] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:09: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:09: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:09: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:09: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:10:39] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:10:59] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:10: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:11: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:12:03] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:12:56] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:12: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:13: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:14: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:14:46] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:14: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:14: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:15: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:15: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:17:35] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:17: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:17: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:17: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:18: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:19: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:19: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:19: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:19: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:22:11] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:22: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:22: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:22: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:23:05] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:23: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:24:46] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:24: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:25:58] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:25: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:26:11] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:26:54] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:26: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:27:17] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:27:31] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:27:43] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:27: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:28: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:29:57] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:29: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:30:28] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:30: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:30:45] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:30: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:30:57] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:30: python model_train.py --exp_name timeLLMConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:33:00] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'weather', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:33: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-25 13:33: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:33:22] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:33: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:33:42] Experiment Start!!!
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001}
+Running at 2025-03-25 13:33: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-25 13:40:08] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-25 13:40:19] Experiment Start!!!
+NMAE - 0.0633    NRMSE - 0.0771    MAE - 0.0711    RMSE - 0.8492    Acc_10 - 0.8132    train_time - 3.7776    
+NMAE - 0.0185    NRMSE - 0.0198    MAE - 0.0191    RMSE - 0.2008    Acc_10 - 1.0000    train_time - 26.3150    
+NMAE - 0.1213    NRMSE - 0.1392    MAE - 0.0511    RMSE - 0.5759    Acc_10 - 0.4396    train_time - 14.0585    
+NMAE - 0.0815    NRMSE - 0.1101    MAE - 0.0713    RMSE - 0.9453    Acc_10 - 0.7050    train_time - 13.2336    
+NMAE - 0.0494    NRMSE - 0.0654    MAE - 0.0592    RMSE - 0.7689    Acc_10 - 0.7671    train_time - 21.6969    
+NMAE - 0.1971    NRMSE - 0.2374    MAE - 0.3946    RMSE - 4.6629    Acc_10 - 0.2268    train_time - 3.6493    
+NMAE - 0.1076    NRMSE - 0.1196    MAE - 0.3574    RMSE - 3.9100    Acc_10 - 0.4688    train_time - 18.7324    
+NMAE - 0.0652    NRMSE - 0.0804    MAE - 0.0444    RMSE - 0.5372    Acc_10 - 0.6957    train_time - 32.3763    
+NMAE - 0.0189    NRMSE - 0.0212    MAE - 0.0199    RMSE - 0.2191    Acc_10 - 1.0000    train_time - 12.1192    
+NMAE - 0.1957    NRMSE - 0.2174    MAE - 0.1233    RMSE - 1.3432    Acc_10 - 0.1550    train_time - 25.1258    
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 1}
+Running at 2025-03-25 13:48: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1
+[2025-03-25 13:49:21] Experiment Start!!!
+NMAE - 0.0510    NRMSE - 0.0656    MAE - 0.0573    RMSE - 0.7229    Acc_10 - 0.8593    train_time - 14.4310    
+NMAE - 0.0178    NRMSE - 0.0184    MAE - 0.0184    RMSE - 0.1865    Acc_10 - 1.0000    train_time - 0.7458    
+NMAE - 0.2846    NRMSE - 0.2964    MAE - 0.1200    RMSE - 1.2261    Acc_10 - 0.0266    train_time - 1.3799    
+NMAE - 0.0929    NRMSE - 0.1159    MAE - 0.0813    RMSE - 0.9943    Acc_10 - 0.6444    train_time - 1.7312    
+NMAE - 0.0424    NRMSE - 0.0527    MAE - 0.0509    RMSE - 0.6197    Acc_10 - 0.9587    train_time - 2.4848    
+NMAE - 0.1905    NRMSE - 0.2146    MAE - 0.3816    RMSE - 4.2157    Acc_10 - 0.2391    train_time - 0.3861    
+NMAE - 0.1363    NRMSE - 0.1758    MAE - 0.4526    RMSE - 5.7440    Acc_10 - 0.4924    train_time - 0.6168    
+NMAE - 0.0799    NRMSE - 0.1032    MAE - 0.0544    RMSE - 0.6893    Acc_10 - 0.5856    train_time - 16.5601    
+NMAE - 0.0197    NRMSE - 0.0226    MAE - 0.0208    RMSE - 0.2343    Acc_10 - 1.0000    train_time - 3.0182    
+NMAE - 0.3083    NRMSE - 0.3337    MAE - 0.1943    RMSE - 2.0620    Acc_10 - 0.0788    train_time - 1.0314    
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 1}
+[2025-03-25 13:56:31] Experiment Start!!!
+NMAE - 0.0500    NRMSE - 0.0684    MAE - 0.0562    RMSE - 0.7542    Acc_10 - 0.8415    train_time - 10.1810    
+NMAE - 0.0175    NRMSE - 0.0182    MAE - 0.0181    RMSE - 0.1842    Acc_10 - 1.0000    train_time - 0.7722    
+NMAE - 0.2972    NRMSE - 0.3085    MAE - 0.1253    RMSE - 1.2761    Acc_10 - 0.0143    train_time - 2.5139    
+NMAE - 0.0837    NRMSE - 0.1028    MAE - 0.0732    RMSE - 0.8823    Acc_10 - 0.6781    train_time - 1.7398    
+NMAE - 0.0385    NRMSE - 0.0456    MAE - 0.0462    RMSE - 0.5368    Acc_10 - 1.0000    train_time - 3.8337    
+NMAE - 0.2038    NRMSE - 0.2218    MAE - 0.4081    RMSE - 4.3567    Acc_10 - 0.1589    train_time - 0.7359    
+NMAE - 0.1487    NRMSE - 0.1866    MAE - 0.4939    RMSE - 6.0965    Acc_10 - 0.4695    train_time - 0.6282    
+NMAE - 0.0846    NRMSE - 0.1068    MAE - 0.0576    RMSE - 0.7130    Acc_10 - 0.5525    train_time - 3.5781    
+NMAE - 0.0134    NRMSE - 0.0176    MAE - 0.0141    RMSE - 0.1820    Acc_10 - 1.0000    train_time - 6.3579    
+NMAE - 0.2860    NRMSE - 0.3234    MAE - 0.1803    RMSE - 1.9984    Acc_10 - 0.1779    train_time - 1.2622    
+================== Sequential Hyper Search ==================
+[2025-03-25 13:59:53] All commands executed successfully.
+
+[2025-03-25 15:23:59] Experiment Start!!!
+NMAE - 0.0543    NRMSE - 0.0702    MAE - 0.0610    RMSE - 0.7733    Acc_10 - 0.8436    train_time - 9.6923    
+NMAE - 0.0165    NRMSE - 0.0173    MAE - 0.0170    RMSE - 0.1754    Acc_10 - 1.0000    train_time - 0.8476    
+NMAE - 0.3160    NRMSE - 0.3297    MAE - 0.1332    RMSE - 1.3640    Acc_10 - 0.0228    train_time - 2.2645    
+NMAE - 0.1077    NRMSE - 0.1281    MAE - 0.0942    RMSE - 1.0992    Acc_10 - 0.5488    train_time - 2.3438    
+NMAE - 0.0433    NRMSE - 0.0519    MAE - 0.0520    RMSE - 0.6103    Acc_10 - 1.0000    train_time - 3.5924    
+NMAE - 0.2182    NRMSE - 0.2414    MAE - 0.4369    RMSE - 4.7430    Acc_10 - 0.1702    train_time - 0.7417    
+NMAE - 0.1170    NRMSE - 0.1409    MAE - 0.3884    RMSE - 4.6043    Acc_10 - 0.5416    train_time - 31.6626    
+NMAE - 0.0850    NRMSE - 0.1072    MAE - 0.0579    RMSE - 0.7161    Acc_10 - 0.5361    train_time - 11.6049    
+NMAE - 0.0149    NRMSE - 0.0183    MAE - 0.0158    RMSE - 0.1891    Acc_10 - 1.0000    train_time - 4.4187    
+NMAE - 0.3043    NRMSE - 0.3466    MAE - 0.1918    RMSE - 2.1417    Acc_10 - 0.1786    train_time - 1.2258    
+================== Sequential Hyper Search ==================
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 8}
+Running at 2025-03-25 15:30: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8
+[2025-03-25 15:31:04] Experiment Start!!!
+NMAE - 0.0722    NRMSE - 0.0934    MAE - 0.0811    RMSE - 1.0297    Acc_10 - 0.6878    train_time - 26.9985    
+================== Sequential Hyper Search ==================
+[2025-03-25 15:32:38] Experiment Start!!!
+NMAE - 0.0722    NRMSE - 0.0934    MAE - 0.0811    RMSE - 1.0297    Acc_10 - 0.6878    train_time - 26.9792    
+NMAE - 0.0193    NRMSE - 0.0201    MAE - 0.0199    RMSE - 0.2039    Acc_10 - 1.0000    train_time - 0.5810    
+================== Sequential Hyper Search ==================
+
+Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 6 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
+Value: 0, Metric: 0.08107841042603584
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 6 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
+Value: 1, Metric: 0.019915516283495208
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 6 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
+[2025-03-25 15:34:19] Experiment Start!!!
+================== Sequential Hyper Search ==================
+
+Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 5 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
+[2025-03-25 15:34:33] Experiment Start!!!
+NMAE - 0.0523    NRMSE - 0.0697    MAE - 0.0588    RMSE - 0.7682    Acc_10 - 0.8388    train_time - 13.8304    
+NMAE - 0.0170    NRMSE - 0.0178    MAE - 0.0176    RMSE - 0.1800    Acc_10 - 1.0000    train_time - 0.7614    
+NMAE - 0.3023    NRMSE - 0.3153    MAE - 0.1275    RMSE - 1.3046    Acc_10 - 0.0235    train_time - 2.2453    
+NMAE - 0.1003    NRMSE - 0.1199    MAE - 0.0878    RMSE - 1.0289    Acc_10 - 0.5974    train_time - 2.3344    
+================== Sequential Hyper Search ==================
+
+Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
+Value: 0, Metric: 0.05877896646658579
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
+Value: 1, Metric: 0.017576358399968198
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
+Value: 2, Metric: 0.1274643562340397
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 3 
+Value: 3, Metric: 0.08775022936712824
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 4 
+[2025-03-25 15:37:53] Experiment Start!!!
+NMAE - 0.0523    NRMSE - 0.0697    MAE - 0.0588    RMSE - 0.7682    Acc_10 - 0.8388    train_time - 13.6773    
+NMAE - 0.0170    NRMSE - 0.0178    MAE - 0.0176    RMSE - 0.1800    Acc_10 - 1.0000    train_time - 0.7589    
+NMAE - 0.3023    NRMSE - 0.3153    MAE - 0.1275    RMSE - 1.3046    Acc_10 - 0.0235    train_time - 2.3158    
+NMAE - 0.1003    NRMSE - 0.1199    MAE - 0.0878    RMSE - 1.0289    Acc_10 - 0.5974    train_time - 2.4115    
+NMAE - 0.0412    NRMSE - 0.0494    MAE - 0.0494    RMSE - 0.5810    Acc_10 - 1.0000    train_time - 3.7002    
+NMAE - 0.2176    NRMSE - 0.2401    MAE - 0.4357    RMSE - 4.7172    Acc_10 - 0.1715    train_time - 0.7410    
+NMAE - 0.1209    NRMSE - 0.1496    MAE - 0.4014    RMSE - 4.8897    Acc_10 - 0.5293    train_time - 19.4476    
+NMAE - 0.0811    NRMSE - 0.1031    MAE - 0.0552    RMSE - 0.6885    Acc_10 - 0.5540    train_time - 24.4672    
+NMAE - 0.0137    NRMSE - 0.0178    MAE - 0.0144    RMSE - 0.1838    Acc_10 - 1.0000    train_time - 4.4205    
+NMAE - 0.2988    NRMSE - 0.3404    MAE - 0.1883    RMSE - 2.1029    Acc_10 - 0.1822    train_time - 1.2296    
+================== Sequential Hyper Search ==================
+
+Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
+Value: 0, Metric: 0.05877896646658579
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
+Value: 1, Metric: 0.017576358399968198
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
+Value: 2, Metric: 0.1274643562340397
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 3 
+Value: 3, Metric: 0.08775022936712824
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 4 
+Value: 4, Metric: 0.04942511594755218
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 5 
+Value: 5, Metric: 0.43568343508838514
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 6 
+Value: 6, Metric: 0.4014045365132765
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 7 
+Value: 7, Metric: 0.05521148881002976
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8 
+Value: 8, Metric: 0.014433898692224043
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 9 
+Value: 9, Metric: 0.18831131473210053
+==> Best idx: 8, local_best_metric: 0.014433898692224043
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 8}
+Running at 2025-03-25 15:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8
+NMAE - 0.0137    NRMSE - 0.0178    MAE - 0.0144    RMSE - 0.1838    Acc_10 - 1.0000    train_time - 4.4670    
+[2025-03-25 15:44:44] All commands executed successfully.
+
+[2025-03-25 18:38:44] Experiment Start!!!
+NMAE - 0.0609    NRMSE - 0.0752    MAE - 0.0684    RMSE - 0.8292    Acc_10 - 0.8134    train_time - 3.7368    
+NMAE - 0.0183    NRMSE - 0.0197    MAE - 0.0190    RMSE - 0.1998    Acc_10 - 1.0000    train_time - 46.8135    
+NMAE - 0.1285    NRMSE - 0.1462    MAE - 0.0542    RMSE - 0.6047    Acc_10 - 0.3996    train_time - 15.0519    
+NMAE - 0.0715    NRMSE - 0.0956    MAE - 0.0626    RMSE - 0.8204    Acc_10 - 0.7484    train_time - 13.1506    
+NMAE - 0.0453    NRMSE - 0.0594    MAE - 0.0543    RMSE - 0.6990    Acc_10 - 0.8287    train_time - 21.6065    
+NMAE - 0.1679    NRMSE - 0.1961    MAE - 0.3362    RMSE - 3.8518    Acc_10 - 0.2656    train_time - 3.6251    
+NMAE - 0.1208    NRMSE - 0.1376    MAE - 0.4013    RMSE - 4.4973    Acc_10 - 0.4480    train_time - 18.6268    
+NMAE - 0.0665    NRMSE - 0.0819    MAE - 0.0453    RMSE - 0.5468    Acc_10 - 0.7099    train_time - 61.3392    
+NMAE - 0.0199    NRMSE - 0.0222    MAE - 0.0210    RMSE - 0.2300    Acc_10 - 1.0000    train_time - 83.2415    
+NMAE - 0.1854    NRMSE - 0.2074    MAE - 0.1168    RMSE - 1.2814    Acc_10 - 0.1863    train_time - 10.8978    
+================== Sequential Hyper Search ==================
+
+Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
+Value: 0, Metric: 0.06838248342486984
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
+Value: 1, Metric: 0.018961175298648523
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
+Value: 2, Metric: 0.0541731917695584
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 3 
+Value: 3, Metric: 0.06260423828962813
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 4 
+Value: 4, Metric: 0.05433199299063454
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 5 
+Value: 5, Metric: 0.33624551245335477
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 6 
+Value: 6, Metric: 0.4012688263415587
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 7 
+Value: 7, Metric: 0.045272527891359514
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8 
+Value: 8, Metric: 0.020966014672889777
+COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 9 
+Value: 9, Metric: 0.11684593070853264
+==> Best idx: 1, local_best_metric: 0.018961175298648523
+The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 1}
+Running at 2025-03-25 18:52: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1
+NMAE - 0.0183    NRMSE - 0.0197    MAE - 0.0190    RMSE - 0.1998    Acc_10 - 1.0000    train_time - 47.3365    
+[2025-03-25 18:54:27] All commands executed successfully.
+

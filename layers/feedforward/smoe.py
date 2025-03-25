@@ -301,8 +301,7 @@ if __name__ == '__main__':
     num_layers = 3  # MoE 层的层数
 
     # 实例化多层 MoE 模型
-    model = MultiLayerMoE(num_layers, input_size, hidden_size, output_size,
-                          num_experts, expert_hidden_size, noisy_gating=True, k=4)
+    model = MultiLayerMoE(num_layers, input_size, hidden_size, output_size, num_experts, expert_hidden_size, noisy_gating=True, k=4)
     model.train()  # 设置为训练模式
 
     # 生成随机输入样例

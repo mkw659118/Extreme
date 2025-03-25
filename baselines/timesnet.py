@@ -170,12 +170,12 @@ class TimesBlock(nn.Module):
         super(TimesBlock, self).__init__()
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
-        self.k = configs.top_k
+        self.k = 3
         # parameter-efficient design
         self.conv = nn.Sequential(
-            Inception_Block_V1(configs.d_model, configs.d_ff, num_kernels=configs.num_kernels),
+            Inception_Block_V1(configs.rank, configs.rank, num_kernels=8),
             nn.GELU(),
-            Inception_Block_V1(configs.d_ff, configs.d_model, num_kernels=configs.num_kernels)
+            Inception_Block_V1(configs.rank, configs.rank, num_kernels=8)
         )
 
     def forward(self, x):

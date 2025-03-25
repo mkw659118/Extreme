@@ -5,7 +5,6 @@ from data_dataset import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders
-from utils.data_scaler import get_scaler
 from utils.data_spliter import get_split_dataset
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -35,6 +34,8 @@ class DataModule:
         if config.dataset == 'financial' and config.multi_dataset:
             self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, self.scaler = multi_dataset(config)
             self.train_set, self.valid_set, self.test_set = self.get_dataset(self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, config)
+            self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
+        else:
             self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
 
         if verbose:

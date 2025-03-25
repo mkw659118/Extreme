@@ -13,7 +13,7 @@ class ExperimentConfig:
     rounds: int = 1
     epochs: int = 200
     patience: int = 20
-    monitor_metrics: str = 'NMAE'
+    monitor_metrics: str = 'MAE'
 
     verbose: int = 10
     device: str = 'cuda'
@@ -40,7 +40,7 @@ class DatasetInfo:
     density: float = 0.70
     eval_set: bool = True
     shuffle: bool = False
-    data_scaler: bool = False
+    scaler_method: str = 'stander'
 
     seq_len: int = 96
     pred_len: int = 96

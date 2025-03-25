@@ -6,14 +6,15 @@ from datetime import datetime
 
 # 在这里写下超参数探索空间
 hyper_dict = {
-    'rounds': [2],
-    'rank': [32, 64, 128],
-    'num_layers': [2, 3, 4, 5, 8, 12, 16, 32],
-    'dataset': ['weather'],  # weather electricity
-    'att': ['self'],  # weather electricity
-    'norm': ['rms', 'layer'],  # weather electricity
-    'ffn': ['moe', 'ffn'],  # weather electricity
-    'loss_coef': [0.001, 0.0001, 0.01, 0.1, 1],  # weather electricity
+    'rounds': [1],
+    'rank': [64],
+    'num_layers': [4],
+    'dataset': ['financial'],  # weather financial
+    'att': ['self'],  
+    'norm': ['rms'],
+    'ffn': ['moe'],
+    'loss_coef': [0.001],
+    'idx': [i for i in range(10)]
 }
 
 ######################################################################################################
@@ -26,11 +27,12 @@ def experiment_run():
 
 def Baselines():
     # once_experiment('MLPConfig', hyper_dict)
-    once_experiment('RNNConfig', hyper_dict)
+    # once_experiment('RNNConfig', hyper_dict)
     # once_experiment('LSTMConfig', hyper_dict)
     # once_experiment('GRUConfig', hyper_dict)
     # once_experiment('CrossformerConfig', hyper_dict)
     # once_experiment('TimesNetConfig', hyper_dict)
+    # once_experiment('timeLLMConfig', hyper_dict)
     return True
 
 def Ablation():

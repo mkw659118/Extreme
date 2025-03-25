@@ -9,6 +9,7 @@ import collections
 import numpy as np
 from tqdm import *
 
+from baselines.TimeLLM import timeLLM
 from baselines.encoder_seq import SeqEncoder
 from baselines.mlp import MLP
 from baselines.cross_former import Crossformer
@@ -24,7 +25,7 @@ torch.set_default_dtype(torch.float32)
 
 # 每次开展新实验都改一下这里
 def get_experiment_name(config):
-    log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
+    log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'
     return log_filename
 
 class Model(torch.nn.Module):
@@ -56,26 +57,26 @@ class Model(torch.nn.Module):
         elif config.model == 'timesnet':
             self.model = TimesNet(enc_in=self.input_size, configs=config)
 
+
+        elif config.model == 'timellm':
+            self.model = timeLLM(config)
+
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
 
-    def forward(self, x):
-        y = self.model(x)
+    def forward(self, *x):
+        y = self.model(*x)
         return y
 
     # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
     def compute_loss(self, pred, label):
         loss = self.loss_function(pred, label)
-        if self.config.model == 'ours':
-            temp = 0
-            try:
-                for i in range(len(self.model.encoder.layers)):
-                    temp += self.model.encoder.layers[i][3].aux_loss
-                loss += temp
-            except:
-                pass
-
+        try:
+            for i in range(len(self.model.encoder.layers)):
+                loss += self.model.encoder.layers[i][3].aux_loss
+        except:
+            pass
         return loss
 
     # 2025年3月9日17:45:11 这行及以下的全部代码几乎可以不用动了，几乎固定

@@ -21,6 +21,7 @@ def generate_data(start_date, end_date, code_idx):
     # 数据库配置
     with open('./datasets/sql_token.pkl', 'rb') as f:
         DB_URI = pickle.load(f)
+
     engine = create_engine(DB_URI)
     DATA_JSON_PATH = './datasets/data.json'
 
@@ -108,7 +109,7 @@ def check_data():
 
 def multi_dataset(config):
     all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
-    for i in range(50):
+    for i in range(10):
         config.idx = i
         config.multi_dataset = False
         datamodule = data_center.DataModule(config)

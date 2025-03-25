@@ -81,29 +81,41 @@ def grid_search_hyperparameters(exp_name, hyper_dict, retrain, debug):
     best_combo = None
 
     with open(log_file, 'a') as f:
-        f.write("================== Grid Search ==================\n")
+        f.write("\n=== Grid Search ===\n")
         for combo in product(*hyper_values_list):
+            # combo 是一个元组，如 (10, 0.1) -> 对应 (Rank=10, Order=0.1)
             combo_dict = dict(zip(hyper_keys, combo))
 
-            command = f"python model_train.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
-            command += " ".join([f"--{k} {v}" for k, v in combo_dict.items()])
+            # 构建命令
+            command = f"python train_model.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
+            # 在命令里添加所有超参数
+            for param_key, param_val in combo_dict.items():
+                command += f"--{param_key} {param_val} "
 
+            # 先给其他未出现在 combo_dict 的超参数，指定其默认值
+            for other_key, other_values in hyper_dict.items():
+                if other_key not in combo_dict:
+                    command += f"--{other_key} {other_values[0]} "
+
+            f.write(f"COMMAND: {command}\n")
             # 运行并获取结果
             current_metric = run_and_get_metric(command, config, combo_dict, debug)
 
-            # 选择最优参数
             if classification_task:
+                # 分类，metric 越大越好
                 if current_metric > best_metric:
                     best_metric = current_metric
                     best_combo = combo_dict
             else:
+                # 回归/预测，metric (MAE) 越小越好
                 if current_metric < best_metric:
                     best_metric = current_metric
                     best_combo = combo_dict
-
             print(f"Combo: {combo_dict}, Metric= {current_metric}\n")
             f.write(f"Combo: {combo_dict}, Metric= {current_metric}\n")
 
+        # 记录最优组合
+        print(f"Best combo: {best_combo}, Best metric: {best_metric}\n")
         f.write(f"Best combo: {best_combo}, Best metric: {best_metric}\n")
     return best_combo
 
@@ -126,19 +138,37 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
                 best_hyper[hyper_name] = hyper_values[0]
                 continue
 
+            f.write(f"\nHyper: {hyper_name}, Values: {hyper_values}\n")
+            print(f"{hyper_name} => {hyper_values}")
             local_best_metric = 0 if classification_task else 1e9
             current_best_value = None
-
             for value in hyper_values:
+                # 根据目前已有最优超参数 + 当前超参数构建命令
                 command = f"python model_train.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
-                command += " ".join([f"--{k} {v}" for k, v in best_hyper.items()])
-                command += f" --{hyper_name} {value}"
 
-                # 运行并获取 metric
+                # 先写入之前已经确定的 best_hyper
+                for best_param_key, best_param_value in best_hyper.items():
+                    config.best_param_key = best_param_value
+                    command += f"--{best_param_key} {best_param_value} "
+
+                # 再加当前要测试的
+                command += f"--{hyper_name} {value} "
+
+                # 对其他 hyper 未探索过的，使用它们的第一个值
+                for other_hyper_name, other_hyper_values in hyper_dict.items():
+                    if other_hyper_name not in best_hyper and other_hyper_name != hyper_name:
+                        config.other_hyper_name = other_hyper_values[0]
+                        best_hyper[other_hyper_name] = other_hyper_values[0]
+                        command += f"--{other_hyper_name} {other_hyper_values[0]} "
+
+                # 运行命令、获取 metric
                 chosen_dict = best_hyper.copy()
                 chosen_dict[hyper_name] = value
+
+                f.write(f"COMMAND: {command}\n")
                 current_metric = run_and_get_metric(command, config, chosen_dict, debug)
 
+                # 比较更新最优
                 if classification_task:
                     if current_metric > local_best_metric:
                         local_best_metric = current_metric
@@ -148,10 +178,17 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
                         local_best_metric = current_metric
                         current_best_value = value
 
-            # 更新最优超参数
-            best_hyper[hyper_name] = current_best_value
+                f.write(f"Value: {value}, Metric: {current_metric}\n")
+                print(f"Value: {value}, Metric: {current_metric}")
 
-        f.write(f"The Best Hyperparameters: {best_hyper}\n")
+            # 结束后，更新最优
+            best_hyper[hyper_name] = current_best_value
+            print(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}")
+            f.write(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}\n")
+
+                # 全部结束后，打印并写日志
+            f.write(f"The Best Hyperparameters: {best_hyper}\n")
+        print("The Best Hyperparameters:", best_hyper)
     return best_hyper
 
 
