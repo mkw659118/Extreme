@@ -35,8 +35,8 @@ class Backbone(torch.nn.Module):
             att_method=config.att_method
         )
 
-        self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
-        self.layer_norm = torch.nn.LayerNorm(self.rank)
+        # self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
+        # self.layer_norm = torch.nn.LayerNorm(self.rank)
         self.fc = torch.nn.Linear(config.rank, 1)
 
     def forward(self, x):
@@ -50,9 +50,9 @@ class Backbone(torch.nn.Module):
         # x_enc += self.fund_embedding(code_idx)
         x_enc = self.predict_linear(x_enc.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
 
-        # x_enc = self.encoder(x_enc)
-        for i in range(len(self.encoder)):
-            x_enc = self.layer_norm(self.encoder[i](x_enc))
+        x_enc = self.encoder(x_enc)
+        # for i in range(len(self.encoder)):
+        #     x_enc = self.layer_norm(self.encoder[i](x_enc))
 
         # x_enc += torch.cat([self.fund_embedding(code_idx), self.fund_embedding(code_idx)], dim=1)
 

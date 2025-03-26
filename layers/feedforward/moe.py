@@ -55,8 +55,6 @@ class MoE(torch.nn.Module):
         # K' = mk - ks
         self.router_num_k = num_m * num_k - num_share_experts
         self.router_gates = Gating(self.d_model, self.num_router_experts, self.router_num_k, self.loss_coef)
-        # print(self)
-
 
     def forward(self, x):
         x = self.__checkinput(x)
