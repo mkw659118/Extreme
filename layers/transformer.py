@@ -3,6 +3,9 @@
 import torch
 
 from layers.att.external_attention import ExternalAttention
+from layers.att.groupquery_attention import GroupQueryAttention
+from layers.att.multilatent_attention import MLA
+from layers.att.multiquery_attention import MultiQueryAttentionBatched
 from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
 from layers.att.self_attention import SelfAttention, Attention
@@ -33,11 +36,11 @@ def get_att(d_model, num_heads, method):
     elif method == 'external':
         return ExternalAttention(d_model, S=d_model*2)
     elif method == 'mla':
-        return ExternalAttention(d_model, S=d_model*2)
+        return MLA(d_model, S=d_model*2)
     elif method == 'gqa':
-        return ExternalAttention(d_model, S=d_model*2)
+        return GroupQueryAttention(d_model, S=d_model*2)
     elif method == 'mqa':
-        return ExternalAttention(d_model, S=d_model*2)
+        return MultiQueryAttentionBatched(d_model, S=d_model*2)
 
 class Transformer(torch.nn.Module):
     def __init__(self, d_model, num_heads, num_layers, norm_method='rms', ffn_method='moe', att_method='self'):
