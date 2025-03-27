@@ -3,6 +3,7 @@
 import torch
 
 from baselines.timesnet import TimesBlock
+from layers.dft import DFT
 from layers.encoder.position_enc import PositionEncoding
 from layers.encoder.seq_enc import SeqEncoder
 from layers.encoder.token_emc import TokenEmbedding
@@ -19,12 +20,11 @@ class Backbone(torch.nn.Module):
         self.seq_len = config.seq_len
         self.projection = torch.nn.Linear(1, config.rank, bias=True)
         # self.projection = TokenEmbedding(1, config.rank)
+
+        self.seasonality_and_trend_decompose = DFT(5)
         self.position_embedding = PositionEncoding(d_model=self.rank, max_len=config.seq_len, method='bert')
         self.fund_embedding = torch.nn.Embedding(999999, config.rank)
         self.temporal_embedding = TemporalEmbedding(self.rank, 'embeds')
-        # self.lstm = torch.nn.LSTM(config.rank, config.rank)
-        # self.encoder = SeqEncoder(input_size=config.rank, d_model=config.rank, seq_len=config.seq_len, num_layers=config.num_layers, seq_method='gru', bidirectional=True)
-        # self.fc = torch.nn.Linear(config.rank * config.seq_len, config.pred_len)
         self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len + config.seq_len)
         self.encoder = Transformer(
             self.rank,
@@ -42,7 +42,10 @@ class Backbone(torch.nn.Module):
     def forward(self, x):
         code_idx = x[:, :, 0].long()
         temporal_idx = x[:, :, 1:5]
-        x_seq = x[:, :, -1].unsqueeze(-1)
+        x_seq = x[:, :, -1]
+
+        x_seq = self.seasonality_and_trend_decompose(x_seq).unsqueeze(-1)
+
         x_enc = self.projection(x_seq)
 
         x_enc += self.temporal_embedding(temporal_idx)

@@ -764,34 +764,6 @@ NMAE - 0.0811    NRMSE - 0.1031    MAE - 0.0552    RMSE - 0.6885    Acc_10 - 0.5
 NMAE - 0.0137    NRMSE - 0.0178    MAE - 0.0144    RMSE - 0.1838    Acc_10 - 1.0000    train_time - 4.4205    
 NMAE - 0.2988    NRMSE - 0.3404    MAE - 0.1883    RMSE - 2.1029    Acc_10 - 0.1822    train_time - 1.2296    
 ================== Sequential Hyper Search ==================
-
-Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
-Value: 0, Metric: 0.05877896646658579
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
-Value: 1, Metric: 0.017576358399968198
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
-Value: 2, Metric: 0.1274643562340397
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 3 
-Value: 3, Metric: 0.08775022936712824
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 4 
-Value: 4, Metric: 0.04942511594755218
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 5 
-Value: 5, Metric: 0.43568343508838514
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 6 
-Value: 6, Metric: 0.4014045365132765
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 7 
-Value: 7, Metric: 0.05521148881002976
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8 
-Value: 8, Metric: 0.014433898692224043
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 9 
-Value: 9, Metric: 0.18831131473210053
-==> Best idx: 8, local_best_metric: 0.014433898692224043
-The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 8}
-Running at 2025-03-25 15:44: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8
-NMAE - 0.0137    NRMSE - 0.0178    MAE - 0.0144    RMSE - 0.1838    Acc_10 - 1.0000    train_time - 4.4670    
-[2025-03-25 15:44:44] All commands executed successfully.
-
 [2025-03-25 18:38:44] Experiment Start!!!
 NMAE - 0.0609    NRMSE - 0.0752    MAE - 0.0684    RMSE - 0.8292    Acc_10 - 0.8134    train_time - 3.7368    
 NMAE - 0.0183    NRMSE - 0.0197    MAE - 0.0190    RMSE - 0.1998    Acc_10 - 1.0000    train_time - 46.8135    
@@ -804,31 +776,21 @@ NMAE - 0.0665    NRMSE - 0.0819    MAE - 0.0453    RMSE - 0.5468    Acc_10 - 0.7
 NMAE - 0.0199    NRMSE - 0.0222    MAE - 0.0210    RMSE - 0.2300    Acc_10 - 1.0000    train_time - 83.2415    
 NMAE - 0.1854    NRMSE - 0.2074    MAE - 0.1168    RMSE - 1.2814    Acc_10 - 0.1863    train_time - 10.8978    
 ================== Sequential Hyper Search ==================
+[2025-03-27 14:43:27] Experiment Start!!!
+NMAE - 0.0543    NRMSE - 0.0764    MAE - 0.0610    RMSE - 0.8422    Acc_10 - 0.8311    train_time - 1.7769    
+NMAE - 0.0170    NRMSE - 0.0177    MAE - 0.0175    RMSE - 0.1791    Acc_10 - 1.0000    train_time - 0.7662    
+NMAE - 0.2492    NRMSE - 0.2612    MAE - 0.1051    RMSE - 1.0806    Acc_10 - 0.0399    train_time - 3.1172    
+NMAE - 0.0585    NRMSE - 0.0773    MAE - 0.0512    RMSE - 0.6637    Acc_10 - 0.7633    train_time - 1.7557    
+NMAE - 0.0386    NRMSE - 0.0454    MAE - 0.0463    RMSE - 0.5344    Acc_10 - 1.0000    train_time - 5.7937    
+NMAE - 0.1709    NRMSE - 0.1869    MAE - 0.3423    RMSE - 3.6720    Acc_10 - 0.2331    train_time - 0.7905    
+NMAE - 0.1079    NRMSE - 0.1375    MAE - 0.3583    RMSE - 4.4946    Acc_10 - 0.5242    train_time - 4.1602    
+NMAE - 0.0668    NRMSE - 0.0847    MAE - 0.0455    RMSE - 0.5653    Acc_10 - 0.6550    train_time - 8.9493    
+[2025-03-27 14:55:46] Experiment Start!!!
+NMAE - 0.0543    NRMSE - 0.0764    MAE - 0.0610    RMSE - 0.8422    Acc_10 - 0.8311    train_time - 1.7538    
+================== Sequential Hyper Search ==================
 
 Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
-Value: 0, Metric: 0.06838248342486984
+Value: 0, Metric: 0.0609688189356251
 COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
-Value: 1, Metric: 0.018961175298648523
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 2 
-Value: 2, Metric: 0.0541731917695584
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 3 
-Value: 3, Metric: 0.06260423828962813
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 4 
-Value: 4, Metric: 0.05433199299063454
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 5 
-Value: 5, Metric: 0.33624551245335477
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 6 
-Value: 6, Metric: 0.4012688263415587
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 7 
-Value: 7, Metric: 0.045272527891359514
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 8 
-Value: 8, Metric: 0.020966014672889777
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 9 
-Value: 9, Metric: 0.11684593070853264
-==> Best idx: 1, local_best_metric: 0.018961175298648523
-The Best Hyperparameters: {'rounds': 1, 'rank': 64, 'num_layers': 4, 'dataset': 'financial', 'att': 'self', 'norm': 'rms', 'ffn': 'moe', 'loss_coef': 0.001, 'idx': 1}
-Running at 2025-03-25 18:52: python model_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1
-NMAE - 0.0183    NRMSE - 0.0197    MAE - 0.0190    RMSE - 0.1998    Acc_10 - 1.0000    train_time - 47.3365    
-[2025-03-25 18:54:27] All commands executed successfully.
-
+[2025-03-27 14:59:26] Experiment Start!!!

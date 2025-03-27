@@ -131,14 +131,14 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
     best_hyper = {}
 
     with open(log_file, 'a') as f:
-        f.write("================== Sequential Hyper Search ==================\n")
+        # f.write("================== Sequential Hyper Search ==================\n")
 
         for hyper_name, hyper_values in hyper_dict.items():
             if len(hyper_values) == 1:
                 best_hyper[hyper_name] = hyper_values[0]
                 continue
 
-            f.write(f"\nHyper: {hyper_name}, Values: {hyper_values}\n")
+            # f.write(f"\nHyper: {hyper_name}, Values: {hyper_values}\n")
             print(f"{hyper_name} => {hyper_values}")
             local_best_metric = 0 if classification_task else 1e9
             current_best_value = None
@@ -165,7 +165,7 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
                 chosen_dict = best_hyper.copy()
                 chosen_dict[hyper_name] = value
 
-                f.write(f"COMMAND: {command}\n")
+                # f.write(f"COMMAND: {command}\n")
                 current_metric = run_and_get_metric(command, config, chosen_dict, debug)
 
                 # 比较更新最优
@@ -178,16 +178,16 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
                         local_best_metric = current_metric
                         current_best_value = value
 
-                f.write(f"Value: {value}, Metric: {current_metric}\n")
+                # f.write(f"Value: {value}, Metric: {current_metric}\n")
                 print(f"Value: {value}, Metric: {current_metric}")
 
             # 结束后，更新最优
             best_hyper[hyper_name] = current_best_value
             print(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}")
-            f.write(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}\n")
+            # f.write(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}\n")
 
-                # 全部结束后，打印并写日志
-            f.write(f"The Best Hyperparameters: {best_hyper}\n")
+        # 全部结束后，打印并写日志
+        # f.write(f"The Best Hyperparameters: {best_hyper}\n")
         print("The Best Hyperparameters:", best_hyper)
     return best_hyper
 

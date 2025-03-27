@@ -97,13 +97,13 @@ class SparseMoE(nn.Module):
 
         # 初始化专家网络
         self.experts = nn.ModuleList([MLP(self.d_model, self.d_ff) for i in range(self.num_experts)])
-        # self.w_gate = nn.Parameter(torch.zeros(d_model, num_experts), requires_grad=True)
-        # self.w_noise = nn.Parameter(torch.zeros(d_model, num_experts), requires_grad=True)
+        self.w_gate = nn.Parameter(torch.zeros(d_model, num_experts), requires_grad=True)
+        self.w_noise = nn.Parameter(torch.zeros(d_model, num_experts), requires_grad=True)
 
-        self.w_gate = nn.Sequential(nn.Linear(self.d_model, self.d_ff, bias=False), nn.ReLU(),
-                                              nn.Linear(self.d_ff, num_experts, bias=False))
-        self.w_noise = nn.Sequential(nn.Linear(self.d_model, self.d_ff, bias=False), nn.ReLU(),
-                                              nn.Linear(self.d_ff, num_experts, bias=False))
+        # self.w_gate = nn.Sequential(nn.Linear(self.d_model, self.d_ff, bias=False), nn.ReLU(),
+        #                                       nn.Linear(self.d_ff, num_experts, bias=False))
+        # self.w_noise = nn.Sequential(nn.Linear(self.d_model, self.d_ff, bias=False), nn.ReLU(),
+        #                                       nn.Linear(self.d_ff, num_experts, bias=False))
 
         self.softplus = nn.Softplus()
         self.softmax = nn.Softmax(1)
@@ -158,28 +158,28 @@ class SparseMoE(nn.Module):
         """
         # 计算 gating logits
 
-        # clean_logits = x @ self.w_gate
-        # if self.noisy_gating and train:
-        #     raw_noise_stddev = x @ self.w_noise
-        #     noise_stddev = ((self.softplus(raw_noise_stddev) + noise_epsilon))
-        #     noisy_logits = clean_logits + (torch.randn_like(clean_logits) * noise_stddev)
-        #     logits = noisy_logits
-        # else:
-        #     logits = clean_logits
-
-
         # if len(x.shape) == 3:
         #     x = rearrange(x, 'b l n -> (b n) l 1')
         #     x = self.start_linear(x).squeeze(-1)
-        clean_logits = self.w_gate(x)
+
+        clean_logits = x @ self.w_gate
         if self.noisy_gating and train:
-            raw_noise_stddev = self.w_noise(x)
-            noise_stddev = self.softplus(raw_noise_stddev) + noise_epsilon
-            noise = torch.randn_like(clean_logits)
-            noisy_logits = clean_logits + (noise * noise_stddev)
-            logits = noisy_logits @ self.W_h
+            raw_noise_stddev = x @ self.w_noise
+            noise_stddev = ((self.softplus(raw_noise_stddev) + noise_epsilon))
+            noisy_logits = clean_logits + (torch.randn_like(clean_logits) * noise_stddev)
+            logits = noisy_logits
         else:
             logits = clean_logits
+
+        # clean_logits = self.w_gate(x)
+        # if self.noisy_gating and train:
+        #     raw_noise_stddev = self.w_noise(x)
+        #     noise_stddev = self.softplus(raw_noise_stddev) + noise_epsilon
+        #     noise = torch.randn_like(clean_logits)
+        #     noisy_logits = clean_logits + (noise * noise_stddev)
+        #     logits = noisy_logits @ self.W_h
+        # else:
+        #     logits = clean_logits
 
         # top-num_k + 1 选择，便于计算概率
         logits = self.softmax(logits)
@@ -228,7 +228,7 @@ class SparseMoE(nn.Module):
         return y
 
 if __name__ == '__main__':
-    inputs = torch.randn(32, 12, 50)
+    inputs = torch.randn(32, 50)
     # d_model, output_size, num_experts, d_ff, noisy_gating=True, num_k=4
     expert = SparseMoE(50, 50, 8, True, 3, 0.001)
     output = expert(inputs)
