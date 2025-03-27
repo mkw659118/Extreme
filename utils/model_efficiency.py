@@ -4,6 +4,8 @@
 
 import sys
 import os
+from model import Model
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(project_root)
@@ -14,7 +16,6 @@ def calculate_flops_params(model, sample_input, config):
     flops, params = profile(model.to(config.device), inputs=sample_input, verbose=False)
     # config.log.only_print(f"Flops: {flops} Params: {params}")
     return flops, params
-
 
 def calculate_inference_time(model, sample_input, config):
     from time import time
@@ -33,7 +34,6 @@ def calculate_inference_time(model, sample_input, config):
 
 
 def only_run():
-    from model_train import Model
     from utils.exp_config import get_config
     from utils.exp_logger import Logger
     from utils.exp_metrics_plotter import MetricsPlotter
@@ -58,7 +58,6 @@ def only_run():
 
 
 def get_efficiency(config):
-    from model_train import Model
     from data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)

@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
-
 from data_dataset import custom_collate_fn, TensorDataset
-from model_train import Model, get_experiment_name
+from main import get_experiment_name
 from utils.utils import set_seed
-from concurrent.futures import ThreadPoolExecutor
+from utils.exp_logger import Logger
+from utils.exp_metrics_plotter import MetricsPlotter
+from utils.utils import set_settings
 torch.set_default_dtype(torch.float32)
 
 def data_to_dataloader(data_input, label):
@@ -122,19 +123,18 @@ def RunOnce(config, runId, log):
 
 
 def run(config):
-    from utils.exp_logger import Logger
-    from utils.exp_metrics_plotter import MetricsPlotter
-    from utils.utils import set_settings
-    set_settings(config)
-    log_filename = get_experiment_name(config)
-    plotter = MetricsPlotter(log_filename, config)
-    log = Logger(log_filename, plotter, config)
-    metrics = RunOnce(config, 0, log)
+    # 多基金
+    for i in range(10):
+        config.idx = i
+        set_settings(config)
+        log_filename = get_experiment_name(config)
+        plotter = MetricsPlotter(log_filename, config)
+        log = Logger(log_filename, plotter, config)
+        metrics = RunOnce(config, 0, log)
     return metrics
 
 
 if __name__ == '__main__':
-    # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
     config = get_config()
     # config = get_config('MLPConfig')

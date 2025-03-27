@@ -30,8 +30,6 @@ def get_ffn(d_model, method):
 
 def get_att(d_model, num_heads, method):
     if method == 'self':
-        # return torch.nn.MultiheadAttention(d_model, num_heads, 0.10)
-        # return SelfAttention(d_model, num_heads, dim_head = d_model, dropout=0.10)
         return Attention(d_model, num_heads, dropout=0.10)
     elif method == 'external':
         return ExternalAttention(d_model, S=d_model*2)

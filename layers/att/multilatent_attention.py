@@ -4,7 +4,7 @@
 import math
 from dataclasses import dataclass
 from typing import Tuple, Optional, Literal
-from encoder.position_enc import WordEmbedding, BertEmbedding
+# from encoder.position_enc import WordEmbedding, BertEmbedding
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -415,9 +415,9 @@ class MLA(nn.Module):
         v_head_dim (int): Dimensionality of value projections.
         softmax_scale (float): Scaling factor for softmax in attention computation.
     """
-    self.wq = nn.Linear(self.dim, self.n_heads * self.qk_head_dim)
     def __init__(self, args: ModelArgs):
         super().__init__()
+        self.wq = nn.Linear(self.dim, self.n_heads * self.qk_head_dim)
         self.dim = args.dim
         self.n_heads = args.n_heads
         self.n_local_heads = args.n_heads // world_size

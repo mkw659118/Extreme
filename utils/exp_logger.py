@@ -13,18 +13,19 @@ class Logger:
     def __init__(
         self,
         filename,
+        exper_detail,
         plotter,
         config,
         show_params=True
     ):
+        self.filename = filename
         self.clear_the_useless_logs()
         self.plotter = plotter
-        self.exper_detail = f"Dataset : {config.dataset.upper()}, Model : {config.model}, Density : {config.density:.3f}, Bs : {config.bs}, Rank : {config.rank}, "
-        self.fileroot = f'./results/{config.model}/' + time.strftime('%Y%m%d', time.localtime(time.time())) + '/log/'
-        self.filename = filename
-        os.makedirs(self.fileroot, exist_ok=True)
-        self.exper_time = time.strftime('%H_%M_%S', time.localtime(time.time())) + '_'
-        self.exper_filename = self.fileroot + self.exper_time + self.filename
+        self.exper_detail = exper_detail
+        fileroot = f'./results/{config.model}/' + time.strftime('%Y%m%d', time.localtime(time.time())) + '/log/'
+        os.makedirs(fileroot, exist_ok=True)
+        exper_time = time.strftime('%H_%M_%S', time.localtime(time.time())) + '_'
+        self.exper_filename = fileroot + exper_time + filename
         if config.hyper_search:
             self.exper_filename += '_hyper_search'
         logging.basicConfig(level=logging.INFO, filename=f"{self.exper_filename}.md", filemode='w', format='%(message)s')
@@ -41,10 +42,11 @@ class Logger:
 
     def save_in_log(self, metrics):
         with open("./run.log", 'a') as f:
+            t = time.strftime('%H_%M_%S', time.localtime(time.time())) + ': '
             ans = ''
             for key in metrics:
                 ans += f"{key} - {np.mean(metrics[key]):.4f}    "
-            f.write(ans + '\n')
+            f.write(t + ans + '\n')
 
     def save_result(self, metrics):
         import pickle

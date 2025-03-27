@@ -211,6 +211,36 @@ NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.
 NMAE - -0.8649    NRMSE - 0.5765    MAE - 0.6823    RMSE - 8.3504    Acc_10 - 0.0125    train_time - 190.8525    
 NMAE - -0.8339    NRMSE - 0.5966    MAE - 0.6579    RMSE - 8.6418    Acc_10 - 0.0144    train_time - 353.2981    
 NMAE - -0.9049    NRMSE - 0.6433    MAE - 0.7138    RMSE - 9.3180    Acc_10 - 0.0137    train_time - 351.1703    
+[2025-03-24 11:22:57] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:24:11] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:24:58] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:25:42] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:26:36] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:27:12] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:29:27] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:29:42] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:31:02] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:39:48] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 11:40:29] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 22:27:02] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 22:27:27] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 22:28:42] Experiment Start!!!
+================== Sequential Hyper Search ==================
+[2025-03-24 22:35:39] Experiment Start!!!
+================== Sequential Hyper Search ==================
 NMAE - -1.6813    NRMSE - 0.6909    MAE - 0.9878    RMSE - 13.5120    Acc_10 - 0.0153    train_time - 13.0046    
 NMAE - -0.9049    NRMSE - 0.6433    MAE - 0.7138    RMSE - 9.3180    Acc_10 - 0.0137    train_time - 325.9153    
 NMAE - -0.9068    NRMSE - 0.6539    MAE - 0.7154    RMSE - 9.4721    Acc_10 - 0.0092    train_time - 54.5503    
@@ -776,6 +806,9 @@ NMAE - 0.0665    NRMSE - 0.0819    MAE - 0.0453    RMSE - 0.5468    Acc_10 - 0.7
 NMAE - 0.0199    NRMSE - 0.0222    MAE - 0.0210    RMSE - 0.2300    Acc_10 - 1.0000    train_time - 83.2415    
 NMAE - 0.1854    NRMSE - 0.2074    MAE - 0.1168    RMSE - 1.2814    Acc_10 - 0.1863    train_time - 10.8978    
 ================== Sequential Hyper Search ==================
+
+
+
 [2025-03-27 14:43:27] Experiment Start!!!
 NMAE - 0.0543    NRMSE - 0.0764    MAE - 0.0610    RMSE - 0.8422    Acc_10 - 0.8311    train_time - 1.7769    
 NMAE - 0.0170    NRMSE - 0.0177    MAE - 0.0175    RMSE - 0.1791    Acc_10 - 1.0000    train_time - 0.7662    
@@ -785,12 +818,10 @@ NMAE - 0.0386    NRMSE - 0.0454    MAE - 0.0463    RMSE - 0.5344    Acc_10 - 1.0
 NMAE - 0.1709    NRMSE - 0.1869    MAE - 0.3423    RMSE - 3.6720    Acc_10 - 0.2331    train_time - 0.7905    
 NMAE - 0.1079    NRMSE - 0.1375    MAE - 0.3583    RMSE - 4.4946    Acc_10 - 0.5242    train_time - 4.1602    
 NMAE - 0.0668    NRMSE - 0.0847    MAE - 0.0455    RMSE - 0.5653    Acc_10 - 0.6550    train_time - 8.9493    
-[2025-03-27 14:55:46] Experiment Start!!!
-NMAE - 0.0543    NRMSE - 0.0764    MAE - 0.0610    RMSE - 0.8422    Acc_10 - 0.8311    train_time - 1.7538    
-================== Sequential Hyper Search ==================
 
-Hyper: idx, Values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 0 
-Value: 0, Metric: 0.0609688189356251
-COMMAND: python model_train.py --exp_name TestConfig --hyper_search 1 --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --idx 1 
-[2025-03-27 14:59:26] Experiment Start!!!
+
+NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9474    
+NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9838    
+NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9693    
+NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9886    
+00_01_15: NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9710    

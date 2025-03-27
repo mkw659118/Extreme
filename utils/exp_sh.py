@@ -4,7 +4,7 @@ import time
 import subprocess
 import numpy as np
 from datetime import datetime
-from model_train import get_experiment_name
+from model_basic import get_experiment_name
 import pickle
 from itertools import product
 from utils.exp_config import get_config

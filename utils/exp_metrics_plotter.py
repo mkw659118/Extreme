@@ -11,8 +11,7 @@ class MetricsPlotter:
         self.fileroot = f'./results/{config.model}/' + time.strftime('%Y%m%d', time.localtime(time.time())) + '/fig/'
         os.makedirs(self.fileroot, exist_ok=True)
         exper_time = time.strftime('%H_%M_%S', time.localtime(time.time())) + '_'
-        self.filename = filename
-        self.exper_filename = self.fileroot + exper_time + self.filename
+        self.exper_filename = self.fileroot + exper_time + filename
         self.all_rounds_results = []
         self.one_round_results = collections.defaultdict(list)
 
@@ -31,7 +30,6 @@ class MetricsPlotter:
     def record_metric(self, metrics):
         import matplotlib.pyplot as plt
         # plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']  # 设置全局字体为 'Arial Unicode MS'
-
         num_rounds = len(self.all_rounds_results)
         num_metrics = len(self.all_rounds_results[0])
         fig, axs = plt.subplots(num_rounds, num_metrics, figsize=(num_metrics * 5, num_rounds * 5))
