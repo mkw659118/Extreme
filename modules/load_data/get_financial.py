@@ -10,10 +10,12 @@ from sqlalchemy import create_engine, text
 import data_center
 from modules.load_data.create_window_dataset import create_window_dataset
 
+pred_value = 'nav'
+# pred_value = 'accnav'
 
 def get_data(code_idx):
-    address = os.listdir('./datasets/financial/')
-    with open(f'./datasets/financial/{address[code_idx]}', 'rb') as f:
+    address = os.listdir(f'./datasets/financial/{pred_value}/')
+    with open(f'./datasets/financial/{pred_value}/{address[code_idx]}', 'rb') as f:
         data = pickle.load(f)
     return data
 
@@ -34,7 +36,7 @@ def generate_data(start_date, end_date, code_idx):
         for group_data in group_list:
             code_list = group_data['code_list']
             try:
-                sql = text("""SELECT fund_code, date, nav FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date""")
+                sql = text("SELECT fund_code, date, nav FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
                 df = pd.read_sql_query(
                     sql.bindparams(codes=tuple(code_list), start=start_date, end=end_date),
                     engine
@@ -54,12 +56,12 @@ def generate_data(start_date, end_date, code_idx):
                 dates[idx].append([df[i][1].year, df[i][1].month, df[i][1].day, df[i][1].weekday()])
                 values[idx].append(float(df[i][2]))
 
-            os.makedirs(f'./datasets/financial/', exist_ok=True)
+            os.makedirs(f'./datasets/financial/{pred_value}/', exist_ok=True)
             for key, value in index_mapping.items():
                 now_data = np.concatenate([np.array([key] * len(dates[value])).reshape(-1, 1), np.array(dates[value]), np.array(values[value]).reshape(-1, 1)], axis=1)
-                with open(f'./datasets/financial/{key}.pkl', 'wb') as f:
+                with open(f'./datasets/financial/{pred_value}/{key}.pkl', 'wb') as f:
                     pickle.dump(now_data, f)
-                    print(f'./datasets/financial/{key}.pkl 存储完毕')
+                    print(f'./datasets/financial/{pred_value}/{key}.pkl 存储完毕')
     data = get_data(code_idx)
     return data
 

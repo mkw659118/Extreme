@@ -11,13 +11,7 @@ from utils.utils import set_seed
 from data_center import DataModule
 
 
-def RunOnce(config, runId, log):
-    # Set seed of this round
-    set_seed(config.seed + runId)
-
-    # Initialize the data and the model
-    datamodule = DataModule(config, True)
-    model = Model(datamodule, config)
+def RunOnce(config, runId, model, datamodule, log):
     try:
         model.compile()
     except Exception as e:

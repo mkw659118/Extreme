@@ -34,7 +34,6 @@ class Backbone(torch.nn.Module):
             ffn_method=config.ffn_method,
             att_method=config.att_method
         )
-
         # self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
         # self.layer_norm = torch.nn.LayerNorm(self.rank)
         self.fc = torch.nn.Linear(config.rank, 1)

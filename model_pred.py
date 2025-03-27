@@ -9,6 +9,7 @@ from tqdm import *
 import numpy as np
 from data_dataset import custom_collate_fn, TensorDataset
 from main import get_experiment_name
+from model import Model
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -38,7 +39,7 @@ def data_to_dataloader(data_input, label):
 
 def predict(model, data_input, label, scaler, config):
     dataloader, flag = data_to_dataloader(data_input, label)
-    os.makedirs(f'./figs/{config.model}', exist_ok=True)
+    os.makedirs(f'./figs/{config.model}/{config.idx}', exist_ok=True)
     model.setup_optimizer(config)
     cnt = 0
     for batch in tqdm(dataloader):
@@ -84,38 +85,32 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
     if label is not None:
         plt.plot(future_time, real_seq, label='Real', linestyle='--', marker='o', markersize=3)
     plt.plot(future_time, pred_seq, label='Pred', linestyle='-', marker='x', markersize=3)
-
     plt.legend()
     plt.title(f'Prediction vs Real - Sample {cnt}')
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
-    plt.savefig(f'./figs/{config.model}/{cnt}.jpg')
+    plt.savefig(f'./figs/{config.model}/{config.idx}/{cnt}.jpg')
     plt.close()
-
     print(f"Figure {cnt} has done!")
 
 
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
-
     from data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    try:
-        sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
-        model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
-        model.setup_optimizer(config)
-        results = model.evaluate_one_epoch(datamodule, 'test')
-        if not config.classification:
-            log(f'MAE={results["MAE"]:.4f} RMSE={results["RMSE"]:.4f} NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} time={sum_time:.1f} s ')
-        else:
-            log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
-        results['train_time'] = sum_time
-        config.record = False
-    except Exception as e:
-        log.only_print(f'Error: {str(e)}')
+    sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
+    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    model.setup_optimizer(config)
+    results = model.evaluate_one_epoch(datamodule, 'test')
+    if not config.classification:
+        log(f'MAE={results["MAE"]:.4f} RMSE={results["RMSE"]:.4f} NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} time={sum_time:.1f} s ')
+    else:
+        log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
+    results['train_time'] = sum_time
+    config.record = False
     # results = model.evaluate_one_epoch(datamodule, 'test')
     results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.scaler, config)
     # results = predict(model, datamodule.test_set.x[0], None, config)
@@ -127,12 +122,11 @@ def run(config):
     for i in range(10):
         config.idx = i
         set_settings(config)
-        log_filename = get_experiment_name(config)
+        log_filename, exper_detail = get_experiment_name(config)
         plotter = MetricsPlotter(log_filename, config)
-        log = Logger(log_filename, plotter, config)
+        log = Logger(log_filename, exper_detail, plotter, config)
         metrics = RunOnce(config, 0, log)
     return metrics
-
 
 if __name__ == '__main__':
     from utils.exp_config import get_config

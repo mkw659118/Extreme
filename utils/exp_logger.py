@@ -19,6 +19,7 @@ class Logger:
         show_params=True
     ):
         self.filename = filename
+        self.exper_detail = exper_detail
         self.clear_the_useless_logs()
         self.plotter = plotter
         self.exper_detail = exper_detail

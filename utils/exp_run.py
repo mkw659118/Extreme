@@ -3,27 +3,31 @@
 import collections
 import numpy as np
 
+from data_center import DataModule
 from utils.exp_run_once import RunOnce
 from utils.model_efficiency import *
+from utils.utils import set_seed
+
 
 def RunExperiments(log, config):
     log('*' * 20 + 'Experiment Start' + '*' * 20)
     metrics = collections.defaultdict(list)
 
     for runId in range(config.rounds):
+        set_seed(config.seed + runId)
+        datamodule = DataModule(config)
+        model = Model(datamodule, config)
+        datamodule = DataModule(config)
         log.plotter.reset_round()
-        try:
-            results = RunOnce(config, runId, log)
-            for key in results:
-                metrics[key].append(results[key])
-            log.plotter.append_round()
-        except Exception as e:
-            raise Exception
-            log(f'Run {runId + 1} Error: {e}, This run will be skipped.')
-        except KeyboardInterrupt as e:
-            raise KeyboardInterrupt
+        results = RunOnce(config, runId, model, datamodule, log)
+        for key in results:
+            metrics[key].append(results[key])
+        log.plotter.append_round()
 
     log('*' * 20 + 'Experiment Results:' + '*' * 20)
+    log(log.exper_detail)
+    log(f'Train_length : {len(datamodule.train_loader.dataset)} Valid_length : {len(datamodule.valid_loader.dataset)} Test_length : {len(datamodule.test_loader.dataset)}')
+
     for key in metrics:
         log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
     try:

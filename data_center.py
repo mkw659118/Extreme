@@ -22,7 +22,7 @@ def load_data(config):
 
 # 数据集定义
 class DataModule:
-    def __init__(self, config, verbose=False):
+    def __init__(self, config):
         self.config = config
         self.path = config.path
         self.x, self.y, self.scaler = load_data(config)
@@ -38,8 +38,6 @@ class DataModule:
         else:
             self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
 
-        if verbose:
-            config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)} Max_value : {np.max(self.y):.2f}')
 
     def get_dataset(self, train_x, train_y, valid_x, valid_y, test_x, test_y, config):
         return (

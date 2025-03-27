@@ -4,10 +4,17 @@ import torch
 from utils.exp_run import RunExperiments
 torch.set_default_dtype(torch.float32)
 
+
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'
-    exper_detail = f"Dataset : {config.dataset.upper()}, Model : {config.model}, Density : {config.density:.3f}, Bs : {config.bs}, Rank : {config.rank}, "
+    exper_detail = \
+        (f"Dataset : {config.dataset.upper()}, "
+         f"Model : {config.model}, "
+         f"Density : {config.density:.3f}, "
+         f"Bs : {config.bs}, "
+         f"Rank : {config.rank}, ")
     return log_filename, exper_detail
+
 
 def run(config):
     from utils.exp_logger import Logger

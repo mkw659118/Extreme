@@ -825,3 +825,8 @@ NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2
 NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9693    
 NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9886    
 00_01_15: NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9710    
+00_05_52: NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 2.9973    
+00_07_40: NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2979    train_time - 3.0015    
+00_12_23: NMAE - 0.1866    NRMSE - 0.2260    MAE - 0.0621    RMSE - 0.7399    Acc_10 - 0.3272    train_time - 2.9304    
+00_14_44: NMAE - 0.1866    NRMSE - 0.2260    MAE - 0.0621    RMSE - 0.7399    Acc_10 - 0.3272    train_time - 2.9414    
+00_22_00: NMAE - 0.1866    NRMSE - 0.2260    MAE - 0.0621    RMSE - 0.7399    Acc_10 - 0.3272    train_time - 2.9074    
