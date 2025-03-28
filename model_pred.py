@@ -88,7 +88,7 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.plot(future_time, pred_seq, label='Pred', linestyle='-', marker='x', markersize=3)
     plt.legend()
     plt.title(f'Prediction vs Real - Sample {cnt}')
-    plt.ylim([0, 1.5])
+    # plt.ylim([0, 1.5])
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)

@@ -17,6 +17,7 @@ def get_data(code_idx):
     address = os.listdir(f'./datasets/financial/{pred_value}/')
     with open(f'./datasets/financial/{pred_value}/{address[code_idx]}', 'rb') as f:
         data = pickle.load(f)
+    print(f'./datasets/financial/{pred_value}/{address[code_idx]}')
     return data
 
 def generate_data(start_date, end_date, code_idx):

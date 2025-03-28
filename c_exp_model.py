@@ -3,13 +3,11 @@
 # 每次开展新实验都改一下这里
 from utils.model_basic import BasicModel
 from modules.backbone import Backbone
-
 from baselines.TimeLLM import timeLLM
 from baselines.encoder_seq import SeqEncoder
 from baselines.mlp import MLP
 from baselines.cross_former import Crossformer
 from baselines.timesnet import TimesNet
-
 
 class Model(BasicModel):
     def __init__(self, datamodule, config):
@@ -45,7 +43,6 @@ class Model(BasicModel):
 
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
-
 
     # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
     def compute_loss(self, pred, label):
