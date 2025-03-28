@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 import pickle
 from sqlalchemy import create_engine, text
-
-import data_center
+from utils.data_scaler import get_scaler
+import a_data_center
 from modules.load_data.create_window_dataset import create_window_dataset
 
-pred_value = 'nav'
-# pred_value = 'accnav'
+# pred_value = 'nav'
+pred_value = 'accnav'
 
 def get_data(code_idx):
     address = os.listdir(f'./datasets/financial/{pred_value}/')
@@ -36,7 +36,7 @@ def generate_data(start_date, end_date, code_idx):
         for group_data in group_list:
             code_list = group_data['code_list']
             try:
-                sql = text("SELECT fund_code, date, nav FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
+                sql = text(f"SELECT fund_code, date, {pred_value} FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
                 df = pd.read_sql_query(
                     sql.bindparams(codes=tuple(code_list), start=start_date, end=end_date),
                     engine
@@ -87,7 +87,6 @@ def get_financial_data(start_date, end_date, idx, config):
         x[:, -1] = x[:, -1].astype(np.float32)
         temp = x[:, -1].astype(np.float32)
         x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
-
     x = x.astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
@@ -97,7 +96,6 @@ def get_financial_data(start_date, end_date, idx, config):
     return X_window, y_window, scaler
 
 
-from utils.data_scaler import get_scaler
 
 def normorlize(data, value_mean, value_std):
     # print(data.shape)

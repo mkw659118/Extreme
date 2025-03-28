@@ -2,15 +2,18 @@
 # Author : yuxiang Zeng
 from dataclasses import dataclass
 
-
 @dataclass
-class LoggerConfig:
-    logger: str = 'None'
+class TrainingConfig:
+    bs: int = 32
+    lr: float = 0.001
+    decay: float = 0.0001
+    loss_func: str = 'L1Loss'  # L1Loss  MSELoss
+    optim: str = 'AdamW'
 
 @dataclass
 class ExperimentConfig:
     seed: int = 0
-    rounds: int = 2
+    rounds: int = 1
     epochs: int = 200
     patience: int = 20
     monitor_metrics: str = 'MAE'
@@ -48,16 +51,12 @@ class DatasetInfo:
 
 
 @dataclass
-class TrainingConfig:
-    bs: int = 32
-    lr: float = 0.001
-    decay: float = 0.0001
-    loss_func: str = 'L1Loss'
-    optim: str = 'AdamW'
-
-
-@dataclass
 class OtherConfig:
     classification: bool = False
     ablation: int = 0
     try_exp: int = -1
+
+
+@dataclass
+class LoggerConfig:
+    logger: str = 'None'

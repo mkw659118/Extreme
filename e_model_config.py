@@ -1,7 +1,7 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 
-from exp_default_config import *
+from d_default_config import *
 from dataclasses import dataclass
 
 
@@ -11,11 +11,11 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     bs: int = 32
     rank: int = 64
     device: str = 'cuda'
-    epochs: int = 1
+    epochs: int = 200
     patience: int = 20
     verbose: int = 1
     try_exp: int = 1
-    num_layers: int = 5
+    num_layers: int = 4
 
     norm_method: str = 'rms'
     ffn_method: str = 'moe'

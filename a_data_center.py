@@ -1,7 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import numpy as np
-from data_dataset import TensorDataset
+from b_data_dataset import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders

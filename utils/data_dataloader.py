@@ -5,7 +5,7 @@ import platform
 from torch.utils.data import DataLoader
 import multiprocessing
 
-from data_dataset import custom_collate_fn
+from b_data_dataset import custom_collate_fn
 
 
 def get_dataloaders(train_set, valid_set, test_set, config):

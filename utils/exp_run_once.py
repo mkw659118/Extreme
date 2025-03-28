@@ -4,11 +4,7 @@ import os
 import torch
 from tqdm import *
 import pickle
-
-from model import Model
 from utils.model_monitor import EarlyStopping
-from utils.utils import set_seed
-from data_center import DataModule
 
 
 def RunOnce(config, runId, model, datamodule, log):
@@ -31,10 +27,7 @@ def RunOnce(config, runId, model, datamodule, log):
             model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
             model.setup_optimizer(config)
             results = model.evaluate_one_epoch(datamodule, 'test')
-            if not config.classification:
-                log(f'MAE={results["MAE"]:.4f} RMSE={results["RMSE"]:.4f} NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} time={sum_time:.1f} s ')
-            else:
-                log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
+            log.show_results(results, sum_time)
             config.record = False
         except Exception as e:
             log.only_print(f'Error: {str(e)}')

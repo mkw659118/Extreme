@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+import subprocess
 
 from utils.exp_sh import once_experiment
 from datetime import datetime
@@ -14,7 +15,7 @@ hyper_dict = {
     'norm': ['rms'],
     'ffn': ['moe'],
     'loss_coef': [0.001],
-    'idx': [i for i in range(10)]
+    'idx': [i for i in range(2000)]
 }
 
 ######################################################################################################
@@ -46,6 +47,7 @@ def Ablation():
 
 def Our_model(hyper=None):
     once_experiment('TestConfig', hyper_dict, grid_search=0)
+    subprocess.run(f'python model_pred.py', shell=True)
     return True
 
 

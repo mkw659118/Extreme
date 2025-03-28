@@ -18,8 +18,8 @@ class Backbone(torch.nn.Module):
         self.rank = config.rank
         self.pred_len = config.pred_len
         self.seq_len = config.seq_len
-        self.projection = torch.nn.Linear(1, config.rank, bias=True)
-        # self.projection = TokenEmbedding(1, config.rank)
+        # self.projection = torch.nn.Linear(1, config.rank, bias=True)
+        self.projection = TokenEmbedding(1, config.rank)
 
         self.seasonality_and_trend_decompose = DFT(5)
         self.position_embedding = PositionEncoding(d_model=self.rank, max_len=config.seq_len, method='bert')

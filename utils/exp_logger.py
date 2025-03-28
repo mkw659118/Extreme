@@ -43,7 +43,9 @@ class Logger:
 
     def save_in_log(self, metrics):
         with open("./run.log", 'a') as f:
-            t = time.strftime('%H_%M_%S', time.localtime(time.time())) + ': '
+            t = time.strftime('|%Y-%m-%d %H:%M:%S| ', time.localtime(time.time()))
+            f.write(t + self.exper_detail + '\n')
+            t = time.strftime('|%Y-%m-%d %H:%M:%S| ', time.localtime(time.time()))
             ans = ''
             for key in metrics:
                 ans += f"{key} - {np.mean(metrics[key]):.4f}    "
@@ -64,7 +66,6 @@ class Logger:
         address = f'./results/metrics/' + self.filename
         with open(address + '.pkl', 'wb') as f:
             pickle.dump(all_info, f)
-
 
     # 日志记录
     def log(self, string):
@@ -87,23 +88,34 @@ class Logger:
         green_string = f"\033[1;38;2;151;200;129m{time.strftime('|%Y-%m-%d %H:%M:%S| ', time.localtime(time.time()))}\033[0m" + f"\033[1m{string}\033[0m"
         print(green_string)
 
+    def show_results(self, result_error, sum_time):
+        string = ''
+        for key in result_error:
+            string += f'{key}={result_error[key]:.4f} '
+        string += f'time={sum_time:.1f} s'
+        self.log(string)
+
     def show_epoch_error(self, runId, epoch, monitor, epoch_loss, result_error, train_time):
         if self.config.verbose and epoch % self.config.verbose == 0:
             self.only_print(f"\033[1;38;2;151;200;129m{self.exper_detail}\033[0m")
-            self.only_print(f'Best Epoch {monitor.best_epoch} = {monitor.best_score * -1:.4f}  now = {(epoch - monitor.best_epoch):d}')
-            if self.config.classification:
-                self.only_print(f"Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.4f} vAc={result_error['AC']:.4f} vPr={result_error['PR']:.4f} vRc={result_error['RC']:.4f} vF1={result_error['F1']:.4f}  time={sum(train_time):.1f} s ")
-            else:
-                self.only_print(f"Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.4f} vMAE={result_error['MAE']:.4f} vRMSE={result_error['RMSE']:.4f} vNMAE={result_error['NMAE']:.4f} vNRMSE={result_error['NRMSE']:.4f} time={sum(train_time):.1f} s ")
+            self.only_print(f'Best Epoch {monitor.best_epoch} {self.config.monitor_metrics} = {monitor.best_score * -1:.4f}  now = {(epoch - monitor.best_epoch):d}')
+            string = f'Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.4f} '
+            for key in result_error:
+                string += f'v{key}={result_error[key]:.4f} '
+            string += f' time={sum(train_time):.1f} s '
+            self.log(string)
 
-    def show_test_error(self, runId, monitor, results, sum_time):
-        if self.config.classification:
-            self(f'Round={runId + 1} BestEpoch={monitor.best_epoch:3d} Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} Training_time={sum_time:.1f} s \n')
-        else:
-            self(f'Round={runId + 1} BestEpoch={monitor.best_epoch:3d} MAE={results["MAE"]:.4f} RMSE={results["RMSE"]:.4f} NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} Training_time={sum_time:.1f} s ')
+    def show_test_error(self, runId, monitor, result_error, sum_time):
+        string = f'Round={runId + 1} BestEpoch={monitor.best_epoch:3d} '
+        for key in result_error:
+            string += f'v{key}={result_error[key]:.4f} '
+        string += f' time={sum_time:.1f} s '
+        self.log(string)
         print()
 
-    def format_and_sort_config_dict(self, config_dict, items_per_line=4):
+
+
+    def format_and_sort_config_dict(self, config_dict, items_per_line=3):
         # Sort the dictionary by keys
         sorted_items = sorted(config_dict.items())
         formatted_str = ''

@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
-from data_dataset import custom_collate_fn, TensorDataset
+from b_data_dataset import custom_collate_fn, TensorDataset
 from main import get_experiment_name
-from model import Model
+from c_exp_model import Model
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -42,12 +42,12 @@ def predict(model, data_input, label, scaler, config):
     os.makedirs(f'./figs/{config.model}/{config.idx}', exist_ok=True)
     model.setup_optimizer(config)
     cnt = 0
-    for batch in tqdm(dataloader):
+    for batch in (dataloader):
         all_item = [item.to(config.device) for item in batch]
         inputs, label = all_item[:-1], all_item[-1]
         pred = model.forward(*inputs)
 
-        for j in range(len(pred)):
+        for j in trange(len(pred)):
             if flag == 'test':
                 save_figure(inputs[0][j], label[j], pred[j], cnt, scaler, config)
             elif flag == 'pred':
@@ -63,7 +63,8 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
         inputs = inputs[:, -1]
 
     inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
-
+    # print(label)
+    # print(pred)
     # exit()
     # 确保inputs和label/pred都是1维
     input_seq = inputs.cpu().reshape(-1).numpy()
@@ -87,17 +88,18 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.plot(future_time, pred_seq, label='Pred', linestyle='-', marker='x', markersize=3)
     plt.legend()
     plt.title(f'Prediction vs Real - Sample {cnt}')
+    plt.ylim([0, 1.5])
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
     plt.savefig(f'./figs/{config.model}/{config.idx}/{cnt}.jpg')
     plt.close()
-    print(f"Figure {cnt} has done!")
+    # print(f"Figure {cnt} has done!")
 
 
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
-    from data_center import DataModule
+    from a_data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
@@ -116,17 +118,21 @@ def RunOnce(config, runId, log):
     # results = predict(model, datamodule.test_set.x[0], None, config)
     return results
 
+def pred(idx):
+    config.idx = idx
+    set_settings(config)
+    log_filename, exper_detail = get_experiment_name(config)
+    plotter = MetricsPlotter(log_filename, config)
+    log = Logger(log_filename, exper_detail, plotter, config)
+    metrics = RunOnce(config, 0, log)
+    return metrics
+
 
 def run(config):
     # 多基金
-    for i in range(10):
-        config.idx = i
-        set_settings(config)
-        log_filename, exper_detail = get_experiment_name(config)
-        plotter = MetricsPlotter(log_filename, config)
-        log = Logger(log_filename, exper_detail, plotter, config)
-        metrics = RunOnce(config, 0, log)
-    return metrics
+    # pred(0)
+    for i in range(100):
+        pred(i)
 
 if __name__ == '__main__':
     from utils.exp_config import get_config

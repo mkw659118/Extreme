@@ -42,6 +42,8 @@ class BasicModel(torch.nn.Module):
         return loss, t2 - t1
 
     def evaluate_one_epoch(self, dataModule, mode='valid'):
+        self.eval()
+        torch.set_grad_enabled(False)
         dataloader = dataModule.valid_loader if mode == 'valid' and len(dataModule.valid_loader.dataset) != 0 else dataModule.test_loader
         preds, reals, val_loss = [], [], 0.
         for batch in (dataloader):

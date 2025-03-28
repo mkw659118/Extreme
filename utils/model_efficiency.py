@@ -4,7 +4,7 @@
 
 import sys
 import os
-from model import Model
+from c_exp_model import Model
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
@@ -38,7 +38,7 @@ def only_run():
     from utils.exp_logger import Logger
     from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings
-    from data_center import DataModule
+    from a_data_center import DataModule
     config = get_config()
     set_settings(config)
     log_filename = f'Model_{config.model}_{config.dataset}_S{config.train_size}_R{config.rank}_Ablation{config.Ablation}'
@@ -58,7 +58,7 @@ def only_run():
 
 
 def get_efficiency(config):
-    from data_center import DataModule
+    from a_data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)
     sample_inputs = next(iter(datamodule.train_loader))
