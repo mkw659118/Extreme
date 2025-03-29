@@ -7,7 +7,6 @@ from pprint import pprint, pformat
 import yaml
 
 
-
 def get_config(Config='TestConfig'):
     import argparse
     from utils.exp_config import load_config, update_config_from_args
@@ -18,7 +17,6 @@ def get_config(Config='TestConfig'):
     args = load_config(args.config_path, args.exp_name)
     args = update_config_from_args(args, unknown_args)
     return args
-
 
 
 def load_config(file_path, class_name):
