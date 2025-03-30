@@ -9,29 +9,11 @@ class TrainingConfig:
     decay: float = 0.0001
     loss_func: str = 'L1Loss'  # L1Loss  MSELoss
     optim: str = 'AdamW'
-
-@dataclass
-class ExperimentConfig:
-    seed: int = 0
-    rounds: int = 1
     epochs: int = 200
     patience: int = 20
-    monitor_metrics: str = 'MAE'
-
     verbose: int = 10
     device: str = 'cuda'
-    debug: bool = False
-    record: bool = True
-    hyper_search: bool = False
-    continue_train: bool = False
-
-
-@dataclass
-class BaseModelConfig:
-    model: str = 'ours'
-    rank: int = 40
-    retrain: bool = True
-    num_layers: int = 3
+    monitor_metrics: str = 'MAE'
 
 
 @dataclass
@@ -48,6 +30,25 @@ class DatasetInfo:
     seq_len: int = 96
     pred_len: int = 96
     ts_var: int = 0
+
+
+@dataclass
+class ExperimentConfig:
+    seed: int = 0
+    rounds: int = 1
+    debug: bool = False
+    record: bool = True
+    hyper_search: bool = False
+    continue_train: bool = False
+
+
+@dataclass
+class BaseModelConfig:
+    model: str = 'ours'
+    rank: int = 40
+    retrain: bool = True
+    num_layers: int = 3
+
 
 
 @dataclass

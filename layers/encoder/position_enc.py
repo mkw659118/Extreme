@@ -20,10 +20,14 @@ class WordEmbedding(nn.Module):
 class BertEmbedding(nn.Module):
     def __init__(self, d_model, max_len=5000):
         super(BertEmbedding, self).__init__()
-        self.embedding = nn.Embedding(num_embeddings=max_len, embedding_dim=d_model)
+        self.embedding = nn.Embedding(num_embeddings=max_len+1, embedding_dim=d_model)
 
     def forward(self, x):
-        pos_idx = torch.arange(0, x.size(1)).view(1, -1).repeat(x.size(0), 1).long().to(x.device)
+        pos_idx = torch.arange(0, x.size(1))
+        pos_idx = pos_idx.view(1, -1)
+        pos_idx= pos_idx.repeat(x.size(0), 1).long()
+        # print(pos_idx)
+        pos_idx = pos_idx.to(x.device)
         return self.embedding(pos_idx)
 
 class PositionEncoding(nn.Module):

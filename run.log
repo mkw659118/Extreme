@@ -1445,3 +1445,639 @@ NMAE - 0.2139    NRMSE - 0.2569    MAE - 0.0712    RMSE - 0.8407    Acc_10 - 0.2
 |2025-03-28 16:45:09| NMAE - 0.1786    NRMSE - 0.1897    MAE - 0.1074    RMSE - 1.1196    Acc_10 - 0.1286    train_time - 11.6174    
 |2025-03-28 16:45:46| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 21, 
 |2025-03-28 16:45:46| NMAE - 0.0950    NRMSE - 0.0964    MAE - 0.1206    RMSE - 1.1983    Acc_10 - 0.5217    train_time - 8.4998    
+[2025-03-29 16:42:04] Experiment Start!!!
+[2025-03-29 16:42:15] Experiment Start!!!
+[2025-03-29 16:42:49] Experiment Start!!!
+[2025-03-29 16:43:01] Experiment Start!!!
+[2025-03-29 16:43:14] Experiment Start!!!
+[2025-03-29 16:43:30] Experiment Start!!!
+[2025-03-29 16:43:40] Experiment Start!!!
+[2025-03-29 16:44:03] Experiment Start!!!
+[2025-03-29 16:45:19] Experiment Start!!!
+[2025-03-29 16:45:56] Experiment Start!!!
+[2025-03-29 16:46:36] Experiment Start!!!
+|2025-03-29 16:47:29| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 1, 
+|2025-03-29 16:47:29| NMAE - 0.0095    NRMSE - 0.0099    MAE - 0.0106    RMSE - 0.1089    Acc_10 - 1.0000    train_time - 0.0000    
+|2025-03-29 16:50:51| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-29 16:50:51| NMAE - 0.0489    NRMSE - 0.0647    MAE - 0.0545    RMSE - 0.7084    Acc_10 - 0.8325    train_time - 0.0000    
+[2025-03-29 16:51:15] Experiment Start!!!
+|2025-03-29 17:01:28| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-29 17:01:28| NMAE - 0.0655    NRMSE - 0.0797    MAE - 0.0737    RMSE - 0.8804    Acc_10 - 0.7704    train_time - 0.0000    
+[2025-03-30 15:06:09] Experiment Start!!!
+[2025-03-30 15:06:47] Experiment Start!!!
+[2025-03-30 15:11:51] Experiment Start!!!
+[2025-03-30 15:12:30] Experiment Start!!!
+|2025-03-30 15:15:22| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 15:15:22| NMAE - 0.0607    NRMSE - 0.0751    MAE - 0.0682    RMSE - 0.8271    Acc_10 - 0.8032    train_time - 0.0000    
+[2025-03-30 15:48:00] Experiment Start!!!
+Running at 2025-03-30 15:48: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:48:04] All commands executed successfully.
+
+[2025-03-30 15:48:55] Experiment Start!!!
+Running at 2025-03-30 15:48: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:48:58] All commands executed successfully.
+
+[2025-03-30 15:49:18] Experiment Start!!!
+Running at 2025-03-30 15:49: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:49:22] All commands executed successfully.
+
+[2025-03-30 15:49:56] Experiment Start!!!
+Running at 2025-03-30 15:49: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:49:59] All commands executed successfully.
+
+[2025-03-30 15:50:41] Experiment Start!!!
+Running at 2025-03-30 15:50: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:50: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:52:02] Experiment Start!!!
+Running at 2025-03-30 15:52: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:52:05] All commands executed successfully.
+
+[2025-03-30 15:53:04] Experiment Start!!!
+Running at 2025-03-30 15:53: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:53:07] All commands executed successfully.
+
+[2025-03-30 15:54:28] Experiment Start!!!
+Running at 2025-03-30 15:54: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:54: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:55:55] Experiment Start!!!
+Running at 2025-03-30 15:55: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:56: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:56:40] Experiment Start!!!
+Running at 2025-03-30 15:56: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:56:45] All commands executed successfully.
+
+[2025-03-30 15:57:04] Experiment Start!!!
+Running at 2025-03-30 15:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:57:23] All commands executed successfully.
+
+[2025-03-30 15:58:38] Experiment Start!!!
+Running at 2025-03-30 15:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 15:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 15:59:54] All commands executed successfully.
+
+[2025-03-30 16:00:48] Experiment Start!!!
+Running at 2025-03-30 16:00: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:00:52] All commands executed successfully.
+
+[2025-03-30 16:01:11] Experiment Start!!!
+Running at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:01: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:03:41] Experiment Start!!!
+Running at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:04:05] Experiment Start!!!
+Running at 2025-03-30 16:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:04:24] Experiment Start!!!
+Running at 2025-03-30 16:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:05:14] Experiment Start!!!
+Running at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:06:39] Experiment Start!!!
+Running at 2025-03-30 16:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:07:50] Experiment Start!!!
+Running at 2025-03-30 16:07: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:07: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:09:49] Experiment Start!!!
+Running at 2025-03-30 16:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:10:09] Experiment Start!!!
+Running at 2025-03-30 16:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:11:40] Experiment Start!!!
+Running at 2025-03-30 16:11: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:11:43] All commands executed successfully.
+
+[2025-03-30 16:12:05] Experiment Start!!!
+Running at 2025-03-30 16:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:12:53] Experiment Start!!!
+Running at 2025-03-30 16:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:13:59] Experiment Start!!!
+Running at 2025-03-30 16:13: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:14: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:15:47] Experiment Start!!!
+Running at 2025-03-30 16:15: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:15: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:16: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:16: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:16: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:16:54] Experiment Start!!!
+Running at 2025-03-30 16:16: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:17: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:17:35] Experiment Start!!!
+Running at 2025-03-30 16:17: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:17: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:17: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:18:53] Experiment Start!!!
+Running at 2025-03-30 16:18: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:19:32] Experiment Start!!!
+Running at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:24:16] Experiment Start!!!
+Running at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:26:06] Experiment Start!!!
+Running at 2025-03-30 16:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:26:23] Experiment Start!!!
+Running at 2025-03-30 16:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:27:36] Experiment Start!!!
+Running at 2025-03-30 16:27: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:27: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:27: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:28:03] Experiment Start!!!
+Running at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:28:33] Experiment Start!!!
+Running at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:30:21] Experiment Start!!!
+Running at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:30:59] Experiment Start!!!
+Running at 2025-03-30 16:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:31:39] Experiment Start!!!
+Running at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:32:28] Experiment Start!!!
+Running at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:32: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:33:36] Experiment Start!!!
+Running at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:33: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:34:25] Experiment Start!!!
+Running at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:34: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:35:10] Experiment Start!!!
+Running at 2025-03-30 16:35: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:35: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:35: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:36:39] Experiment Start!!!
+Running at 2025-03-30 16:36: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:36: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:36: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:37: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:37: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset weather --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:43:50] Experiment Start!!!
+Running at 2025-03-30 16:43: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Retrying at 2025-03-30 16:43: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:44:42] Experiment Start!!!
+Running at 2025-03-30 16:44: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:45:10| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:45:10| NMAE - 0.0957    NRMSE - 0.1164    MAE - 0.1075    RMSE - 1.2824    Acc_10 - 0.5704    train_time - 0.0000    
+[2025-03-30 16:45:11] All commands executed successfully.
+
+[2025-03-30 16:45:21] Experiment Start!!!
+Running at 2025-03-30 16:45: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:46:47| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:46:47| NMAE - 0.0635    NRMSE - 0.0792    MAE - 0.0713    RMSE - 0.8732    Acc_10 - 0.7825    train_time - 0.0000    
+[2025-03-30 16:46:48] All commands executed successfully.
+
+[2025-03-30 16:47:37] Experiment Start!!!
+Running at 2025-03-30 16:47: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:47:57| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:47:57| NMAE - 0.0868    NRMSE - 0.1020    MAE - 0.0975    RMSE - 1.1237    Acc_10 - 0.6444    train_time - 0.0000    
+[2025-03-30 16:47:59] All commands executed successfully.
+
+[2025-03-30 16:48:41] Experiment Start!!!
+Running at 2025-03-30 16:48: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+[2025-03-30 16:49:04] Experiment Start!!!
+Running at 2025-03-30 16:49: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:49:46| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:49:46| NMAE - 0.0740    NRMSE - 0.0961    MAE - 0.0831    RMSE - 1.0592    Acc_10 - 0.7125    train_time - 0.0000    
+[2025-03-30 16:49:47] All commands executed successfully.
+
+[2025-03-30 16:49:59] Experiment Start!!!
+Running at 2025-03-30 16:49: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:50:21| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:50:21| NMAE - 0.0940    NRMSE - 0.1126    MAE - 0.1056    RMSE - 1.2411    Acc_10 - 0.5917    train_time - 0.0000    
+[2025-03-30 16:50:23] All commands executed successfully.
+
+[2025-03-30 16:51:56] Experiment Start!!!
+Running at 2025-03-30 16:51: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:52:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:52:19| NMAE - 0.0940    NRMSE - 0.1126    MAE - 0.1056    RMSE - 1.2411    Acc_10 - 0.5917    train_time - 0.0000    
+[2025-03-30 16:52:20] All commands executed successfully.
+
+[2025-03-30 16:52:29] Experiment Start!!!
+Running at 2025-03-30 16:52: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:53:10| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:53:10| NMAE - 0.0762    NRMSE - 0.0978    MAE - 0.0856    RMSE - 1.0779    Acc_10 - 0.7006    train_time - 0.0000    
+[2025-03-30 16:53:11] All commands executed successfully.
+
+[2025-03-30 16:53:58] Experiment Start!!!
+Running at 2025-03-30 16:53: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:54:26| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:54:26| NMAE - 0.0946    NRMSE - 0.1148    MAE - 0.1063    RMSE - 1.2656    Acc_10 - 0.5745    train_time - 0.0000    
+[2025-03-30 16:54:27] All commands executed successfully.
+
+[2025-03-30 16:55:12] Experiment Start!!!
+Running at 2025-03-30 16:55: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:56:38| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:56:38| NMAE - 0.0635    NRMSE - 0.0792    MAE - 0.0713    RMSE - 0.8732    Acc_10 - 0.7825    train_time - 0.0000    
+[2025-03-30 16:56:40] All commands executed successfully.
+
+[2025-03-30 16:57:00] Experiment Start!!!
+Running at 2025-03-30 16:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:58:20| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:58:20| NMAE - 0.0635    NRMSE - 0.0792    MAE - 0.0713    RMSE - 0.8726    Acc_10 - 0.7841    train_time - 0.0000    
+[2025-03-30 16:58:22] All commands executed successfully.
+
+[2025-03-30 16:58:51] Experiment Start!!!
+Running at 2025-03-30 16:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 16:59:18| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 16:59:18| NMAE - 0.0891    NRMSE - 0.1080    MAE - 0.1001    RMSE - 1.1904    Acc_10 - 0.5985    train_time - 0.0000    
+[2025-03-30 16:59:20] All commands executed successfully.
+
+[2025-03-30 16:59:56] Experiment Start!!!
+Running at 2025-03-30 16:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:00:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:00:19| NMAE - 0.0752    NRMSE - 0.1001    MAE - 0.0845    RMSE - 1.1029    Acc_10 - 0.6726    train_time - 0.0000    
+[2025-03-30 17:00:20] All commands executed successfully.
+
+[2025-03-30 17:00:30] Experiment Start!!!
+Running at 2025-03-30 17:00: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:00:52| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:00:52| NMAE - 0.0932    NRMSE - 0.1124    MAE - 0.1047    RMSE - 1.2387    Acc_10 - 0.5976    train_time - 0.0000    
+[2025-03-30 17:00:54] All commands executed successfully.
+
+[2025-03-30 17:02:20] Experiment Start!!!
+Running at 2025-03-30 17:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:03:45| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:03:45| NMAE - 0.0635    NRMSE - 0.0792    MAE - 0.0713    RMSE - 0.8726    Acc_10 - 0.7841    train_time - 0.0000    
+[2025-03-30 17:03:47] All commands executed successfully.
+
+[2025-03-30 17:04:02] Experiment Start!!!
+Running at 2025-03-30 17:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:04:31| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:04:31| NMAE - 0.0891    NRMSE - 0.1080    MAE - 0.1001    RMSE - 1.1904    Acc_10 - 0.5985    train_time - 0.0000    
+[2025-03-30 17:04:33] All commands executed successfully.
+
+[2025-03-30 17:04:56] Experiment Start!!!
+Running at 2025-03-30 17:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:05:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:05:19| NMAE - 0.0932    NRMSE - 0.1124    MAE - 0.1047    RMSE - 1.2387    Acc_10 - 0.5976    train_time - 0.0000    
+[2025-03-30 17:05:21] All commands executed successfully.
+
+[2025-03-30 17:05:45] Experiment Start!!!
+Running at 2025-03-30 17:05: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:06:06| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:06:06| NMAE - 0.0822    NRMSE - 0.0959    MAE - 0.0923    RMSE - 1.0571    Acc_10 - 0.6688    train_time - 0.0000    
+[2025-03-30 17:06:07] All commands executed successfully.
+
+[2025-03-30 17:06:48] Experiment Start!!!
+Running at 2025-03-30 17:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:08:15| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:08:15| NMAE - 0.0635    NRMSE - 0.0792    MAE - 0.0713    RMSE - 0.8732    Acc_10 - 0.7825    train_time - 0.0000    
+[2025-03-30 17:08:16] All commands executed successfully.
+
+[2025-03-30 17:08:44] Experiment Start!!!
+Running at 2025-03-30 17:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:09:53| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:09:53| NMAE - 0.0626    NRMSE - 0.0786    MAE - 0.0703    RMSE - 0.8660    Acc_10 - 0.7882    train_time - 0.0000    
+[2025-03-30 17:09:54] All commands executed successfully.
+
+[2025-03-30 17:10:08] Experiment Start!!!
+Running at 2025-03-30 17:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:11:46| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:11:46| NMAE - 0.0646    NRMSE - 0.0812    MAE - 0.0725    RMSE - 0.8949    Acc_10 - 0.7704    train_time - 0.0000    
+[2025-03-30 17:11:47] All commands executed successfully.
+
+[2025-03-30 17:12:05] Experiment Start!!!
+Running at 2025-03-30 17:12: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001
+|2025-03-30 17:12:48| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:12:48| NMAE - 0.0518    NRMSE - 0.0658    MAE - 0.0582    RMSE - 0.7248    Acc_10 - 0.8623    train_time - 0.0000    
+[2025-03-30 17:12:50] All commands executed successfully.
+
+[2025-03-30 17:20:29] Experiment Start!!!
+|2025-03-30 17:21:13| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:21:13| NMAE - 0.0518    NRMSE - 0.0658    MAE - 0.0582    RMSE - 0.7248    Acc_10 - 0.8623    train_time - 0.0000    
+|2025-03-30 17:22:54| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:22:54| NMAE - 0.0556    NRMSE - 0.0708    MAE - 0.0625    RMSE - 0.7802    Acc_10 - 0.8331    train_time - 0.0000    
+|2025-03-30 17:23:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:23:19| NMAE - 0.0610    NRMSE - 0.0760    MAE - 0.0685    RMSE - 0.8373    Acc_10 - 0.7942    train_time - 0.0000    
+|2025-03-30 17:24:59| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:24:59| NMAE - 0.0555    NRMSE - 0.0707    MAE - 0.0624    RMSE - 0.7795    Acc_10 - 0.8336    train_time - 0.0000    
+|2025-03-30 17:25:21| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:25:21| NMAE - 1.4243    NRMSE - 1.4316    MAE - 1.6000    RMSE - 15.7758    Acc_10 - 0.0013    train_time - 0.0000    
+|2025-03-30 17:26:56| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 17:26:56| NMAE - 0.1127    NRMSE - 0.1335    MAE - 0.1266    RMSE - 1.4715    Acc_10 - 0.4670    train_time - 0.0000    
+[2025-03-30 18:09:08] Experiment Start!!!
+Running at 2025-03-30 18:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:09:23] Experiment Start!!!
+Running at 2025-03-30 18:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:09:49] Experiment Start!!!
+Running at 2025-03-30 18:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:10:14] Experiment Start!!!
+Running at 2025-03-30 18:10: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:20:44] Experiment Start!!!
+Running at 2025-03-30 18:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:21:26] Experiment Start!!!
+Running at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:23:14] Experiment Start!!!
+Running at 2025-03-30 18:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:24:32] Experiment Start!!!
+Running at 2025-03-30 18:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:24:44] Experiment Start!!!
+Running at 2025-03-30 18:24: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:25:02] Experiment Start!!!
+Running at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Retrying at 2025-03-30 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+[2025-03-30 18:26:35] Experiment Start!!!
+Running at 2025-03-30 18:26: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method mahalanobis
+|2025-03-30 18:27:37| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 18:27:37| NMAE - 0.0611    NRMSE - 0.0767    MAE - 0.0686    RMSE - 0.8449    Acc_10 - 0.8024    train_time - 0.0000    
+[2025-03-30 18:27:38] All commands executed successfully.
+
+[2025-03-30 18:28:46] Experiment Start!!!
+Running at 2025-03-30 18:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+Retrying at 2025-03-30 18:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+Retrying at 2025-03-30 18:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:29:31] Experiment Start!!!
+Running at 2025-03-30 18:29: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+[2025-03-30 18:29:35] All commands executed successfully.
+
+[2025-03-30 18:30:31] Experiment Start!!!
+Running at 2025-03-30 18:30: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method dtw
+|2025-03-30 18:31:05| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-03-30 18:31:05| NMAE - 0.0685    NRMSE - 0.0829    MAE - 0.0770    RMSE - 0.9135    Acc_10 - 0.7509    train_time - 0.0000    
+[2025-03-30 18:31:07] All commands executed successfully.
+

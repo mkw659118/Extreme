@@ -7,7 +7,7 @@ from datetime import datetime
 import pickle
 from itertools import product
 
-from main import get_experiment_name
+from run_train import get_experiment_name
 from utils.exp_config import get_config
 
 
@@ -23,7 +23,7 @@ def once_experiment(exper_name, hyper_dict, grid_search=0, retrain=1, debug=0):
 
     # 再跑最佳参数实验
     commands = []
-    command = f"python main.py --exp_name {exper_name} --retrain 1"
+    command = f"python run_train.py --exp_name {exper_name} --retrain 1"
     commands.append(command)
 
     commands = [add_parameter(command, best_hyper) for command in commands]
@@ -145,7 +145,7 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
             current_best_value = None
             for value in hyper_values:
                 # 根据目前已有最优超参数 + 当前超参数构建命令
-                command = f"python main.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
+                command = f"python run_train.py --exp_name {exp_name} --hyper_search 1 --retrain {retrain} "
 
                 # 先写入之前已经确定的 best_hyper
                 for best_param_key, best_param_value in best_hyper.items():

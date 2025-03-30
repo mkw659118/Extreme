@@ -1,9 +1,9 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
+import os
 import torch
 from utils.exp_run import RunExperiments
 torch.set_default_dtype(torch.float32)
-
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'

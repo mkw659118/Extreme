@@ -4,7 +4,7 @@
 
 import sys
 import os
-from c_exp_model import Model
+from c_model_control import Model
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))

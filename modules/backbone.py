@@ -38,17 +38,12 @@ class Backbone(torch.nn.Module):
         # self.layer_norm = torch.nn.LayerNorm(self.rank)
         self.fc = torch.nn.Linear(config.rank, 1)
 
-    def forward(self, x):
-        code_idx = x[:, :, 0].long()
-        temporal_idx = x[:, :, 1:5]
-        x_seq = x[:, :, -1]
-
-        x_seq = self.seasonality_and_trend_decompose(x_seq).unsqueeze(-1)
-
+    def forward(self, x, x_mark):
+        # print(x.shape, x_mark.shape)
+        x_seq = self.seasonality_and_trend_decompose(x).unsqueeze(-1)
         x_enc = self.projection(x_seq)
-
-        x_enc += self.temporal_embedding(temporal_idx)
         x_enc += self.position_embedding(x_enc)
+        # x_enc += self.tempora l_embedding(x_mark)
         # x_enc += self.fund_embedding(code_idx)
         x_enc = self.predict_linear(x_enc.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
 

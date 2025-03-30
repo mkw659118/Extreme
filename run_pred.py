@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
-from b_data_dataset import custom_collate_fn, TensorDataset
-from main import get_experiment_name
-from c_exp_model import Model
+from b_data_control import custom_collate_fn, TensorDataset
+from run_train import get_experiment_name
+from c_model_control import Model
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -131,7 +131,7 @@ def pred(idx):
 def run(config):
     # 多基金
     # pred(0)
-    for i in range(100):
+    for i in range(50):
         pred(i)
 
 if __name__ == '__main__':

@@ -7,11 +7,10 @@ import pandas as pd
 import pickle
 from sqlalchemy import create_engine, text
 from utils.data_scaler import get_scaler
-import a_data_center
 from modules.load_data.create_window_dataset import create_window_dataset
 
-# pred_value = 'nav'
-pred_value = 'accnav'
+pred_value = 'nav'
+# pred_value = 'accnav'
 
 def get_data(code_idx):
     address = os.listdir(f'./datasets/financial/{pred_value}/')
@@ -67,35 +66,55 @@ def generate_data(start_date, end_date, code_idx):
     return data
 
 
+
+
 def get_financial_data(start_date, end_date, idx, config):
     try:
         data = get_data(idx)
     except Exception as e:
         data = generate_data(start_date, end_date, idx)
-    # 过滤掉数据库存储数据异常 2025年3月17日10:30:47
-    data = np.stack([df for df in data if int(df[1]) <= int(end_date.split('-')[0])])
     data = data.astype(np.float32)
 
-    for i in range(len(data)):
-        if int(data[i][1]) > 2025:
-            print(data[i])
-
     x, y = data, data[:, -1].astype(np.float32)
+    # x, y = data[:, -1], data[:, -1].astype(np.float32)
     scaler = None
     if not config.multi_dataset:
         scaler = get_scaler(y, config)
         y = scaler.transform(y)
+        # x = scaler.transform(x)
         x[:, -1] = x[:, -1].astype(np.float32)
         temp = x[:, -1].astype(np.float32)
         x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
-    x = x.astype(np.float32)
+
+    # x = x.astype(np.float32)
     y = y.astype(np.float32)
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
-    for i in range(len(X_window)):
-        if X_window[i][0][1] > 2025:
-            print(X_window[i][0])
+    # X_window, y_window = filter_jump_sequences(X_window, y_window, threshold=0.5, mode='absolute')
     return X_window, y_window, scaler
 
+def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
+    """
+    X_window: [n, seq_len, d] numpy array，其中最后一个维度是 value
+    y_window: [n, ...]，标签
+    返回：
+        - 过滤后的 X_window
+        - 对应的 y_window
+        - 保留的索引 idx（相对于原始）
+    """
+    values = X_window[:, :, -1]  # 提取 value 部分
+    diff = values[:, 1:] - values[:, :-1]
+
+    if mode == 'absolute':
+        mask = np.any(np.abs(diff) > threshold, axis=1)
+    elif mode == 'relative':
+        prev = np.clip(values[:, :-1], 1e-5, None)
+        rel_diff = np.abs(diff / prev)
+        mask = np.any(rel_diff > threshold, axis=1)
+    else:
+        raise ValueError("mode must be 'absolute' or 'relative'")
+    idx = np.where(~mask)[0]
+    X_window, y_window = X_window[idx], y_window[idx]
+    return X_window, y_window
 
 
 def normorlize(data, value_mean, value_std):
@@ -105,8 +124,6 @@ def normorlize(data, value_mean, value_std):
     data[:, :, -1] = (temp - value_mean) / value_std
     return data
 
-def check_data():
-    return
 
 def multi_dataset(config):
     all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []

@@ -93,7 +93,7 @@ class Logger:
         for key in result_error:
             string += f'{key}={result_error[key]:.4f} '
         string += f'time={sum_time:.1f} s'
-        self.log(string)
+        self.only_print(string)
 
     def show_epoch_error(self, runId, epoch, monitor, epoch_loss, result_error, train_time):
         if self.config.verbose and epoch % self.config.verbose == 0:
@@ -103,7 +103,7 @@ class Logger:
             for key in result_error:
                 string += f'v{key}={result_error[key]:.4f} '
             string += f' time={sum(train_time):.1f} s '
-            self.log(string)
+            self.only_print(string)
 
     def show_test_error(self, runId, monitor, result_error, sum_time):
         string = f'Round={runId + 1} BestEpoch={monitor.best_epoch:3d} '

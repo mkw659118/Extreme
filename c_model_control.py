@@ -1,6 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 每次开展新实验都改一下这里
+from layers.metric.distance import PairwiseLoss
 from utils.model_basic import BasicModel
 from modules.backbone import Backbone
 from baselines.TimeLLM import timeLLM
@@ -18,6 +19,7 @@ class Model(BasicModel):
 
         if config.model == 'ours':
             self.model = Backbone(self.input_size, config)
+            self.distance = PairwiseLoss(method=config.dis_method, reduction= 'mean')
         elif config.model == 'mlp':
             self.model = MLP(input_dim=self.input_size * config.seq_len, hidden_dim=self.hidden_size, output_dim=config.pred_len, n_layer=config.num_layers, init_method='xavier')
         elif config.model in ['rnn', 'lstm', 'gru']:
@@ -52,4 +54,5 @@ class Model(BasicModel):
                 loss += self.model.encoder.layers[i][3].aux_loss
         except:
             pass
+        loss += 1e-3 * self.distance(pred, label)
         return loss

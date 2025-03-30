@@ -27,6 +27,7 @@ class FixedEmbedding(nn.Module):
 class TemporalEmbedding(nn.Module):
     def __init__(self, d_model, embed_type='fixed', freq='h'):
         super(TemporalEmbedding, self).__init__()
+        self.d_model = d_model
         # minute_size = 4
         # hour_size = 24
         weekday_size = 7
@@ -44,11 +45,13 @@ class TemporalEmbedding(nn.Module):
 
     def forward(self, x):
         x = x.long()
-        year_x = self.year_embed(x[:, :, 0])
-        month_x = self.month_embed(x[:, :, 1])
-        day_x = self.day_embed(x[:, :, 2])
-        weekday_x = self.weekday_embed(x[:, :, 3])
+        x_enc = torch.zeros(x.shape[0], x.shape[1], self.d_model, device=x.device)
+        # x_enc += self.year_embed(x[:, :, 0])
+        x_enc += self.month_embed(x[:, :, 1])
+        x_enc += self.day_embed(x[:, :, 2])
+        x_enc += self.weekday_embed(x[:, :, 3])
+        return x_enc
+
         # minute_x = self.minute_embed(x[:, :, 4]) if hasattr(self, 'minute_embed') else 0.
         # hour_x = self.hour_embed(x[:, :, 3])
         # return hour_x + weekday_x + day_x + month_x + minute_x
-        return year_x + month_x + day_x + weekday_x

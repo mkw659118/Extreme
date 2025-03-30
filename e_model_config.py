@@ -20,8 +20,8 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     norm_method: str = 'rms'
     ffn_method: str = 'moe'
     att_method: str = 'self'
-
-    dataset: str = 'financial'
+    dis_method: str = 'dtw'
+    # dataset: str = 'financial'
     multi_dataset: bool = False
     idx: int = 0
 

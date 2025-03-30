@@ -15,7 +15,8 @@ hyper_dict = {
     'norm': ['rms'],
     'ffn': ['moe'],
     'loss_coef': [0.001],
-    'idx': [i for i in range(2000)]
+    'dis_method': ['dtw'],  # 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'
+    # 'idx': [i for i in range(50)]
 }
 
 ######################################################################################################
@@ -35,6 +36,7 @@ def Baselines():
     # once_experiment('TimesNetConfig', hyper_dict)
     # once_experiment('timeLLMConfig', hyper_dict)
     return True
+
 
 def Ablation():
     hyper_dict = {
