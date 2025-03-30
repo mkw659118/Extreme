@@ -34,34 +34,35 @@ def generate_data(start_date, end_date, code_idx):
     # 遍历所有股票类别
     for group_idx, (group_name, group_list) in enumerate(group_map.items()):
         for group_data in group_list:
-            code_list = group_data['code_list']
-            try:
-                sql = text(f"SELECT fund_code, date, {pred_value} FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
-                df = pd.read_sql_query(
-                    sql.bindparams(codes=tuple(code_list), start=start_date, end=end_date),
-                    engine
-                )
-            except Exception as e:
-                print(f"数据库查询失败: {str(e)}")
-                raise e
+            if group_name == 'stock1' and group_data['industry_code'] in ['270000', '480000']:
+                code_list = group_data['code_list']
+                try:
+                    sql = text(f"SELECT fund_code, date, {pred_value} FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
+                    df = pd.read_sql_query(
+                        sql.bindparams(codes=tuple(code_list), start=start_date, end=end_date),
+                        engine
+                    )
+                except Exception as e:
+                    print(f"数据库查询失败: {str(e)}")
+                    raise e
 
-            # 为每组的股票做映射，获得分组可以去其他地方做
-            df = df.to_numpy()
-            unique_values = np.unique(df[:, 0])
-            index_mapping = {value: idx for idx, value in enumerate(unique_values)}
-            values = [[] for _ in range(len(unique_values))]
-            dates = [[] for _ in range(len(unique_values))]
-            for i in range(len(df)):
-                idx = index_mapping[df[i][0]]
-                dates[idx].append([df[i][1].year, df[i][1].month, df[i][1].day, df[i][1].weekday()])
-                values[idx].append(float(df[i][2]))
+                # 为每组的股票做映射，获得分组可以去其他地方做
+                df = df.to_numpy()
+                unique_values = np.unique(df[:, 0])
+                index_mapping = {value: idx for idx, value in enumerate(unique_values)}
+                values = [[] for _ in range(len(unique_values))]
+                dates = [[] for _ in range(len(unique_values))]
+                for i in range(len(df)):
+                    idx = index_mapping[df[i][0]]
+                    dates[idx].append([df[i][1].year, df[i][1].month, df[i][1].day, df[i][1].weekday()])
+                    values[idx].append(float(df[i][2]))
 
-            os.makedirs(f'./datasets/financial/{pred_value}/', exist_ok=True)
-            for key, value in index_mapping.items():
-                now_data = np.concatenate([np.array([key] * len(dates[value])).reshape(-1, 1), np.array(dates[value]), np.array(values[value]).reshape(-1, 1)], axis=1)
-                with open(f'./datasets/financial/{pred_value}/{key}.pkl', 'wb') as f:
-                    pickle.dump(now_data, f)
-                    print(f'./datasets/financial/{pred_value}/{key}.pkl 存储完毕')
+                os.makedirs(f'./datasets/financial/{pred_value}/', exist_ok=True)
+                for key, value in index_mapping.items():
+                    now_data = np.concatenate([np.array([key] * len(dates[value])).reshape(-1, 1), np.array(dates[value]), np.array(values[value]).reshape(-1, 1)], axis=1)
+                    with open(f'./datasets/financial/{pred_value}/{key}.pkl', 'wb') as f:
+                        pickle.dump(now_data, f)
+                        print(f'./datasets/financial/{pred_value}/{key}.pkl 存储完毕')
     data = get_data(code_idx)
     return data
 

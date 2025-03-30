@@ -46,6 +46,8 @@ class PairwiseLoss(nn.Module):
             return SoftDTW(use_cuda=True, gamma=0.1)
         elif self.method == 'mahalanobis':
             return self._mahalanobis_distance
+        elif self.method == 'none':
+            return lambda x, y: 0
         else:
             raise ValueError(f"Unsupported method: {self.method}")
 
@@ -76,6 +78,9 @@ class PairwiseLoss(nn.Module):
         if len(x.shape) == 2 and self.method == 'dtw':
             x = x.unsqueeze(-1)
             y = y.unsqueeze(-1)
+
+        if self.method == 'none':
+            return 0.0
 
         loss = self.func(x, y)
         if self.reduction == 'mean':

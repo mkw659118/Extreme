@@ -12,7 +12,7 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     rank: int = 64
     device: str = 'cuda'
     epochs: int = 200
-    patience: int = 20
+    patience: int = 30
     verbose: int = 1
     try_exp: int = 1
     num_layers: int = 4
