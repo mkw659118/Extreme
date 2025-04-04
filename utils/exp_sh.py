@@ -55,7 +55,8 @@ def run_and_get_metric(cmd_str, config, chosen_hyper, debug=False):
     if debug:
         print(log_filename, chosen_hyper)
     else:
-        subprocess.run(cmd_str, shell=True)
+        # subprocess.run(cmd_str, shell=True)
+        pass
 
     metric_file_address = f'./results/metrics/' + get_experiment_name(config)[0]
     this_expr_metrics = pickle.load(open(metric_file_address + '.pkl', 'rb'))
@@ -179,13 +180,13 @@ def sequential_hyper_search(exp_name, hyper_dict, retrain, debug):
                         local_best_metric = current_metric
                         current_best_value = value
 
-                # f.write(f"Value: {value}, Metric: {current_metric}\n")
-                print(f"Value: {value}, Metric: {current_metric}")
+                f.write(f"Value: {value}, Metric: {current_metric:5.4f}\n")
+                print(f"Value: {value}, Metric: {current_metric:5.4f}")
 
             # 结束后，更新最优
             best_hyper[hyper_name] = current_best_value
-            print(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}")
-            # f.write(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric}\n")
+            print(f"\n\n==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric:5.4f}")
+            f.write(f"==> Best {hyper_name}: {current_best_value}, local_best_metric: {local_best_metric:5.4f}\n")
 
         # 全部结束后，打印并写日志
         # f.write(f"The Best Hyperparameters: {best_hyper}\n")
@@ -221,3 +222,12 @@ def run_command(command, log_file, retry_count=0):
                 f.write(f"Command failed, retrying in 3 seconds: {command}\n")
             retry_count += 1
             time.sleep(3)  # 等待一段时间后重试
+
+def log_message(message):
+    log_file = "run.log"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(log_file, 'a') as f:
+        if message[0] == '\n':
+            message = message[1:]
+            f.write('\n')
+        f.write(f"[{timestamp}] {message}\n")

@@ -9,15 +9,14 @@ from utils.data_scaler import get_scaler
 
 
 def get_lottery(datasets, config):
-    idx = '号'
     df = pd.read_excel('./datasets/lottery/pl3_desc.xls', header=1)
     df = df.iloc[::-1].reset_index(drop=True)
     timestamps = pd.to_datetime(df['开奖日期'])
     timestamps = np.array([[ts.year, ts.month, ts.day, ts.weekday()] for ts in timestamps])
-    x = np.array(df[idx]).reshape(-1, 1)
+    x = np.array(df['号']).reshape(-1, 1)
     # timestamps
     x = np.concatenate((timestamps, x), axis=-1)
-    y = np.array(df[idx]).reshape(-1, )
+    y = np.array(df['号']).reshape(-1, )
 
     # 根据训练集对input进行特征归一化
     scaler = get_scaler(y, config)

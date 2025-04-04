@@ -2126,3 +2126,205 @@ Running at 2025-04-04 14:28: python run_train.py --exp_name TestConfig --retrain
 |2025-04-04 14:50:10| NMAE - 0.5586    NRMSE - 0.5532    MAE - 2.5306    RMSE - 29.0676    Acc_10 - 0.1009    train_time - 0.0000    
 [2025-04-04 14:50:12] All commands executed successfully.
 
+[2025-04-04 16:20:12] Experiment Start!!!
+Running at 2025-04-04 16:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 16:20:23] Experiment Start!!!
+Running at 2025-04-04 16:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 16:21:52] Experiment Start!!!
+Running at 2025-04-04 16:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 16:22:24] Experiment Start!!!
+Running at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 16:22:38] Experiment Start!!!
+Running at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 16:22:45] Experiment Start!!!
+Running at 2025-04-04 16:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+|2025-04-04 16:23:11| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:23:11| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+[2025-04-04 16:23:12] All commands executed successfully.
+
+[2025-04-04 16:23:43] Experiment Start!!!
+Running at 2025-04-04 16:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+|2025-04-04 16:24:06| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:24:06| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+[2025-04-04 16:24:08] All commands executed successfully.
+
+
+[2025-04-04 16:28:04] Experiment Start!!!
+[2025-04-04 16:30:15] Experiment Start!!!
+|2025-04-04 16:30:41| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:30:41| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+|2025-04-04 16:31:06| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:31:06| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+Running at 2025-04-04 16:31: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none --revin False
+|2025-04-04 16:31:30| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:31:30| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+[2025-04-04 16:31:31] All commands executed successfully.
+
+
+[2025-04-04 16:35:22] Experiment Start!!!
+|2025-04-04 16:35:48| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:35:48| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+|2025-04-04 16:36:13| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:36:13| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+Running at 2025-04-04 16:36: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none --revin False
+|2025-04-04 16:36:38| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:36:38| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+[2025-04-04 16:36:39] All commands executed successfully.
+
+
+[2025-04-04 16:39:45] Experiment Start!!!
+Running at 2025-04-04 16:39: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+
+[2025-04-04 16:39:59] Experiment Start!!!
+Running at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Retrying at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+
+[2025-04-04 16:40:19] Experiment Start!!!
+Running at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Retrying at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Retrying at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Retrying at 2025-04-04 16:40: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+
+[2025-04-04 16:40:58] Experiment Start!!!
+|2025-04-04 16:41:24| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:41:24| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+|2025-04-04 16:41:55| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:41:55| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+|2025-04-04 16:42:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:42:19| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+Running at 2025-04-04 16:42: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 16:42:44| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:42:44| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 0.0000    
+[2025-04-04 16:42:45] All commands executed successfully.
+
+
+[2025-04-04 16:43:40] Experiment Start!!!
+|2025-04-04 16:44:06| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:44:06| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+
+[2025-04-04 16:44:33] Experiment Start!!!
+|2025-04-04 16:44:59| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:44:59| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+|2025-04-04 16:45:24| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:45:24| NMAE - 0.1295    NRMSE - 0.1647    MAE - 0.0943    RMSE - 1.1836    Acc_10 - 0.4895    train_time - 0.0000    
+|2025-04-04 16:45:52| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:45:52| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+
+[2025-04-04 16:46:04] Experiment Start!!!
+Running at 2025-04-04 16:46: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+Retrying at 2025-04-04 16:46: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin True --dis_method none --fft True
+|2025-04-04 16:46:53| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:46:53| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 0.0000    
+[2025-04-04 16:46:55] All commands executed successfully.
+
+
+[2025-04-04 16:51:11] Experiment Start!!!
+|2025-04-04 16:51:37| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:51:37| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 2.6005    
+|2025-04-04 16:52:01| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:52:01| NMAE - 0.1295    NRMSE - 0.1647    MAE - 0.0943    RMSE - 1.1836    Acc_10 - 0.4895    train_time - 1.7904    
+|2025-04-04 16:52:28| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:52:28| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 2.6620    
+|2025-04-04 16:52:53| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:52:53| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6382    
+Running at 2025-04-04 16:52: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 16:53:18| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:53:18| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.5876    
+[2025-04-04 16:53:19] All commands executed successfully.
+
+
+[2025-04-04 16:56:25] Experiment Start!!!
+|2025-04-04 16:56:49| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:56:49| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6255    
+|2025-04-04 16:57:13| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:57:13| NMAE - 0.1105    NRMSE - 0.1363    MAE - 0.0804    RMSE - 0.9796    Acc_10 - 0.5317    train_time - 1.5572    
+|2025-04-04 16:57:38| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:57:38| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6056    
+|2025-04-04 16:58:06| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:58:06| NMAE - 0.1294    NRMSE - 0.1646    MAE - 0.0942    RMSE - 1.1827    Acc_10 - 0.4875    train_time - 2.8941    
+Running at 2025-04-04 16:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 16:58:31| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 16:58:31| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6266    
+[2025-04-04 16:58:33] All commands executed successfully.
+
+
+
+[2025-04-04 17:03:54] Experiment Start!!!
+Running at 2025-04-04 17:03: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 17:04:18| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 17:04:18| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6444    
+[2025-04-04 17:04:19] All commands executed successfully.
+
+
+[2025-04-04 17:06:33] Experiment Start!!!
+Running at 2025-04-04 17:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+
+[2025-04-04 17:06:56] Experiment Start!!!
+
+
+==> Best fft: True, local_best_metric: 0.07976977955983129
+
+
+==> Best revin: False, local_best_metric: 0.07976977955983129
+
+
+==> Best dis_method: none, local_best_metric: 0.07976977955983129
+Running at 2025-04-04 17:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 17:07:20| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 17:07:20| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6006    
+
+[2025-04-04 17:07:25] Experiment Start!!!
+==> Best fft: True, local_best_metric: 0.07976977955983129
+==> Best revin: False, local_best_metric: 0.07976977955983129
+==> Best dis_method: none, local_best_metric: 0.07976977955983129
+Running at 2025-04-04 17:07: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 17:07:49| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 17:07:49| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6681    
+[2025-04-04 17:07:50] All commands executed successfully.
+
+
+[2025-04-04 17:08:04] Experiment Start!!!
+==> Best fft: True, local_best_metric: 0.0798
+==> Best revin: False, local_best_metric: 0.0798
+==> Best dis_method: none, local_best_metric: 0.0798
+Running at 2025-04-04 17:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 17:08:28| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 17:08:28| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.7605    
+[2025-04-04 17:08:30] All commands executed successfully.
+
+
+[2025-04-04 17:09:58] Experiment Start!!!
+Value: True, Metric: 0.0798
+Value: False, Metric: 0.0798
+==> Best fft: True, local_best_metric: 0.0798
+Value: False, Metric: 0.0798
+Value: True, Metric: 0.0798
+==> Best revin: False, local_best_metric: 0.0798
+Value: none, Metric: 0.0798
+Value: cosine, Metric: 0.0798
+==> Best dis_method: none, local_best_metric: 0.0798
+Running at 2025-04-04 17:09: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 17:10:22| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 17:10:22| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6052    
+[2025-04-04 17:10:23] All commands executed successfully.
+

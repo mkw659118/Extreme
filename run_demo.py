@@ -2,7 +2,7 @@
 # Author : yuxiang Zeng
 import subprocess
 
-from utils.exp_sh import once_experiment
+from utils.exp_sh import once_experiment, log_message
 from datetime import datetime
 
 # 在这里写下超参数探索空间
@@ -10,12 +10,14 @@ hyper_dict = {
     'rounds': [1],
     'rank': [64],
     'num_layers': [4],
-    'dataset': ['lottery'],  # weather financial lottery
+    'dataset': ['financial'],  # weather financial lottery
     'att': ['self'],  
     'norm': ['rms'],
     'ffn': ['moe'],
     'loss_coef': [0.001],
-    'dis_method': ['none'],  #
+    'fft': [True, False],
+    'revin': [False, True],
+    'dis_method': ['none', 'cosine'],  #
     # 'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
     # 'idx': [i for i in range(50)]
 }
@@ -54,14 +56,8 @@ def Our_model(hyper=None):
     return True
 
 
-def log_message(message):
-    log_file = "run.log"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(log_file, 'a') as f:
-        f.write(f"[{timestamp}] {message}\n")
-
 if __name__ == "__main__":
-    log_message("Experiment Start!!!")
+    log_message("\nExperiment Start!!!")
     experiment_run()
     log_message("All commands executed successfully.\n")
 

@@ -57,6 +57,7 @@ def RunOnce(config, runId, model, datamodule, log):
 
             # 训练一个epoch并记录耗时
             train_loss, time_cost = model.train_one_epoch(datamodule)
+            train_time.append(time_cost)
 
             # 验证集上评估当前模型误差
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')

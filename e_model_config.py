@@ -15,14 +15,18 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     verbose: int = 1
     try_exp: int = 1
     num_layers: int = 4
+    multi_dataset: bool = False
+    dataset: str = 'financial'
 
+    # 组件专区
     norm_method: str = 'rms'
     ffn_method: str = 'moe'
     att_method: str = 'self'
     dis_method: str = 'dtw'
-    # dataset: str = 'financial'
-    multi_dataset: bool = False
+    revin: bool = False
+    fft: bool = False
     idx: int = 0
+
 
 
 @dataclass
