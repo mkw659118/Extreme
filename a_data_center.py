@@ -3,6 +3,7 @@
 import numpy as np
 from b_data_control import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
+from modules.load_data.get_lottery import get_lottery
 from modules.load_data.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders
 from utils.data_spliter import get_split_dataset
@@ -15,8 +16,10 @@ from utils.exp_config import get_config
 def load_data(config):
     if config.dataset == 'financial':
         all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config.idx, config)
-    else:
+    elif config.dataset == 'weather':
         all_x, all_y, scaler = get_ts(config.dataset, config)
+    elif config.dataset == 'lottery':
+        all_x, all_y, scaler = get_lottery(config.dataset, config)
     return all_x, all_y, scaler
 
 

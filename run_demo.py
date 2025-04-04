@@ -10,12 +10,13 @@ hyper_dict = {
     'rounds': [1],
     'rank': [64],
     'num_layers': [4],
-    'dataset': ['financial'],  # weather financial
+    'dataset': ['lottery'],  # weather financial lottery
     'att': ['self'],  
     'norm': ['rms'],
     'ffn': ['moe'],
     'loss_coef': [0.001],
-    'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
+    'dis_method': ['none'],  #
+    # 'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
     # 'idx': [i for i in range(50)]
 }
 

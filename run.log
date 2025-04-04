@@ -2091,3 +2091,38 @@ Running at 2025-03-30 18:30: python run_train.py --exp_name TestConfig --retrain
 [2025-03-30 19:04:56] Experiment Start!!!
 [2025-03-30 19:05:22] Experiment Start!!!
 [2025-03-30 19:05:27] Experiment Start!!!
+[2025-04-04 14:19:29] Experiment Start!!!
+[2025-04-04 14:19:50] Experiment Start!!!
+Running at 2025-04-04 14:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:19: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:20:24] Experiment Start!!!
+Running at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:20:42] Experiment Start!!!
+Running at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:20: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:21:14] Experiment Start!!!
+Running at 2025-04-04 14:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+Retrying at 2025-04-04 14:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:21:40] Experiment Start!!!
+Running at 2025-04-04 14:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:22:47] Experiment Start!!!
+Running at 2025-04-04 14:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+[2025-04-04 14:28:57] Experiment Start!!!
+Running at 2025-04-04 14:28: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset lottery --att self --norm rms --ffn moe --loss_coef 0.001 --dis_method none
+|2025-04-04 14:50:10| Dataset : LOTTERY, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 14:50:10| NMAE - 0.5586    NRMSE - 0.5532    MAE - 2.5306    RMSE - 29.0676    Acc_10 - 0.1009    train_time - 0.0000    
+[2025-04-04 14:50:12] All commands executed successfully.
+

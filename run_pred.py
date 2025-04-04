@@ -9,7 +9,7 @@ from tqdm import *
 import numpy as np
 from b_data_control import custom_collate_fn, TensorDataset
 from run_train import get_experiment_name
-from c_model_control import Model
+from c_model_center import Model
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter

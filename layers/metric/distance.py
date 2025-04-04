@@ -3,7 +3,6 @@
 
 import torch
 import torch.nn as nn
-from tslearn.metrics import dtw
 import torch.nn.functional as F
 
 from torchmetrics.functional.pairwise import (

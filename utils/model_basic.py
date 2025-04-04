@@ -3,6 +3,8 @@
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月27日23:33:32）
 import torch
 from time import time
+
+from f_loss_function import compute_loss
 from utils.exp_metrics import ErrorMetrics
 from utils.model_trainer import get_loss_function, get_optimizer
 
@@ -32,7 +34,7 @@ class BasicModel(torch.nn.Module):
             all_item = [item.to(self.config.device) for item in train_batch]
             inputs, label = all_item[:-1], all_item[-1]
             pred = self.forward(*inputs)
-            loss = self.compute_loss(pred, label)
+            loss = compute_loss(self, pred, label)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
