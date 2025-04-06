@@ -38,10 +38,10 @@ def compute_regression_metrics(realVec, estiVec):
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
 
     return {
-        'NMAE': NMAE,
-        'NRMSE': NRMSE,
         'MAE': MAE,
         'RMSE': RMSE,
+        'NMAE': NMAE,
+        'NRMSE': NRMSE,
         'Acc_10': Acc[2],
     }
 

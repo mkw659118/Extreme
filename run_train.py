@@ -14,6 +14,8 @@ def get_experiment_name(config):
          f"Bs : {config.bs}, "
          f"Rank : {config.rank}, "
          f"Fundidx : {config.idx}, "
+         f"Seq_len : {config.seq_len}, "
+         f"Pred_len : {config.pred_len}, "
     )
     return log_filename, exper_detail
 

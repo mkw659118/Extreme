@@ -72,7 +72,10 @@ class Logger:
         import time
         if string[0] == '\n':
             print('\n', end='')
+            self.logger.info('')
             string = string[1:]
+            self.logger.info(string)
+            return True
         final_string = time.strftime('|%Y-%m-%d %H:%M:%S| ', time.localtime(time.time())) + string
         self.only_print(string)
         self.logger.info(final_string)
@@ -90,6 +93,7 @@ class Logger:
 
     def show_results(self, result_error, sum_time):
         string = ''
+        string += f'Valid{self.config.monitor_metrics}={result_error[self.config.monitor_metrics] * -1:.4f} ｜ '
         for key in result_error:
             string += f'{key}={result_error[key]:.4f} '
         string += f'time={sum_time:.1f} s'
@@ -98,7 +102,7 @@ class Logger:
     def show_epoch_error(self, runId, epoch, monitor, epoch_loss, result_error, train_time):
         if self.config.verbose and epoch % self.config.verbose == 0:
             self.only_print(f"\033[1;38;2;151;200;129m{self.exper_detail}\033[0m")
-            self.only_print(f'Best Epoch {monitor.best_epoch} {self.config.monitor_metrics} = {monitor.best_score * -1:.4f}  now = {(epoch - monitor.best_epoch):d}')
+            self.only_print(f'Best Epoch {monitor.best_epoch} {self.config.monitor_metric} = {monitor.best_score * -1:.4f}  now = {(epoch - monitor.best_epoch):d}')
             string = f'Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.4f} '
             for key in result_error:
                 string += f'v{key}={result_error[key]:.4f} '
@@ -107,8 +111,9 @@ class Logger:
 
     def show_test_error(self, runId, monitor, result_error, sum_time):
         string = f'Round={runId + 1} BestEpoch={monitor.best_epoch:3d} '
+        string += f'Valid{self.config.monitor_metric}={monitor.best_score * -1:.4f} ｜ '
         for key in result_error:
-            string += f'v{key}={result_error[key]:.4f} '
+            string += f'{key}={result_error[key]:.4f} '
         string += f' time={sum_time:.1f} s '
         self.log(string)
         print()
@@ -125,14 +130,11 @@ class Logger:
             formatted_str += f"     {line_str},\n"
         return f"{{\n{formatted_str}}}".strip(',\n')
 
-
     def clear_the_useless_logs(self):
-        def delete_small_log_files(directory):
-            # 获取所有.log文件
+        def delete_logs_without_round1(directory):
+            # 获取所有 .log 文件
             log_files = glob.glob(os.path.join(directory, '*.md'))
-            number_lines = 15
-
-            # 遍历所有的.log文件
+            # 遍历所有的 .log 文件
             for file_path in log_files:
                 try:
                     # 检查文件是否存在且可读
@@ -140,24 +142,26 @@ class Logger:
                         print(f"Cannot access '{file_path}'. Skipping.")
                         continue
 
-                    # 使用with语句安全地打开文件
-                    with open(file_path, 'r') as file:
-                        lines = file.readlines()
+                    # 读取文件内容
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        content = file.read()
 
-                    # 检查行数并删除文件
-                    if len(lines) < number_lines:
-                        os.remove(file_path)  # 删除文件
-                        print(f"Deleted '{file_path}' as it had less than {number_lines} lines.")
+                    # 如果没有包含 "Round=1"，就删除
+                    if "Round=1" not in content:
+                        os.remove(file_path)
+                        print(f"Deleted '{file_path}' as it does not contain 'Round=1'.")
 
                 except OSError as e:
                     print(f"OS error processing file {file_path}: {e}")
                 except Exception as e:
                     print(f"Error processing file {file_path}: {e}")
 
-        root_directory = f'./results/'
+        root_directory = './results/'
         for dirpath, dirnames, filenames in os.walk(root_directory):
             if 'log' in dirpath:
-                delete_small_log_files(dirpath)
+                delete_logs_without_round1(dirpath)
+
+
 
     def delete_empty_directories(self, dir_path):
         import os

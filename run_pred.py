@@ -59,8 +59,8 @@ def predict(model, data_input, label, scaler, config):
 def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
-    if inputs.shape[-1] != 1:
-        inputs, = inputs[:, -1]
+    # if inputs.shape[-1] != 1:
+        # inputs, = inputs[:, -1]
 
     inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
     # print(label)
@@ -130,9 +130,9 @@ def pred(idx):
 
 def run(config):
     # 多基金
-    # pred(0)
-    for i in range(50):
-        pred(i)
+    pred(0)
+    # for i in range(50):
+    #     pred(i)
 
 if __name__ == '__main__':
     from utils.exp_config import get_config

@@ -440,13 +440,17 @@ class FlattenHead(nn.Module):
 class Timer(nn.Module):
     def __init__(self, configs):
         super().__init__()
-        self.patch_len = configs.patch_len
-        self.stride = configs.patch_len
-        self.d_model = configs.d_model
-        self.d_ff = configs.d_ff
-        self.layers = configs.e_layers
-        self.n_heads = configs.n_heads
-        self.dropout = configs.dropout
+        self.patch_len = 96
+        self.stride = 96
+        self.d_model = 1024
+        self.d_ff = 2048
+        self.layers = 8
+        self.e_layers = 8
+        self.n_heads = 8
+        self.dropout = 0.10
+        self.factor = 1
+        self.output_attention = 1
+        self.activation = 'gelu'
         padding = 0
 
         # patching and embedding
@@ -458,16 +462,16 @@ class Timer(nn.Module):
             [
                 EncoderLayer(
                     AttentionLayer(
-                        FullAttention(True, configs.factor, attention_dropout=configs.dropout,
-                                      output_attention=True), configs.d_model, configs.n_heads),
-                    configs.d_model,
-                    configs.d_ff,
-                    dropout=configs.dropout,
-                    activation=configs.activation
-                ) for l in range(configs.e_layers)
+                        FullAttention(True, self.factor, attention_dropout=self.dropout,
+                                      output_attention=True), self.d_model, self.n_heads),
+                    self.d_model,
+                    self.d_ff,
+                    dropout=self.dropout,
+                    activation=self.activation
+                ) for l in range(self.e_layers)
             ],
-            norm_layer=torch.nn.LayerNorm(configs.d_model)
+            norm_layer=torch.nn.LayerNorm(self.d_model)
         )
 
         # Prediction Head
-        self.proj = nn.Linear(self.d_model, configs.patch_len, bias=True)
+        self.proj = nn.Linear(self.d_model, self.patch_len, bias=True)

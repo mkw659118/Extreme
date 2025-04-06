@@ -13,7 +13,7 @@ class TrainingConfig:
     patience: int = 20
     verbose: int = 10
     device: str = 'cuda'
-    monitor_metrics: str = 'MAE'
+    monitor_metric: str = 'MAE'
 
 
 @dataclass
@@ -28,7 +28,7 @@ class DatasetInfo:
     scaler_method: str = 'stander'
 
     seq_len: int = 96
-    pred_len: int = 96
+    pred_len: int = 5
     ts_var: int = 0
 
 

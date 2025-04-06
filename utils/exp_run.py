@@ -44,4 +44,7 @@ def RunExperiments(log, config):
         log.save_result(metrics)
         log.plotter.record_metric(metrics)
     log('*' * 20 + 'Experiment Success' + '*' * 20)
+
+
+    log(f'\n{str(model)}')
     return metrics

@@ -63,7 +63,7 @@ def RunOnce(config, runId, model, datamodule, log):
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')
 
             # 将当前epoch的验证误差传递给early stopping模块进行跟踪
-            monitor.track_one_epoch(epoch, model, valid_error, config.monitor_metrics)
+            monitor.track_one_epoch(epoch, model, valid_error, config.monitor_metric)
 
             # 输出当前epoch的训练误差和验证误差，并记录训练时间
             log.show_epoch_error(runId, epoch, monitor, train_loss, valid_error, train_time)
@@ -82,6 +82,7 @@ def RunOnce(config, runId, model, datamodule, log):
 
         # 使用最优模型在测试集评估
         results = model.evaluate_one_epoch(datamodule, 'test')
+        results = {f'Valid{config.monitor_metric}': abs(monitor.best_score), **results}
         log.show_test_error(runId, monitor, results, sum_time)
 
         # 保存最优模型参数
