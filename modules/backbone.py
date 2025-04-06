@@ -9,6 +9,7 @@ from layers.encoder.seq_enc import SeqEncoder
 from layers.encoder.token_emc import TokenEmbedding
 from layers.revin import RevIN
 from layers.transformer import Transformer
+from modules.pretrain_timer import Timer
 from modules.temporal_enc import TemporalEmbedding
 
 
@@ -46,6 +47,22 @@ class Backbone(torch.nn.Module):
         # self.layer_norm = torch.nn.LayerNorm(self.rank)
         self.fc = torch.nn.Linear(config.rank, 1)
 
+        # Pretrain Timer
+        # self.backbone = Timer(config)
+        # self.enc_embedding = self.backbone.patch_embedding
+        # self.decoder = self.backbone.decoder
+        # # self.proj = self.backbone.proj
+        # self.proj = torch.nn.Linear(1024, config.pred_len)
+        # ckpt_path = 'Timer_forecast_1.0.ckpt'
+        # sd = torch.load(ckpt_path, weights_only=False, map_location="cpu")["state_dict"]
+        # sd = {k[6:]: v for k, v in sd.items()}
+        # try:
+        #     self.backbone.load_state_dict(sd, strict=True)
+        #     print("✅ Backbone state_dict 加载成功。")
+        # except RuntimeError as e:
+        #     print("❌ 加载失败：", e)
+        # exit()
+
     def forward(self, x, x_mark):
         # norm
         if self.revin:
@@ -77,3 +94,49 @@ class Backbone(torch.nn.Module):
         if self.revin:
             y = self.revin_layer(y, 'denorm')
         return y
+
+    # def forward(self, x, x_mark):
+    #     x = x.unsqueeze(-1)
+    #     B, L, M = x.shape
+    #     x_enc = x
+    #
+    #     # Normalization from Non-stationary Transformer
+    #     # means = x_enc.mean(1, keepdim=True).detach()
+    #     # x_enc = x_enc - means
+    #     # stdev = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5).detach()
+    #     # x_enc /= stdev
+    #
+    #     # Step 1: 交换时间维度和变量维度
+    #     x_enc = x_enc.permute(0, 2, 1)
+    #     # 输入: x_enc shape: [B, T, M]
+    #     # 输出: x_enc shape: [B, M, T]
+    #     # 解释: B是batch size，T是时间长度，M是变量数。这里将变量维度提前，为后续patching按变量维度做操作。
+    #
+    #     # Step 2: 进入Embedding模块
+    #     dec_in, n_vars = self.enc_embedding(x_enc)
+    #     # 输入: [B, M, T]
+    #     # 输出: dec_in shape: [B * M, N, D]，n_vars = M
+    #     # 解释: 将每个变量视为一个序列，每个序列被切成N个patch，每个patch变为D维embedding。共B个样本，每个样本有M个变量，所以展开为 B*M 个序列。
+    #
+    #     # Step 3: Transformer编码
+    #     dec_out, attns = self.decoder(dec_in)
+    #     # 输入: dec_in shape: [B * M, N, D]
+    #     # 输出: dec_out shape: [B * M, N, D]
+    #     # 解释: 标准的Transformer block输出，attns 是注意力得分，可以用于可视化或中间提取。
+    #
+    #     # Step 4: 输出维度映射
+    #     dec_out = self.proj(dec_out)
+    #     # 输入: [B * M, N, D]
+    #     # 输出: [B * M, N, L]
+    #     # 解释: proj 是一个线性层，将每个token的embedding从 D 映射到预测长度 L（可能是时间片段长度）。
+    #
+    #     # Step 5: reshape 为最终输出形式
+    #     dec_out = dec_out.reshape(B, M, -1).transpose(1, 2)
+    #     # 输入: [B * M, N, L] → reshape 为 [B, M, N * L] → transpose 为 [B, T, M]
+    #     # 输出: dec_out shape: [B, T, M]
+    #     # 解释: 每个变量对应的 patch 被拼接为完整的时间序列，再把变量维度放到最后，恢复为常规时间序列格式。
+    #
+    #     # De-Normalization from Non-stationary Transformer
+    #     # dec_out = dec_out * stdev + means
+    #
+    #     return dec_out.squeeze(-1)

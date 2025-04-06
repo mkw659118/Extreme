@@ -15,9 +15,9 @@ hyper_dict = {
     'norm': ['rms'],
     'ffn': ['moe'],
     'loss_coef': [0.001],
-    'fft': [True, False],
-    'revin': [False, True],
-    'dis_method': ['none', 'cosine'],  #
+    'fft': [True],
+    'revin': [False],
+    'dis_method': ['cosine'],  #
     # 'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
     # 'idx': [i for i in range(50)]
 }

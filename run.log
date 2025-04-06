@@ -2328,3 +2328,90 @@ Running at 2025-04-04 17:09: python run_train.py --exp_name TestConfig --retrain
 |2025-04-04 17:10:22| NMAE - 0.1095    NRMSE - 0.1343    MAE - 0.0798    RMSE - 0.9652    Acc_10 - 0.5320    train_time - 1.6052    
 [2025-04-04 17:10:23] All commands executed successfully.
 
+
+[2025-04-04 21:21:43] Experiment Start!!!
+Value: True, Metric: 0.0798
+Value: False, Metric: 0.0798
+==> Best fft: True, local_best_metric: 0.0798
+Value: False, Metric: 0.0798
+Value: True, Metric: 0.0798
+==> Best revin: False, local_best_metric: 0.0798
+Value: none, Metric: 0.0798
+Value: cosine, Metric: 0.0798
+==> Best dis_method: none, local_best_metric: 0.0798
+Running at 2025-04-04 21:21: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+
+[2025-04-04 21:22:11] Experiment Start!!!
+Value: True, Metric: 0.0798
+Value: False, Metric: 0.0798
+==> Best fft: True, local_best_metric: 0.0798
+Value: False, Metric: 0.0798
+Value: True, Metric: 0.0798
+==> Best revin: False, local_best_metric: 0.0798
+Value: none, Metric: 0.0798
+Value: cosine, Metric: 0.0798
+==> Best dis_method: none, local_best_metric: 0.0798
+Running at 2025-04-04 21:22: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+
+[2025-04-04 21:23:10] Experiment Start!!!
+Value: True, Metric: 0.0798
+Value: False, Metric: 0.0798
+==> Best fft: True, local_best_metric: 0.0798
+Value: False, Metric: 0.0798
+Value: True, Metric: 0.0798
+==> Best revin: False, local_best_metric: 0.0798
+Value: none, Metric: 0.0798
+Value: cosine, Metric: 0.0798
+==> Best dis_method: none, local_best_metric: 0.0798
+Running at 2025-04-04 21:23: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --revin False --dis_method none --fft True
+|2025-04-04 21:24:18| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:24:18| NMAE - 0.0673    NRMSE - 0.0874    MAE - 0.0524    RMSE - 0.1534    Acc_10 - 0.8014    train_time - 19.0933    
+[2025-04-04 21:24:19] All commands executed successfully.
+
+|2025-04-04 21:28:37| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:28:37| NMAE - 0.0523    NRMSE - 0.0668    MAE - 0.0407    RMSE - 0.1172    Acc_10 - 0.8884    train_time - 22.6086    
+|2025-04-04 21:30:49| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:30:49| NMAE - 0.0523    NRMSE - 0.0668    MAE - 0.0407    RMSE - 0.1172    Acc_10 - 0.8884    train_time - 22.0945    
+|2025-04-04 21:34:02| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:34:02| NMAE - 0.0523    NRMSE - 0.0668    MAE - 0.0407    RMSE - 0.1172    Acc_10 - 0.8884    train_time - 22.6043    
+|2025-04-04 21:36:37| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:36:37| NMAE - 0.0523    NRMSE - 0.0668    MAE - 0.0407    RMSE - 0.1172    Acc_10 - 0.8884    train_time - 22.5685    
+|2025-04-04 21:41:51| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-04 21:41:51| NMAE - 0.0523    NRMSE - 0.0668    MAE - 0.0407    RMSE - 0.1172    Acc_10 - 0.8884    train_time - 22.6615
+
+
+|2025-04-06 14:35:37| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:35:37| NMAE - 0.1516    NRMSE - 0.1849    MAE - 0.1104    RMSE - 1.3287    Acc_10 - 0.4018    train_time - 2.1246    
+|2025-04-06 14:36:35| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:36:35| NMAE - 0.1123    NRMSE - 0.1425    MAE - 0.0818    RMSE - 1.0242    Acc_10 - 0.5448    train_time - 5.4653    
+|2025-04-06 14:38:59| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:38:59| NMAE - 0.1102    NRMSE - 0.1273    MAE - 0.0803    RMSE - 0.9150    Acc_10 - 0.4492    train_time - 4.2030    
+|2025-04-06 14:44:02| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:44:02| NMAE - 0.1102    NRMSE - 0.1271    MAE - 0.0802    RMSE - 0.9136    Acc_10 - 0.4553    train_time - 2.3927    
+|2025-04-06 14:46:26| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:46:26| NMAE - 0.1102    NRMSE - 0.1271    MAE - 0.0802    RMSE - 0.9136    Acc_10 - 0.4553    train_time - 2.3442    
+|2025-04-06 14:47:15| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:47:15| NMAE - 0.1390    NRMSE - 0.1516    MAE - 0.1082    RMSE - 0.2660    Acc_10 - 0.1850    train_time - 2.8673    
+|2025-04-06 14:49:20| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, 
+|2025-04-06 14:49:20| NMAE - 0.0588    NRMSE - 0.0762    MAE - 0.0458    RMSE - 0.1337    Acc_10 - 0.8449    train_time - 22.4422
+
+这个是我们的
+|2025-04-06 14:54:10| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 14:54:10| NMAE - 0.0588    NRMSE - 0.0762    MAE - 0.0458    RMSE - 0.1337    Acc_10 - 0.8449    train_time - 22.4312
+|2025-04-06 15:16:03| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 1024, Fundidx : 0, Seq_len : 96, Pred_len : 5,
+|2025-04-06 15:16:03| NMAE - 0.0832    NRMSE - 0.1005    MAE - 0.0648    RMSE - 0.1763    Acc_10 - 0.6830    train_time - 98.6543
+
+这个是预训练模型
+|2025-04-06 14:55:00| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 14:55:00| NMAE - 0.1390    NRMSE - 0.1516    MAE - 0.1082    RMSE - 0.2660    Acc_10 - 0.1850    train_time - 3.0427    
+
+|2025-04-06 15:19:28| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 32, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 15:19:28| NMAE - 0.0421    NRMSE - 0.0557    MAE - 0.0328    RMSE - 0.0978    Acc_10 - 0.9565    train_time - 13.8551    
+|2025-04-06 15:20:34| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 32, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 15:20:34| NMAE - 0.0421    NRMSE - 0.0557    MAE - 0.0328    RMSE - 0.0978    Acc_10 - 0.9565    train_time - 14.0885    
+|2025-04-06 15:28:36| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 32, Fundidx : 0, Seq_len : 96, Pred_len : 5,
+|2025-04-06 15:28:36| Valid-MAE - 0.0350    NMAE - 0.1242    NRMSE - 0.1390    MAE - 0.0967    RMSE - 0.2439    Acc_10 - 0.3483    train_time - 0.4149    
+|2025-04-06 15:29:28| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 32, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 15:29:28| Valid-MAE - 0.0350    MAE - 0.0967    RMSE - 0.2439    NMAE - 0.1242    NRMSE - 0.1390    Acc_10 - 0.3483    train_time - 0.4116    
+|2025-04-06 15:29:52| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 32, Fundidx : 0, Seq_len : 96, Pred_len : 5, 
+|2025-04-06 15:29:52| ValidMAE - 0.0350    MAE - 0.0967    RMSE - 0.2439    NMAE - 0.1242    NRMSE - 0.1390    Acc_10 - 0.3483    train_time - 0.4206    

@@ -59,8 +59,8 @@ def predict(model, data_input, label, scaler, config):
 def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
-    if inputs.shape[-1] != 1:
-        inputs, = inputs[:, -1]
+    # if inputs.shape[-1] != 1:
+        # inputs, = inputs[:, -1]
 
     inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
     # print(label)
