@@ -214,7 +214,6 @@ class SparseMoE(nn.Module):
         importance = gates.sum(0)
         loss = self.cv_squared(importance) + self.cv_squared(load)
         loss *= self.loss_coef
-        self.aux_loss = loss
         # 构建 dispatcher 并分发输入
         dispatcher = SparseDispatcher(self.num_experts, gates)
         expert_inputs = dispatcher.dispatch(x)
@@ -225,7 +224,7 @@ class SparseMoE(nn.Module):
 
         # 合并各专家输出
         y = dispatcher.combine(expert_outputs)
-        return y
+        return y, loss
 
 if __name__ == '__main__':
     inputs = torch.randn(32, 50)

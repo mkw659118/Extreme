@@ -5,92 +5,81 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
-from sqlalchemy import create_engine, text
+from modules.load_data.generate_financial import get_all_fund_list, generate_data
 from utils.data_scaler import get_scaler
 from modules.load_data.create_window_dataset import create_window_dataset
+import a_data_center
 
-pred_value = 'nav'
-# pred_value = 'accnav'
-
-def get_data(code_idx):
-    address = os.listdir(f'./datasets/financial/{pred_value}/')
-    with open(f'./datasets/financial/{pred_value}/{address[code_idx]}', 'rb') as f:
-        data = pickle.load(f)
-    print(f'./datasets/financial/{pred_value}/{address[code_idx]}')
-    return data
-
-def generate_data(start_date, end_date, code_idx):
-    # 数据库配置
-    with open('./datasets/sql_token.pkl', 'rb') as f:
-        DB_URI = pickle.load(f)
-
-    engine = create_engine(DB_URI)
-    DATA_JSON_PATH = './datasets/data.json'
-
-    # 加载分类数据
-    with open(DATA_JSON_PATH) as f:
-        group_map = json.load(f)
-
-    # 遍历所有股票类别
-    for group_idx, (group_name, group_list) in enumerate(group_map.items()):
-        for group_data in group_list:
-            if group_name == 'stock1' and group_data['industry_code'] in ['270000', '480000']:
-                code_list = group_data['code_list']
-                try:
-                    sql = text(f"SELECT fund_code, date, {pred_value} FROM b_fund_nav_details_new WHERE fund_code IN :codes AND date BETWEEN :start AND :end ORDER BY date")
-                    df = pd.read_sql_query(
-                        sql.bindparams(codes=tuple(code_list), start=start_date, end=end_date),
-                        engine
-                    )
-                except Exception as e:
-                    print(f"数据库查询失败: {str(e)}")
-                    raise e
-
-                # 为每组的股票做映射，获得分组可以去其他地方做
-                df = df.to_numpy()
-                unique_values = np.unique(df[:, 0])
-                index_mapping = {value: idx for idx, value in enumerate(unique_values)}
-                values = [[] for _ in range(len(unique_values))]
-                dates = [[] for _ in range(len(unique_values))]
-                for i in range(len(df)):
-                    idx = index_mapping[df[i][0]]
-                    dates[idx].append([df[i][1].year, df[i][1].month, df[i][1].day, df[i][1].weekday()])
-                    values[idx].append(float(df[i][2]))
-
-                os.makedirs(f'./datasets/financial/{pred_value}/', exist_ok=True)
-                for key, value in index_mapping.items():
-                    now_data = np.concatenate([np.array([key] * len(dates[value])).reshape(-1, 1), np.array(dates[value]), np.array(values[value]).reshape(-1, 1)], axis=1)
-                    with open(f'./datasets/financial/{pred_value}/{key}.pkl', 'wb') as f:
-                        pickle.dump(now_data, f)
-                        print(f'./datasets/financial/{pred_value}/{key}.pkl 存储完毕')
-    data = get_data(code_idx)
-    return data
+input_keys = ['nav', 'accnav', 'adj_nav']
+pred_value = 'nav'  # 'nav', 'accnav', 'adj_nav'
 
 
+def get_data(fund_code):
+    # 读取数据
+    with open(f'./datasets/financial/{fund_code}.pkl', 'rb') as f:
+        df = pickle.load(f)  # 假设 df 现在是 numpy 数组
+
+    print(f'./datasets/financial/{fund_code}.pkl')
+    # print(df[:, -4:])
+    # print()
+    # 假设原始数据按顺序排列： fund_code, year, month, day, weekday, nav, accnav, adj_nav
+    # 你已经知道 'nav', 'accnav', 'adj_nav' 列的位置：[-3, -2, -1]
+    col_indices = {'nav': -3, 'accnav': -2, 'adj_nav': -1}
+
+    # 提取 input_keys 中的列
+    input_columns = [df[:, col_indices[key]] for key in input_keys if key != pred_value]
+
+    # 获取其它列（fund_code, year, month, day, weekday）
+    fund_code_column = df[:, 0]  # 第一列 fund_code
+    year_column = df[:, 1]  # 第二列 year
+    month_column = df[:, 2]  # 第三列 month
+    day_column = df[:, 3]  # 第四列 day
+    weekday_column = df[:, 4]  # 第五列 weekday
+
+    # 将前五列和 input_keys 中的列拼接（不包括 pred_value）
+    ordered_data = np.column_stack((fund_code_column, year_column, month_column, day_column, weekday_column, *input_columns))
+
+    # 获取 pred_value 列并将其移到最后
+    pred_column = df[:, col_indices[pred_value]]
+
+    # 最终将目标列 pred_value 插入到数据末尾
+    final_data = np.column_stack((ordered_data, pred_column))
+    # print(final_data[:, -4:])
+    return final_data
 
 
 def get_financial_data(start_date, end_date, idx, config):
+    now_fund_code = get_all_fund_list()[idx]
     try:
-        data = get_data(idx)
+        data = get_data(now_fund_code)
     except Exception as e:
-        data = generate_data(start_date, end_date, idx)
+        print(e)
+        data = generate_data(start_date, end_date)
     data = data.astype(np.float32)
 
     x, y = data, data[:, -1].astype(np.float32)
-    # x, y = data[:, -1], data[:, -1].astype(np.float32)
     scaler = None
+
     if not config.multi_dataset:
+        for i in range(len(input_keys)):
+            x[:, -i] = x[:, -i].astype(np.float32)
+            scaler = get_scaler(x[:, -i], config)
+            x[:, -i] = scaler.transform(x[:, -i])
+
         scaler = get_scaler(y, config)
         y = scaler.transform(y)
-        # x = scaler.transform(x)
-        x[:, -1] = x[:, -1].astype(np.float32)
-        temp = x[:, -1].astype(np.float32)
-        x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
+
+        # x[:, -1] = x[:, -1].astype(np.float32)
+        # temp = x[:, -1].astype(np.float32)
+        # x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
 
     # x = x.astype(np.float32)
     y = y.astype(np.float32)
+
+    # 构建
     X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     # X_window, y_window = filter_jump_sequences(X_window, y_window, threshold=0.5, mode='absolute')
+    print(X_window.shape, y_window.shape)
     return X_window, y_window, scaler
 
 def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
@@ -131,7 +120,7 @@ def multi_dataset(config):
     for i in range(10):
         config.idx = i
         config.multi_dataset = False
-        datamodule = data_center.DataModule(config)
+        datamodule = a_data_center.DataModule(config)
         if len(datamodule.train_set.x) == 0 or len(datamodule.y) <= config.seq_len:
             continue
         all_train_x.append(datamodule.train_set.x)
@@ -172,6 +161,7 @@ def multi_dataset(config):
     scaler = get_scaler(all_train_y, config)
     scaler.y_mean, scaler.y_std = y_mean, y_std
     print(all_train_x.shape, all_train_y.shape)
+
     return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler
 
 

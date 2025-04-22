@@ -6,9 +6,11 @@
 def compute_loss(model, pred, label):
     loss = model.loss_function(pred, label)
     try:
-        for i in range(len(model.model.encoder.layers)):
-            loss += model.model.encoder.layers[i][3].aux_loss
+        # for i in range(len(model.model.encoder.layers)):
+        #     loss += model.model.encoder.layers[i][3].aux_loss
+        loss += 1e-3 * model.distance(pred, label)
+        loss += 1e-3 * model.model.aux_loss
     except:
         pass
-    loss += 1e-3 * model.distance(pred, label)
+
     return loss

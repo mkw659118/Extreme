@@ -1,22 +1,31 @@
-if __name__ == '__main__':
-    from modules.pretrain_timer import Timer
-    import torch
-    from utils.exp_config import get_config
+import pickle
+import os
 
+import numpy as np
+from utils.data_scaler import get_scaler
+
+def main():
+    all_fund = os.listdir('./datasets/financial/')
+    for i in range(len(all_fund)):
+        with open(f'./datasets/financial/{all_fund[0]}', 'rb') as f:
+            df = pickle.load(f)
+            print(df)
+        break
+
+    x = np.array(df)
+    for i in range(3):
+        x[:, -i] = x[:, -i].astype(np.float32)
+        scaler = get_scaler(x[:, -i], config)
+        x[:, -i] = scaler.transform(x[:, -i])
+    print(x)
+    # temp = x[:, -1].astype(np.float32)
+    # x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
+    # print(df)
+    # print(df.shape)
+
+
+if __name__ == '__main__':
+    from utils.exp_config import get_config
     config = get_config()
-    # config.patch_len = 96
-    # config.d_model = 1024
-    # config.d_ff = 2048
-    # config.e_layers = 8
-    # config.n_heads = 8
-    # config.dropout = 0.10
-    # config.factor = 1
-    # config.output_attention = 1
-    # config.activation = 'gelu'
-    # config.ckpt_path = 'Timer_forecast_1.0.ckpt'
-    backbone = Timer(config)
-    ckpt_path = 'Timer_forecast_1.0.ckpt'
-    sd = torch.load(ckpt_path, weights_only=False, map_location="cpu")["state_dict"]
-    sd = {k[6:]: v for k, v in sd.items()}
-    backbone.load_state_dict(sd, strict=True)
-    print(backbone)
+    main()
+
