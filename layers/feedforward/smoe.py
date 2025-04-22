@@ -171,16 +171,6 @@ class SparseMoE(nn.Module):
         else:
             logits = clean_logits
 
-        # clean_logits = self.w_gate(x)
-        # if self.noisy_gating and train:
-        #     raw_noise_stddev = self.w_noise(x)
-        #     noise_stddev = self.softplus(raw_noise_stddev) + noise_epsilon
-        #     noise = torch.randn_like(clean_logits)
-        #     noisy_logits = clean_logits + (noise * noise_stddev)
-        #     logits = noisy_logits @ self.W_h
-        # else:
-        #     logits = clean_logits
-
         # top-num_k + 1 选择，便于计算概率
         logits = self.softmax(logits)
         top_logits, top_indices = logits.topk(min(self.num_k + 1, self.num_experts), dim=1)
@@ -212,9 +202,11 @@ class SparseMoE(nn.Module):
 
         # 计算重要性和负载的变异系数损失
         importance = gates.sum(0)
+        # print(gates)
+        # print(gates.shape, importance.shape, load.shape)
+        # exit()
         loss = self.cv_squared(importance) + self.cv_squared(load)
         loss *= self.loss_coef
-        self.aux_loss = loss
         # 构建 dispatcher 并分发输入
         dispatcher = SparseDispatcher(self.num_experts, gates)
         expert_inputs = dispatcher.dispatch(x)
@@ -225,7 +217,7 @@ class SparseMoE(nn.Module):
 
         # 合并各专家输出
         y = dispatcher.combine(expert_outputs)
-        return y
+        return y, loss
 
 if __name__ == '__main__':
     inputs = torch.randn(32, 50)

@@ -30,7 +30,7 @@ def compute_regression_metrics(realVec, estiVec):
     absError = np.abs(estiVec - realVec)
     MAE = np.mean(absError)
     RMSE = np.linalg.norm(absError) / np.sqrt(absError.shape[0])
-    NMAE = np.sum(absError) / np.sum(realVec)
+    NMAE = np.sum(absError) / np.sum(np.abs(realVec))
     NRMSE = np.sqrt(np.sum((realVec - estiVec) ** 2)) / np.sqrt(np.sum(realVec ** 2))
 
     # 计算不同阈值下的准确率

@@ -1,6 +1,5 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-import numpy as np
 from b_data_control import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_lottery import get_lottery
