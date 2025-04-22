@@ -8,7 +8,7 @@ from dataclasses import dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'ours'
     bs: int = 32
-    rank: int = 32
+    rank: int = 64
     device: str = 'cuda'
     epochs: int = 200
     patience: int = 30
@@ -78,10 +78,10 @@ class timeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo
     patch_len: int = 16
     stride: int = 8
     llm_model: str = "LLAMA"
-    llm_layers: int =6
+    llm_layers: int = 6
     prompt_domain: int = 0
-    n_heads: int =8
-    enc_in:int =7
+    n_heads: int = 8
+    enc_in:int = 7
     dropout: float = 0.1
     dataset: str = "weather"
 

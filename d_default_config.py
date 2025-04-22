@@ -15,6 +15,13 @@ class TrainingConfig:
     device: str = 'cuda'
     monitor_metric: str = 'MAE'
 
+@dataclass
+class BaseModelConfig:
+    model: str = 'ours'
+    rank: int = 40
+    retrain: bool = True
+    num_layers: int = 3
+
 
 @dataclass
 class DatasetInfo:
@@ -41,22 +48,11 @@ class ExperimentConfig:
     hyper_search: bool = False
     continue_train: bool = False
 
-
-@dataclass
-class BaseModelConfig:
-    model: str = 'ours'
-    rank: int = 40
-    retrain: bool = True
-    num_layers: int = 3
-
-
-
 @dataclass
 class OtherConfig:
     classification: bool = False
     ablation: int = 0
     try_exp: int = -1
-
 
 @dataclass
 class LoggerConfig:

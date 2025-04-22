@@ -18,12 +18,14 @@ class TensorDataset(Dataset):
         x = self.x[idx][:, -1]  # [..., np.newaxis]
         y = self.y[idx]
         x_mark = self.x[idx][:, :-1] if not self.config.dataset == 'financial' else self.x[idx][:, 1:-1]
+        x_fund = self.x[idx][:, 0]
         # x, y = torch.from_numpy(x), torch.from_numpy(y)
-        return x, x_mark, y
+        return x, x_mark, x_fund, y
 
 def custom_collate_fn(batch, config):
     from torch.utils.data.dataloader import default_collate
-    x, x_mark, y = zip(*batch)
+    x, x_mark, x_fund, y = zip(*batch)
     x, y = default_collate(x), default_collate(y)
     x_mark = default_collate(x_mark)
-    return x, x_mark, y
+    x_fund = default_collate(x_fund).long()
+    return x, x_mark, x_fund, y

@@ -17,7 +17,6 @@ def RunExperiments(log, config):
         set_seed(config.seed + runId)
         datamodule = DataModule(config)
         model = Model(datamodule, config)
-        datamodule = DataModule(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)
         for key in results:
