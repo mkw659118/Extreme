@@ -43,6 +43,23 @@ def set_seed(seed):
     t.backends.cudnn.benchmark = False
 
 
+def conduct_statistical_data(x):
+    # 数据统计汇总
+    print("\n=== 数据长度统计 ===")
+    print(f"样本总数: {len(x)}")
+    print(f"最小长度: {np.min(x)}")
+    print(f"最大长度: {np.max(x)}")
+    print(f"平均长度: {np.mean(x):.2f}")
+    print(f"中位数长度: {np.median(x)}")
+    print(f"标准差: {np.std(x):.2f}")
+    print(f"25% 分位数: {np.percentile(x, 25):.2f}")
+    print(f"50% 分位数（即中位数）: {np.percentile(x, 50):.2f}")
+    print(f"75% 分位数: {np.percentile(x, 75):.2f}")
+    print(f"99 百分位数: {np.percentile(x, 99):.2f}")
+    print(f"99.9 百分位数: {np.percentile(x, 99.9):.2f}")
+    return True
+
+
 def computer_info():
     def showinfo(tip, info):
         print("{} : {}".format(tip, info))

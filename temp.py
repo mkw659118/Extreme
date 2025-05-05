@@ -13,11 +13,12 @@ def main():
         break
 
     x = np.array(df)
-    for i in range(3):
-        x[:, -i] = x[:, -i].astype(np.float32)
-        scaler = get_scaler(x[:, -i], config)
-        x[:, -i] = scaler.transform(x[:, -i])
     print(x)
+    # for i in range(3):
+    #     x[:, -i] = x[:, -i].astype(np.float32)
+    #     scaler = get_scaler(x[:, -i], config)
+    #     x[:, -i] = scaler.transform(x[:, -i])
+    # print(x)
     # temp = x[:, -1].astype(np.float32)
     # x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
     # print(df)
