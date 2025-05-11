@@ -2476,45 +2476,6 @@ Running at 2025-04-22 17:54: python run_train.py --exp_name TestConfig --retrain
 Command failed, retrying in 3 seconds: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
 Retrying at 2025-04-22 17:55: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
 
-[2025-04-22 17:57:26] Experiment Start!!!
-Running at 2025-04-22 17:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 17:57:45] Experiment Start!!!
-Running at 2025-04-22 17:57: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 17:58:30] Experiment Start!!!
-Running at 2025-04-22 17:58: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 17:59:23] Experiment Start!!!
-Running at 2025-04-22 17:59: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-[2025-04-22 17:59:35] All commands executed successfully.
-
-
-[2025-04-22 18:02:39] Experiment Start!!!
-Running at 2025-04-22 18:02: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-[2025-04-22 18:02:57] All commands executed successfully.
-
-
-[2025-04-22 18:04:10] Experiment Start!!!
-Running at 2025-04-22 18:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 18:04:18] Experiment Start!!!
-Running at 2025-04-22 18:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 18:04:59] Experiment Start!!!
-Running at 2025-04-22 18:04: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 18:06:09] Experiment Start!!!
-Running at 2025-04-22 18:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 18:06:58] Experiment Start!!!
-Running at 2025-04-22 18:06: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-
-[2025-04-22 18:07:54] Experiment Start!!!
-Running at 2025-04-22 18:07: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
-[2025-04-22 18:08:19] All commands executed successfully.
-
-
 [2025-04-22 18:08:38] Experiment Start!!!
 Running at 2025-04-22 18:08: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
 
