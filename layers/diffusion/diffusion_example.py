@@ -208,7 +208,6 @@ class DDPM(nn.Module):
             x_i = self.oneover_sqrta[i] * (x_i - eps * self.mab_over_sqrtmab[i]) + self.sqrt_beta_t[i] * z
             if i % 20 == 0 or i == self.n_T or i < 8:
                 x_i_store.append(x_i.detach().cpu().numpy())
-
         return x_i, np.array(x_i_store)
 
 # ============================ 训练函数 ============================

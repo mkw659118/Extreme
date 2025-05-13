@@ -2517,3 +2517,91 @@ Running at 2025-04-22 18:25: python run_train.py --exp_name TestConfig --retrain
 
 [2025-04-22 18:25:15] Experiment Start!!!
 Running at 2025-04-22 18:25: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 32 --num_layers 4 --dataset financial --att self --norm rms --ffn moe --loss_coef 0.001 --fft True --revin False --dis_method cosine
+|2025-05-13 15:49:00| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 48, Pred_len : 5, 
+|2025-05-13 15:49:00| ValidMAE - 0.0128 MAE - 0.0350 RMSE - 0.1022 NMAE - 0.0383 NRMSE - 0.0499 Acc_10 - 0.9357 train_time - 14.4879
+|2025-05-13 15:54:02| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 48, Pred_len : 10, 
+|2025-05-13 15:54:02| ValidMAE - 0.0158 MAE - 0.0372 RMSE - 0.1523 NMAE - 0.0409 NRMSE - 0.0527 Acc_10 - 0.9183 train_time - 20.4205
+|2025-05-13 15:58:36| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 48, Pred_len : 10, 
+|2025-05-13 15:58:36| ValidMAE - 0.0158 MAE - 0.0372 RMSE - 0.1523 NMAE - 0.0409 NRMSE - 0.0527 Acc_10 - 0.9183 train_time - 21.6148
+|2025-05-13 16:03:40| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 32, Rank : 64, Fundidx : 0, Seq_len : 48, Pred_len : 10, 
+|2025-05-13 16:03:40| ValidMAE - 0.0158 MAE - 0.0372 RMSE - 0.1523 NMAE - 0.0409 NRMSE - 0.0527 Acc_10 - 0.9183 train_time - 20.9239
+
+[2025-05-13 16:13:28] Experiment Start!!!
+Value: 0, Metric: 0.0372
+Value: 1, Metric: 0.0460
+Value: 2, Metric: 0.0314
+Value: 3, Metric: 0.0385
+Value: 4, Metric: 0.0416
+Value: 5, Metric: 0.0559
+Value: 6, Metric: 0.0797
+Value: 7, Metric: 0.0338
+Value: 8, Metric: 0.0524
+Value: 9, Metric: 0.0494
+Value: 10, Metric: 0.0359
+Value: 11, Metric: 0.0794
+Value: 12, Metric: 0.0336
+Value: 13, Metric: 0.0811
+Value: 14, Metric: 0.0497
+Value: 15, Metric: 0.0359
+Value: 16, Metric: 0.0794
+Value: 17, Metric: 0.0342
+Value: 18, Metric: 0.0336
+Value: 19, Metric: 0.0301
+Value: 20, Metric: 0.0811
+Value: 21, Metric: 0.0497
+Value: 22, Metric: 0.0857
+Value: 23, Metric: 0.0309
+Value: 24, Metric: 0.0986
+Value: 25, Metric: 0.1086
+Value: 26, Metric: 0.0493
+Value: 27, Metric: 0.0886
+Value: 28, Metric: 0.0290
+Value: 29, Metric: 0.0434
+Value: 30, Metric: 0.0796
+Value: 31, Metric: 0.0855
+Value: 32, Metric: 0.0263
+==> Best idx: 32, local_best_metric: 0.0263
+Running at 2025-05-13 16:13: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --idx 32
+
+[2025-05-13 16:13:49] Experiment Start!!!
+Value: 0, Metric: 0.0372
+Value: 1, Metric: 0.0460
+Value: 2, Metric: 0.0314
+Value: 3, Metric: 0.0385
+Value: 4, Metric: 0.0416
+Value: 5, Metric: 0.0559
+Value: 6, Metric: 0.0797
+Value: 7, Metric: 0.0338
+Value: 8, Metric: 0.0524
+Value: 9, Metric: 0.0494
+Value: 10, Metric: 0.0359
+Value: 11, Metric: 0.0794
+Value: 12, Metric: 0.0336
+Value: 13, Metric: 0.0811
+Value: 14, Metric: 0.0497
+Value: 15, Metric: 0.0359
+Value: 16, Metric: 0.0794
+Value: 17, Metric: 0.0342
+Value: 18, Metric: 0.0336
+Value: 19, Metric: 0.0301
+Value: 20, Metric: 0.0811
+Value: 21, Metric: 0.0497
+Value: 22, Metric: 0.0857
+Value: 23, Metric: 0.0309
+Value: 24, Metric: 0.0986
+Value: 25, Metric: 0.1086
+Value: 26, Metric: 0.0493
+Value: 27, Metric: 0.0886
+Value: 28, Metric: 0.0290
+Value: 29, Metric: 0.0434
+Value: 30, Metric: 0.0796
+Value: 31, Metric: 0.0855
+Value: 32, Metric: 0.0263
+==> Best idx: 32, local_best_metric: 0.0263
+Running at 2025-05-13 16:13: python run_train.py --exp_name TestConfig --retrain 1 --rounds 1 --rank 64 --idx 32
+
+[2025-05-13 16:14:15] Experiment Start!!!
+
+[2025-05-13 16:14:50] Experiment Start!!!
+
+[2025-05-13 16:15:15] Experiment Start!!!

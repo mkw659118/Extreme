@@ -55,7 +55,7 @@ def run_and_get_metric(cmd_str, config, chosen_hyper, debug=False):
     if debug:
         print(log_filename, chosen_hyper)
     else:
-        # subprocess.run(cmd_str, shell=True)
+        subprocess.run(cmd_str, shell=True)
         pass
 
     metric_file_address = f'./results/metrics/' + get_experiment_name(config)[0]

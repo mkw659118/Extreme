@@ -20,8 +20,6 @@ def get_data(fund_code):
         df = pickle.load(f)  # 假设 df 现在是 numpy 数组
 
     print(f'./datasets/financial/{fund_code}.pkl')
-    # print(df[:, -4:])
-    # print()
     # 假设原始数据按顺序排列： fund_code, year, month, day, weekday, nav, accnav, adj_nav
     # 你已经知道 'nav', 'accnav', 'adj_nav' 列的位置：[-3, -2, -1]
     col_indices = {'nav': -3, 'accnav': -2, 'adj_nav': -1}
@@ -47,9 +45,20 @@ def get_data(fund_code):
     # print(final_data[:, -4:])
     return final_data
 
+# 为了对齐实验，现在加上this one  20250513 15时47分
+def get_benchmark_code():
+    with open('./datasets/benchmark.pkl', 'rb') as f:
+        group = pickle.load(f)
+        group = group['stock-270000']
+        group.remove('013869')
+        group.remove('013870')
+    print(len(group))
+    return group
 
 def get_financial_data(start_date, end_date, idx, config):
-    now_fund_code = get_all_fund_list()[idx]
+    # now_fund_code = get_all_fund_list()[idx]
+    # 为了对齐实验，现在加上this one  20250513 15时47分
+    now_fund_code = get_benchmark_code()[idx]
     try:
         data = get_data(now_fund_code)
     except Exception as e:
@@ -81,6 +90,8 @@ def get_financial_data(start_date, end_date, idx, config):
     # X_window, y_window = filter_jump_sequences(X_window, y_window, threshold=0.5, mode='absolute')
     print(X_window.shape, y_window.shape)
     return X_window, y_window, scaler
+
+
 
 def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
     """

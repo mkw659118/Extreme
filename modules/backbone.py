@@ -44,9 +44,7 @@ class Backbone(torch.nn.Module):
             ffn_method=config.ffn_method,
             att_method=config.att_method
         )
-
         # self.moe = SparseMoE(self.rank * (config.seq_len + config.pred_len), self.rank * (config.seq_len + config.pred_len), 8, noisy_gating=True, num_k=1, loss_coef=1e-3)
-
         self.moe = MoE(d_model=self.rank, d_ff=self.rank, num_m=1, num_router_experts=10, num_share_experts=1, num_k=2, loss_coef=0.001)
         # self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
         # self.layer_norm = torch.nn.LayerNorm(self.rank)
