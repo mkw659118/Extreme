@@ -130,9 +130,9 @@ def pred(idx):
 
 def run(config):
     # 多基金
-    pred(0)
-    # for i in range(50):
-    #     pred(i)
+    # pred(0)
+    for i in range(33):
+        pred(i)
 
 if __name__ == '__main__':
     from utils.exp_config import get_config

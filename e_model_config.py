@@ -15,7 +15,7 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     verbose: int = 5
     try_exp: int = 1
     num_layers: int = 4
-    multi_dataset: bool = False
+    multi_dataset: bool = True
     dataset: str = 'financial'
 
     # 组件专区
