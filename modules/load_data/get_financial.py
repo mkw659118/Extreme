@@ -81,64 +81,84 @@ def get_financial_data(start_date, end_date, idx, config):
 
     y = y.astype(np.float32)
     # 构建
-    X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
-    # X_window, y_window = filter_jump_sequences(X_window, y_window, threshold=0.5, mode='absolute')
+    X_window, y_window = x, y
+    # X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     print(X_window.shape, y_window.shape)
     return X_window, y_window, scaler
 
 
+# def multi_dataset(config):
+#     now_fund_code = get_benchmark_code()
+#     all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
+#     for i in range(len(now_fund_code)):
+#         config.idx = i
+#         config.multi_dataset = False
+#         datamodule = a_data_center.DataModule(config)
+#         if len(datamodule.train_set.x) == 0 or len(datamodule.y) <= config.seq_len:
+#             continue
+#         all_train_x.append(datamodule.train_set.x)
+#         all_train_y.append(datamodule.train_set.y)
+#
+#         all_valid_x.append(datamodule.valid_set.x)
+#         all_valid_y.append(datamodule.valid_set.y)
+#
+#         all_test_x.append(datamodule.test_set.x)
+#         all_test_y.append(datamodule.test_set.y)
+#         del datamodule
+#
+#     all_train_x = np.concatenate(all_train_x, axis=0)
+#     all_train_y = np.concatenate(all_train_y, axis=0)
+#
+#     all_valid_x = np.concatenate(all_valid_x, axis=0)
+#     all_valid_y = np.concatenate(all_valid_y, axis=0)
+#
+#     all_test_x = np.concatenate(all_test_x, axis=0)
+#     all_test_y = np.concatenate(all_test_y, axis=0)
+#
+#     y_mean = np.mean(all_train_y)
+#     y_std = np.std(all_train_y)
+#
+#     all_train_y = (all_train_y - y_mean) / y_std
+#     all_valid_y = (all_valid_y - y_mean) / y_std
+#     all_test_y = (all_test_y - y_mean) / y_std
+#
+#     for i in range(len(input_keys)):
+#         all_train_x[:, -i] = all_train_x[:, -i].astype(np.float32)
+#         all_valid_x[:, -i] = all_valid_x[:, -i].astype(np.float32)
+#         all_test_x[:, -i] = all_test_x[:, -i].astype(np.float32)
+#
+#         now_mean = np.mean(all_train_x[:, -i])
+#         now_std = np.std(all_train_x[:, -i]) + 1e-9
+#
+#         all_train_x[:, -i] = (all_train_x[:, -i] - now_mean) / now_std
+#         all_valid_x[:, -i] = (all_valid_x[:, -i] - now_mean) / now_std
+#         all_test_x[:, -i] = (all_test_x[:, -i] - now_mean) / now_std
+#
+#     scaler = get_scaler(all_train_y, config)
+#     scaler.y_mean, scaler.y_std = y_mean, y_std
+#     print(all_train_x.shape, all_train_y.shape)
+#
+#     return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler
+
+
+
 def multi_dataset(config):
     now_fund_code = get_benchmark_code()
-    all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
-    for i in range(len(now_fund_code)):
-        config.idx = i
-        config.multi_dataset = False
-        datamodule = a_data_center.DataModule(config)
-        if len(datamodule.train_set.x) == 0 or len(datamodule.y) <= config.seq_len:
-            continue
-        all_train_x.append(datamodule.train_set.x)
-        all_train_y.append(datamodule.train_set.y)
+    min_length = 1e9
+    for fund_code in now_fund_code:
+        df = get_data(fund_code)
+        min_length = min(len(df), min_length)
 
-        all_valid_x.append(datamodule.valid_set.x)
-        all_valid_y.append(datamodule.valid_set.y)
+    raw_data = []
+    for fund_code in now_fund_code:
+        df = get_data(fund_code)
+        raw_data.append(df[-min_length:])
 
-        all_test_x.append(datamodule.test_set.x)
-        all_test_y.append(datamodule.test_set.y)
-        del datamodule
-
-    all_train_x = np.concatenate(all_train_x, axis=0)
-    all_train_y = np.concatenate(all_train_y, axis=0)
-
-    all_valid_x = np.concatenate(all_valid_x, axis=0)
-    all_valid_y = np.concatenate(all_valid_y, axis=0)
-
-    all_test_x = np.concatenate(all_test_x, axis=0)
-    all_test_y = np.concatenate(all_test_y, axis=0)
-
-    y_mean = np.mean(all_train_y)
-    y_std = np.std(all_train_y)
-
-    all_train_y = (all_train_y - y_mean) / y_std
-    all_valid_y = (all_valid_y - y_mean) / y_std
-    all_test_y = (all_test_y - y_mean) / y_std
-
-    for i in range(len(input_keys)):
-        all_train_x[:, :, -i] = all_train_x[:, :, -i].astype(np.float32)
-        all_valid_x[:, :, -i] = all_valid_x[:, :, -i].astype(np.float32)
-        all_test_x[:, :, -i] = all_test_x[:, :, -i].astype(np.float32)
-
-        now_mean = np.mean(all_train_x[:, :, -i])
-        now_std = np.std(all_train_x[:, :, -i])
-
-        all_train_x[:, :, -i] = (all_train_x[:, :, -i] - now_mean) / now_std
-        all_valid_x[:, :, -i] = (all_valid_x[:, :, -i] - now_mean) / now_std
-        all_test_x[:, :, -i] = (all_test_x[:, :, -i] - now_mean) / now_std
-
-    scaler = get_scaler(all_train_y, config)
-    scaler.y_mean, scaler.y_std = y_mean, y_std
-    print(all_train_x.shape, all_train_y.shape)
-
-    return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler
+    data = np.stack(raw_data, axis=0)
+    data = data.transpose(1, 0, 2)
+    x, y = data[:, :, :], data[:, :, -1]
+    scaler = get_scaler(y, config)
+    return x, y, scaler
 
 
 def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):

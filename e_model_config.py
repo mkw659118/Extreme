@@ -11,16 +11,18 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     rank: int = 64
     device: str = 'cuda'
     epochs: int = 200
-    patience: int = 30
+    loss_func: str = 'MSELoss'  # L1Loss  MSELoss
+    patience: int = 45
     verbose: int = 5
     try_exp: int = 1
-    num_layers: int = 4
-    multi_dataset: bool = True
     dataset: str = 'financial'
 
+    multi_dataset: bool = True
+
     # 组件专区
+    num_layers: int = 4
     norm_method: str = 'rms'
-    ffn_method: str = 'moe'
+    ffn_method: str = 'ffn'
     att_method: str = 'self'
     dis_method: str = 'cosine'
     revin: bool = False

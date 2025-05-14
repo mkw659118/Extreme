@@ -98,6 +98,10 @@ class MoE(torch.nn.Module):
         elif len(x.shape) == 3:
             self.flag = 2
             return x
+        elif len(x.shape) == 4:
+            self.flag = 3
+            self.bs, self.seq_len, self.channels, self.dim = x.shape
+            return x.reshape(x.shape[0], x.shape[1], -1)
         else:
             raise ValueError
 
@@ -106,6 +110,8 @@ class MoE(torch.nn.Module):
             return x.squeeze(1)
         elif self.flag == 2:
             return x
+        elif self.flag == 3:
+            return x.reshape(self.bs, self.seq_len, self.channels, self.dim)
         else:
             raise ValueError
 
