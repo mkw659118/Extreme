@@ -38,3 +38,5 @@ def get_scaler(y, config):
         return DataScalerStander(y, config)
     elif config.scaler_method == 'minmax':
         return DataScalerMinMax(y, config)
+    else:
+        return NotImplementedError

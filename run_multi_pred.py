@@ -17,16 +17,9 @@ from utils.utils import set_settings
 torch.set_default_dtype(torch.float32)
 
 def data_to_dataloader(data_input, label):
-    if label is None:
-        data_set = TensorDataset(data_input.reshape(-1, 96, 1), torch.randn(data_input.shape[0], 1), 'pred', config)
-        print(data_input.reshape(-1, 96, 1).shape)
-        bs = 1
-        flag = 'pred'
-    else:
-        data_set = TensorDataset(data_input, label, 'pred', config)
-        bs = 256
-        flag = 'test'
-
+    data_set = TensorDataset(data_input, label, 'pred', config)
+    bs = 256
+    flag = 'test'
     pred_dataloader = DataLoader(
         data_set,
         batch_size=bs,
@@ -37,43 +30,14 @@ def data_to_dataloader(data_input, label):
     return pred_dataloader, flag
 
 
-def predict(model, data_input, label, scaler, config):
-    dataloader, flag = data_to_dataloader(data_input, label)
-    os.makedirs(f'./figs/{config.model}/{config.idx}', exist_ok=True)
-    model.setup_optimizer(config)
-    cnt = 0
-    for batch in (dataloader):
-        all_item = [item.to(config.device) for item in batch]
-        inputs, label = all_item[:-1], all_item[-1]
-        pred = model.forward(*inputs)
 
-        for j in trange(len(pred)):
-            if flag == 'test':
-                save_figure(inputs[0][j], label[j], pred[j], cnt, scaler, config)
-            elif flag == 'pred':
-                save_figure(inputs[0][j], None, pred[j], cnt, scaler, config)
-            cnt += 1
-    return True
-
-
-def save_figure(inputs, label, pred, cnt, scaler, config):
+def save_figure(inputs, label, pred, cnt, scaler, code_idx, config):
     plt.figure(figsize=(12, 6), dpi=300)
-
-    # if inputs.shape[-1] != 1:
-        # inputs, = inputs[:, -1]
-
+    os.makedirs(f'./figs/{config.model}/{code_idx}', exist_ok=True)
     inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
-    # print(label)
-    # print(pred)
-    # exit()
-    # 确保inputs和label/pred都是1维
-    input_seq = inputs.cpu().reshape(-1).numpy()
-    # print(input_seq)
-    # print(pred)
-    # exit()
-    if label is not None:
-        real_seq = label.cpu().reshape(-1).numpy()
-    pred_seq = pred.cpu().reshape(-1).detach().numpy()
+    input_seq = inputs.reshape(-1)
+    real_seq = label.reshape(-1)
+    pred_seq = pred.reshape(-1)
 
     # 计算x轴时间索引
     input_len = len(input_seq)
@@ -83,8 +47,7 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
     future_time = np.arange(input_len, input_len + future_len)  # 预测区间时间
     # 画图：前面是inputs，后面是label和pred
     plt.plot(input_time, input_seq, label='Input', linestyle='-.', marker='s', markersize=3)
-    if label is not None:
-        plt.plot(future_time, real_seq, label='Real', linestyle='--', marker='o', markersize=3)
+    plt.plot(future_time, real_seq, label='Real', linestyle='--', marker='o', markersize=3)
     plt.plot(future_time, pred_seq, label='Pred', linestyle='-', marker='x', markersize=3)
     plt.legend()
     plt.title(f'Prediction vs Real - Sample {cnt}')
@@ -92,9 +55,36 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
-    plt.savefig(f'./figs/{config.model}/{config.idx}/{cnt}.jpg')
+    plt.savefig(f'./figs/{config.model}/{code_idx}/{cnt}.jpg')
     plt.close()
     # print(f"Figure {cnt} has done!")
+
+
+def predict(model, data_input, label, scaler, config):
+    dataloader, flag = data_to_dataloader(data_input, label)
+    model.setup_optimizer(config)
+    cnt = 0
+    print(len(dataloader.dataset))
+    for batch in (dataloader):
+        all_item = [item.to(config.device) for item in batch]
+        inputs, label = all_item[:-1], all_item[-1]
+        pred = model.forward(*inputs)
+
+        history_value = inputs[0][:, :, :, -1].detach().cpu().numpy()
+        pred_value = pred.detach().cpu().numpy()
+        real_value = label.detach().cpu().numpy()
+
+        for k in range(history_value.shape[-1]):
+            now_idx = cnt
+            for i in trange(history_value.shape[0]):
+                now_idx += 1
+                save_figure(history_value[i, :, k], real_value[i, :, k], pred_value[i, :, k], now_idx, scaler, k, config)
+
+        cnt += label.shape[0]
+
+    return True
+
+
 
 
 def RunOnce(config, runId, log):
@@ -104,7 +94,10 @@ def RunOnce(config, runId, log):
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
     sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    try:
+        model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    except:
+        pass
     model.setup_optimizer(config)
     results = model.evaluate_one_epoch(datamodule, 'test')
     if not config.classification:
@@ -113,26 +106,17 @@ def RunOnce(config, runId, log):
         log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
     results['train_time'] = sum_time
     config.record = False
-    # results = model.evaluate_one_epoch(datamodule, 'test')
     results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.scaler, config)
-    # results = predict(model, datamodule.test_set.x[0], None, config)
     return results
 
-def pred(idx):
-    config.idx = idx
+
+def run(config):
     set_settings(config)
     log_filename, exper_detail = get_experiment_name(config)
     plotter = MetricsPlotter(log_filename, config)
     log = Logger(log_filename, exper_detail, plotter, config)
     metrics = RunOnce(config, 0, log)
     return metrics
-
-
-def run(config):
-    # 多基金
-    # pred(0)
-    for i in range(33):
-        pred(i)
 
 if __name__ == '__main__':
     from utils.exp_config import get_config

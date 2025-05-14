@@ -7,6 +7,8 @@ torch.set_default_dtype(torch.float32)
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'
+    if config.multi_dataset:
+        log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi'
     exper_detail = (
          f"Dataset : {config.dataset.upper()}, "
          f"Model : {config.model}, "

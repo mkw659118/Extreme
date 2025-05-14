@@ -85,7 +85,7 @@ def RunOnce(config, runId, model, datamodule, log):
 
         # 使用最优模型在测试集评估
         results = model.evaluate_one_epoch(datamodule, 'test')
-        results = {f'Valid{config.monitor_metric}': abs(monitor.best_score), **results}
+        # results = {f'Valid{config.monitor_metric}': abs(monitor.best_score), **results}
         log.show_test_error(runId, monitor, results, sum_time)
 
         # 保存最优模型参数

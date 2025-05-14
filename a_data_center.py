@@ -35,7 +35,9 @@ class DataModule:
         self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
 
         if config.dataset == 'financial' and config.multi_dataset:
-            self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, self.scaler = multi_dataset(config)
+            # self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, self.scaler = multi_dataset(config)
+            self.x, self.y, self.scaler = multi_dataset(config)
+            self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y = get_split_dataset(self.x, self.y, config)
             self.train_set, self.valid_set, self.test_set = self.get_dataset(self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y, config)
             self.train_loader, self.valid_loader, self.test_loader = get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
             config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)}')

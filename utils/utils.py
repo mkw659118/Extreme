@@ -11,6 +11,9 @@ import torch as t
 import numpy as np
 
 def set_settings(config):
+    if config.multi_dataset:
+        config.bs = 128
+
     if config.debug:
         config.rounds = 2
         config.epochs = 1

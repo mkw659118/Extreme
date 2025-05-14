@@ -7,18 +7,18 @@ from utils.exp_sh import once_experiment, log_message
 # 在这里写下超参数探索空间
 hyper_dict = {
     'rounds': [1],
-    'rank': [32],
-    'num_layers': [4],
-    'dataset': ['financial'],  # weather financial lottery
-    'att': ['self'],  
-    'norm': ['rms'],
-    'ffn': ['moe'],
-    'loss_coef': [0.001],
-    'fft': [True],
-    'revin': [False],
-    'dis_method': ['cosine'],  #
+    'rank': [56],
+    'num_layers': [1],
+    # 'dataset': ['financial'],  # weather financial lottery
+    # 'att': ['self'],
+    # 'norm': ['rms'],
+    # 'ffn': ['moe'],
+    # 'loss_coef': [0.001],
+    # 'fft': [True],
+    # 'revin': [False],
+    'dis_method': ['cosine', None],  #
     # 'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
-    # 'idx': [i for i in range(50)]
+    # 'idx': [i for i in range(33)]
 }
 
 ######################################################################################################
