@@ -8,7 +8,7 @@ from dataclasses import dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'ours'
     bs: int = 32
-    rank: int = 64
+    rank: int = 56
     device: str = 'cuda'
     epochs: int = 200
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
@@ -20,7 +20,7 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     multi_dataset: bool = True
 
     # 组件专区
-    num_layers: int = 4
+    num_layers: int = 1
     norm_method: str = 'rms'
     ffn_method: str = 'ffn'
     att_method: str = 'self'
