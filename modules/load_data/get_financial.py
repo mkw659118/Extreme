@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
-from modules.load_data.generate_financial import get_all_fund_list, generate_data
+from modules.load_data.generate_financial import get_all_fund_list, generate_data, process_fund
 from utils.data_scaler import get_scaler
 from modules.load_data.create_window_dataset import create_window_dataset
 import a_data_center
@@ -14,12 +14,14 @@ input_keys = ['nav', 'accnav', 'adj_nav']
 pred_value = 'nav'  # 'nav', 'accnav', 'adj_nav'
 
 
-def get_data(fund_code):
+def get_data(start_date, end_date, fund_code):
     # 读取数据
-    with open(f'./datasets/financial/{fund_code}.pkl', 'rb') as f:
+    dir_name = 'S' + (start_date + '_E' + end_date).replace('-', '')
+
+    with open(f'./datasets/financial/{dir_name}/{fund_code}.pkl', 'rb') as f:
         df = pickle.load(f)  # 假设 df 现在是 numpy 数组
 
-    print(f'./datasets/financial/{fund_code}.pkl')
+    print(f'./datasets/financial/{dir_name}/{fund_code}.pkl')
     # 假设原始数据按顺序排列： fund_code, year, month, day, weekday, nav, accnav, adj_nav
     # 你已经知道 'nav', 'accnav', 'adj_nav' 列的位置：[-3, -2, -1]
     col_indices = {'nav': -3, 'accnav': -2, 'adj_nav': -1}
@@ -50,9 +52,9 @@ def get_benchmark_code():
     with open('./datasets/benchmark.pkl', 'rb') as f:
         group = pickle.load(f)
         group = group['stock-270000']
-        group.remove('013869')
-        group.remove('013870')
-    #
+        # group.remove('013869')
+        # group.remove('013870')
+
     # print(f'now fund code: {group}')
     return group
 
@@ -61,10 +63,12 @@ def get_financial_data(start_date, end_date, idx, config):
     # 为了对齐实验，现在加上this one  20250513 15时47分
     now_fund_code = get_benchmark_code()[idx]
     try:
-        data = get_data(now_fund_code)
+        data = get_data(start_date, end_date, now_fund_code)
     except Exception as e:
         print(e)
-        data = generate_data(start_date, end_date)
+        generate_data(start_date, end_date)
+        data = get_data(start_date, end_date, now_fund_code)
+
     data = data.astype(np.float32)
 
     x, y = data, data[:, -1].astype(np.float32)
@@ -146,14 +150,21 @@ def multi_dataset(config):
     now_fund_code = get_benchmark_code()
     min_length = 1e9
     for fund_code in now_fund_code:
-        df = get_data(fund_code)
-        min_length = min(len(df), min_length)
+        try:
+            df = get_data(config.start_date, config.end_date, fund_code)
+            min_length = min(len(df), min_length)
+        except Exception as e:
+            print(e)
+            process_fund(0, fund_code, config.start_date, config.end_date)
+
 
     raw_data = []
     for fund_code in now_fund_code:
-        df = get_data(fund_code)
-        raw_data.append(df[-min_length:])
-
+        try:
+            df = get_data(config.start_date, config.end_date, fund_code)
+            raw_data.append(df[-min_length:])
+        except Exception as e:
+            print(e)
     data = np.stack(raw_data, axis=0)
     data = data.transpose(1, 0, 2)
     x, y = data[:, :, :], data[:, :, -1]

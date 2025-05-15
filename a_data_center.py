@@ -1,6 +1,5 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-import numpy as np
 from b_data_control import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_lottery import get_lottery
@@ -10,12 +9,12 @@ from utils.data_spliter import get_split_dataset
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
 from utils.utils import set_settings
-from utils.exp_config import get_config
+from exp.exp_config import get_config
 
 
 def load_data(config):
     if config.dataset == 'financial':
-        all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config.idx, config)
+        all_x, all_y, scaler = get_financial_data(config.start_date, config.end_date, config.idx, config)
     elif config.dataset == 'weather':
         all_x, all_y, scaler = get_ts(config.dataset, config)
     elif config.dataset == 'lottery':

@@ -85,8 +85,6 @@ def predict(model, data_input, label, scaler, config):
     return True
 
 
-
-
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
     from a_data_center import DataModule
@@ -119,7 +117,7 @@ def run(config):
     return metrics
 
 if __name__ == '__main__':
-    from utils.exp_config import get_config
+    from exp.exp_config import get_config
     config = get_config()
     # config = get_config('MLPConfig')
     # config = get_config('CrossformerConfig')

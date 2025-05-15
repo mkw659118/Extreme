@@ -1,7 +1,6 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import os
-import time
 
 import torch
 import pickle
@@ -75,6 +74,6 @@ def run(config):
 
 
 if __name__ == '__main__':
-    from utils.exp_config import get_config
+    from exp.exp_config import get_config
     config = get_config()
     run(config)

@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 import pickle
-import numpy as np
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # 数据库配置
@@ -97,24 +97,28 @@ def process_date_columns(df):
     ]
     return df[new_order].to_numpy()
 
-def save_fund_data(df, fund, index):
+def save_fund_data(df, fund, index, start_date, end_date):
     """保存为本地 pickle 文件"""
-    filepath = f'./datasets/financial/{fund}.pkl'
+    dir_name = 'S' + (start_date + '_E' + end_date).replace('-', '')
+    filepath = f'./datasets/financial/{dir_name}/{fund}.pkl'
     with open(filepath, 'wb') as f:
         pickle.dump(df, f)
         print(f'{index}: {filepath} 存储完毕')
 
+# process_fund(0, fund_code, config.start_date, config.end_date）
 def process_fund(index, fund, start_date, end_date):
     df = query_fund_data(fund, start_date, end_date)
     if df.empty:
         return
     df = process_date_columns(df)
-    save_fund_data(df, fund, index)
+    save_fund_data(df, fund, index, start_date, end_date)
     return
 
 def generate_data(start_date, end_date):
-    code_list = get_all_fund_list()
     # start_date, end_date = '2020-07-13', '2025-03-08'  # 注意日期格式统一
+    code_list = get_all_fund_list()
+    dir_name = 'S' + (start_date + '_E' + end_date).replace('-', '')
+    os.makedirs(f'./datasets/financial/{dir_name}', exist_ok=True)
     print(f'共需处理基金数量：{len(code_list)}')
 
     # 线性处理方式
@@ -140,6 +144,7 @@ def generate_data(start_date, end_date):
             except Exception as e:
                 print(f"线程执行出错: {e}")
     engine.dispose()
+    return True
 
 
 if __name__ == '__main__':

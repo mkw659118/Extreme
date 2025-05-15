@@ -34,8 +34,8 @@ class DatasetInfo:
     shuffle: bool = False
     scaler_method: str = 'stander'
 
-    seq_len: int = 48
-    pred_len: int = 10
+    seq_len: int = 12
+    pred_len: int = 5
     ts_var: int = 0
 
 

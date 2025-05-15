@@ -1,15 +1,10 @@
 # coding : utf-8
 # Author : yuxiang Zeng
-import os
-import ast
-import argparse
-from pprint import pprint, pformat
-import yaml
 
 
 def get_config(Config='TestConfig'):
     import argparse
-    from utils.exp_config import load_config, update_config_from_args
+    from exp.exp_config import load_config, update_config_from_args
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_path', type=str, default='e_model_config.py')
     parser.add_argument('--exp_name', type=str, default=Config)

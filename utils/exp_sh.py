@@ -8,7 +8,7 @@ import pickle
 from itertools import product
 
 from run_train import get_experiment_name
-from utils.exp_config import get_config
+from exp.exp_config import get_config
 
 
 # 搜索最佳超参数然后取最佳

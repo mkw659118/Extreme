@@ -135,7 +135,7 @@ def run(config):
         pred(i)
 
 if __name__ == '__main__':
-    from utils.exp_config import get_config
+    from exp.exp_config import get_config
     config = get_config()
     # config = get_config('MLPConfig')
     # config = get_config('CrossformerConfig')
