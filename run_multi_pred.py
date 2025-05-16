@@ -85,8 +85,6 @@ def predict(model, data_input, label, scaler, config):
     return True
 
 
-
-
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
     from a_data_center import DataModule

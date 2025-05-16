@@ -1,13 +1,12 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import os
-import time
 
 import torch
 import pickle
 from run_train import get_experiment_name
 from c_model_center import Model
-from utils.exp_metrics import ErrorMetrics
+from exp.exp_metrics import ErrorMetrics
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter

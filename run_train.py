@@ -1,8 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-import os
 import torch
-from utils.exp_run import RunExperiments
+from exp.exp_run import RunExperiments
 torch.set_default_dtype(torch.float32)
 
 def get_experiment_name(config):

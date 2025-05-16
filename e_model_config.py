@@ -28,6 +28,11 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     revin: bool = False
     fft: bool = False
     idx: int = 0
+    # start_date: str = '2022-07-13'
+    # end_date: str = '2023-07-13'
+
+    start_date: str = '2020-05-15'
+    end_date: str = '2025-05-15'
 
 
 

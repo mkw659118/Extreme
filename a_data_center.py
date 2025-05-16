@@ -14,7 +14,7 @@ from utils.exp_config import get_config
 
 def load_data(config):
     if config.dataset == 'financial':
-        all_x, all_y, scaler = get_financial_data('2020-07-13', '2025-03-8', config.idx, config)
+        all_x, all_y, scaler = get_financial_data(config.start_date, config.end_date, config.idx, config)
     elif config.dataset == 'weather':
         all_x, all_y, scaler = get_ts(config.dataset, config)
     elif config.dataset == 'lottery':
