@@ -80,8 +80,10 @@ class GuidanceDenoiseDiffusion:
         vocabs = vocab_embedding([item[1] for item in x_vocab], x_0.shape[1], self.device)
         t = torch.randint(0, self.n_steps, (x_0.shape[0],), device=self.device)
         noise = torch.randn_like(x_0)
+
         x_t, target = self.q_sample(x_0, t, noise)
         eps_theta = eps_model(x_t, vocabs, t)
+
         return torch.nn.functional.mse_loss(eps_theta, target)
 
 
@@ -153,6 +155,7 @@ if __name__ == "__main__":
 
     eps_model = NoisePredictor(len_seq, 2, device).to(device)
     diffusion = GuidanceDenoiseDiffusion(n_steps, device)
+
     optimizer = torch.optim.Adam(eps_model.parameters(), lr=1e-4)
     early_stopping = EarlyStopping(patience=20000, delta=0.0, verbose=False)
 

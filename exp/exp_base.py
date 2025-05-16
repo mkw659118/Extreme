@@ -5,7 +5,7 @@ import torch
 from time import time
 
 from f_loss_function import compute_loss
-from utils.exp_metrics import ErrorMetrics
+from exp.exp_metrics import ErrorMetrics
 from utils.model_trainer import get_loss_function, get_optimizer
 
 

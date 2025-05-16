@@ -11,9 +11,9 @@ from sklearn.model_selection import ParameterGrid
 import torch
 
 from a_data_center import experiment, DataModule
-from exp.exp_config import get_config
+from utils.exp_config import get_config
 from utils.exp_logger import Logger
-from utils.exp_metrics import ErrorMetrics
+from exp.exp_metrics import ErrorMetrics
 from utils.utils import set_settings, set_seed
 
 global log

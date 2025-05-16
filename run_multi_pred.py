@@ -117,7 +117,7 @@ def run(config):
     return metrics
 
 if __name__ == '__main__':
-    from exp.exp_config import get_config
+    from utils.exp_config import get_config
     config = get_config()
     # config = get_config('MLPConfig')
     # config = get_config('CrossformerConfig')

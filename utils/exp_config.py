@@ -4,7 +4,7 @@
 
 def get_config(Config='TestConfig'):
     import argparse
-    from exp.exp_config import load_config, update_config_from_args
+    from utils.exp_config import load_config, update_config_from_args
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_path', type=str, default='e_model_config.py')
     parser.add_argument('--exp_name', type=str, default=Config)

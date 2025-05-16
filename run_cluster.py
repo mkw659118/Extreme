@@ -115,10 +115,10 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
 
 
 if __name__ == '__main__':
-    from exp.exp_config import get_config
+    from utils.exp_config import get_config
     config = get_config()
 
-    n_clusters = 20
+    n_clusters = 25
     mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
     with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)
@@ -126,6 +126,6 @@ if __name__ == '__main__':
     # 构造数据目录名（必须和聚类用的保持一致）
     dir_name = 'S' + (config.start_date + '_E' + config.end_date).replace('-', '')
     data_dir = f'./datasets/financial/{dir_name}'
-    output_dir = f'./datasets/financial/{dir_name}'
+    output_dir = f'./figs/clusters_{n_clusters}'
     # 绘图
     plot_clusters_from_mapping(mapping_array, data_dir, output_dir)

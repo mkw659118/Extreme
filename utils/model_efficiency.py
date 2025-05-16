@@ -34,7 +34,7 @@ def calculate_inference_time(model, sample_input, config):
 
 
 def only_run():
-    from exp.exp_config import get_config
+    from utils.exp_config import get_config
     from utils.exp_logger import Logger
     from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings

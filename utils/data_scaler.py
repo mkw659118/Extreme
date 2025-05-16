@@ -8,7 +8,7 @@ class DataScalerStander:
         # 根据训练集的数值进行归一化
         scaler = y[:int(len(y) * self.config.density)].astype(np.float32)
         self.y_mean = scaler.mean()
-        self.y_std = scaler.std()
+        self.y_std = scaler.std() + 1e-9
         # print(self.y_mean, self.y_std)
 
     def transform(self, y):

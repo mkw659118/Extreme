@@ -6,7 +6,7 @@ import torch
 import pickle
 from run_train import get_experiment_name
 from c_model_center import Model
-from utils.exp_metrics import ErrorMetrics
+from exp.exp_metrics import ErrorMetrics
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -74,6 +74,6 @@ def run(config):
 
 
 if __name__ == '__main__':
-    from exp.exp_config import get_config
+    from utils.exp_config import get_config
     config = get_config()
     run(config)

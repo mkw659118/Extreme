@@ -30,8 +30,6 @@ def ErrorMetrics(realVec, estiVec, config):
 
 def compute_regression_metrics(realVec, estiVec):
     """ 计算回归任务的误差指标 """
-
-
     absError = np.abs(estiVec - realVec)
 
     MAE = np.mean(absError)
