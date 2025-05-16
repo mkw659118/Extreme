@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
-from b_data_control import custom_collate_fn, TensorDataset
+
+from exp.exp_dataloader import DataModule
+from exp.exp_dataset import TensorDataset, custom_collate_fn
+from exp.exp_model import Model
 from run_train import get_experiment_name
-from c_model_center import Model
 from utils.utils import set_seed
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
@@ -59,18 +61,11 @@ def predict(model, data_input, label, scaler, config):
 def save_figure(inputs, label, pred, cnt, scaler, config):
     plt.figure(figsize=(12, 6), dpi=300)
 
-    # if inputs.shape[-1] != 1:
-        # inputs, = inputs[:, -1]
-
     inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
-    # print(label)
-    # print(pred)
-    # exit()
+
     # 确保inputs和label/pred都是1维
     input_seq = inputs.cpu().reshape(-1).numpy()
-    # print(input_seq)
-    # print(pred)
-    # exit()
+
     if label is not None:
         real_seq = label.cpu().reshape(-1).numpy()
     pred_seq = pred.cpu().reshape(-1).detach().numpy()
@@ -99,7 +94,6 @@ def save_figure(inputs, label, pred, cnt, scaler, config):
 
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
-    from a_data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
@@ -126,7 +120,6 @@ def pred(idx):
     log = Logger(log_filename, exper_detail, plotter, config)
     metrics = RunOnce(config, 0, log)
     return metrics
-
 
 def run(config):
     # 多基金

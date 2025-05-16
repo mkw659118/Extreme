@@ -8,7 +8,7 @@ from layers.att.multilatent_attention import MLA
 from layers.att.multiquery_attention import MultiQueryAttentionBatched
 from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
-from layers.att.self_attention import SelfAttention, Attention
+from layers.att.self_attention import Attention
 from layers.feedforward.smoe import SparseMoE
 
 

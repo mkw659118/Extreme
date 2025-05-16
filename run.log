@@ -2974,3 +2974,7 @@ Running at 2025-05-14 17:20: python run_train.py --exp_name TestConfig --retrain
 |2025-05-15 15:42:42| MAE - 0.0147 RMSE - 0.0207 NMAE - 0.0102 NRMSE - 0.0142 Acc_10 - 1.0000 train_time - 7.5307
 |2025-05-15 16:06:14| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 128, Rank : 56, Fundidx : 0, Seq_len : 12, Pred_len : 5, 
 |2025-05-15 16:06:14| MAE - 0.0145 RMSE - 0.0203 NMAE - 0.0105 NRMSE - 0.0146 Acc_10 - 1.0000 train_time - 16.3107
+|2025-05-16 21:24:36| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 128, Rank : 56, Fundidx : 0, Seq_len : 12, Pred_len : 5, 
+|2025-05-16 21:24:36| MAE - 0.0145 RMSE - 0.0204 NMAE - 0.0105 NRMSE - 0.0146 Acc_10 - 1.0000 train_time - 194.2445
+|2025-05-16 21:49:14| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 128, Rank : 56, Fundidx : 0, Seq_len : 12, Pred_len : 5, 
+|2025-05-16 21:49:14| MAE - 0.0145 RMSE - 0.0204 NMAE - 0.0105 NRMSE - 0.0146 Acc_10 - 1.0000 train_time - 199.0610

@@ -4,7 +4,6 @@
 # Author : yuxiang Zeng
 import numpy as np
 import pandas as pd
-from modules.load_data.create_window_dataset import create_window_dataset
 from utils.data_scaler import get_scaler
 
 
@@ -20,11 +19,9 @@ def get_ts(dataset, config):
     timestamps = pd.to_datetime(df[:, 0])
     timestamps = np.array([[ts.year, ts.month, ts.day, ts.weekday()] for ts in timestamps])
 
-
     x = np.concatenate((timestamps, x), axis=1)
     print(x[0])
     print(x.shape, y.shape)
-
 
     # 根据训练集对input进行特征归一化
     scaler = get_scaler(y, config)
@@ -34,8 +31,7 @@ def get_ts(dataset, config):
     temp = x[:, -1].astype(np.float32)
     x[:, -1] = (temp - scaler.y_mean) / scaler.y_std
 
-
     x = x.astype(np.float32)
     y = y.astype(np.float32)
-    X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
+    X_window, y_window = x, y
     return X_window, y_window, scaler

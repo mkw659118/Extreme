@@ -1,9 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import torch
-
 from layers.encoder.position_enc import PositionEncoding
-from layers.encoder.seq_enc import SeqEncoder
 from layers.encoder.token_emc import TokenEmbedding
 from layers.transformer import Transformer
 from modules.temporal_enc import TemporalEmbedding

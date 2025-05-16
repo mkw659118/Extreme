@@ -12,7 +12,8 @@ class SimpleModel(nn.Module):
         self.linear2 = nn.Linear(hidden_dim, hidden_dim)
         self.linear3 = nn.Linear(hidden_dim, output_dim)
 
-    def forward(self, x):
+    def forward(self, input_ids=None, **kwargs):  # 兼容PEFT传入的多余参数
+        x = input_ids
         x = self.linear1(x).relu()
         x = self.linear2(x).relu()
         return self.linear3(x)

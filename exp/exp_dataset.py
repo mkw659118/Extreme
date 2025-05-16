@@ -3,7 +3,6 @@
 # 根据场景需要来改这里的input形状
 from torch.utils.data import Dataset
 
-
 class TensorDataset(Dataset):
     def __init__(self, x, y, mode, config):
         self.config = config
@@ -25,7 +24,6 @@ class TensorDataset(Dataset):
         s_end = s_begin + self.config.seq_len
         r_begin = s_end
         r_end = r_begin + self.config.pred_len
-        # print(s_begin, s_end, r_begin, r_end)
 
         if not self.config.multi_dataset:
             x = self.x[s_begin:s_end][:, -3:]

@@ -7,9 +7,8 @@ import time
 import logging
 import pickle
 import numpy as np
-import yagmail
-
 from utils.model_efficiency import get_efficiency
+
 
 class Logger:
     def __init__(self, filename, exper_detail, plotter, config, show_params=True):

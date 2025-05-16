@@ -8,10 +8,8 @@ from layers.encoder.position_enc import PositionEncoding
 from layers.encoder.seq_enc import SeqEncoder
 from layers.encoder.token_emc import TokenEmbedding
 from layers.feedforward.moe import MoE
-from layers.feedforward.smoe import SparseMoE
 from layers.revin import RevIN
 from layers.transformer import Transformer
-from modules.temporal_enc import TemporalEmbedding
 
 class Backbone(torch.nn.Module):
     def __init__(self, enc_in, config):
@@ -83,21 +81,21 @@ class Backbone(torch.nn.Module):
         # [bs, seq, d] -> [bs, d, seq] -> [bs, d, pred] -> [bs, pred, d]
         # x_enc = self.predict_linear(x_enc.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
 
-
         # ===== 1. 跨通道 attention =====
-        # 原始 x_enc: (bs, 48, 33, 64)
-        # 调整为 (33, bs*48, 64)
+        # 原始 x_enc: (batch, time, channel, dim)
+        # 调整为 (channel, batch*time, dim)
         bs, pred_len, channels, dim = x_enc.shape
         x_enc = x_enc.permute(2, 0, 1, 3).reshape(channels, bs * pred_len, dim)
         x_enc = self.encoder(x_enc)
-        # 还原为 (bs, 48, 33, 64)
+        # 还原为 (batch, time, channel, dim)
         x_enc = x_enc.reshape(channels, bs, pred_len, dim).permute(1, 2, 0, 3)
+
         # ===== 2. 跨时间 attention =====
-        # 调整为 (48, bs*33, 64)
+        # 调整为 (time, batch*channel, dim)
         x_enc = x_enc.permute(1, 0, 2, 3).reshape(pred_len, bs * channels, dim)
         # 注意力：时间步之间的 self-attention
-        x_enc = self.encoder2(x_enc)  # (48, bs*33, 64)
-        # 还原为 (bs, 48, 33, 64)
+        x_enc = self.encoder2(x_enc)
+        # 还原为 (batch, time, channel, dim)
         x_enc = x_enc.reshape(pred_len, bs, channels, dim).permute(1, 0, 2, 3)
 
         # x_enc = self.encoder(x_enc)

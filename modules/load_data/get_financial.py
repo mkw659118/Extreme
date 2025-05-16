@@ -8,7 +8,6 @@ import pickle
 from modules.load_data.generate_financial import get_all_fund_list, generate_data, process_fund
 from utils.data_scaler import get_scaler
 from modules.load_data.create_window_dataset import create_window_dataset
-import a_data_center
 
 input_keys = ['nav', 'accnav', 'adj_nav']
 pred_value = 'nav'  # 'nav', 'accnav', 'adj_nav'

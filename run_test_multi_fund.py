@@ -1,11 +1,12 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import os
-
 import torch
 import pickle
+
+from exp.exp_dataloader import DataModule
+from exp.exp_model import Model
 from run_train import get_experiment_name
-from c_model_center import Model
 from exp.exp_metrics import ErrorMetrics
 from utils.utils import set_seed
 from utils.exp_logger import Logger
@@ -13,9 +14,9 @@ from utils.exp_metrics_plotter import MetricsPlotter
 from utils.utils import set_settings
 torch.set_default_dtype(torch.float32)
 
+
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
-    from a_data_center import DataModule
     datamodule = DataModule(config)
     model = Model(datamodule, config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
@@ -48,7 +49,6 @@ def RunOnce(config, runId, log):
     preds = torch.cat(preds, dim=0)
     reals, preds = datamodule.scaler.inverse_transform(reals), datamodule.scaler.inverse_transform(preds)
     return reals, preds
-
 
 
 def run(config):

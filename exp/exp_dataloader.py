@@ -1,15 +1,11 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-from b_data_control import TensorDataset
+from exp.exp_dataset import TensorDataset
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_lottery import get_lottery
 from modules.load_data.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders
 from utils.data_spliter import get_split_dataset
-from utils.exp_logger import Logger
-from utils.exp_metrics_plotter import MetricsPlotter
-from utils.utils import set_settings
-from utils.exp_config import get_config
 
 
 def load_data(config):
@@ -49,24 +45,3 @@ class DataModule:
             TensorDataset(test_x, test_y, 'test', config)
         )
 
-
-if __name__ == '__main__':
-    config = get_config()
-    set_settings(config)
-    config.experiment = True
-
-    # logger plotter
-    exper_detail = f"Dataset : {config.dataset.upper()}, Model : {config.model}, Train_size : {config.train_size}"
-    log_filename = f'{config.train_size}_r{config.rank}'
-    log = Logger(log_filename, exper_detail, config)
-    plotter = MetricsPlotter(log_filename, config)
-    config.log = log
-    log(str(config.__dict__))
-
-    datamodule = DataModule(config)
-    for train_batch in datamodule.train_loader:
-        all_item = [item.to(config.device) for item in train_batch]
-        inputs, label = all_item[:-1], all_item[-1]
-        print(inputs, label.shape)
-        # break
-    print('Done!')

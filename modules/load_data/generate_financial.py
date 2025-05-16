@@ -131,7 +131,11 @@ def generate_data(start_date, end_date):
 
     # 多线程处理
     print(f'共需处理基金数量：{len(code_list)}')
-    max_workers = 16  # 线程数，可按 CPU 或数据库压力调节
+    from concurrent.futures import ThreadPoolExecutor
+
+    # 获取 CPU 核心数，并计算线程数（取至少为1）
+    cpu_count = os.cpu_count()
+    max_workers = max(1, cpu_count // 4)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
             executor.submit(process_fund, i, fund, start_date, end_date)

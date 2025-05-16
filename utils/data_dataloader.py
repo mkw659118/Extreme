@@ -2,10 +2,9 @@
 # Author : yuxiang Zeng
 # 2025年3月9日17:37:03 这里的代码几乎可以不用修正了
 import platform
-from torch.utils.data import DataLoader
 import multiprocessing
-
-from b_data_control import custom_collate_fn
+from torch.utils.data import DataLoader
+from exp.exp_dataset import custom_collate_fn
 
 
 def get_dataloaders(train_set, valid_set, test_set, config):

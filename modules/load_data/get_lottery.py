@@ -3,8 +3,6 @@
 
 import pandas as pd
 import numpy as np
-
-from modules.load_data.create_window_dataset import create_window_dataset
 from utils.data_scaler import get_scaler
 
 
@@ -28,6 +26,6 @@ def get_lottery(datasets, config):
 
     x = x.astype(np.float32)
     y = y.astype(np.float32)
-    X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
+    X_window, y_window = x, y
     print(X_window.shape, y_window.shape)
     return X_window, y_window, scaler

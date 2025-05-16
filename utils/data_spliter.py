@@ -1,7 +1,12 @@
 # coding : utf-8
 # Author : yuxiang Zeng
-from utils.data_preprocessor import preprocess_data
+# 注意，这里的代码已经几乎完善，非必要不要改动（2025年04月22日11:54:01）
 import numpy as np
+
+def preprocess_data(x, y, config):
+    x = np.array(x).astype(np.float32)
+    y = np.array(y).astype(np.float32)
+    return x, y
 
 def get_split_dataset(x, y, config):
     if config.classification:

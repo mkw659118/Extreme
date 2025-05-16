@@ -48,11 +48,7 @@ class ExperimentConfig:
     hyper_search: bool = False
     continue_train: bool = False
 
-@dataclass
-class OtherConfig:
-    classification: bool = False
-    ablation: int = 0
-    try_exp: int = -1
+
 
 @dataclass
 class LoggerConfig:

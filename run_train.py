@@ -1,8 +1,15 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import torch
-from exp.exp_run import RunExperiments
+import collections
+import numpy as np
+from exp.exp_dataloader import DataModule
+from exp.exp_main import RunOnce
+from exp.exp_model import Model
+from utils.model_efficiency import get_efficiency
+from utils.utils import set_seed
 torch.set_default_dtype(torch.float32)
+
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'
@@ -19,6 +26,45 @@ def get_experiment_name(config):
          f"Pred_len : {config.pred_len}, "
     )
     return log_filename, exper_detail
+
+
+def RunExperiments(log, config):
+    log('*' * 20 + 'Experiment Start' + '*' * 20)
+    metrics = collections.defaultdict(list)
+
+    for runId in range(config.rounds):
+        set_seed(config.seed + runId)
+        datamodule = DataModule(config)
+        model = Model(datamodule, config)
+        log.plotter.reset_round()
+        results = RunOnce(config, runId, model, datamodule, log)
+        for key in results:
+            metrics[key].append(results[key])
+        log.plotter.append_round()
+
+    log('*' * 20 + 'Experiment Results:' + '*' * 20)
+    log(log.exper_detail)
+    log(f'Train_length : {len(datamodule.train_loader.dataset)} Valid_length : {len(datamodule.valid_loader.dataset)} Test_length : {len(datamodule.test_loader.dataset)}')
+
+    for key in metrics:
+        log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
+    try:
+        flops, params, inference_time = get_efficiency(config)
+        log(f"Flops: {flops:.0f}")
+        log(f"Params: {params:.0f}")
+        log(f"Inference time: {inference_time:.2f} ms")
+    except Exception as e:
+        log('Skip the efficiency calculation')
+
+    log.save_in_log(metrics)
+
+    if config.record:
+        log.save_result(metrics)
+        log.plotter.record_metric(metrics)
+    log('*' * 20 + 'Experiment Success' + '*' * 20)
+
+    log(f'\n{str(model)}')
+    return metrics
 
 
 def run(config):

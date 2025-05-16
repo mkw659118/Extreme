@@ -812,8 +812,8 @@ class Transformer(nn.Module):
 
 
 if __name__ == "__main__":
-    torch.set_default_dtype(torch.bfloat16)
-    torch.set_default_device("cuda")
+    torch.set_default_dtype(torch.float32)
+    torch.set_default_device("cpu")
     torch.manual_seed(0)
     args = ModelArgs()
     # x = torch.randint(0, args.vocab_size, (2, 128)) 这样的初始化是离散的，我们应该使用连续的方式
@@ -823,7 +823,3 @@ if __name__ == "__main__":
     print(model(input).size())
 
 
-# 总体：
-# 我修改了class ModelArgs，使其符合时间序列预测任务；
-# 不使用 ColumnParallelLinear和ParallelEmbedding改使用了nn.Linear和WordWordEmbedding；
-# 主要目的是去除vocalb_size，并使用连续的输入，而不是离散的输入； ---Peng Ziyang

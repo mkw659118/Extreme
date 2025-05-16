@@ -1,8 +1,21 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 
-from d_default_config import *
+from default_config import *
 from dataclasses import dataclass
+
+@dataclass
+class OtherConfig:
+    classification: bool = False
+    ablation: int = 0
+    try_exp: int = -1
+    # start_date: str = '2022-07-13'
+    # end_date: str = '2023-07-13'
+
+    start_date: str = '2020-05-15'
+    end_date: str = '2025-05-15'
+    multi_dataset: bool = True
+
 
 @dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
@@ -17,8 +30,6 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     try_exp: int = 1
     dataset: str = 'financial'
 
-    multi_dataset: bool = True
-
     # 组件专区
     num_layers: int = 1
     norm_method: str = 'rms'
@@ -28,12 +39,6 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     revin: bool = False
     fft: bool = False
     idx: int = 0
-    # start_date: str = '2022-07-13'
-    # end_date: str = '2023-07-13'
-
-    start_date: str = '2020-05-15'
-    end_date: str = '2025-05-15'
-
 
 
 @dataclass
@@ -72,6 +77,7 @@ class TimesNetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     e_layers: int = 2  # 网络层数
     num_kernels: int = 8
     label_len: int = 24
+
 
 @dataclass
 class timeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):

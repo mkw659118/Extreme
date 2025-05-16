@@ -42,7 +42,7 @@ class PairwiseLoss(nn.Module):
                 reduction='sum'
             )
         elif self.method == 'dtw':
-            return SoftDTW(use_cuda=True, gamma=0.1)
+            return SoftDTW(use_cuda=torch.cuda.is_available(), gamma=0.1)
         elif self.method == 'mahalanobis':
             return self._mahalanobis_distance
         elif self.method == 'none':
@@ -87,6 +87,7 @@ class PairwiseLoss(nn.Module):
         elif self.reduction == 'sum':
             return loss.sum()
         return loss
+
 
 # Example for each method
 if __name__ == "__main__":
