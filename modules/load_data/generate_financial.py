@@ -111,8 +111,8 @@ def process_fund(index, fund, start_date, end_date):
     if df.empty:
         return
     df = process_date_columns(df)
-    save_fund_data(df, fund, index, start_date, end_date)
-    return
+    # save_fund_data(df, fund, index, start_date, end_date)
+    return df
 
 def generate_data(start_date, end_date):
     # start_date, end_date = '2020-07-13', '2025-03-08'  # 注意日期格式统一

@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # 训练1轮
     model.train()
-    for epoch in range(1):
+    for epoch in range(5):
         for batch_x, batch_y in dataloader:
             optimizer.zero_grad()
             out = model(batch_x)

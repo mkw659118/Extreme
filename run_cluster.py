@@ -11,7 +11,8 @@ from tslearn.preprocessing import TimeSeriesScalerMinMax
 def dtw_kmeans(X, n_clusters=10, max_iter=10, random_state=42, verbose=True):
     # 先对所有时间序列进行归一化处理
     X_scaled = TimeSeriesScalerMinMax().fit_transform(X)
-
+    cpu_count = os.cpu_count()
+    max_workers = max(1, cpu_count // 4)
     # 使用 tslearn 的 DTW 距离版本的 KMeans
     model = TimeSeriesKMeans(
         n_clusters=n_clusters,
@@ -19,7 +20,7 @@ def dtw_kmeans(X, n_clusters=10, max_iter=10, random_state=42, verbose=True):
         max_iter=max_iter,
         verbose=verbose,
         random_state=random_state,
-        n_jobs=14
+        n_jobs=max_workers
     )
     labels = model.fit_predict(X_scaled)
     return labels

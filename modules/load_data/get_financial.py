@@ -7,7 +7,6 @@ import pandas as pd
 import pickle
 from modules.load_data.generate_financial import get_all_fund_list, generate_data, process_fund
 from utils.data_scaler import get_scaler
-from modules.load_data.create_window_dataset import create_window_dataset
 
 input_keys = ['nav', 'accnav', 'adj_nav']
 pred_value = 'nav'  # 'nav', 'accnav', 'adj_nav'
@@ -53,20 +52,20 @@ def get_benchmark_code():
         group = group['stock-270000']
         # group.remove('013869')
         # group.remove('013870')
-
     # print(f'now fund code: {group}')
     return group
 
 def get_financial_data(start_date, end_date, idx, config):
     # now_fund_code = get_all_fund_list()[idx]
     # 为了对齐实验，现在加上this one  20250513 15时47分
-    now_fund_code = get_benchmark_code()[idx]
+    fund_code = get_benchmark_code()[idx]
     try:
-        data = get_data(start_date, end_date, now_fund_code)
+        data = get_data(start_date, end_date, fund_code)
+        # data = process_fund(0, fund_code, config.start_date, config.end_date)
     except Exception as e:
         print(e)
         generate_data(start_date, end_date)
-        data = get_data(start_date, end_date, now_fund_code)
+        data = get_data(start_date, end_date, fund_code)
 
     data = data.astype(np.float32)
 
@@ -88,6 +87,61 @@ def get_financial_data(start_date, end_date, idx, config):
     # X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
     print(X_window.shape, y_window.shape)
     return X_window, y_window, scaler
+
+
+def multi_dataset(config):
+    now_fund_code = get_benchmark_code()
+    min_length = 1e9
+    for fund_code in now_fund_code:
+        try:
+            # df = get_data(config.start_date, config.end_date, fund_code)
+            df = process_fund(0, fund_code, config.start_date, config.end_date)
+            min_length = min(len(df), min_length)
+        except Exception as e:
+            print(e)
+            process_fund(0, fund_code, config.start_date, config.end_date)
+
+    raw_data = []
+    for fund_code in now_fund_code:
+        try:
+            # df = get_data(config.start_date, config.end_date, fund_code)
+            df = process_fund(0, fund_code, config.start_date, config.end_date)
+            raw_data.append(df[-min_length:])
+        except Exception as e:
+            print(e)
+    data = np.stack(raw_data, axis=0)
+    data = data.transpose(1, 0, 2)
+    x, y = data[:, :, :], data[:, :, -1]
+    scaler = get_scaler(y, config)
+    return x, y, scaler
+
+
+def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
+    """
+    X_window: [n, seq_len, d] numpy array，其中最后一个维度是 value
+    y_window: [n, ...]，标签
+    返回：
+        - 过滤后的 X_window
+        - 对应的 y_window
+        - 保留的索引 idx（相对于原始）
+    """
+    values = X_window[:, :, -1]  # 提取 value 部分
+    diff = values[:, 1:] - values[:, :-1]
+
+    if mode == 'absolute':
+        mask = np.any(np.abs(diff) > threshold, axis=1)
+    elif mode == 'relative':
+        prev = np.clip(values[:, :-1], 1e-5, None)
+        rel_diff = np.abs(diff / prev)
+        mask = np.any(rel_diff > threshold, axis=1)
+    else:
+        raise ValueError("mode must be 'absolute' or 'relative'")
+    idx = np.where(~mask)[0]
+    X_window, y_window = X_window[idx], y_window[idx]
+    return X_window, y_window
+
+
+
 
 
 # def multi_dataset(config):
@@ -142,55 +196,3 @@ def get_financial_data(start_date, end_date, idx, config):
 #     print(all_train_x.shape, all_train_y.shape)
 #
 #     return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler
-
-
-
-def multi_dataset(config):
-    now_fund_code = get_benchmark_code()
-    min_length = 1e9
-    for fund_code in now_fund_code:
-        try:
-            df = get_data(config.start_date, config.end_date, fund_code)
-            min_length = min(len(df), min_length)
-        except Exception as e:
-            print(e)
-            process_fund(0, fund_code, config.start_date, config.end_date)
-
-
-    raw_data = []
-    for fund_code in now_fund_code:
-        try:
-            df = get_data(config.start_date, config.end_date, fund_code)
-            raw_data.append(df[-min_length:])
-        except Exception as e:
-            print(e)
-    data = np.stack(raw_data, axis=0)
-    data = data.transpose(1, 0, 2)
-    x, y = data[:, :, :], data[:, :, -1]
-    scaler = get_scaler(y, config)
-    return x, y, scaler
-
-
-def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
-    """
-    X_window: [n, seq_len, d] numpy array，其中最后一个维度是 value
-    y_window: [n, ...]，标签
-    返回：
-        - 过滤后的 X_window
-        - 对应的 y_window
-        - 保留的索引 idx（相对于原始）
-    """
-    values = X_window[:, :, -1]  # 提取 value 部分
-    diff = values[:, 1:] - values[:, :-1]
-
-    if mode == 'absolute':
-        mask = np.any(np.abs(diff) > threshold, axis=1)
-    elif mode == 'relative':
-        prev = np.clip(values[:, :-1], 1e-5, None)
-        rel_diff = np.abs(diff / prev)
-        mask = np.any(rel_diff > threshold, axis=1)
-    else:
-        raise ValueError("mode must be 'absolute' or 'relative'")
-    idx = np.where(~mask)[0]
-    X_window, y_window = X_window[idx], y_window[idx]
-    return X_window, y_window

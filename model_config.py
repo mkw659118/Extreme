@@ -22,7 +22,6 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     model: str = 'ours'
     bs: int = 32
     rank: int = 56
-    device: str = 'cuda'
     epochs: int = 200
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
     patience: int = 45

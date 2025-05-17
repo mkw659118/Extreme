@@ -6,8 +6,8 @@ import numpy as np
 from exp.exp_dataloader import DataModule
 from exp.exp_main import RunOnce
 from exp.exp_model import Model
-from utils.model_efficiency import get_efficiency
-from utils.utils import set_seed
+import utils.model_efficiency
+import utils.utils
 torch.set_default_dtype(torch.float32)
 
 
@@ -33,7 +33,7 @@ def RunExperiments(log, config):
     metrics = collections.defaultdict(list)
 
     for runId in range(config.rounds):
-        set_seed(config.seed + runId)
+        utils.utils.set_seed(config.seed + runId)
         datamodule = DataModule(config)
         model = Model(datamodule, config)
         log.plotter.reset_round()
@@ -49,7 +49,7 @@ def RunExperiments(log, config):
     for key in metrics:
         log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
     try:
-        flops, params, inference_time = get_efficiency(config)
+        flops, params, inference_time = utils.model_efficiency.get_efficiency(config)
         log(f"Flops: {flops:.0f}")
         log(f"Params: {params:.0f}")
         log(f"Inference time: {inference_time:.2f} ms")
