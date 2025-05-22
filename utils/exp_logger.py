@@ -193,7 +193,8 @@ class Logger:
             print(f"Error sending email: {e}")
 
     # 实验结束时执行的清理操作
-    def end_the_experiment(self):
+    def end_the_experiment(self, model):
+        self.logger.info(f'\n{str(model)}')
         self.logger.info('```')
         self._delete_empty_directories('./results/')
 

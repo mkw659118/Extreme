@@ -119,7 +119,7 @@ if __name__ == '__main__':
     from utils.exp_config import get_config
     config = get_config()
 
-    n_clusters = 25
+    n_clusters = 30
     mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
     with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)

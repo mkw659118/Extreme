@@ -15,6 +15,7 @@ class TrainingConfig:
     device: str = 'cuda'
     monitor_metric: str = 'MAE'
 
+
 @dataclass
 class BaseModelConfig:
     model: str = 'ours'
@@ -33,10 +34,6 @@ class DatasetInfo:
     eval_set: bool = True
     shuffle: bool = False
     scaler_method: str = 'stander'
-
-    seq_len: int = 12
-    pred_len: int = 5
-    ts_var: int = 0
 
 
 @dataclass
