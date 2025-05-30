@@ -43,14 +43,15 @@ class Crossformer(nn.Module):
         self.fc = nn.Linear(data_dim, 1)
 
 
-    def forward(self, x_seq, x_mark):
-        batch_size = x_seq.shape[0]
-        if (self.in_len_add != 0):
-            x_seq = torch.cat((x_seq[:, :1, :].expand(-1, self.in_len_add, -1), x_seq), dim = 1)
-        x_seq = self.enc_value_embedding(x_seq)
-        x_seq += self.enc_pos_embedding
-        x_seq = self.pre_norm(x_seq)
-        enc_out = self.encoder(x_seq)
+    def forward(self, x_enc, x_mark):
+        x_enc = x_enc.unsqueeze(-1)
+        batch_size = x_enc.shape[0]
+        if self.in_len_add != 0:
+            x_enc = torch.cat((x_enc[:, :1, :].expand(-1, self.in_len_add, -1), x_enc), dim = 1)
+        x_enc = self.enc_value_embedding(x_enc)
+        x_enc += self.enc_pos_embedding
+        x_enc = self.pre_norm(x_enc)
+        enc_out = self.encoder(x_enc)
         dec_in = repeat(self.dec_pos_embedding, 'b ts_d l d -> (repeat b) ts_d l d', repeat = batch_size)
         predict_y = self.decoder(dec_in, enc_out)
         predict_y = predict_y[:, :self.out_len, :]

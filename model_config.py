@@ -76,7 +76,6 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     idx: int = 0
 
 
-
 @dataclass
 class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mlp'
@@ -89,14 +88,13 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     revin: bool = True
 
 
-
 @dataclass
 class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'crossformer'  
     bs: int = 256
-    rank: int = 32
+    rank: int = 128
     verbose: int = 1
-    seg_len: int = 6
+    seg_len: int = 24
 
 
 @dataclass
@@ -118,7 +116,7 @@ class TimesNetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
 
 
 @dataclass
-class timeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+class TimeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'timellm'
     task_name: str='timeLLM进行时序预测',
     bs: int = 1

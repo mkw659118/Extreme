@@ -173,9 +173,9 @@ class TimesBlock(nn.Module):
         self.k = 3
         # parameter-efficient design
         self.conv = nn.Sequential(
-            Inception_Block_V1(configs.rank, configs.rank, num_kernels=8),
+            Inception_Block_V1(configs.d_model, configs.d_model, num_kernels=8),
             nn.GELU(),
-            Inception_Block_V1(configs.rank, configs.rank, num_kernels=8)
+            Inception_Block_V1(configs.d_model, configs.d_model, num_kernels=8)
         )
 
     def forward(self, x):
@@ -221,18 +221,19 @@ class TimesNet(nn.Module):
         self.seq_len = configs.seq_len
         self.label_len = configs.label_len
         self.pred_len = configs.pred_len
-        self.model = nn.ModuleList([TimesBlock(configs) for _ in range(configs.e_layers)])
         self.enc_embedding = DataEmbedding(enc_in, configs.d_model, configs.embed, configs.freq, configs.dropout)
+        self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
+        self.backbone = nn.ModuleList([TimesBlock(configs) for _ in range(configs.e_layers)])
         self.layer = configs.e_layers
         self.layer_norm = nn.LayerNorm(configs.d_model)
-        self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
         self.projection = nn.Linear(configs.d_model, 1, bias=True)
 
     def forward(self, x_enc, x_mark):
+        x_enc = x_enc.unsqueeze(-1)
         enc_out = self.enc_embedding(x_enc, None)  # [B,T,C]
         enc_out = self.predict_linear(enc_out.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
         for i in range(self.layer):
-            enc_out = self.layer_norm(self.model[i](enc_out))
+            enc_out = self.layer_norm(self.backbone[i](enc_out))
         dec_out = self.projection(enc_out)
         dec_out = dec_out[:, -self.pred_len:, :]  # [B, L, D]
         dec_out = dec_out.reshape(dec_out.shape[0], -1)
