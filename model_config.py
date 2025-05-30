@@ -14,7 +14,12 @@ class OtherConfig:
 
     start_date: str = '2020-05-15'
     end_date: str = '2025-05-15'
-    multi_dataset: bool = True
+    multi_dataset: bool = False
+
+    seq_len: int = 96
+    pred_len: int = 96
+    ts_var: int = 0
+
 
 
 @dataclass
@@ -27,7 +32,7 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 45
     verbose: int = 5
     try_exp: int = 1
-    dataset: str = 'financial'
+    dataset: str = 'weather'  #  financial  weather
 
     # 组件专区
     num_layers: int = 1
@@ -35,8 +40,8 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     ffn_method: str = 'ffn'
     att_method: str = 'self'
     dis_method: str = 'cosine'
-    revin: bool = False
     fft: bool = False
+    revin: bool = False
     idx: int = 0
 
 
@@ -49,6 +54,9 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     patience: int = 50
     verbose: int = 1
     num_layers: int = 2
+    revin: bool = True
+
+
 
 
 @dataclass

@@ -12,7 +12,7 @@ torch.set_default_dtype(torch.float32)
 
 
 def get_experiment_name(config):
-    log_filename = f'Model_{config.model}_Dataset_{config.dataset}_{config.idx}_R{config.rank}'
+    log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
     if config.multi_dataset:
         log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi'
     exper_detail = (
@@ -21,7 +21,6 @@ def get_experiment_name(config):
          f"Density : {config.density:.3f}, "
          f"Bs : {config.bs}, "
          f"Rank : {config.rank}, "
-         f"Fundidx : {config.idx}, "
          f"Seq_len : {config.seq_len}, "
          f"Pred_len : {config.pred_len}, "
     )
@@ -83,5 +82,5 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    config = get_config()
+    config = get_config('MLPConfig')
     run(config)

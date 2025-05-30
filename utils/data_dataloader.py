@@ -4,7 +4,6 @@
 import platform
 import multiprocessing
 from torch.utils.data import DataLoader
-from exp.exp_dataset import custom_collate_fn
 
 
 def get_dataloaders(train_set, valid_set, test_set, config):
@@ -22,7 +21,7 @@ def get_dataloaders(train_set, valid_set, test_set, config):
         drop_last=False,
         shuffle=True,
         pin_memory=True,
-        collate_fn=lambda batch: custom_collate_fn(batch, config),
+        collate_fn=lambda batch: train_set.custom_collate_fn(batch, config),
         num_workers=max_workers,
         prefetch_factor=prefetch_factor
     )
@@ -32,7 +31,7 @@ def get_dataloaders(train_set, valid_set, test_set, config):
         drop_last=False,
         shuffle=False,
         pin_memory=True,
-        collate_fn=lambda batch: custom_collate_fn(batch, config),
+        collate_fn=lambda batch: valid_set.custom_collate_fn(batch, config),
         num_workers=max_workers,
         prefetch_factor=prefetch_factor
     )
@@ -42,7 +41,7 @@ def get_dataloaders(train_set, valid_set, test_set, config):
         drop_last=False,
         shuffle=False,
         pin_memory=True,
-        collate_fn=lambda batch: custom_collate_fn(batch, config),
+        collate_fn=lambda batch: test_set.custom_collate_fn(batch, config),
         num_workers=max_workers,
         prefetch_factor=prefetch_factor
     )

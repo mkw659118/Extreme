@@ -1,6 +1,6 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-from exp.exp_dataset import TensorDataset
+from exp.exp_dataset import TensorDataset, TimeSeriesDataset
 from modules.load_data.generate_financial import generate_data
 from modules.load_data.get_financial import get_financial_data, multi_dataset
 from modules.load_data.get_lottery import get_lottery
@@ -12,7 +12,6 @@ from utils.data_spliter import get_split_dataset
 def load_data(config):
     if config.dataset == 'financial':
         if config.multi_dataset:
-            # generate_data(config.start_date, config.end_date)
             all_x, all_y, scaler = multi_dataset(config)
         else:
             all_x, all_y, scaler = get_financial_data(config.start_date, config.end_date, config.idx, config)
@@ -36,9 +35,16 @@ class DataModule:
         config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)}')
 
     def get_dataset(self, train_x, train_y, valid_x, valid_y, test_x, test_y, config):
-        return (
-            TensorDataset(train_x, train_y, 'train', config),
-            TensorDataset(valid_x, valid_y, 'valid', config),
-            TensorDataset(test_x, test_y, 'test', config)
-        )
+        if config.dataset == 'financial':
+            return (
+                TensorDataset(train_x, train_y, 'train', config),
+                TensorDataset(valid_x, valid_y, 'valid', config),
+                TensorDataset(test_x, test_y, 'test', config)
+            )
+        else:
+            return (
+                TimeSeriesDataset(train_x, train_y, 'train', config),
+                TimeSeriesDataset(valid_x, valid_y, 'valid', config),
+                TimeSeriesDataset(test_x, test_y, 'test', config)
+            )
 

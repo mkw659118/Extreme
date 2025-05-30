@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import pickle
-
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from tslearn.clustering import TimeSeriesKMeans

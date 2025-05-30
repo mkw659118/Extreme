@@ -9,6 +9,7 @@ hyper_dict = {
     'rounds': [1],
     'rank': [56],
     'num_layers': [1],
+    'pred_len': [96, 192, 336, 720],
     # 'dataset': ['financial'],  # weather financial lottery
     # 'att': ['self'],
     # 'norm': ['rms'],
