@@ -69,7 +69,8 @@ class SeqEncoder(torch.nn.Module):
         )
         self.fc = torch.nn.Linear(seq_len * d_model, pred_len)
 
-    def forward(self, x):
+    def forward(self, x, x_mark):
+        x = x.unsqueeze(-1)
         out = self.seq_transfer(x)
         for i in range(self.num_layers):
             out = out + self.seq_encoder[i](out)

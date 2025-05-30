@@ -148,25 +148,6 @@ class TimeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo
     dropout: float = 0.1
     dataset: str = "weather"
 
-@dataclass
-class timeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'timellm'
-    task_name: str='timeLLM进行时序预测',
-    d_ff: int = 32
-    top_k: int = 5
-    llm_dim: int = 4096
-    d_model: int = 16
-    patch_len: int = 16
-    stride: int = 8
-    llm_model: str = "LLAMA"
-    llm_layers: int =6
-    prompt_domain: int = 0
-    n_heads: int =8
-    enc_in:int =7
-    dropout: float = 0.1
-    dataset: str = "weather"
-
-
 
 @dataclass
 class RNNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):

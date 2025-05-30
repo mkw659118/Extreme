@@ -31,7 +31,15 @@ class Model(BasicModel):
             self.model = Linear2(self.input_size, config)
 
         elif config.model in ['rnn', 'lstm', 'gru']:
-            self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=config.num_layers, seq_method=config.model, bidirectional=True)
+            self.model = SeqEncoder(
+                input_size=self.input_size,
+                d_model=self.hidden_size,
+                seq_len=config.seq_len,
+                pred_len=config.seq_len,
+                num_layers=config.num_layers,
+                seq_method=config.model,
+                bidirectional=True
+            )
         elif config.model == 'crossformer':  # 添加 Crossformer 支持
             self.model = Crossformer(
                 data_dim=self.input_size,
