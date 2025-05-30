@@ -15,6 +15,7 @@ class TrainingConfig:
     device: str = 'cuda'
     monitor_metric: str = 'MAE'
 
+
 @dataclass
 class BaseModelConfig:
     model: str = 'ours'

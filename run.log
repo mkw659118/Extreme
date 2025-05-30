@@ -2978,26 +2978,26 @@ Running at 2025-05-14 17:20: python run_train.py --exp_name TestConfig --retrain
 |2025-05-16 21:24:36| MAE - 0.0145 RMSE - 0.0204 NMAE - 0.0105 NRMSE - 0.0146 Acc_10 - 1.0000 train_time - 194.2445
 |2025-05-16 21:49:14| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 128, Rank : 56, Fundidx : 0, Seq_len : 12, Pred_len : 5, 
 |2025-05-16 21:49:14| MAE - 0.0145 RMSE - 0.0204 NMAE - 0.0105 NRMSE - 0.0146 Acc_10 - 1.0000 train_time - 199.0610
-|2025-05-30 10:49:32| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Fundidx : 0, Seq_len : 96, Pred_len : 96, 
+|2025-05-30 10:49:32| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Fundidx : 0, Seq_len : 96, Pred_len : 96,
 |2025-05-30 10:49:32| MAE - 0.0585 RMSE - 0.0719 NMAE - 0.8538 NRMSE - 0.8925 Acc_10 - 0.0342 train_time - 15.6091
-|2025-05-30 10:57:51| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-05-30 10:57:51| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96,
 |2025-05-30 10:57:51| MAE - 0.0236 RMSE - 0.0332 NMAE - 0.3453 NRMSE - 0.4120 Acc_10 - 0.2187 train_time - 0.9800
-|2025-05-30 11:01:17| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-05-30 11:01:17| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192,
 |2025-05-30 11:01:17| MAE - 0.0269 RMSE - 0.0369 NMAE - 0.3918 NRMSE - 0.4564 Acc_10 - 0.1797 train_time - 1.0923
 
 
 
-|2025-05-30 11:14:12| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 92, 
+|2025-05-30 11:14:12| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 92,
 |2025-05-30 11:14:12| MAE - 0.0597 RMSE - 0.0735 NMAE - 0.8724 NRMSE - 0.9123 Acc_10 - 0.0393 train_time - 9.0302
-|2025-05-30 11:15:15| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 196, 
+|2025-05-30 11:15:15| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 196,
 |2025-05-30 11:15:15| MAE - 0.0654 RMSE - 0.0781 NMAE - 0.9531 NRMSE - 0.9665 Acc_10 - 0.0076 train_time - 26.4125
-|2025-05-30 11:15:51| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 336, 
+|2025-05-30 11:15:51| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 336,
 |2025-05-30 11:15:51| MAE - 0.0662 RMSE - 0.0790 NMAE - 0.9599 NRMSE - 0.9731 Acc_10 - 0.0068 train_time - 3.4780
-|2025-05-30 11:16:51| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 720, 
+|2025-05-30 11:16:51| Dataset : WEATHER, Model : ours, Density : 0.700, Bs : 32, Rank : 56, Seq_len : 96, Pred_len : 720,
 |2025-05-30 11:16:51| MAE - 0.0690 RMSE - 0.0816 NMAE - 0.9874 NRMSE - 0.9925 Acc_10 - 0.0025 train_time - 21.0640
 
 
-|2025-05-30 11:34:28| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-05-30 11:34:28| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96,
 |2025-05-30 11:34:28| MAE - 0.0236 RMSE - 0.0332 NMAE - 0.3453 NRMSE - 0.4120 Acc_10 - 0.2187 train_time - 0.6847
-|2025-05-30 11:35:08| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-05-30 11:35:08| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192,
 |2025-05-30 11:35:08| MAE - 0.0269 RMSE - 0.0369 NMAE - 0.3918 NRMSE - 0.4564 Acc_10 - 0.1797 train_time - 0.9102

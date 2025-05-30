@@ -7,7 +7,7 @@ import os
 
 from exp.exp_dataloader import DataModule
 from exp.exp_model import Model
-from run_train import get_experiment_name
+import run_train
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
@@ -56,7 +56,7 @@ def only_run():
     log_filename = f'Model_{config.model}_{config.dataset}_S{config.train_size}_R{config.rank}_Ablation{config.Ablation}'
     plotter = MetricsPlotter(log_filename, config)
     # filename, exper_detail, plotter, config,
-    log_filename, exper_detail = get_experiment_name(config)
+    log_filename, exper_detail = run_train.get_experiment_name(config)
     log = Logger(log_filename, exper_detail, plotter, config, show_params=False)
 
     datamodule = DataModule(config)

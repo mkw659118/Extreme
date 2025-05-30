@@ -10,7 +10,6 @@ import utils.model_efficiency
 import utils.utils
 torch.set_default_dtype(torch.float32)
 
-
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
     if config.multi_dataset:
@@ -62,7 +61,7 @@ def RunExperiments(log, config):
         log.plotter.record_metric(metrics)
     log('*' * 20 + 'Experiment Success' + '*' * 20)
 
-    log(f'\n{str(model)}')
+    log.end_the_experiment(model)
     return metrics
 
 
@@ -75,7 +74,6 @@ def run(config):
     plotter = MetricsPlotter(log_filename, config)
     log = Logger(log_filename, exper_detail, plotter, config)
     metrics = RunExperiments(log, config)
-    log.end_the_experiment()
     return metrics
 
 

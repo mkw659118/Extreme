@@ -9,6 +9,10 @@ class OtherConfig:
     classification: bool = False
     ablation: int = 0
     try_exp: int = -1
+
+    seq_len: int = 24
+    pred_len: int = 10
+    ts_var: int = 0
     # start_date: str = '2022-07-13'
     # end_date: str = '2023-07-13'
 
@@ -28,14 +32,14 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     bs: int = 32
     rank: int = 56
     epochs: int = 200
-    loss_func: str = 'MSELoss'  # L1Loss  MSELoss
+    loss_func: str = 'L1Loss'  # L1Loss  MSELoss
     patience: int = 45
     verbose: int = 5
     try_exp: int = 1
     dataset: str = 'weather'  #  financial  weather
 
     # 组件专区
-    num_layers: int = 1
+    num_layers: int = 2
     norm_method: str = 'rms'
     ffn_method: str = 'ffn'
     att_method: str = 'self'
