@@ -25,18 +25,21 @@ class OtherConfig:
     ts_var: int = 0
 
 
-
 @dataclass
 class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'ours'
     bs: int = 32
     rank: int = 56
     epochs: int = 200
-    loss_func: str = 'L1Loss'  # L1Loss  MSELoss
+    loss_func: str = 'MSELoss'  # L1Loss  MSELoss
     patience: int = 45
     verbose: int = 5
     try_exp: int = 1
-    dataset: str = 'weather'  #  financial  weather
+    dataset: str = 'financial'  # financial  weather
+    multi_dataset: bool = True
+
+    seq_len: int = 32
+    pred_len: int = 10
 
     # 组件专区
     num_layers: int = 2
@@ -47,6 +50,8 @@ class TestConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     fft: bool = False
     revin: bool = False
     idx: int = 0
+
+
 
 
 @dataclass

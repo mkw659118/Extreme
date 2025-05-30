@@ -22,8 +22,11 @@ class Model(BasicModel):
 
         if config.model == 'ours':
             self.model = TimeSeriesModel(self.input_size, config)
+
+        # 2025年05月30日11:45:49 这里只使用了一层的Linear，效果：
         elif config.model == 'mlp':
             self.model = Linear(self.input_size, config)
+
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=config.num_layers, seq_method=config.model, bidirectional=True)
         elif config.model == 'crossformer':  # 添加 Crossformer 支持
