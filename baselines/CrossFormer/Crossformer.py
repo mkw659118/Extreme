@@ -43,7 +43,7 @@ class Crossformer(nn.Module):
         self.fc = nn.Linear(data_dim, 1)
 
 
-    def forward(self, x_seq):
+    def forward(self, x_seq, x_mark):
         batch_size = x_seq.shape[0]
         if (self.in_len_add != 0):
             x_seq = torch.cat((x_seq[:, :1, :].expand(-1, self.in_len_add, -1), x_seq), dim = 1)

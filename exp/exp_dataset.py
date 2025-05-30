@@ -2,6 +2,7 @@
 # Author : yuxiang Zeng
 # 根据场景需要来改这里的input形状
 from torch.utils.data import Dataset
+import numpy as np
 
 class TensorDataset(Dataset):
     def __init__(self, x, y, mode, config):

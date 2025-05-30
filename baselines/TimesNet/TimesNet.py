@@ -228,7 +228,7 @@ class TimesNet(nn.Module):
         self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
         self.projection = nn.Linear(configs.d_model, 1, bias=True)
 
-    def forward(self, x_enc):
+    def forward(self, x_enc, x_mark):
         enc_out = self.enc_embedding(x_enc, None)  # [B,T,C]
         enc_out = self.predict_linear(enc_out.permute(0, 2, 1)).permute(0, 2, 1)  # align temporal dimension
         for i in range(self.layer):

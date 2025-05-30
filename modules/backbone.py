@@ -2,7 +2,6 @@
 # Author : Yuxiang Zeng
 import torch
 
-from baselines.timesnet import TimesBlock
 from layers.dft import DFT
 from layers.encoder.position_enc import PositionEncoding
 from layers.encoder.seq_enc import SeqEncoder

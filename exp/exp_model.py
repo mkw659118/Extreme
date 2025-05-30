@@ -4,11 +4,11 @@
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.Linear import Linear
 from baselines.TimeLLM.TimeLLM import timeLLM
+from baselines.TimesNet.TimesNet import TimesNet
 from layers.metric.distance import PairwiseLoss
 from exp.exp_base import BasicModel
 from modules.backbone import Backbone
 from baselines.encoder_seq import SeqEncoder
-from baselines.timesnet import TimesNet
 from modules.ts_model import TimeSeriesModel
 
 
@@ -16,8 +16,8 @@ class Model(BasicModel):
     def __init__(self, datamodule, config):
         super().__init__(config)
         self.config = config
-        # self.input_size = datamodule.train_loader.dataset.shape[-1]
-        self.input_size = 3
+        self.input_size = datamodule.train_loader.dataset.x.shape[-1]
+        # self.input_size = 3
         self.hidden_size = config.rank
 
         if config.model == 'ours':

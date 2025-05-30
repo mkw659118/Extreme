@@ -2997,7 +2997,3 @@ Running at 2025-05-14 17:20: python run_train.py --exp_name TestConfig --retrain
 |2025-05-30 11:16:51| MAE - 0.0690 RMSE - 0.0816 NMAE - 0.9874 NRMSE - 0.9925 Acc_10 - 0.0025 train_time - 21.0640
 
 
-|2025-05-30 11:34:28| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96,
-|2025-05-30 11:34:28| MAE - 0.0236 RMSE - 0.0332 NMAE - 0.3453 NRMSE - 0.4120 Acc_10 - 0.2187 train_time - 0.6847
-|2025-05-30 11:35:08| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192,
-|2025-05-30 11:35:08| MAE - 0.0269 RMSE - 0.0369 NMAE - 0.3918 NRMSE - 0.4564 Acc_10 - 0.1797 train_time - 0.9102

@@ -65,7 +65,6 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     dataset: str = 'weather'  # financial  weather
     multi_dataset: bool = False
 
-
     # 组件专区
     num_layers: int = 2
     norm_method: str = 'rms'
@@ -88,7 +87,6 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     verbose: int = 1
     num_layers: int = 2
     revin: bool = True
-
 
 
 
