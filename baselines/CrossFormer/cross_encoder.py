@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from baselines.cross_models.attn import FullAttention, AttentionLayer, TwoStageAttentionLayer
+from baselines.CrossFormer.attn import FullAttention, AttentionLayer, TwoStageAttentionLayer
 from math import ceil
 
 class SegMerging(nn.Module):

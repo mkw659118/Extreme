@@ -9,7 +9,7 @@ from tqdm import *
 import numpy as np
 
 from exp.exp_dataloader import DataModule
-from exp.exp_dataset import TensorDataset, custom_collate_fn
+from exp.exp_dataset import TensorDataset
 from exp.exp_model import Model
 from run_train import get_experiment_name
 from utils.utils import set_seed
@@ -28,7 +28,7 @@ def data_to_dataloader(data_input, label):
         batch_size=bs,
         shuffle=False,
         pin_memory=True,
-        collate_fn=lambda batch: custom_collate_fn(batch, config),
+        collate_fn=lambda batch: data_set.custom_collate_fn(batch, config),
     )
     return pred_dataloader, flag
 

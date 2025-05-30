@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 
-from baselines.cross_models.cross_encoder import Encoder
-from baselines.cross_models.cross_decoder import Decoder
-from baselines.cross_models.attn import FullAttention, AttentionLayer, TwoStageAttentionLayer
-from baselines.cross_models.cross_embed import DSW_embedding
+from baselines.CrossFormer.cross_encoder import Encoder
+from baselines.CrossFormer.cross_decoder import Decoder
+from baselines.CrossFormer.attn import FullAttention, AttentionLayer, TwoStageAttentionLayer
+from baselines.CrossFormer.cross_embed import DSW_embedding
 
 from math import ceil
 

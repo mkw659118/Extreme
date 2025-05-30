@@ -5,9 +5,9 @@ import torch.nn as nn
 
 from transformers import LlamaConfig, LlamaModel, LlamaTokenizer, GPT2Config, GPT2Model, GPT2Tokenizer, BertConfig, \
     BertModel, BertTokenizer
-from baselines.timellm_models.Embed import PatchEmbedding
+from baselines.TimeLLM.Embed import PatchEmbedding
 import transformers
-from baselines.timellm_models.StandardNorm import Normalize
+from baselines.TimeLLM.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
@@ -44,15 +44,15 @@ class timeLLM(nn.Module):
         #模型选择
         if configs.llm_model == 'LLAMA':
             # self.llama_config = LlamaConfig.from_pretrained('/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/')
-            self.llama_config = LlamaConfig.from_pretrained('./baselines/timellm_models/llama7b/config.json')
+            self.llama_config = LlamaConfig.from_pretrained('./baselines/TimeLLM/llama7b/config.json')
             self.llama_config.num_hidden_layers = configs.llm_layers
             self.llama_config.output_attentions = True
             self.llama_config.output_hidden_states = True
             try:
                 self.llm_model = LlamaModel.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/",
-                    # './baselines/timellm_models/llama7b/pytorch_model-00001-of-00033.bin',
-                    './baselines/timellm_models/llama7b',
+                    # './baselines/TimeLLM/llama7b/pytorch_model-00001-of-00033.bin',
+                    './baselines/TimeLLM/llama7b',
                     trust_remote_code=True,
                     local_files_only=True,
                     config=self.llama_config,
@@ -62,7 +62,7 @@ class timeLLM(nn.Module):
                 print("Local model files not found. Attempting to download...")
                 self.llm_model = LlamaModel.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/",
-                    './baselines/timellm_models/llama7b',
+                    './baselines/TimeLLM/llama7b',
                     trust_remote_code=True,
                     local_files_only=False,
                     config=self.llama_config,
@@ -71,7 +71,7 @@ class timeLLM(nn.Module):
             try:
                 self.tokenizer = LlamaTokenizer.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/tokenizer.model",
-                    './baselines/timellm_models/llama7b',
+                    './baselines/TimeLLM/llama7b',
                     trust_remote_code=True,
                     local_files_only=True
                 )
@@ -79,7 +79,7 @@ class timeLLM(nn.Module):
                 print("Local tokenizer files not found. Atempting to download them..")
                 self.tokenizer = LlamaTokenizer.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/tokenizer.model",
-                    './baselines/timellm_models/llama7b',
+                    './baselines/TimeLLM/llama7b',
                     trust_remote_code=True,
                     local_files_only=False
                 )
@@ -119,14 +119,14 @@ class timeLLM(nn.Module):
                     local_files_only=False
                 )
         elif configs.llm_model == 'BERT':
-            self.bert_config = BertConfig.from_pretrained('E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/timellm_models/BERT')
+            self.bert_config = BertConfig.from_pretrained('E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/TimeLLM/BERT')
 
             self.bert_config.num_hidden_layers = configs.llm_layers
             self.bert_config.output_attentions = True
             self.bert_config.output_hidden_states = True
             try:
                 self.llm_model = BertModel.from_pretrained(
-                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/timellm_models/BERT',
+                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/TimeLLM/BERT',
                     trust_remote_code=True,
                     local_files_only=True,
                     config=self.bert_config,
@@ -134,7 +134,7 @@ class timeLLM(nn.Module):
             except EnvironmentError:  # downloads model from HF is not already done
                 print("Local model files not found. Attempting to download...")
                 self.llm_model = BertModel.from_pretrained(
-                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/timellm_models/BERT',
+                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/TimeLLM/BERT',
                     trust_remote_code=True,
                     local_files_only=False,
                     config=self.bert_config,
@@ -142,14 +142,14 @@ class timeLLM(nn.Module):
 
             try:
                 self.tokenizer = BertTokenizer.from_pretrained(
-                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/timellm_models/BERT',
+                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/TimeLLM/BERT',
                     trust_remote_code=True,
                     local_files_only=True
                 )
             except EnvironmentError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Atempting to download them..")
                 self.tokenizer = BertTokenizer.from_pretrained(
-                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/timellm_models/BERT',
+                    'E:/HNUStudyZero/HNUcodingPre/Task1/TimeSeries-crossformer/baselines/TimeLLM/BERT',
                     trust_remote_code=True,
                     local_files_only=False
                 )
