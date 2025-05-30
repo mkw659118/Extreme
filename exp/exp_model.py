@@ -3,6 +3,7 @@
 # 每次开展新实验都改一下这里
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.Linear import Linear
+from baselines.Linear2 import Linear2
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
 from layers.metric.distance import PairwiseLoss
@@ -26,6 +27,8 @@ class Model(BasicModel):
         # 2025年05月30日11:45:49 这里只使用了一层的Linear，效果：
         elif config.model == 'mlp':
             self.model = Linear(self.input_size, config)
+        elif config.model == 'mlp2':
+            self.model = Linear2(self.input_size, config)
 
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(input_size=self.input_size, d_model=self.hidden_size, seq_len=config.seq_len, pred_len=config.seq_len, num_layers=config.num_layers, seq_method=config.model, bidirectional=True)

@@ -7,6 +7,8 @@ import time
 import logging
 import pickle
 import numpy as np
+import yagmail
+
 from utils.model_efficiency import get_efficiency
 
 

@@ -76,6 +76,7 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     idx: int = 0
 
 
+
 @dataclass
 class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mlp'
@@ -85,6 +86,19 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     patience: int = 50
     verbose: int = 1
     num_layers: int = 2
+    revin: bool = True
+
+
+@dataclass
+class MLP2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'mlp2'
+    bs: int = 32
+    rank: int = 32
+    epochs: int = 200
+    patience: int = 50
+    verbose: int = 1
+    num_layers: int = 2
+    hidden_dim: int = 256
     revin: bool = True
 
 
