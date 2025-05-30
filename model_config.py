@@ -21,7 +21,7 @@ class OtherConfig:
     multi_dataset: bool = False
 
     seq_len: int = 96
-    pred_len: int = 96
+    pred_len: int = 12
     ts_var: int = 0
 
 
@@ -88,6 +88,18 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     num_layers: int = 2
     revin: bool = True
 
+
+@dataclass
+class MLP2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'mlp2'
+    bs: int = 32
+    rank: int = 32
+    epochs: int = 200
+    patience: int = 50
+    verbose: int = 1
+    num_layers: int = 2
+    hidden_dim: int = 256
+    revin: bool = True
 
 
 @dataclass

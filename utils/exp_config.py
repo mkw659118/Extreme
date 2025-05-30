@@ -7,6 +7,7 @@ from dataclasses import fields
 
 
 def get_config(Config='TestConfig'):
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_path', type=str, default='model_config.py')
     parser.add_argument('--exp_name', type=str, default=Config)
