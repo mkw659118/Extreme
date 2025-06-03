@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pred_lens=(12 96 192 336 720)
+pred_lens=(12 96)
 
 for len in "${pred_lens[@]}"
 do

@@ -17,8 +17,8 @@ class Linear2(torch.nn.Module):
 
         self.model = torch.nn.Sequential(
             torch.nn.Linear(config.seq_len, config.hidden_dim),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(p=0.2),
+            torch.nn.GELU(),
+            # torch.nn.Dropout(p=0.1),
             torch.nn.LayerNorm(config.hidden_dim),
             torch.nn.Linear(config.hidden_dim, config.pred_len)
         )
@@ -38,3 +38,25 @@ class Linear2(torch.nn.Module):
             y = y.squeeze(-1)
 
         return y
+    # def forward(self, x, x_mark):
+    #     # x: [B, L]
+    #
+    #     print("Before RevIN - x range:", x.min().item(), x.max().item())
+    #
+    #     if self.revin:
+    #         x = x.unsqueeze(-1)
+    #         x = self.revin_layer(x, 'norm')
+    #         x = x.squeeze(-1)
+    #
+    #     print("After RevIN(norm) - x range:", x.min().item(), x.max().item())
+    #
+    #     y = self.model(x)
+    #
+    #     if self.revin:
+    #         y = y.unsqueeze(-1)
+    #         y = self.revin_layer(y, 'denorm')
+    #         y = y.squeeze(-1)
+    #
+    #     print("After RevIN(denorm) - y range:", y.min().item(), y.max().item())
+    #
+    #     return y

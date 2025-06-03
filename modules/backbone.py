@@ -10,6 +10,7 @@ from layers.feedforward.moe import MoE
 from layers.revin import RevIN
 from layers.transformer import Transformer
 
+
 class Backbone(torch.nn.Module):
     def __init__(self, enc_in, config):
         super(Backbone, self).__init__()
