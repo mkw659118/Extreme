@@ -1,0 +1,39 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE settings
+.vscode/
+.idea/
+
+# Checkpoints / Model artifacts
+*.ckpt
+*.pth
+*.pt
+*.h5
+*.onnx
+*.pkl
+
+*.jpg
+*.png
+*.jpg
+*.gif
+
+*.csv
+
+
+# OS / Misc
+.DS_Store
+Thumbs.db
+
+# Virtual env
+env/
+venv/
+.venv/
+
+# 
+/results/*
