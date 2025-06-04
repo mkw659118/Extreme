@@ -3086,3 +3086,9 @@ Running at 2025-05-14 17:20: python run_train.py --exp_name TestConfig --retrain
 |2025-06-04 17:08:45| MAE - 0.2291 MSE - 0.2093 RMSE - 0.4574 MAPE - 14.3344 NMAE - 0.3762 NRMSE - 0.5722 Acc_10 - 0.0547 train_time - 450.8928
 |2025-06-04 17:46:06| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
 |2025-06-04 17:46:06| MAE - 0.2094 MSE - 0.1823 RMSE - 0.4270 MAPE - 14.6788 NMAE - 0.3438 NRMSE - 0.5341 Acc_10 - 0.0571 train_time - 228.3198
+|2025-06-04 18:09:07| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-04 18:09:07| MAE - 0.2094 MSE - 0.1823 RMSE - 0.4270 MAPE - 14.6788 NMAE - 0.3438 NRMSE - 0.5341 Acc_10 - 0.0571 train_time - 230.5154
+|2025-06-04 18:31:49| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-04 18:31:49| MAE - 0.2094 MSE - 0.1823 RMSE - 0.4270 MAPE - 14.6788 NMAE - 0.3438 NRMSE - 0.5341 Acc_10 - 0.0571 train_time - 221.3227
+|2025-06-04 18:54:24| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-04 18:54:24| MAE - 0.2094 MSE - 0.1823 RMSE - 0.4270 MAPE - 14.6788 NMAE - 0.3438 NRMSE - 0.5341 Acc_10 - 0.0571 train_time - 222.0928

@@ -4,7 +4,7 @@ from configs.MainConfig import OtherConfig
 
 
 @dataclass
-class mlp3_config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+class MLP3Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mlp3'
     bs: int = 32
     rank: int = 32
