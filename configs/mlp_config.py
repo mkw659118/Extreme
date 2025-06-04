@@ -1,8 +1,8 @@
 
-from default_config import *
+from configs.default_config import *
 from dataclasses import dataclass
 
-from model_config import OtherConfig
+from configs.MainConfig import OtherConfig
 
 
 @dataclass

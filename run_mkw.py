@@ -81,23 +81,17 @@ def run(config):
     return metrics
 
 
-#
-# if __name__ == '__main__':
-#     # Experiment Settings, logger, plotter
-#     from utils.exp_config import get_config
-#     config = get_config('MLPConfig')
-#     run(config)
-
-
 def get_config_by_name(config_name):
     # 配置类文件都放在 configs/ 目录下
+    config_name += '_config'
     module_path = f"configs.{config_name}"
     module = importlib.import_module(module_path)
     config_class = getattr(module, config_name)
     return config_class()
 
-
 if __name__ == '__main__':
-    config_name = 'mlp3_config'  # 可以替换成传参或其他方式
-    config = get_config_by_name(config_name)
+    # Experiment Settings, logger, plotter
+    from utils.exp_config import get_config
+    config = get_config('mlp3_config')
     run(config)
+

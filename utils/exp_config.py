@@ -6,10 +6,18 @@ import sys
 from dataclasses import fields
 
 
-def get_config(Config='TestConfig'):
+def get_config_by_name(config_name):
+    # 配置类文件都放在 configs/ 目录下
+    config_name += '_config'
+    module_path = f"configs.{config_name}"
+    module = importlib.import_module(module_path)
+    config_class = getattr(module, config_name)
+    return config_class()
 
+
+def get_config(Config='MainConfig'):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_path', type=str, default='configs.py')
+    parser.add_argument('--config_path', type=str, default=f'configs/{Config}.py')
     parser.add_argument('--exp_name', type=str, default=Config)
     args, unknown_args = parser.parse_known_args()
     args = load_config(args.config_path, args.exp_name)
@@ -22,6 +30,7 @@ def load_config(file_path, class_name):
     module = importlib.util.module_from_spec(spec)
     sys.modules["module.name"] = module
     spec.loader.exec_module(module)
+    print(module, class_name)
     config = getattr(module, class_name)()
     return config
 

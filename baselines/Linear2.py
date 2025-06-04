@@ -29,7 +29,7 @@ class Linear2(torch.nn.Module):
         if self.revin:
             x = self.revin_layer(x, 'norm')
 
-        x = rearrange(x, 'bs seq_len  -> bs d_model seq_len')
+        x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
         y = self.model(x)
         y = rearrange(y, 'bs d_model pred_len -> bs pred_len d_model')
 
