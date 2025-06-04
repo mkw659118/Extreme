@@ -73,43 +73,6 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     ts_var: int = True
 
 
-
-@dataclass
-class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'mlp'
-    bs: int = 32
-    rank: int = 32
-    epochs: int = 200
-    patience: int = 50
-    verbose: int = 1
-    num_layers: int = 2
-    revin: bool = True
-
-
-@dataclass
-class MLP2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'mlp2'
-    bs: int = 32
-    rank: int = 32
-    epochs: int = 200
-    patience: int = 50
-    verbose: int = 1
-    num_layers: int = 2
-    hidden_dim: int = 256
-    revin: bool = True
-
-@dataclass
-class MLP3Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'mlp3'
-    bs: int = 32
-    rank: int = 32
-    epochs: int = 200
-    patience: int = 50
-    verbose: int = 1
-    num_layers: int = 2
-    hidden_dim: int = 256
-    revin: bool = True
-
 @dataclass
 class CrossformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'crossformer'  

@@ -1,5 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
+import importlib
+
 import torch
 import collections
 import numpy as np
@@ -8,20 +10,22 @@ from exp.exp_main import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
 import utils.utils
+
 torch.set_default_dtype(torch.float32)
+
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
     if config.multi_dataset:
         log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi'
     exper_detail = (
-         f"Dataset : {config.dataset.upper()}, "
-         f"Model : {config.model}, "
-         f"Density : {config.density:.3f}, "
-         f"Bs : {config.bs}, "
-         f"Rank : {config.rank}, "
-         f"Seq_len : {config.seq_len}, "
-         f"Pred_len : {config.pred_len}, "
+        f"Dataset : {config.dataset.upper()}, "
+        f"Model : {config.model}, "
+        f"Density : {config.density:.3f}, "
+        f"Bs : {config.bs}, "
+        f"Rank : {config.rank}, "
+        f"Seq_len : {config.seq_len}, "
+        f"Pred_len : {config.pred_len}, "
     )
     return log_filename, exper_detail
 
@@ -77,8 +81,23 @@ def run(config):
     return metrics
 
 
+#
+# if __name__ == '__main__':
+#     # Experiment Settings, logger, plotter
+#     from utils.exp_config import get_config
+#     config = get_config('MLPConfig')
+#     run(config)
+
+
+def get_config_by_name(config_name):
+    # 配置类文件都放在 configs/ 目录下
+    module_path = f"configs.{config_name}"
+    module = importlib.import_module(module_path)
+    config_class = getattr(module, config_name)
+    return config_class()
+
+
 if __name__ == '__main__':
-    # Experiment Settings, logger, plotter
-    from utils.exp_config import get_config
-    config = get_config('MLP2Config')
+    config_name = 'mlp3_config'  # 可以替换成传参或其他方式
+    config = get_config_by_name(config_name)
     run(config)

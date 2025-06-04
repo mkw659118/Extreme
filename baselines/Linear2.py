@@ -25,7 +25,7 @@ class Linear2(torch.nn.Module):
         )
 
     def forward(self, x, x_mark):
-        # x: [B, L, 1]
+        # x: [B, L, D]
         if self.revin:
             x = self.revin_layer(x, 'norm')
 
