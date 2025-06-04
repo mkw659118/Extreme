@@ -18,14 +18,17 @@ class Model(BasicModel):
     def __init__(self, datamodule, config):
         super().__init__(config)
         self.config = config
-        self.input_size = 1 if config.dataset != 'financial' else 3
         if config.dataset == 'weather':
             self.input_size = datamodule.train_loader.dataset.x.shape[-1]
+        elif config.dataset == 'financial':
+            self.input_size = 3
+        else:
+            NotImplementedError
+
         self.hidden_size = config.rank
 
         if config.model == 'ours':
             self.model = TimeSeriesModel(self.input_size, config)
-
         # 2025年05月30日11:45:49 这里只使用了一层的Linear，效果：
         elif config.model == 'mlp':
             self.model = Linear(self.input_size, config)
