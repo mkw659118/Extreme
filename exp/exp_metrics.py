@@ -19,8 +19,8 @@ def ErrorMetrics(realVec, estiVec, config):
     elif isinstance(estiVec, t.Tensor):
         estiVec = estiVec.cpu().detach().numpy().astype(float)
 
-    realVec = realVec.reshape(-1, 1)
-    estiVec = estiVec.reshape(-1, 1)
+    # realVec = realVec.reshape(-1, 1).astype(np.float32)
+    # estiVec = estiVec.reshape(-1, 1).astype(np.float32)
 
     if config.classification:
         return compute_classification_metrics(realVec, estiVec)
@@ -28,12 +28,16 @@ def ErrorMetrics(realVec, estiVec, config):
         return compute_regression_metrics(realVec, estiVec)
 
 
+
 def compute_regression_metrics(realVec, estiVec):
     """ 计算回归任务的误差指标 """
     absError = np.abs(estiVec - realVec)
 
-    MAE = np.mean(absError)
-    RMSE = np.linalg.norm(absError) / np.sqrt(absError.shape[0])
+    MAE = np.mean(np.abs(realVec - estiVec))
+    MSE = np.mean((realVec - estiVec) ** 2)
+    RMSE = np.sqrt(MSE)
+    MAPE = np.mean(np.abs((realVec - estiVec) / realVec))
+    
     NMAE = np.sum(absError) / np.sum(np.abs(realVec))
     NRMSE = np.sqrt(np.sum((realVec - estiVec) ** 2)) / np.sqrt(np.sum(realVec ** 2))
 
@@ -43,7 +47,9 @@ def compute_regression_metrics(realVec, estiVec):
 
     return {
         'MAE': MAE,
+        'MSE': MSE,
         'RMSE': RMSE,
+        'MAPE': MAPE,
         'NMAE': NMAE,
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],

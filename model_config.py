@@ -10,19 +10,15 @@ class OtherConfig:
     ablation: int = 0
     try_exp: int = -1
 
-    seq_len: int = 24
-    pred_len: int = 10
-    ts_var: int = 0
+    ts_var: int = 1
     # start_date: str = '2022-07-13'
     # end_date: str = '2023-07-13'
-
     start_date: str = '2020-05-15'
     end_date: str = '2025-05-15'
     multi_dataset: bool = False
-
     seq_len: int = 96
     pred_len: int = 96
-    ts_var: int = 0
+
 
 
 @dataclass
@@ -64,7 +60,7 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     try_exp: int = 1
     dataset: str = 'weather'  # financial  weather
     multi_dataset: bool = False
-
+    scaler_method: str = 'stander'
     # 组件专区
     num_layers: int = 2
     norm_method: str = 'rms'
@@ -74,6 +70,7 @@ class TimeSeriesConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetI
     fft: bool = False
     revin: bool = False
     idx: int = 0
+    ts_var: int = True
 
 
 

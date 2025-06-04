@@ -61,8 +61,8 @@ class TimeSeriesDataset(Dataset):
         r_begin = s_end
         r_end = r_begin + self.config.pred_len
 
-        x = self.x[s_begin:s_end][:, -1]
-        x_mark = self.x[s_begin:s_end][:, :-1]
+        x = self.x[s_begin:s_end][:, 4:]
+        x_mark = self.x[s_begin:s_end][:, :4]
         y = self.y[r_begin:r_end]
         return x, x_mark, y
 

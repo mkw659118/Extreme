@@ -18,8 +18,9 @@ class Model(BasicModel):
     def __init__(self, datamodule, config):
         super().__init__(config)
         self.config = config
-        # self.input_size = datamodule.train_loader.dataset.x.shape[-1]
         self.input_size = 1 if config.dataset != 'financial' else 3
+        if config.dataset == 'weather':
+            self.input_size = datamodule.train_loader.dataset.x.shape[-1]
         self.hidden_size = config.rank
 
         if config.model == 'ours':

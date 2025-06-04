@@ -62,6 +62,7 @@ class BasicModel(torch.nn.Module):
         preds = torch.cat(preds, dim=0)
         if self.config.dataset != 'weather':
             reals, preds = dataModule.scaler.inverse_transform(reals), dataModule.scaler.inverse_transform(preds)
+        
         if mode == 'valid':
             self.scheduler.step(val_loss)
         metrics_error = ErrorMetrics(reals, preds, self.config)

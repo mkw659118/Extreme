@@ -1,37 +1,45 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 import numpy as np
+import torch 
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 class DataScalerStander:
     def __init__(self, y, config):
         self.config = config
-        # 根据训练集的数值进行归一化
-        scaler = y[:int(len(y) * self.config.density)].astype(np.float32)
-        self.y_mean = scaler.mean()
-        self.y_std = scaler.std() + 1e-9
-        # print(self.y_mean, self.y_std)
+        # 按 density 截取训练数据，然后 reshape 成二维
+        train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
+        self.scaler = StandardScaler()
+        self.scaler.fit(train_data)
 
     def transform(self, y):
-        return (y - self.y_mean) / self.y_std if self.y_std != 0 else y - self.y_mean
+        y = self.__check_input__(y)
+        return self.scaler.transform(y)
 
     def inverse_transform(self, y):
-        return y * self.y_std + self.y_mean if self.y_std != 0 else y + self.y_mean
+        y = self.__check_input__(y)
+        return self.scaler.inverse_transform(y)
+    
+    def __check_input__(self, y):
+        if isinstance(y, np.ndarray):
+            y = y.astype(float)
+        elif isinstance(y, torch.Tensor):
+            y = y.cpu().detach().numpy().astype(float)
+        return y 
 
 class DataScalerMinMax:
     def __init__(self, y, config):
         self.config = config
-        # 根据训练集的数值进行归一化
-        scaler = y[:int(len(y) * self.config.density)].astype(np.float32) * 1.2
-        # scaler = y
-        self.y_min = scaler.min()
-        self.y_max = scaler.max()
+        train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
+        self.scaler = MinMaxScaler()
+        self.scaler.fit(train_data)
 
     def transform(self, y):
-        return (y - self.y_min) / (self.y_max - self.y_min) if self.y_max != self.y_min else y - self.y_min
+        return self.scaler.transform(y)
 
     def inverse_transform(self, y):
-        return y * (self.y_max - self.y_min) + self.y_min if self.y_max != self.y_min else y + self.y_min
-
+        return self.scaler.inverse_transform(y)
+    
 
 def get_scaler(y, config):
     if config.scaler_method == 'stander':
