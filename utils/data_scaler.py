@@ -25,9 +25,6 @@ class DataScalerStander:
             y = y.astype(float)
         elif isinstance(y, torch.Tensor):
             y = y.cpu().detach().numpy().astype(float)
-        
-        if len(y.shape) == 3:
-            y = y.reshape(y.shape[0], -1)
         return y 
 
 class DataScalerMinMax:
@@ -38,11 +35,20 @@ class DataScalerMinMax:
         self.scaler.fit(train_data)
 
     def transform(self, y):
+        y = self.__check_input__(y)
         return self.scaler.transform(y)
 
     def inverse_transform(self, y):
+        y = self.__check_input__(y)
         return self.scaler.inverse_transform(y)
     
+    def __check_input__(self, y):
+        if isinstance(y, np.ndarray):
+            y = y.astype(float)
+        elif isinstance(y, torch.Tensor):
+            y = y.cpu().detach().numpy().astype(float)
+        return y 
+
 
 
 class GlobalStandardScaler:

@@ -57,6 +57,7 @@ def get_benchmark_code():
     # print(f'now fund code: {group}')
     return group
 
+
 def get_group_idx(group_index):
     with open('./results/func_code_to_label_30.pkl', 'rb') as f:
         data = pickle.load(f)
@@ -65,6 +66,7 @@ def get_group_idx(group_index):
         if data[i][1] == group_index:
             all_func_code.append(data[i][0])
     return all_func_code
+
 
 def multi_dataset(config):
     # now_fund_code = get_benchmark_code()
@@ -92,7 +94,12 @@ def multi_dataset(config):
     data = np.stack(raw_data, axis=0)
     data = data.transpose(1, 0, 2)
     x, y = data[:, :, :], data[:, :, -1]
+    for i in range(len(input_keys)):
+        x[:, -i] = x[:, -i].astype(np.float32)
+        scaler = get_scaler(x[:, -i], config)
+        x[:, -i] = scaler.transform(x[:, -i])
     scaler = get_scaler(y, config)
+    y = scaler.transform(y)
     return x, y, scaler
 
 
@@ -130,83 +137,6 @@ def get_financial_data(start_date, end_date, idx, config):
     return X_window, y_window, scaler
 
 
-def filter_jump_sequences(X_window, y_window, threshold=0.3, mode='absolute'):
-    """
-    X_window: [n, seq_len, d] numpy array，其中最后一个维度是 value
-    y_window: [n, ...]，标签
-    返回：
-        - 过滤后的 X_window
-        - 对应的 y_window
-        - 保留的索引 idx（相对于原始）
-    """
-    values = X_window[:, :, -1]  # 提取 value 部分
-    diff = values[:, 1:] - values[:, :-1]
-
-    if mode == 'absolute':
-        mask = np.any(np.abs(diff) > threshold, axis=1)
-    elif mode == 'relative':
-        prev = np.clip(values[:, :-1], 1e-5, None)
-        rel_diff = np.abs(diff / prev)
-        mask = np.any(rel_diff > threshold, axis=1)
-    else:
-        raise ValueError("mode must be 'absolute' or 'relative'")
-    idx = np.where(~mask)[0]
-    X_window, y_window = X_window[idx], y_window[idx]
-    return X_window, y_window
 
 
 
-
-
-# def multi_dataset(config):
-#     now_fund_code = get_benchmark_code()
-#     all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y = [], [], [], [], [], []
-#     for i in range(len(now_fund_code)):
-#         config.idx = i
-#         config.multi_dataset = False
-#         datamodule = a_data_center.DataModule(config)
-#         if len(datamodule.train_set.x) == 0 or len(datamodule.y) <= config.seq_len:
-#             continue
-#         all_train_x.append(datamodule.train_set.x)
-#         all_train_y.append(datamodule.train_set.y)
-#
-#         all_valid_x.append(datamodule.valid_set.x)
-#         all_valid_y.append(datamodule.valid_set.y)
-#
-#         all_test_x.append(datamodule.test_set.x)
-#         all_test_y.append(datamodule.test_set.y)
-#         del datamodule
-#
-#     all_train_x = np.concatenate(all_train_x, axis=0)
-#     all_train_y = np.concatenate(all_train_y, axis=0)
-#
-#     all_valid_x = np.concatenate(all_valid_x, axis=0)
-#     all_valid_y = np.concatenate(all_valid_y, axis=0)
-#
-#     all_test_x = np.concatenate(all_test_x, axis=0)
-#     all_test_y = np.concatenate(all_test_y, axis=0)
-#
-#     y_mean = np.mean(all_train_y)
-#     y_std = np.std(all_train_y)
-#
-#     all_train_y = (all_train_y - y_mean) / y_std
-#     all_valid_y = (all_valid_y - y_mean) / y_std
-#     all_test_y = (all_test_y - y_mean) / y_std
-#
-#     for i in range(len(input_keys)):
-#         all_train_x[:, -i] = all_train_x[:, -i].astype(np.float32)
-#         all_valid_x[:, -i] = all_valid_x[:, -i].astype(np.float32)
-#         all_test_x[:, -i] = all_test_x[:, -i].astype(np.float32)
-#
-#         now_mean = np.mean(all_train_x[:, -i])
-#         now_std = np.std(all_train_x[:, -i]) + 1e-9
-#
-#         all_train_x[:, -i] = (all_train_x[:, -i] - now_mean) / now_std
-#         all_valid_x[:, -i] = (all_valid_x[:, -i] - now_mean) / now_std
-#         all_test_x[:, -i] = (all_test_x[:, -i] - now_mean) / now_std
-#
-#     scaler = get_scaler(all_train_y, config)
-#     scaler.y_mean, scaler.y_std = y_mean, y_std
-#     print(all_train_x.shape, all_train_y.shape)
-#
-#     return all_train_x, all_train_y, all_valid_x, all_valid_y, all_test_x, all_test_y, scaler

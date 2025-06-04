@@ -3094,3 +3094,7 @@ Running at 2025-05-14 17:20: python run_train.py --exp_name TestConfig --retrain
 |2025-06-04 18:54:24| MAE - 0.2094 MSE - 0.1823 RMSE - 0.4270 MAPE - 14.6788 NMAE - 0.3438 NRMSE - 0.5341 Acc_10 - 0.0571 train_time - 222.0928
 |2025-06-04 20:31:48| Dataset : FINANCIAL, Model : ours, Density : 0.700, Bs : 128, Rank : 56, Seq_len : 32, Pred_len : 10, 
 |2025-06-04 20:31:48| MAE - 0.0071 MSE - 0.0002 RMSE - 0.0139 MAPE - 0.0037 NMAE - 0.0038 NRMSE - 0.0075 Acc_10 - 0.9998 train_time - 55.0536
+|2025-06-04 22:32:59| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 32, Pred_len : 10, 
+|2025-06-04 22:32:59| MAE - 0.0078 MSE - 0.0002 RMSE - 0.0132 MAPE - 0.0044 NMAE - 0.0044 NRMSE - 0.0074 Acc_10 - 1.0000 train_time - 36.2261
+|2025-06-04 22:42:38| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 32, Pred_len : 10, 
+|2025-06-04 22:42:38| MAE - 0.0160 MSE - 0.0037 RMSE - 0.0612 MAPE - 0.0109 NMAE - 0.0143 NRMSE - 0.0519 Acc_10 - 0.9414 train_time - 91.1586

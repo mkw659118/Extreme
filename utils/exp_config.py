@@ -30,7 +30,6 @@ def load_config(file_path, class_name):
     module = importlib.util.module_from_spec(spec)
     sys.modules["module.name"] = module
     spec.loader.exec_module(module)
-    print(module, class_name)
     config = getattr(module, class_name)()
     return config
 

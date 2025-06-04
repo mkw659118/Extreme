@@ -66,7 +66,7 @@ def get_all_fund_list():
 def query_fund_data(fund, start_date, end_date):
     """查询数据库中某支基金的净值数据"""
     sql = text("""
-        SELECT fund_code, date, nav, accnav, adj_nav
+        SELECT fund_code, date, accnav, adj_nav, nav
         FROM b_fund_nav_details_new
         WHERE fund_code IN :codes
           AND date BETWEEN :start AND :end
@@ -81,6 +81,7 @@ def query_fund_data(fund, start_date, end_date):
     except Exception as e:
         print(f"[{fund}] 数据库查询失败: {str(e)}")
         return pd.DataFrame()
+
 
 def process_date_columns(df):
     """将 date 拆成 year, month, day, weekday 四列"""
@@ -97,6 +98,7 @@ def process_date_columns(df):
     ]
     return df[new_order].to_numpy()
 
+
 def save_fund_data(df, fund, index, start_date, end_date):
     """保存为本地 pickle 文件"""
     dir_name = 'S' + (start_date + '_E' + end_date).replace('-', '')
@@ -104,6 +106,7 @@ def save_fund_data(df, fund, index, start_date, end_date):
     with open(filepath, 'wb') as f:
         pickle.dump(df, f)
         print(f'{index}: {filepath} 存储完毕')
+
 
 # process_fund(0, fund_code, config.start_date, config.end_date）
 def process_fund(index, fund, start_date, end_date):
@@ -113,6 +116,7 @@ def process_fund(index, fund, start_date, end_date):
     df = process_date_columns(df)
     # save_fund_data(df, fund, index, start_date, end_date)
     return df
+
 
 def generate_data(start_date, end_date):
     # start_date, end_date = '2020-07-13', '2025-03-08'  # 注意日期格式统一
