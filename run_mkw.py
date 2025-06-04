@@ -5,7 +5,7 @@ import importlib
 import torch
 import collections
 import numpy as np
-from exp.exp_dataloader import DataModule
+from data_provider.exp_dataloader import DataModule
 from exp.exp_main import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency

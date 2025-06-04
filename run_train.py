@@ -3,7 +3,7 @@
 import torch
 import collections
 import numpy as np
-from exp.exp_dataloader import DataModule
+from data_provider.exp_dataloader import DataModule
 from exp.exp_main import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
@@ -18,7 +18,6 @@ def get_experiment_name(config):
          f"Dataset : {config.dataset.upper()}, "
          f"Model : {config.model}, "
          f"Density : {config.density:.3f}, "
-         f"Bs : {config.bs}, "
          f"Rank : {config.rank}, "
          f"Seq_len : {config.seq_len}, "
          f"Pred_len : {config.pred_len}, "

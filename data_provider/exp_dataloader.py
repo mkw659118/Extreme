@@ -1,10 +1,10 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-from exp.exp_dataset import TensorDataset, TimeSeriesDataset
-from modules.load_data.generate_financial import generate_data
-from modules.load_data.get_financial import get_financial_data, multi_dataset
-from modules.load_data.get_lottery import get_lottery
-from modules.load_data.get_ts import get_ts
+from data_provider.exp_dataset import TensorDataset, TimeSeriesDataset
+from data_provider.generate_financial import generate_data
+from data_provider.get_financial import get_financial_data, multi_dataset
+from data_provider.get_lottery import get_lottery
+from data_provider.get_ts import get_ts
 from utils.data_dataloader import get_dataloaders
 from utils.data_spliter import get_split_dataset
 

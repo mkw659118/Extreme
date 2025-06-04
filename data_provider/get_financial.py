@@ -8,7 +8,7 @@ import pickle
 
 from tqdm import tqdm
 
-from modules.load_data.generate_financial import get_all_fund_list, generate_data, process_fund
+from data_provider.generate_financial import get_all_fund_list, generate_data, process_fund
 from utils.data_scaler import get_scaler
 
 input_keys = ['nav', 'accnav', 'adj_nav']

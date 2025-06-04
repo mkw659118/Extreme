@@ -4,7 +4,7 @@ import os
 import torch
 import pickle
 
-from exp.exp_dataloader import DataModule
+from data_provider.exp_dataloader import DataModule
 from exp.exp_model import Model
 from run_train import get_experiment_name
 from exp.exp_metrics import ErrorMetrics

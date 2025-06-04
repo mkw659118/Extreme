@@ -5,7 +5,7 @@
 import sys
 import os
 
-from exp.exp_dataloader import DataModule
+from data_provider.exp_dataloader import DataModule
 from exp.exp_model import Model
 import run_train
 
