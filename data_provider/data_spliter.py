@@ -19,15 +19,18 @@ def get_train_valid_test_dataset(x, y, config):
     if config.shuffle:
         indices = np.random.permutation(len(x))
         x, y = x[indices], y[indices]
+
+    x_len = len(x)
     if config.use_train_size:
         train_size = int(config.train_size)
     else:
-        train_size = int(len(x) * config.density)
+        train_size = int(x_len * config.density)
 
     if config.eval_set:
-        valid_size = int((int(len(x)) - train_size) / 2)
+        valid_size = int((int(x_len) - train_size) / 2)
     else:
         valid_size = 0
+    print(x_len, train_size, valid_size, x_len - train_size - valid_size)
 
     train_x = x[:train_size]
     train_y = y[:train_size]
