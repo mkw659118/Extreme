@@ -1,7 +1,7 @@
 # coding : utf-8
 # Author : yuxiang Zeng
-import numpy as np
 import subprocess
+
 from utils.exp_sh import once_experiment, log_message
 
 # 在这里写下超参数探索空间
@@ -9,14 +9,15 @@ hyper_dict = {
     'rounds': [1],
     'rank': [56],
     'num_layers': [1],
-    'pred_len': [10, 20],
+    'pred_len': [96, 192, 336, 720],
+    # 'dataset': ['financial'],  # weather financial lottery
     # 'att': ['self'],
     # 'norm': ['rms'],
     # 'ffn': ['moe'],
     # 'loss_coef': [0.001],
     # 'fft': [True],
     # 'revin': [False],
-    # 'dis_method': ['cosine', None],  #
+    'dis_method': ['cosine', None],  #
     # 'dis_method': ['none', 'cosine', 'euclidean', 'manhattan', 'minkowski', 'linear', 'kl', 'mahalanobis' 'dtw'],  #
     # 'idx': [i for i in range(33)]
 }
@@ -45,12 +46,12 @@ def Ablation():
         # 'dataset': ['a', 'b', 'c'],
         'ablation': [1, 2, 3],
     }
-    once_experiment('FinancialConfig', hyper_dict, grid_search=1, retrain=1)
+    once_experiment('TestConfig', hyper_dict, grid_search=1, retrain=1)
     return True
 
 
 def Our_model(hyper=None):
-    once_experiment('FinancialConfig', hyper_dict, grid_search=0)
+    once_experiment('TestConfig', hyper_dict, grid_search=0)
     subprocess.run(f'python model_pred.py', shell=True)
     return True
 

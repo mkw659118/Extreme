@@ -37,7 +37,9 @@ def calculate_inference_time(model, sample_input, config):
     return inference_time * 1000
 
 
-def get_efficiency(datamodule, model, config):
+def get_efficiency(config):
+    datamodule = DataModule(config)
+    model = Model(datamodule, config)
     sample_inputs = next(iter(datamodule.train_loader))
     flops, params = calculate_flops_params(model, sample_inputs, config)
     inference_time = calculate_inference_time(model, sample_inputs, config)

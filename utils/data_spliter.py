@@ -25,7 +25,7 @@ def get_train_valid_test_dataset(x, y, config):
         train_size = int(len(x) * config.density)
 
     if config.eval_set:
-        valid_size = int((int(len(x)) - train_size) / 2)
+        valid_size = int(len(x) * 0.10)
     else:
         valid_size = 0
 

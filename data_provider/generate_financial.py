@@ -64,11 +64,9 @@ def get_all_fund_list():
 
 
 def query_fund_data(fund, start_date, end_date):
-    """查询数据库中某支基金的净值数据
-        SELECT fund_code, date, accnav, adj_nav, nav
-    """
+    """查询数据库中某支基金的净值数据"""
     sql = text("""
-        SELECT fund_code, date, nav, accnav, adj_nav
+        SELECT fund_code, date, accnav, adj_nav, nav
         FROM b_fund_nav_details_new
         WHERE fund_code IN :codes
           AND date BETWEEN :start AND :end

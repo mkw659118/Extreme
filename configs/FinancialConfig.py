@@ -18,7 +18,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     scaler_method: str = 'global'
     multi_dataset: bool = True
 
-    seq_len: int = 16
+    seq_len: int = 32
     pred_len: int = 10
 
     # 组件专区

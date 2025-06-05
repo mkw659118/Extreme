@@ -4,78 +4,51 @@ import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from einops import rearrange
-
-
 class DataScalerStander:
     def __init__(self, y, config):
         self.config = config
-        y = self.__check_input__(y)
-        self.original_shape = None
-        if y.ndim == 3:
-            self.original_shape = y.shape
-            y = y.reshape(-1, y.shape[-1])
+        # 按 density 截取训练数据，然后 reshape 成二维
         train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
         self.scaler = StandardScaler()
         self.scaler.fit(train_data)
 
     def transform(self, y):
         y = self.__check_input__(y)
-        orig_shape = y.shape
-        if y.ndim == 3:
-            y = y.reshape(-1, y.shape[-1])
-            y = self.scaler.transform(y)
-            return y.reshape(orig_shape)
         return self.scaler.transform(y)
 
     def inverse_transform(self, y):
         y = self.__check_input__(y)
-        orig_shape = y.shape
-        if y.ndim == 3:
-            y = y.reshape(-1, y.shape[-1])
-            y = self.scaler.inverse_transform(y)
-            return y.reshape(orig_shape)
         return self.scaler.inverse_transform(y)
-
+    
     def __check_input__(self, y):
-        if isinstance(y, torch.Tensor):
-            y = y.cpu().detach().numpy()
-        return y.astype(float)
-
+        if isinstance(y, np.ndarray):
+            y = y.astype(float)
+        elif isinstance(y, torch.Tensor):
+            y = y.cpu().detach().numpy().astype(float)
+        return y 
 
 class DataScalerMinMax:
     def __init__(self, y, config):
         self.config = config
-        y = self.__check_input__(y)
-        self.original_shape = None
-        if y.ndim == 3:
-            self.original_shape = y.shape
-            y = y.reshape(-1, y.shape[-1])
         train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
         self.scaler = MinMaxScaler()
         self.scaler.fit(train_data)
 
     def transform(self, y):
         y = self.__check_input__(y)
-        orig_shape = y.shape
-        if y.ndim == 3:
-            y = y.reshape(-1, y.shape[-1])
-            y = self.scaler.transform(y)
-            return y.reshape(orig_shape)
         return self.scaler.transform(y)
 
     def inverse_transform(self, y):
         y = self.__check_input__(y)
-        orig_shape = y.shape
-        if y.ndim == 3:
-            y = y.reshape(-1, y.shape[-1])
-            y = self.scaler.inverse_transform(y)
-            return y.reshape(orig_shape)
         return self.scaler.inverse_transform(y)
-
+    
     def __check_input__(self, y):
-        if isinstance(y, torch.Tensor):
-            y = y.cpu().detach().numpy()
-        return y.astype(float)
+        if isinstance(y, np.ndarray):
+            y = y.astype(float)
+        elif isinstance(y, torch.Tensor):
+            y = y.cpu().detach().numpy().astype(float)
+        return y 
+
 
 
 class GlobalStandardScaler:
@@ -102,27 +75,15 @@ class GlobalStandardScaler:
         elif isinstance(y, np.ndarray):
             y = y.astype(float)
         return y
-
-class NoneScaler:
-    def __init__(self, y, config):
-        self.config = config
-
-    def transform(self, y):
-        return y
-
-    def inverse_transform(self, y):
-        return y
     
 
-def get_scaler(y, config, selected_method=None):
-    method = selected_method if selected_method else config.scaler_method
-    if method == 'stander':
+def get_scaler(y, config):
+    if config.scaler_method == 'stander':
         return DataScalerStander(y, config)
-    elif method == 'minmax':
+    elif config.scaler_method == 'minmax':
         return DataScalerMinMax(y, config)
-    elif method == 'global':
+    elif config.scaler_method == 'global':
         return GlobalStandardScaler(y, config)
-    elif method == 'None':
-        return NoneScaler(y, config)
     else:
-        raise NotImplementedError(f"Scaler method '{method}' is not supported.")
+        return NotImplementedError
+    

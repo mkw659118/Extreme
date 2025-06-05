@@ -38,3 +38,6 @@ venv/
 # 
 /results/*
 /Checkpoints/*
+/baselines/timellm_models/
+/layers/diffusion/data/
+/layers/my_ddpm_model/

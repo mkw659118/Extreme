@@ -1,15 +1,14 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
-import numpy as np
 import torch
 import collections
+import numpy as np
 from data_provider.exp_dataloader import DataModule
 from exp.exp_main import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
 import utils.utils
 torch.set_default_dtype(torch.float32)
-torch.set_float32_matmul_precision('high')
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
@@ -47,7 +46,7 @@ def RunExperiments(log, config):
     for key in metrics:
         log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
     try:
-        flops, params, inference_time = utils.model_efficiency.get_efficiency(datamodule, model, config)
+        flops, params, inference_time = utils.model_efficiency.get_efficiency(config)
         log(f"Flops: {flops:.0f}")
         log(f"Params: {params:.0f}")
         log(f"Inference time: {inference_time:.2f} ms")

@@ -43,7 +43,7 @@ class Logger:
 
     # 保存运行日志到run.log文件
     def save_in_log(self, metrics):
-        with open(f"./{self.config.logger}.log", 'a') as f:
+        with open("./run.log", 'a') as f:
             timestamp = time.strftime('|%Y-%m-%d %H:%M:%S| ')
             f.write(timestamp + self.exper_detail + '\n')
             metric_str = ' '.join([f"{k} - {np.mean(v):.4f}" for k, v in metrics.items()])
