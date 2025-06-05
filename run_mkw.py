@@ -81,14 +81,6 @@ def run(config):
     return metrics
 
 
-def get_config_by_name(config_name):
-    # 配置类文件都放在 configs/ 目录下
-    config_name += '_config'
-    module_path = f"configs.{config_name}"
-    module = importlib.import_module(module_path)
-    config_class = getattr(module, config_name)
-    return config_class()
-
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
