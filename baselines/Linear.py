@@ -20,10 +20,18 @@ class Linear(torch.nn.Module):
         if self.revin:
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
-        # self.
-        self.middle_linear = torch.nn.Linear(config.seq_len, config.d_model)
-        self.predict_linear = torch.nn.Linear(config.d_model, config.pred_len)
+        # 中间线性层，对时间维度进行映射（注意是对 seq_len 映射到更大维度）
+        # 输入维度：seq_len → 输出维度：d_model + seq_len
+        self.middle_linear = nn.Linear(self.seq_len, self.seq_len + self.pred_len)
 
+        # 用于将中间表示直接预测为 pred_len 步（这层在 forward 中未使用）
+        self.predict_linear = nn.Linear(self.seq_len + self.pred_len, self.pred_len)
+
+        # 对特征维度进行非线性特征提升（例如 21 → 50）
+        self.up_feature_linear = nn.Linear(self.config.input_size, 50)
+
+        # 再降回原特征维度（例如 50 → 21）
+        self.down_feature_linear = nn.Linear(50, self.config.input_size)
 
     def forward(self, x, x_mark):
         # x: [B, L, D]
