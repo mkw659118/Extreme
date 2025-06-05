@@ -37,7 +37,6 @@ class DatasetInfo:
 
 
 
-
 @dataclass
 class ExperimentConfig:
     seed: int = 0
@@ -51,4 +50,4 @@ class ExperimentConfig:
 
 @dataclass
 class LoggerConfig:
-    logger: str = 'None'
+    logger: str = 'ZYX'

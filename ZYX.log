@@ -1,0 +1,2 @@
+|2025-06-05 12:14:56| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 16, Pred_len : 10, 
+|2025-06-05 12:14:56| MAE - 0.0486 MSE - 0.0046 RMSE - 0.0675 MAPE - 0.0452 NMAE - 0.0454 NRMSE - 0.0586 Acc_10 - 0.9221 train_time - 20.3539

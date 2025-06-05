@@ -4,7 +4,7 @@
 # Author : yuxiang Zeng
 import numpy as np
 import pandas as pd
-from utils.data_scaler import get_scaler
+from data_provider.data_scaler import get_scaler
 
 
 def get_ts(dataset, config):
@@ -19,16 +19,15 @@ def get_ts(dataset, config):
     timestamps = pd.to_datetime(df[:, 0])
     timestamps = np.array([[ts.year, ts.month, ts.day, ts.weekday()] for ts in timestamps])
 
-
     # 根据训练集对input进行特征归一化
     print(y.min(), y.max())
-    scaler = get_scaler(y, config)
-    y = scaler.transform(y)
+    y_scaler = get_scaler(y, config)
+    y = y_scaler.transform(y)
     print(y.min(), y.max())
 
     print(x.min(), x.max())
-    temp_scaler = get_scaler(x, config)
-    x = temp_scaler.transform(x)
+    x_scaler = get_scaler(x, config)
+    x = x_scaler.transform(x)
     print(x.min(), x.max())
 
     x = np.concatenate((timestamps, x), axis=1)
@@ -36,4 +35,4 @@ def get_ts(dataset, config):
     x = x.astype(np.float32)
     y = y.astype(np.float32)
 
-    return x, y, scaler
+    return x, y, x_scaler, y_scaler
