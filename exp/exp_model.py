@@ -15,16 +15,11 @@ from modules.ts_model import TimeSeriesModel
 
 
 class Model(BasicModel):
-    def __init__(self, datamodule, config):
+    def __init__(self, config):
         super().__init__(config)
         self.config = config
-        if config.dataset == 'weather':
-            self.input_size = datamodule.train_loader.dataset.x.shape[-1]
-        elif config.dataset == 'financial':
-            self.input_size = 3
-        else:
-            NotImplementedError
-
+        
+        self.input_size = config.input_size
         self.hidden_size = config.rank
 
         if config.model == 'ours':

@@ -20,6 +20,8 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
 
     seq_len: int = 16
     pred_len: int = 10
+    input_size: int = 3
+    
 
     # 组件专区
     num_layers: int = 2
