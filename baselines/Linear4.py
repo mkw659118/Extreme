@@ -10,9 +10,9 @@ from layers.revin import RevIN
 
 # 以下是做法三：timesNet
 
-class Linear(nn.Module):
+class Linear4(nn.Module):
     def __init__(self, enc_in, config):
-        super(Linear, self).__init__()
+        super(Linear4, self).__init__()
         self.config = config
         self.rank = config.rank
         self.pred_len = config.pred_len
