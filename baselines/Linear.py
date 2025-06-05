@@ -13,12 +13,15 @@ class Linear(torch.nn.Module):
         self.pred_len = config.pred_len
         self.seq_len = config.seq_len
         self.revin = config.revin
+        self.d_model = config.d_model
 
         if self.revin:
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
         # self.
-        self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len)
+        self.middle_linear = torch.nn.Linear(config.seq_len, config.d_model)
+        self.predict_linear = torch.nn.Linear(config.d_model, config.pred_len)
+
 
     def forward(self, x, x_mark):
         # x: [B, L, D]
@@ -26,11 +29,12 @@ class Linear(torch.nn.Module):
             x = self.revin_layer(x, 'norm')
 
         # rearrange to [B, D, L] to apply Linear on seq_len dimension
-        x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
-        y = self.predict_linear(x)  # [B, D, pred_len]
-        y = rearrange(y, 'bs d_model pred_len -> bs pred_len d_model')
+        x = rearrange(x, 'B L D -> B D L')
+        y = self.middle_linear(x)  # [B D d_model]
+        y = self.predict_linear(y)  # [B, D, P]
+        y = rearrange(y, 'B D P -> B P D')
 
         if self.revin:
             y = self.revin_layer(y, 'denorm')
-        # shape = [B, pred_len, D]
+        # shape = [B, P, D]
         return y
