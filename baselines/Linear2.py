@@ -11,19 +11,19 @@ class Linear2(torch.nn.Module):
         self.revin = config.revin
         self.pred_len = config.pred_len
         self.seq_len = config.seq_len
-        self.hidden_dim = config.hidden_dim
+        self.d_model = config.d_model
 
         if self.revin:
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(config.seq_len, config.hidden_dim),
+            torch.nn.Linear(config.seq_len, self.d_model),
             torch.nn.GELU(),
-            torch.nn.LayerNorm(config.hidden_dim),
-            torch.nn.Linear(config.hidden_dim, config.hidden_dim),
+            torch.nn.LayerNorm(self.d_model),
+            torch.nn.Linear(self.d_model, self.d_model),
             torch.nn.GELU(),
-            torch.nn.LayerNorm(config.hidden_dim),
-            torch.nn.Linear(config.hidden_dim, config.pred_len)
+            torch.nn.LayerNorm(self.d_model),
+            torch.nn.Linear(self.d_model, config.pred_len)
         )
 
     def forward(self, x, x_mark):

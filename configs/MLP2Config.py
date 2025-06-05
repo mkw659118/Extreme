@@ -12,5 +12,5 @@ class MLP2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     patience: int = 50
     verbose: int = 1
     num_layers: int = 2
-    hidden_dim: int = 256
+    d_model: int = 50
     revin: bool = True
