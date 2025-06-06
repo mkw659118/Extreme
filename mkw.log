@@ -1,0 +1,8 @@
+|2025-06-05 17:28:09| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-05 17:28:09| MAE - 0.2044 MSE - 0.1688 RMSE - 0.4109 MAPE - 6.2822 NMAE - 0.3148 NRMSE - 0.4924 Acc_10 - 0.0408 train_time - 605.3010
+
+
+|2025-06-05 18:30:07| Dataset : WEATHER, Model : mlp, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-05 18:30:07| MAE - 0.2044 MSE - 0.1688 RMSE - 0.4109 MAPE - 6.2822 NMAE - 0.3148 NRMSE - 0.4924 Acc_10 - 0.0408 train_time - 583.1872
+
+
