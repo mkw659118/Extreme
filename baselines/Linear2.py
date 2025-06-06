@@ -4,6 +4,7 @@ import torch
 from layers.revin import RevIN
 from einops import rearrange, repeat
 
+
 class Linear2(torch.nn.Module):
     def __init__(self, enc_in, config):
         super(Linear2, self).__init__()
@@ -17,13 +18,13 @@ class Linear2(torch.nn.Module):
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(config.seq_len, self.d_model),
+            torch.nn.Linear(self.seq_len, self.d_model),
             torch.nn.GELU(),
             torch.nn.LayerNorm(self.d_model),
             torch.nn.Linear(self.d_model, self.d_model),
             torch.nn.GELU(),
             torch.nn.LayerNorm(self.d_model),
-            torch.nn.Linear(self.d_model, config.pred_len)
+            torch.nn.Linear(self.d_model, self.pred_len)
         )
 
     def forward(self, x, x_mark):
