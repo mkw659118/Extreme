@@ -30,11 +30,25 @@
 |2025-06-05 19:53:33| MAE - 0.2709 MSE - 0.2564 RMSE - 0.5063 MAPE - 11.2184 NMAE - 0.4179 NRMSE - 0.6066 Acc_10 - 0.0341 train_time - 95.8133
 
 
+
 |2025-06-05 19:58:38| Dataset : WEATHER, Model : mlp4, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96,
 |2025-06-05 19:58:38| MAE - 0.2051 MSE - 0.1700 RMSE - 0.4123 MAPE - 5.6417 NMAE - 0.3158 NRMSE - 0.4941 Acc_10 - 0.0511 train_time - 130.9800
 |2025-06-05 20:02:56| Dataset : WEATHER, Model : mlp4, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192,
 |2025-06-05 20:02:56| MAE - 0.2399 MSE - 0.2099 RMSE - 0.4582 MAPE - 8.1836 NMAE - 0.3697 NRMSE - 0.5490 Acc_10 - 0.0410 train_time - 71.2438
-
-
-|2025-06-06 11:00:47| Dataset : WEATHER, Model : mlp4, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336, 
+|2025-06-06 11:00:47| Dataset : WEATHER, Model : mlp4, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336,
 |2025-06-06 11:00:47| MAE - 0.2745 MSE - 0.2577 RMSE - 0.5076 MAPE - 11.5650 NMAE - 0.4234 NRMSE - 0.6081 Acc_10 - 0.0344 train_time - 635.9138
+|2025-06-06 11:39:17| Dataset : WEATHER, Model : mlp4, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720,
+|2025-06-06 11:39:17| MAE - 0.3136 MSE - 0.3144 RMSE - 0.5607 MAPE - 14.4948 NMAE - 0.4871 NRMSE - 0.6769 Acc_10 - 0.0291 train_time - 742.0765
+
+
+|2025-06-06 11:59:51| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-06 11:59:51| MAE - 0.1959 MSE - 0.1657 RMSE - 0.4071 MAPE - 4.4270 NMAE - 0.3018 NRMSE - 0.4879 Acc_10 - 0.0554 train_time - 287.0181
+|2025-06-06 12:12:35| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-06-06 12:12:35| MAE - 0.2345 MSE - 0.2087 RMSE - 0.4569 MAPE - 7.4867 NMAE - 0.3614 NRMSE - 0.5474 Acc_10 - 0.0422 train_time - 239.0777
+|2025-06-06 13:31:39| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336, 
+|2025-06-06 13:31:39| MAE - 0.2738 MSE - 0.2611 RMSE - 0.5109 MAPE - 10.7857 NMAE - 0.4224 NRMSE - 0.6121 Acc_10 - 0.0336 train_time - 342.8072
+|2025-06-06 13:46:18| Dataset : WEATHER, Model : mlp3, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720, 
+|2025-06-06 13:46:18| MAE - 0.3164 MSE - 0.3210 RMSE - 0.5666 MAPE - 14.5505 NMAE - 0.4914 NRMSE - 0.6840 Acc_10 - 0.0275 train_time - 88.0384
+
+|2025-06-06 18:58:18| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-06 18:58:18| MAE - 0.2434 MSE - 0.2082 RMSE - 0.4563 MAPE - 6.9509 NMAE - 0.3749 NRMSE - 0.5468 Acc_10 - 0.0351 train_time - 332.0723

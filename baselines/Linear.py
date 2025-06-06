@@ -28,10 +28,10 @@ class Linear(torch.nn.Module):
         self.predict_linear = nn.Linear(self.seq_len + self.pred_len, self.pred_len)
 
         # 对特征维度进行非线性特征提升（例如 21 → 50）
-        self.up_feature_linear = nn.Linear(self.config.input_size, 50)
+        self.up_feature_linear = nn.Linear(self.config.input_size, self.d_model)
 
         # 再降回原特征维度（例如 50 → 21）
-        self.down_feature_linear = nn.Linear(50, self.config.input_size)
+        self.down_feature_linear = nn.Linear(self.d_model, self.config.input_size)
 
     def forward(self, x, x_mark):
         # x: [B, L, D]

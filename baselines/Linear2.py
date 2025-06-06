@@ -2,7 +2,7 @@
 # Author : Yuxiang Zeng
 import torch
 from layers.revin import RevIN
-from einops import rearrange, repeat
+from einops import rearrange
 
 
 class Linear2(torch.nn.Module):

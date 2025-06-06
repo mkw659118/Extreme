@@ -19,20 +19,19 @@ class Linear3(torch.nn.Module):
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(self.seq_len, self.d_model * 2),  # 第一层：扩张隐藏维度
+            torch.nn.Linear(self.seq_len, self.seq_len + self.d_model * 2),  # 第一层：扩张隐藏维度
             torch.nn.GELU(),
             torch.nn.Dropout(p=0.1),
-
-            torch.nn.Linear(self.d_model * 2, self.d_model),  # 第二层：压缩回原始隐藏维度
+            torch.nn.LayerNorm(self.seq_len + self.d_model * 2),
+            torch.nn.Linear(self.seq_len + self.d_model * 2, self.d_model),  # 第二层：压缩回原始隐藏维度
             torch.nn.GELU(),
             torch.nn.Dropout(p=0.1),
-
             torch.nn.LayerNorm(self.d_model),  # 层归一化
             torch.nn.Linear(self.d_model, self.pred_len)  # 第三层：输出层
         )
 
     def forward(self, x, x_mark):
-        # x: [B, L, 1]
+        # x: [B, L, D]
         if self.revin:
             x = self.revin_layer(x, 'norm')
 

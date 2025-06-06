@@ -17,11 +17,11 @@
 #done
 
 # 预测长度列表
-pred_lens=(336 720)
+pred_lens=(96 192 336 720)
 
 
   for len in "${pred_lens[@]}"
   do
     echo "Running with exp_name=, pred_len=$len"
-    python run_mkw.py --exp_name "MLP4Config" --retrain 1 --pred_len "$len" --revin True --logger mkw
+    python run_mkw.py --exp_name "MLP5Config" --retrain 1 --pred_len "$len" --revin True --logger mkw
   done
