@@ -1,9 +1,28 @@
 import numpy as np
 import torch
 from math import sqrt
-
+import math 
 import torch.nn as nn
 import torch.nn.functional as F
+
+def get_timer(config):
+    # config.patch_len = 96
+    # config.d_model = 1024
+    # config.d_ff = 2048
+    # config.e_layers = 8
+    # config.n_heads = 8
+    # config.dropout = 0.10
+    # config.factor = 21
+    # config.output_attention = 1
+    # config.activation = 'gelu'
+    # config.ckpt_path = 'Timer_forecast_1.0.ckpt'
+    timer = Timer(config)
+    ckpt_path = 'Timer_forecast_1.0.ckpt'
+    sd = torch.load(ckpt_path, weights_only=False, map_location="cpu")["state_dict"]
+    sd = {k[6:]: v for k, v in sd.items()}
+    timer.load_state_dict(sd, strict=True)
+    return timer 
+
 
 class TriangularCausalMask():
     def __init__(self, B, L, device="cpu"):
@@ -414,6 +433,7 @@ class PatchEmbedding(nn.Module):
         else:
             x = self.value_embedding(x)
         return self.dropout(x), n_vars
+    
 
 class FlattenHead(nn.Module):
     def __init__(self, nf, target_window, head_dropout=0):
@@ -440,7 +460,7 @@ class Timer(nn.Module):
         self.e_layers = 8
         self.n_heads = 8
         self.dropout = 0.10
-        self.factor = 1
+        self.factor = 21
         self.output_attention = 1
         self.activation = 'gelu'
         padding = 0
@@ -454,8 +474,10 @@ class Timer(nn.Module):
             [
                 EncoderLayer(
                     AttentionLayer(
-                        FullAttention(True, self.factor, attention_dropout=self.dropout,
-                                      output_attention=True), self.d_model, self.n_heads),
+                        FullAttention(True, self.factor, attention_dropout=self.dropout, output_attention=True),
+                        self.d_model, 
+                        self.n_heads
+                    ),
                     self.d_model,
                     self.d_ff,
                     dropout=self.dropout,

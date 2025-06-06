@@ -2,6 +2,7 @@
 # Author : Yuxiang Zeng
 import torch
 
+from baselines.Timer.Timer import get_timer
 from layers.dft import DFT
 from layers.encoder.position_enc import PositionEncoding
 from layers.encoder.seq_enc import SeqEncoder
@@ -33,6 +34,8 @@ class Backbone(torch.nn.Module):
         # self.temporal_embedding = TemporalEmbedding(self.rank, 'embeds')
         self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len + config.seq_len)
 
+        # self.timer = get_timer(config)
+
         self.encoder = Transformer(
             self.rank,
             num_heads=4,
@@ -52,13 +55,13 @@ class Backbone(torch.nn.Module):
         )
         # self.moe = MoE(d_model=self.rank, d_ff=self.rank, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
         # self.moe = MoE(d_model=self.rank * 33, d_ff=self.rank * 33, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
-
         self.decoder = torch.nn.Linear(config.rank, 1)
         # self.moe = SparseMoE(self.rank * (config.seq_len + config.pred_len), self.rank * (config.seq_len + config.pred_len), 8, noisy_gating=True, num_k=1, loss_coef=1e-3)
         # self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
         # self.layer_norm = torch.nn.LayerNorm(self.rank)
 
     def forward(self, x, x_mark, x_fund):
+        # x.shape = torch.Size([bs, seq, channels, d])
         # norm
         if self.revin:
             x = self.revin_layer(x, 'norm')
