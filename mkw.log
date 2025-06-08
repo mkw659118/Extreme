@@ -58,3 +58,17 @@
 |2025-06-06 19:46:13| MAE - 0.3013 MSE - 0.2872 RMSE - 0.5359 MAPE - 12.9449 NMAE - 0.4648 NRMSE - 0.6420 Acc_10 - 0.0268 train_time - 786.1112
 |2025-06-06 20:11:06| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720, 
 |2025-06-06 20:11:06| MAE - 0.3358 MSE - 0.3389 RMSE - 0.5821 MAPE - 15.4466 NMAE - 0.5216 NRMSE - 0.7028 Acc_10 - 0.0240 train_time - 373.4866
+
+|2025-06-08 12:28:08| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-08 12:28:08| MAE - 0.2148 MSE - 0.1840 RMSE - 0.4289 MAPE - 4.8029 NMAE - 0.3308 NRMSE - 0.5140 Acc_10 - 0.0456 train_time - 124.5368
+|2025-06-08 12:36:32| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-06-08 12:36:32| MAE - 0.2484 MSE - 0.2151 RMSE - 0.4638 MAPE - 7.9489 NMAE - 0.3828 NRMSE - 0.5557 Acc_10 - 0.0355 train_time - 68.2795
+|2025-06-08 12:49:49| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336, 
+|2025-06-08 12:49:49| MAE - 0.2979 MSE - 0.2903 RMSE - 0.5388 MAPE - 9.4101 NMAE - 0.4596 NRMSE - 0.6455 Acc_10 - 0.0282 train_time - 186.0557
+|2025-06-08 13:02:46| Dataset : WEATHER, Model : mlp5, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720, 
+|2025-06-08 13:02:46| MAE - 0.3279 MSE - 0.3348 RMSE - 0.5786 MAPE - 10.5438 NMAE - 0.5094 NRMSE - 0.6985 Acc_10 - 0.0243 train_time - 42.2269
+
+|2025-06-08 17:05:54| Dataset : WEATHER, Model : seasonal_trend_model, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-08 17:05:54| MAE - 0.1845 MSE - 0.1465 RMSE - 0.3827 MAPE - 5.6331 NMAE - 0.2842 NRMSE - 0.4586 Acc_10 - 0.0488 train_time - 4187.1746
+|2025-06-08 18:35:07| Dataset : WEATHER, Model : seasonal_trend_model, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-06-08 18:35:07| MAE - 0.2239 MSE - 0.1849 RMSE - 0.4300 MAPE - 5.6297 NMAE - 0.3451 NRMSE - 0.5153 Acc_10 - 0.0337 train_time - 3290.8637

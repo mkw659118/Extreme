@@ -84,6 +84,6 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    config = get_config('MLP5Config')
+    config = get_config('DFTDecomModelConfig')
     run(config)
 

@@ -7,6 +7,8 @@ from baselines.Linear2 import Linear2
 from baselines.Linear3 import Linear3
 from baselines.Linear4 import Linear4
 from baselines.Linear5 import Linear5
+from baselines.SeasonalTrendModel import SeasonalTrendModel
+from baselines.DFTDecomModel import DFTDecomModel
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
 from layers.metric.distance import PairwiseLoss
@@ -41,6 +43,12 @@ class Model(BasicModel):
 
         elif config.model == 'mlp5':
             self.model = Linear5(self.input_size, config)
+
+        elif config.model == 'seasonal_trend_model':
+            self.model = SeasonalTrendModel(config)
+
+        elif config.model == 'dft':
+            self.model = DFTDecomModel(config)
 
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(
