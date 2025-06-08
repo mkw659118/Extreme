@@ -18,17 +18,18 @@ class Linear5(torch.nn.Module):
         self.pred_len = config.pred_len
         self.seq_len = config.seq_len
         self.d_model = config.d_model
-        self.group = config.group
+        self.patch_num = config.patch_num
         self.input_size = config.input_size
+        self.patch_len = config.seq_len // config.patch_num
 
         if self.revin:
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
         # 增加 Dropout 和激活函数
         self.linear_up = nn.Sequential(
-            nn.Linear(self.seq_len // self.group, self.d_model),
-            nn.GELU(),
-            nn.Dropout(p=0.1)
+            nn.Linear(self.input_size, self.d_model),
+            nn.GELU()
+            # nn.Dropout(p=0.1)
         )
 
         # 增加 LayerNorm
@@ -38,18 +39,18 @@ class Linear5(torch.nn.Module):
         )
 
     def forward(self, x, x_mark=None):
-        # x: [B, L, D]
+        # x: [Bs, seq_len, D]
         if self.revin:
             x = self.revin_layer(x, 'norm')
 
-        # L = g * l
-        x = rearrange(x, 'B (g l) D -> B g l D', g=self.group)  # [B, g, l, D]
-        x = rearrange(x, 'B g l D -> B g D l')  # [B, g, D, l]
-        x = self.linear_up(x)  # [B, g, D, d_model]
+        x = rearrange(x, 'Bs seq_len D -> Bs patch_num patch_len D', patch_num=self.patch_num)
+        x = self.linear_up(x)  # [ Bs, patch_num, patch_len d_model ]
 
-        # [bs, patch, d_model, seq_len], torch.cat 
-        x = x.sum(dim=1)  # [B, D, d_model]
-        # [bs, seq_len, patch * d_model] linear-> [bs, seq_len, d_model]
+        x = rearrange(x, 'Bs patch_num patch_len d_model -> Bs patch_num d_model patch_len')  # [B, g, D, l]
+
+        # # [bs, patch, d_model, seq_len], torch.cat
+        # x = x.sum(dim=1)  # [B, D, d_model]
+        # # [bs, patch * patch_len, d_model] linear-> [bs, seq_len, d_model]
 
         x = self.linear_final(x)  # [B, D, pred_len]
 

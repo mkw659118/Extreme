@@ -16,4 +16,4 @@ class MLP5Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, T
     num_layers: int = 2
     revin: bool = True
     d_model: int = 50
-    group: int = 8
+    patch_num: int = 8
