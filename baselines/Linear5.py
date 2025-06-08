@@ -47,7 +47,9 @@ class Linear5(torch.nn.Module):
         x = rearrange(x, 'B g l D -> B g D l')  # [B, g, D, l]
         x = self.linear_up(x)  # [B, g, D, d_model]
 
+        # [bs, patch, d_model, seq_len], torch.cat 
         x = x.sum(dim=1)  # [B, D, d_model]
+        # [bs, seq_len, patch * d_model] linear-> [bs, seq_len, d_model]
 
         x = self.linear_final(x)  # [B, D, pred_len]
 
