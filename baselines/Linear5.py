@@ -33,20 +33,28 @@ class Linear5(torch.nn.Module):
         )
 
         # 增加 LayerNorm
-        self.linear_final = nn.Sequential(
+        self.linear_back = nn.Sequential(
             nn.LayerNorm(self.d_model),
             nn.Linear(self.d_model, self.input_size)
         )
+
+        self.linear_final = torch.nn.Linear(self.seq_len, self.pred_len)
 
     def forward(self, x, x_mark=None):
         # x: [Bs, seq_len, D]
         if self.revin:
             x = self.revin_layer(x, 'norm')
-
-        x = rearrange(x, 'Bs seq_len D -> Bs patch_num patch_len D', patch_num=self.patch_num)
+        # seq_len = patch_num * patch_len
+        x = rearrange(x, 'Bs (patch_num patch_len) D -> Bs patch_num patch_len D', patch_num=self.patch_num)
         x = self.linear_up(x)  # [ Bs, patch_num, patch_len d_model ]
         x = rearrange(x, 'Bs patch_num patch_len d_model -> Bs (patch_num patch_len) d_model')
+        x = self.linear_back(x)
+
+        x = rearrange(x, 'Bs seq_len D -> Bs D seq_len')
         x = self.linear_final(x)
+
+        x = rearrange(x, 'Bs D pred_len -> Bs pred_len D')
+
         if self.revin:
             x = self.revin_layer(x, 'denorm')
 
