@@ -47,6 +47,7 @@ class Linear5(torch.nn.Module):
         x = self.linear_up(x)  # [ Bs, patch_num, patch_len d_model ]
 
         x = rearrange(x, 'Bs patch_num patch_len d_model -> Bs patch_num d_model patch_len')  # [B, g, D, l]
+        x = rearrange(x, 'Bs patch_num patch_len d_model -> Bs (patch_num patch_len) d_model', patch_num=self.patch_num)
 
         # # [bs, patch, d_model, seq_len], torch.cat
         # x = x.sum(dim=1)  # [B, D, d_model]
