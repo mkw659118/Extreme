@@ -2,14 +2,10 @@
 # Author : Yuxiang Zeng
 import torch
 
-from baselines.Timer.Timer import get_timer
 from layers.dft import DFT
 from layers.encoder.position_enc import PositionEncoding
-from layers.encoder.seq_enc import SeqEncoder
-from layers.encoder.token_emc import TokenEmbedding
-from layers.feedforward.moe import MoE
 from layers.revin import RevIN
-from layers.transformer import Transformer
+from baselines.Transformer import Transformer
 
 
 class Backbone(torch.nn.Module):

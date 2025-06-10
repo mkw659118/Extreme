@@ -7,7 +7,7 @@ import numpy as np
 
 from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
-from layers.transformer import get_norm
+from baselines.Transformer import get_norm
 
 
 def get_norm(d_model, method):

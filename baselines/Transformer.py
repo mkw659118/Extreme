@@ -47,8 +47,9 @@ def get_att(d_model, num_heads, method):
 
 
 class Transformer(torch.nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, norm_method='rms', ffn_method='moe', att_method='self'):
+    def __init__(self, d_model, num_heads, num_layers, input_size, norm_method='rms', ffn_method='moe', att_method='self'):
         super().__init__()
+        self.input_projection = torch.nn.Linear(input_size, d_model)
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):
             self.layers.append(
@@ -62,16 +63,11 @@ class Transformer(torch.nn.Module):
                 )
             )
         self.norm = get_norm(d_model, norm_method)
+        self.output_projection = torch.nn.Linear(d_model, input_size)
 
-    def forward(self, x):
+    def forward(self, x, x_mark=None):
+        x = self.input_projection(x)  # 调整形状为 [B, L, d_model]
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
-        return self.norm(x)
-
-if __name__ == '__main__':
-    rank, num_layers, num_heads = 64, 4, 8
-    model = Transformer(rank, num_heads=num_heads, num_layers=num_layers)
-    x = torch.randn(16, 10, rank)
-    output = model(x)
-    print("Output shape:", output.shape)
+        return self.output_projection(self.norm(x))
