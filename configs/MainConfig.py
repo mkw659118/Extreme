@@ -13,7 +13,7 @@ class OtherConfig:
     
     multi_dataset: bool = False
     seq_len: int = 96
-    pred_len: int = 336
+    pred_len: int = 96
 
 
 

@@ -28,7 +28,7 @@ class ModelArgs:
         dim (int): Model dimension.
         inter_dim (int): Intermediate dimension for MLP layers.
         moe_inter_dim (int): Intermediate dimension for MoE layers.
-        n_layers (int): Number of transformer layers.
+        n_layers (int): Number of transformer_library layers.
         n_dense_layers (int): Number of dense layers in the model.
         n_heads (int): Number of attention heads.
         n_routed_experts (int): Number of routed experts for MoE layers.
@@ -720,7 +720,7 @@ class Block(nn.Module):
         Initializes the Transformer block.
 
         Args:
-            layer_id (int): Layer index in the transformer.
+            layer_id (int): Layer index in the transformer_library.
             args (ModelArgs): Model arguments containing block parameters.
         """
         super().__init__()
@@ -752,9 +752,9 @@ class Transformer(nn.Module):
     Transformer model with positional embeddings, multiple layers, and output projection.
 
     Attributes:
-        max_seq_len (int): Maximum sequence length for the transformer.
+        max_seq_len (int): Maximum sequence length for the transformer_library.
         embed (nn.Module): Embedding layer for input tokens.
-        layers (torch.nn.ModuleList): List of transformer blocks.
+        layers (torch.nn.ModuleList): List of transformer_library blocks.
         norm (nn.Module): Layer normalization applied after all blocks.
         head (nn.Module): Output projection layer mapping to vocabulary size.
         freqs_cis (torch.Tensor): Precomputed complex exponential values for rotary embeddings.
@@ -764,7 +764,7 @@ class Transformer(nn.Module):
         Initializes the Transformer model.
 
         Args:
-            args (ModelArgs): Model arguments containing transformer parameters.
+            args (ModelArgs): Model arguments containing transformer_library parameters.
         """
         global world_size, rank
         world_size = dist.get_world_size() if dist.is_initialized() else 1

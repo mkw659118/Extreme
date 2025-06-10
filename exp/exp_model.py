@@ -9,6 +9,7 @@ from baselines.Linear4 import Linear4
 from baselines.Linear5 import Linear5
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
+from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
 from layers.metric.distance import PairwiseLoss
@@ -49,6 +50,9 @@ class Model(BasicModel):
 
         elif config.model == 'dft':
             self.model = DFTDecomModel(config)
+
+        elif config.model == 'transformer_library':
+            self.model = TransformerLibrary(config)
 
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(

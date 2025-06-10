@@ -34,6 +34,7 @@ class DatasetInfo:
     eval_set: bool = True
     shuffle: bool = False
     scaler_method: str = 'stander'
+    spliter_ratio: str = '7:1:2'
 
 
 

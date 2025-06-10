@@ -72,3 +72,26 @@
 |2025-06-08 17:05:54| MAE - 0.1845 MSE - 0.1465 RMSE - 0.3827 MAPE - 5.6331 NMAE - 0.2842 NRMSE - 0.4586 Acc_10 - 0.0488 train_time - 4187.1746
 |2025-06-08 18:35:07| Dataset : WEATHER, Model : seasonal_trend_model, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
 |2025-06-08 18:35:07| MAE - 0.2239 MSE - 0.1849 RMSE - 0.4300 MAPE - 5.6297 NMAE - 0.3451 NRMSE - 0.5153 Acc_10 - 0.0337 train_time - 3290.8637
+|2025-06-08 19:18:30| Dataset : WEATHER, Model : seasonal_trend_model, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336, 
+|2025-06-08 19:18:30| MAE - 0.2641 MSE - 0.2330 RMSE - 0.4827 MAPE - 7.2710 NMAE - 0.4074 NRMSE - 0.5782 Acc_10 - 0.0259 train_time - 699.0833
+|2025-06-08 20:08:25| Dataset : WEATHER, Model : seasonal_trend_model, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720, 
+|2025-06-08 20:08:25| MAE - 0.3106 MSE - 0.2988 RMSE - 0.5467 MAPE - 6.7034 NMAE - 0.4824 NRMSE - 0.6600 Acc_10 - 0.0195 train_time - 610.3571
+
+
+
+|2025-06-08 21:05:54| Dataset : WEATHER, Model : dft, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 96, 
+|2025-06-08 21:05:54| MAE - 0.1869 MSE - 0.1494 RMSE - 0.3865 MAPE - 5.8035 NMAE - 0.2879 NRMSE - 0.4632 Acc_10 - 0.0487 train_time - 5076.2958
+|2025-06-08 22:25:13| Dataset : WEATHER, Model : dft, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 192, 
+|2025-06-08 22:25:13| MAE - 0.2264 MSE - 0.1881 RMSE - 0.4337 MAPE - 5.7922 NMAE - 0.3490 NRMSE - 0.5197 Acc_10 - 0.0335 train_time - 2897.1519
+|2025-06-08 23:38:37| Dataset : WEATHER, Model : dft, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 336, 
+|2025-06-08 23:38:37| MAE - 0.2625 MSE - 0.2339 RMSE - 0.4836 MAPE - 6.5867 NMAE - 0.4050 NRMSE - 0.5794 Acc_10 - 0.0250 train_time - 2392.1605
+|2025-06-09 00:18:42| Dataset : WEATHER, Model : dft, Density : 0.700, Bs : 32, Rank : 32, Seq_len : 96, Pred_len : 720, 
+|2025-06-09 00:18:42| MAE - 0.3125 MSE - 0.3014 RMSE - 0.5490 MAPE - 6.9914 NMAE - 0.4854 NRMSE - 0.6628 Acc_10 - 0.0197 train_time - 484.3798
+
+
+
+
+
+
+
+

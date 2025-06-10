@@ -32,8 +32,12 @@ class BasicModel(torch.nn.Module):
         t1 = time()
         for train_batch in (dataModule.train_loader):
             all_item = [item.to(self.config.device) for item in train_batch]
-            inputs, label = all_item[:-1], all_item[-1]
-            pred = self.forward(*inputs)
+            if len(all_item) == 5:  # 特殊模型，如 TransformerLibrary
+                x_enc, x_mark_enc, x_dec, x_mark_dec, label = all_item
+                pred = self.model(x_enc, x_mark_enc, x_dec, x_mark_dec)
+            else:
+                inputs, label = all_item[:-1], all_item[-1]
+                pred = self.forward(*inputs)
             loss = compute_loss(self, pred, label)
             self.optimizer.zero_grad()
             loss.backward()
@@ -50,8 +54,12 @@ class BasicModel(torch.nn.Module):
         preds, reals, val_loss = [], [], 0.
         for batch in (dataloader):
             all_item = [item.to(self.config.device) for item in batch]
-            inputs, label = all_item[:-1], all_item[-1]
-            pred = self.forward(*inputs)
+            if len(all_item) == 5:
+                x_enc, x_mark_enc, x_dec, x_mark_dec, label = all_item
+                pred = self.model(x_enc, x_mark_enc, x_dec, x_mark_dec)
+            else:
+                inputs, label = all_item[:-1], all_item[-1]
+                pred = self.forward(*inputs)
             if mode == 'valid':
                 val_loss += self.loss_function(pred, label)
             if self.config.classification:

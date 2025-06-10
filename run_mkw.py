@@ -39,6 +39,8 @@ def RunExperiments(log, config):
         datamodule = DataModule(config)
         model = Model(config)
         log.plotter.reset_round()
+        print("当前模型类型hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh：", config.model)
+
         results = RunOnce(config, runId, model, datamodule, log)
         for key in results:
             metrics[key].append(results[key])
@@ -84,6 +86,6 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    config = get_config('DFTDecomModelConfig')
+    config = get_config('TransformerLibraryConfig')
     run(config)
 
