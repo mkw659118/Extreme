@@ -51,8 +51,9 @@ class TensorDataset(Dataset):
 class TimeSeriesDataset(Dataset):
     def __init__(self, x, y, mode, config):
         self.config = config
-        self.x = x
-        self.y = y
+        # 统一转换为 PyTorch tensor，避免 __getitem__ 重复转换
+        self.x = torch.from_numpy(x).float()
+        self.y = torch.from_numpy(y).float()
         self.mode = mode
 
     def __len__(self):
