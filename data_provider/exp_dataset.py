@@ -54,6 +54,9 @@ class TimeSeriesDataset(Dataset):
         # 统一转换为 PyTorch tensor，避免 __getitem__ 重复转换
         self.x = torch.from_numpy(x).float()
         self.y = torch.from_numpy(y).float()
+        print("ajhahlfahlhfahfakjuuuuuuuuuuuuuuuuuu")
+        print(x.shape)
+        print(y.shape)
         self.mode = mode
 
     def __len__(self):
@@ -81,27 +84,22 @@ class TimeSeriesDataset(Dataset):
 
         # 如果当前模型是 transformer_library 模型，则需要构造 decoder 的输入
         if self.config.model == 'transformer_library':
-            label_len = self.config.label_len  # decoder 可用的已知历史长度
-            pred_len = self.config.pred_len  # decoder 需要预测的未来长度
-            dec_len = label_len + pred_len  # decoder 总长度
+            label_len = self.config.label_len
+            pred_len = self.config.pred_len
+            dec_len = label_len + pred_len
 
             # ------------------- 构造 Encoder 输入 -------------------
-            # x_enc: 编码器输入特征 [seq_len, D]，只取后面实际变量维度
             x_enc = self.x[s_begin:s_end][:, 4:]
-            # x_mark_enc: 编码器时间戳 [seq_len, 4]，通常是年/月/日/小时
             x_mark_enc = self.x[s_begin:s_end][:, :4]
 
             # ------------------- 构造 Decoder 输入 -------------------
-            # 初始化为全 0，shape = [label_len + pred_len, D]
-            x_dec = torch.zeros((dec_len, x_enc.shape[1]))
-            # 前 label_len 部分复制 encoder 的尾部值（作为已知历史）
+            d_actual = self.x.shape[1] - 4  # 真实变量维度
+            x_dec = torch.zeros((dec_len, d_actual))
             x_dec[:label_len] = self.x[s_end - label_len:s_end][:, 4:]
 
-            # x_mark_dec: decoder 时间戳 [label_len + pred_len, 4]，时间特征包含历史与未来
             x_mark_dec = self.x[s_end - label_len:s_end + pred_len][:, :4]
 
             # ------------------- 构造预测目标 -------------------
-            # y: 预测目标值 [pred_len, D]，只取预测段，不含 label_len
             y = self.y[s_end:s_end + pred_len]
 
             return x_enc, x_mark_enc, x_dec, x_mark_dec, y
