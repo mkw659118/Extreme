@@ -4,7 +4,7 @@
 #pred_lens=(96 192 336 720)
 #
 ## 模型配置列表
-#exp_names=(MLP5Config SeasonalTrendModelConfig DFTDecomModelConfig TransformerLibraryConfig)
+#exp_names=(MLP5Config SeasonalTrendModelConfig DFTDecomModelConfig TransformerLibraryConfig TransformerConfig)
 #
 ## 双重循环
 #for exp in "${exp_names[@]}"
@@ -17,7 +17,7 @@
 #done
 
 # 预测长度列表
-pred_lens=(96)
+pred_lens=(96 192 336 720)
 
 
   for len in "${pred_lens[@]}"

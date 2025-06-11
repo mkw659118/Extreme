@@ -60,6 +60,8 @@ class Model(BasicModel):
                 d_model=config.d_model,
                 num_heads=config.n_heads,
                 num_layers=config.num_layers,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
                 input_size=config.input_size
             )
         elif config.model in ['rnn', 'lstm', 'gru']:
@@ -67,7 +69,7 @@ class Model(BasicModel):
                 input_size=self.input_size,
                 d_model=self.hidden_size,
                 seq_len=config.seq_len,
-                pred_len=config.seq_len,
+                pred_len=config.pred_len,
                 num_layers=config.num_layers,
                 seq_method=config.model,
                 bidirectional=True

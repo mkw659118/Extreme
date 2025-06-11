@@ -10,7 +10,7 @@ from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
 from layers.att.self_attention import Attention
 from layers.feedforward.smoe import SparseMoE
-
+from einops import rearrange
 
 def get_norm(d_model, method):
     if method == 'batch':
@@ -47,7 +47,7 @@ def get_att(d_model, num_heads, method):
 
 
 class Transformer(torch.nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, input_size, norm_method='rms', ffn_method='moe', att_method='self'):
+    def __init__(self, d_model, num_heads, num_layers, seq_len, pred_len, input_size, norm_method='rms', ffn_method='moe', att_method='self'):
         super().__init__()
         self.input_projection = torch.nn.Linear(input_size, d_model)
         self.layers = torch.nn.ModuleList([])
@@ -63,11 +63,17 @@ class Transformer(torch.nn.Module):
                 )
             )
         self.norm = get_norm(d_model, norm_method)
-        self.output_projection = torch.nn.Linear(d_model, input_size)
+        self.output_projection = torch.nn.Linear(d_model, input_size)  # 特征还原原始维度
+        self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
 
     def forward(self, x, x_mark=None):
         x = self.input_projection(x)  # 调整形状为 [B, L, d_model]
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
-        return self.output_projection(self.norm(x))
+
+        x = self.output_projection(self.norm(x))
+        x = rearrange(x, 'Bs seq_len D -> Bs D seq_len')
+        x = self.seq_to_pred_Linear(x)
+        x = rearrange(x, 'Bs D pred_len -> Bs pred_len D')
+        return x
