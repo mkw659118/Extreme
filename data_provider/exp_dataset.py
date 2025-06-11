@@ -1,8 +1,9 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 # 根据场景需要来改这里的input形状
+import torch
 from torch.utils.data import Dataset
-import numpy as np
+
 
 class TensorDataset(Dataset):
     def __init__(self, x, y, mode, config):
@@ -69,33 +70,52 @@ class TimeSeriesDataset(Dataset):
     #     y = self.y[r_begin:r_end]
     #     return x, x_mark, y
     def __getitem__(self, idx):
+        # 序列起始位置：从 idx 开始取样本
         s_begin = idx
+        # 编码器输入序列的结束位置（不包含该位置）
         s_end = s_begin + self.config.seq_len
+        # 原始的解码器目标（预测段）起止范围
         r_begin = s_end
         r_end = r_begin + self.config.pred_len
 
+        # 如果当前模型是 transformer_library 模型，则需要构造 decoder 的输入
         if self.config.model == 'transformer_library':
-            # Decoder输入从Encoder结尾前label_len个时间步开始
-            r_begin = s_end - self.config.label_len
-            r_end = s_end + self.config.pred_len
+            label_len = self.config.label_len  # decoder 可用的已知历史长度
+            pred_len = self.config.pred_len  # decoder 需要预测的未来长度
+            dec_len = label_len + pred_len  # decoder 总长度
+
+            # ------------------- 构造 Encoder 输入 -------------------
+            # x_enc: 编码器输入特征 [seq_len, D]，只取后面实际变量维度
             x_enc = self.x[s_begin:s_end][:, 4:]
+            # x_mark_enc: 编码器时间戳 [seq_len, 4]，通常是年/月/日/小时
             x_mark_enc = self.x[s_begin:s_end][:, :4]
-            x_dec = self.x[r_begin:r_end][:, 4:]
-            x_mark_dec = self.x[r_begin:r_end][:, :4]
-            y = self.y[s_end:s_end + self.config.pred_len]
+
+            # ------------------- 构造 Decoder 输入 -------------------
+            # 初始化为全 0，shape = [label_len + pred_len, D]
+            x_dec = torch.zeros((dec_len, x_enc.shape[1]))
+            # 前 label_len 部分复制 encoder 的尾部值（作为已知历史）
+            x_dec[:label_len] = self.x[s_end - label_len:s_end][:, 4:]
+
+            # x_mark_dec: decoder 时间戳 [label_len + pred_len, 4]，时间特征包含历史与未来
+            x_mark_dec = self.x[s_end - label_len:s_end + pred_len][:, :4]
+
+            # ------------------- 构造预测目标 -------------------
+            # y: 预测目标值 [pred_len, D]，只取预测段，不含 label_len
+            y = self.y[s_end:s_end + pred_len]
+
             return x_enc, x_mark_enc, x_dec, x_mark_dec, y
+
         else:
+            # ------------------- 兼容其他模型（非 Transformer） -------------------
+            # x: 输入特征 [seq_len, D]，不使用 decoder，只返回 encoder 输入
             x = self.x[s_begin:s_end][:, 4:]
+            # x_mark: 对应时间戳 [seq_len, 4]
             x_mark = self.x[s_begin:s_end][:, :4]
+            # y: 预测目标值 [pred_len, D]
             y = self.y[r_begin:r_end]
+
             return x, x_mark, y
 
-    # def custom_collate_fn(self, batch, config):
-    #     from torch.utils.data.dataloader import default_collate
-    #     x, x_mark, y = zip(*batch)
-    #     x, y = default_collate(x), default_collate(y)
-    #     x_mark = default_collate(x_mark)
-    #     return x, x_mark, y
     def custom_collate_fn(self, batch, config):
         from torch.utils.data.dataloader import default_collate
         if config.model == 'transformer_library':
