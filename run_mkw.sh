@@ -45,7 +45,7 @@ do
       --retrain 1 \
       --pred_len "$len" \
       --revin True \
-      --mode "$mode" \
+      --match_mode "$mode" \
       --logger mkw
   done
 done

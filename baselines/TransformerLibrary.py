@@ -59,15 +59,10 @@ class TransformerLibrary(nn.Module):
             projection=nn.Linear(configs.d_model, configs.c_out, bias=True)
         )
 
-    def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
+
+    def forward(self, x_enc, x_mark):
         # Embedding
-        enc_out = self.enc_embedding(x_enc, x_mark_enc)
+        enc_out = self.enc_embedding(x_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=None)
-
-        dec_out = self.dec_embedding(x_dec, x_mark_dec)
-        dec_out = self.decoder(dec_out, enc_out, x_mask=None, cross_mask=None)
-        return dec_out
-
-    def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
-        dec_out = self.forecast(x_enc, x_mark_enc, x_dec, x_mark_dec)
+        dec_out = self.decoder(enc_out, enc_out)
         return dec_out[:, -self.pred_len:, :]  # [B, L, D]
