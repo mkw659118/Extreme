@@ -47,7 +47,7 @@ def get_att(d_model, num_heads, method):
 
 
 class Transformer(torch.nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, seq_len, pred_len, input_size, norm_method='rms', ffn_method='moe', att_method='self'):
+    def __init__(self, input_size, d_model, num_heads, num_layers, seq_len, pred_len, norm_method='rms', ffn_method='moe', att_method='self'):
         super().__init__()
         self.input_projection = torch.nn.Linear(input_size, d_model)
         self.layers = torch.nn.ModuleList([])
@@ -71,7 +71,6 @@ class Transformer(torch.nn.Module):
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
-
         x = self.output_projection(self.norm(x))
         x = rearrange(x, 'Bs seq_len D -> Bs D seq_len')
         x = self.seq_to_pred_Linear(x)

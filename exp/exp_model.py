@@ -57,12 +57,12 @@ class Model(BasicModel):
 
         elif config.model == 'transformer':  # 添加 transformer 支持
             self.model = Transformer(
+                input_size=config.input_size,
                 d_model=config.d_model,
                 num_heads=config.n_heads,
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
-                input_size=config.input_size
             )
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(

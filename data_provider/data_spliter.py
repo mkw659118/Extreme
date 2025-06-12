@@ -30,6 +30,8 @@ def get_train_valid_test_dataset(x, y, config):
     if config.shuffle:
         indices = np.random.permutation(len(x))
         x, y = x[indices], y[indices]
+
+        
     if config.use_train_size:
         train_size = int(config.train_size)
     else:
