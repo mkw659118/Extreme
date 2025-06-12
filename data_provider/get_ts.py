@@ -20,15 +20,11 @@ def get_ts(dataset, config):
     timestamps = np.array([[ts.year, ts.month, ts.day, ts.weekday()] for ts in timestamps])
 
     # 根据训练集对input进行特征归一化
-    print(y.min(), y.max())
     y_scaler = get_scaler(y, config)
     y = y_scaler.transform(y)
-    print(y.min(), y.max())
 
-    print(x.min(), x.max())
     x_scaler = get_scaler(x, config)
     x = x_scaler.transform(x)
-    print(x.min(), x.max())
 
     x = np.concatenate((timestamps, x), axis=1)
 

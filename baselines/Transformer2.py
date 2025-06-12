@@ -46,10 +46,11 @@ def get_att(d_model, num_heads, method):
     return None
 
 
-class Transformer(torch.nn.Module):
+class Transformer2(torch.nn.Module):
     def __init__(self, input_size, d_model, num_heads, num_layers, seq_len, pred_len, norm_method='rms', ffn_method='ffn', att_method='self'):
         super().__init__()
         self.input_projection = torch.nn.Linear(input_size, d_model)
+        self.input_seq_projection = torch.nn.Linear(seq_len, seq_len + pred_len)
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):
             self.layers.append(
@@ -68,11 +69,11 @@ class Transformer(torch.nn.Module):
 
     def forward(self, x, x_mark=None):
         x = self.input_projection(x)  # 调整形状为 [B, L, d_model]
+        x = self.input_seq_projection(x.permute(0, 2, 1))
+        x = x.permute(0, 2, 1)
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
         x = self.output_projection(self.norm(x))
-        x = rearrange(x, 'Bs seq_len D -> Bs D seq_len')
-        x = self.seq_to_pred_Linear(x)
-        x = rearrange(x, 'Bs D pred_len -> Bs pred_len D')
+        x = x[:, -self.pred_len:, :]
         return x

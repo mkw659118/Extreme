@@ -55,7 +55,7 @@ class Model(BasicModel):
         elif config.model == 'transformer_library':
             self.model = TransformerLibrary(config)
 
-        elif config.model == 'transformer':  # 添加 transformer 支持
+        elif config.model in ['transformer', 'transformer2']:  # 添加 transformer 支持
             self.model = Transformer(
                 input_size=config.input_size,
                 d_model=config.d_model,
