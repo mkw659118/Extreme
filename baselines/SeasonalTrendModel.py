@@ -47,6 +47,8 @@ class SeasonalTrendModel(nn.Module):
         self.decompsition = series_decomp(self.kernel_size)
         self.individual = configs.individual
         self.channels = configs.input_size
+        self.match_mode = configs.match_mode
+        self.x_linear = nn.Linear(self.seq_len, self.pred_len)
 
         if self.individual:
             self.Linear_Seasonal = nn.ModuleList()
@@ -80,6 +82,18 @@ class SeasonalTrendModel(nn.Module):
         else:
             seasonal_output = self.Linear_Seasonal(seasonal_init)
             trend_output = self.Linear_Trend(trend_init)
+        x = self.x_linear(x.permute(0, 2, 1))
+        if self.match_mode == 'a':
+            x_out = x
+        elif self.match_mode == 'ab':
+            x_out = x + seasonal_output
+        elif self.match_mode == 'ac':
+            x_out = x + trend_output
+        elif self.match_mode == 'bc':
+            x_out = seasonal_output + trend_output
+        elif self.match_mode == 'abc':
+            x_out = x + seasonal_output + trend_output
+        else:
+            raise ValueError(f"Unknown ablation mode: {self.match_mode}")
 
-        x = seasonal_output + trend_output
-        return x.permute(0, 2, 1) # to [Batch, Output length, Channel]
+        return x_out.permute(0, 2, 1)  # to [Batch, Output length, Channel]

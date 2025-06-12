@@ -22,3 +22,4 @@ class SeasonalTrendModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, 
     d_model: int = 50
     kernel_size: int = 25
     individual: bool = True
+    match_mode: str = 'abc'
