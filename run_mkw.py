@@ -39,7 +39,6 @@ def RunExperiments(log, config):
         datamodule = DataModule(config)
         model = Model(config)
         log.plotter.reset_round()
-        print("当前模型类型hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh：", config.model)
 
         results = RunOnce(config, runId, model, datamodule, log)
         for key in results:
