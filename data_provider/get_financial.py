@@ -64,7 +64,7 @@ def get_group_idx(group_index):
         data = pickle.load(f)
     all_func_code = []
     for i in range(len(data)):
-        if data[i][1] == group_index:
+        if int(data[i][1]) == group_index:
             all_func_code.append(data[i][0])
     return all_func_code
 

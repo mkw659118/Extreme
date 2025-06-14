@@ -1,12 +1,19 @@
 # coding : utf-8
 # Author : yuxiang Zeng
 import subprocess
-
+import pickle
+import numpy as np
 from utils.exp_sh import once_experiment, log_message
+
+with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
+    data = np.array(pickle.load(f))
+    df = data[:, 1].astype(np.float32)
+num = int(df.max() + 1)
+print(num)
 
 # 在这里写下超参数探索空间
 hyper_dict = {
-    'idx': [i for i in range(100)]
+    'idx': [i for i in range(num)]
 }
 
 ######################################################################################################
@@ -38,7 +45,6 @@ def Ablation():
 
 
 def Our_model(hyper=None):
-    subprocess.run(f'python run_cluster.py', shell=True)
     once_experiment('FinancialConfig', hyper_dict, grid_search=0)
     return True
 

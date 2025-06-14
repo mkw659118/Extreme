@@ -14,7 +14,7 @@ torch.set_float32_matmul_precision('high')
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
     if config.multi_dataset:
-        log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi'
+        log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi_{config.idx}'
     exper_detail = (
          f"Dataset : {config.dataset.upper()}, "
          f"Model : {config.model}, "

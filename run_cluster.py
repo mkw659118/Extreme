@@ -112,50 +112,62 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
         plt.tight_layout()
         plt.savefig(os.path.join(group_dir, f'{fund_code}.png'))
         plt.close()
-
-
-def balanced_cluster(data, cluster_num):
+def balanced_cluster(data, cluster_num, group_size_limit=70):
     import random
+    import pickle
+    import numpy as np
     from collections import defaultdict
 
     arr = np.array(data)
-    samples = arr.tolist()  # 每个元素是 [fund_code, group]
+    samples = arr.tolist()
 
     # 构建原始组 → 样本映射
     group_to_samples = defaultdict(list)
     for fund_code, group in samples:
         group_to_samples[group].append(fund_code)
 
-    # 开始重新分组
-    new_samples = []
-    group_size_limit = 70
-    new_group_id = cluster_num + 1  # 新组号从31开始
+    # 累积所有切好的 batch（每个组大小不超过 group_size_limit）
+    all_batches = []
+    tail_samples = []
 
-    for old_group, fund_codes in group_to_samples.items():
-        random.shuffle(fund_codes)  # ✅ 打乱
+    for fund_codes in group_to_samples.values():
+        random.shuffle(fund_codes)
         for i in range(0, len(fund_codes), group_size_limit):
             batch = fund_codes[i:i + group_size_limit]
-            for code in batch:
-                new_samples.append([code, new_group_id])
-            new_group_id += 1
+            if len(batch) < group_size_limit // 2:
+                tail_samples.extend(batch)  # 留作合并
+            else:
+                all_batches.append(batch)
 
-    # 保存为与原格式一致的二维数组
+    # 把剩余样本拼接成尽量接近 group_size_limit 的组
+    if tail_samples:
+        random.shuffle(tail_samples)
+        for i in range(0, len(tail_samples), group_size_limit):
+            batch = tail_samples[i:i + group_size_limit]
+            all_batches.append(batch)
+
+    # 重新分配连续组号
+    new_samples = []
+    for new_group_id, batch in enumerate(all_batches):
+        for fund_code in batch:
+            new_samples.append([fund_code, int(new_group_id)])
+
     new_arr = np.array(new_samples)
 
-    # 可选：保存为 pkl 文件
-    with open(f'./results/func_code_to_label_{n_clusters}_balanced.pkl', 'wb') as f:
+    # 保存
+    with open(f'./results/func_code_to_label_{cluster_num}_balanced.pkl', 'wb') as f:
         pickle.dump(new_arr.tolist(), f)
 
-    print(f"✅ 新数据保存完毕，格式与原始一致，shape: {new_arr.shape}")
+    print(f"✅ 新数据保存完毕，组数: {len(all_batches)}，总样本数: {len(new_samples)}，shape: {new_arr.shape}")
     return new_arr
 
 
 if __name__ == '__main__':
     from utils.exp_config import get_config
-    config = get_config()
+    config = get_config('FinancialConfig')
 
     n_clusters = 40
-    mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
+    # mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
     with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)
 
@@ -164,6 +176,6 @@ if __name__ == '__main__':
     data_dir = f'./datasets/financial/{dir_name}'
     output_dir = f'./figs/clusters_{n_clusters}'
     # 绘图
-    plot_clusters_from_mapping(mapping_array, data_dir, output_dir)
+    # plot_clusters_from_mapping(mapping_array, data_dir, output_dir)
 
     mapping_array = balanced_cluster(mapping_array, n_clusters)

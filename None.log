@@ -4,3 +4,9 @@
 |2025-06-05 15:36:39| MAE - 0.0461 MSE - 0.0040 RMSE - 0.0635 MAPE - 0.0432 NMAE - 0.0430 NRMSE - 0.0551 Acc_10 - 0.9294 train_time - 36.6466
 |2025-06-07 11:36:54| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 16, Pred_len : 10, 
 |2025-06-07 11:36:54| MAE - 0.0461 MSE - 0.0040 RMSE - 0.0635 MAPE - 0.0432 NMAE - 0.0430 NRMSE - 0.0551 Acc_10 - 0.9294 train_time - 29.2577
+|2025-06-14 22:45:19| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 16, Pred_len : 10, 
+|2025-06-14 22:45:19| MAE - 0.0389 MSE - 0.0038 RMSE - 0.0618 MAPE - 0.0277 NMAE - 0.0289 NRMSE - 0.0420 Acc_10 - 0.9854 train_time - 38.9287
+|2025-06-14 22:48:21| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 16, Pred_len : 10, 
+|2025-06-14 22:48:21| MAE - 0.0285 MSE - 0.0011 RMSE - 0.0332 MAPE - 0.0229 NMAE - 0.0230 NRMSE - 0.0265 Acc_10 - 0.9987 train_time - 32.9227
+|2025-06-14 22:50:44| Dataset : FINANCIAL, Model : ours, Density : 0.700, Rank : 56, Seq_len : 16, Pred_len : 10, 
+|2025-06-14 22:50:44| MAE - 0.0346 MSE - 0.0017 RMSE - 0.0407 MAPE - 0.0271 NMAE - 0.0272 NRMSE - 0.0313 Acc_10 - 0.9975 train_time - 17.9357
