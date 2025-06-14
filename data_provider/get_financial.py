@@ -59,7 +59,8 @@ def get_benchmark_code():
 
 
 def get_group_idx(group_index):
-    with open('./results/func_code_to_label_30.pkl', 'rb') as f:
+    # './results/func_code_to_label_{n_clusters}.pkl'
+    with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
         data = pickle.load(f)
     all_func_code = []
     for i in range(len(data)):
@@ -69,8 +70,8 @@ def get_group_idx(group_index):
 
 
 def multi_dataset(config):
-    now_fund_code = get_benchmark_code()
-    # now_fund_code = get_group_idx(27)
+    # now_fund_code = get_benchmark_code()
+    now_fund_code = get_group_idx(config.idx)
     min_length = 1e9
     all_data = []
     for fund_code in tqdm(now_fund_code, desc='SQL'):
@@ -106,7 +107,7 @@ def multi_dataset(config):
 
 
 def get_financial_data(start_date, end_date, idx, config):
-    # now_fund_code = get_all_fund_list()[idx]
+    # fund_code = get_all_fund_list()[idx]
     # 为了对齐实验，现在加上this one  20250513 15时47分
     fund_code = get_benchmark_code()[idx]
     try:

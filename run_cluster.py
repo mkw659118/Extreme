@@ -114,11 +114,47 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
         plt.close()
 
 
+def balanced_cluster(data, cluster_num):
+    import random
+    from collections import defaultdict
+
+    arr = np.array(data)
+    samples = arr.tolist()  # 每个元素是 [fund_code, group]
+
+    # 构建原始组 → 样本映射
+    group_to_samples = defaultdict(list)
+    for fund_code, group in samples:
+        group_to_samples[group].append(fund_code)
+
+    # 开始重新分组
+    new_samples = []
+    group_size_limit = 70
+    new_group_id = cluster_num + 1  # 新组号从31开始
+
+    for old_group, fund_codes in group_to_samples.items():
+        random.shuffle(fund_codes)  # ✅ 打乱
+        for i in range(0, len(fund_codes), group_size_limit):
+            batch = fund_codes[i:i + group_size_limit]
+            for code in batch:
+                new_samples.append([code, new_group_id])
+            new_group_id += 1
+
+    # 保存为与原格式一致的二维数组
+    new_arr = np.array(new_samples)
+
+    # 可选：保存为 pkl 文件
+    with open(f'./results/func_code_to_label_{n_clusters}_balanced.pkl', 'wb') as f:
+        pickle.dump(new_arr.tolist(), f)
+
+    print(f"✅ 新数据保存完毕，格式与原始一致，shape: {new_arr.shape}")
+    return new_arr
+
+
 if __name__ == '__main__':
     from utils.exp_config import get_config
     config = get_config()
 
-    n_clusters = 30
+    n_clusters = 40
     mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
     with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)
@@ -129,3 +165,5 @@ if __name__ == '__main__':
     output_dir = f'./figs/clusters_{n_clusters}'
     # 绘图
     plot_clusters_from_mapping(mapping_array, data_dir, output_dir)
+
+    mapping_array = balanced_cluster(mapping_array, n_clusters)

@@ -1,4 +1,4 @@
-#!/bin/bash
+# !/bin/bash
 
 pred_lens=(12 96 192 336 720)
 exp_names=(MLPConfig RNNConfig LSTMConfig GRUConfig CrossformerConfig TimesNetConfig)
