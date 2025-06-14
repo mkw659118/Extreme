@@ -1,6 +1,9 @@
 #!/bin/bash
 #python run_cluster.py
-python run_demo.py
+for i in {1..126}
+do
+    python run_train.py --idx $i
+done
 # pred_lens=(12 96 192 336 720)
 # exp_names=(MLPConfig RNNConfig LSTMConfig GRUConfig CrossformerConfig TimesNetConfig)
 
