@@ -5,7 +5,7 @@ import torch
 from layers.dft import DFT
 from layers.encoder.position_enc import PositionEncoding
 from layers.revin import RevIN
-from baselines.Transformer import Transformer
+from layers.transformer import Transformer
 
 
 class Backbone(torch.nn.Module):
