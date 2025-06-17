@@ -47,10 +47,11 @@ def get_att(d_model, num_heads, method):
 
 
 class Transformer2(torch.nn.Module):
-    def __init__(self, input_size, d_model, num_heads, num_layers, seq_len, pred_len, norm_method='rms', ffn_method='ffn', att_method='self'):
+    def __init__(self, input_size, d_model, num_heads, num_layers, seq_len, pred_len, norm_method='layer', ffn_method='ffn', att_method='self'):
         super().__init__()
         self.input_projection = torch.nn.Linear(input_size, d_model)
         self.input_seq_projection = torch.nn.Linear(seq_len, seq_len + pred_len)
+        self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):
             self.layers.append(
@@ -65,12 +66,15 @@ class Transformer2(torch.nn.Module):
             )
         self.norm = get_norm(d_model, norm_method)
         self.output_projection = torch.nn.Linear(d_model, input_size)  # 特征还原原始维度
-        self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
 
     def forward(self, x, x_mark=None):
-        x = self.input_projection(x)  # 调整形状为 [B, L, d_model]
+        # [B, L, d_model]
+        x = self.input_projection(x)  
+        # [B, d_model, L] -> [B, d_model, seq + pred]
         x = self.input_seq_projection(x.permute(0, 2, 1))
+        # [B, seq + pred, d_model]
         x = x.permute(0, 2, 1)
+        
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x

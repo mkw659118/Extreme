@@ -135,32 +135,37 @@ def start_server(current_date, table_name = 'temp_sql'):
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
     
-    with open('./results/func_code_to_label_30.pkl', 'rb') as f:
-        code_cluster = pickle.load(f)
-        group_num = code_cluster[:, 1].max() + 1
     
-    for i in [27]:
+    with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
+        data = np.array(pickle.load(f))
+        df = data[:, 1].astype(np.float32)
+    group_num = int(df.max() + 1)
+
+    for i in range(group_num):
         # 27
-        group_fund_code = get_group_idx(i)
-        print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表")
+        try:
+            group_fund_code = get_group_idx(i)
+            print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表")
 
-        history_input = get_history_data(group_fund_code, current_date, config)
-        print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
+            history_input = get_history_data(group_fund_code, current_date, config)
+            print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
 
-        cleaned_input = check_input(history_input, config)
-        print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
+            cleaned_input = check_input(history_input, config)
+            print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
 
-        model = get_pretrained_model(config)
-        print("🤖 模型加载完成。")
+            model = get_pretrained_model(config)
+            print("🤖 模型加载完成。")
 
-        pred_value = predict_torch_model(model, cleaned_input, config)
-        print(f"📉 预测结果维度: {pred_value.shape}")
+            pred_value = predict_torch_model(model, cleaned_input, config)
+            print(f"📉 预测结果维度: {pred_value.shape}")
 
-        pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
-        print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")
-        print(pred_value_sql.head(2))  # 打印前两行以核验内容结构
+            pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
+            print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")
+            print(pred_value_sql.head(2))  # 打印前两行以核验内容结构
 
-        insert_pred_to_sql(pred_value_sql, table_name)
+            insert_pred_to_sql(pred_value_sql, table_name)
+        except:
+            continue
 
     return pred_value_sql
 

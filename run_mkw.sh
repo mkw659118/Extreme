@@ -4,7 +4,8 @@
 pred_lens=(96 192 336 720)
 
 # 模型配置列表
-exp_names=(TransformerLibraryConfig TransformerConfig Transformer2Config)
+exp_names=(TransformerConfig Transformer2Config)
+# exp_names=(TransformerLibraryConfig TransformerConfig Transformer2Config)
 
 # 双重循环
 for exp in "${exp_names[@]}"

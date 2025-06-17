@@ -235,3 +235,5 @@ x + x_seasonal + x_trend
 |2025-06-13 12:22:29| MAE - 0.3616 MSE - 0.3608 RMSE - 0.6007 MAPE - 10.7372 NMAE - 0.5916 NRMSE - 0.7489 Acc_10 - 0.0205 train_time - 2.5175
 |2025-06-13 12:26:49| Dataset : WEATHER, Model : transformer2, Density : 0.700, Bs : 32, Rank : 40, Seq_len : 96, Pred_len : 720, 
 |2025-06-13 12:26:49| MAE - 0.3798 MSE - 0.3822 RMSE - 0.6182 MAPE - 13.2903 NMAE - 0.6217 NRMSE - 0.7724 Acc_10 - 0.0181 train_time - 10.0610
+|2025-06-17 10:26:56| Dataset : WEATHER, Model : transformer_library, Density : 0.700, Bs : 32, Rank : 40, Seq_len : 96, Pred_len : 96, 
+|2025-06-17 10:26:56| MAE - 0.2827 MSE - 0.2504 RMSE - 0.5004 MAPE - 12.7259 NMAE - 0.4642 NRMSE - 0.6260 Acc_10 - 0.0280 train_time - 7.5465
