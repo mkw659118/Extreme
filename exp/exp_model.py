@@ -10,6 +10,7 @@ from baselines.Linear5 import Linear5
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
+from baselines.Transformer2 import Transformer2
 from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
@@ -55,7 +56,7 @@ class Model(BasicModel):
         elif config.model == 'transformer_library':
             self.model = TransformerLibrary(config)
 
-        elif config.model in ['transformer', 'transformer2']:  # 添加 transformer 支持
+        elif config.model == 'transformer':  # 添加 transformer 支持
             self.model = Transformer(
                 input_size=config.input_size,
                 d_model=config.d_model,
@@ -64,6 +65,17 @@ class Model(BasicModel):
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
             )
+
+        elif config.model == 'transformer2':  # 添加 transformer 支持
+            self.model = Transformer2(
+                input_size=config.input_size,
+                d_model=config.d_model,
+                num_heads=config.n_heads,
+                num_layers=config.num_layers,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+            )
+
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(
                 input_size=self.input_size,
