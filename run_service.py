@@ -164,11 +164,13 @@ def start_server(current_date, table_name = 'temp_sql'):
             print(pred_value_sql.head(2))  # 打印前两行以核验内容结构
 
             insert_pred_to_sql(pred_value_sql, table_name)
-        except:
+        except Exception as e:
+            print(e)
             continue
 
     return pred_value_sql
 
 if __name__ == '__main__':
-    current_date = '2025-4-15'
+    # current_date = '2025-4-15'
+    current_date = '2025-6-16'
     pred_value = start_server(current_date)
