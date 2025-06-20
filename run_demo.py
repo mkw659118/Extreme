@@ -8,7 +8,7 @@ from utils.exp_sh import once_experiment, log_message
 with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
     data = np.array(pickle.load(f))
     df = data[:, 1].astype(np.float32)
-num = int(df.max() + 1)
+num = int(df.max())
 print(num)
 
 # 在这里写下超参数探索空间

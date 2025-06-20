@@ -35,7 +35,7 @@ env/
 venv/
 .venv/
 
-# 
+# 自定义专区
 /results/*
 /Checkpoints/*
 /baselines/timellm_models/

@@ -50,6 +50,7 @@ def get_history_data(get_group_idx, current_date, config):
         start_date = get_start_date(current_date, window_size=64)
         df = query_fund_data(get_group_idx[i], start_date, current_date)
         df = process_date_columns(df)
+        df = df[-config.seq_len:, :]
         all_history_input.append(df)
     data = all_history_input
     return data
@@ -81,16 +82,15 @@ def predict_torch_model(model, history_input, config):
 def get_sql_format_data(pred_value, cleaned_input):
     from datetime import datetime
     now_df = []
-    for i in range(pred_value.shape[0]):
-        for j in range(pred_value.shape[1]):
-            idx = np.random.randint(0, 10)  # 生成一个 0 到 9（包含 0，不包含 10）之间的整数
-            fund_code = cleaned_input[i][j][0]
-            forcast_date = current_date
-            pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'
-            model_version = 'v2025'
-            create_date = update_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            now_df.append([idx, fund_code, forcast_date, pred, model_version, create_date, update_date])
-            # break
+    cleaned_input = cleaned_input[0, :, :]
+    for j in range(pred_value.shape[1]):
+        idx = np.random.randint(0, 10)  # 生成一个 0 到 9（包含 0，不包含 10）之间的整数
+        fund_code = cleaned_input[j][0]
+        forcast_date = current_date
+        pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'
+        model_version = 'v2025'
+        create_date = update_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        now_df.append([idx, fund_code, forcast_date, pred, model_version, create_date, update_date])
         # break
     # now_df
     now_df = np.array(now_df)
@@ -145,7 +145,7 @@ def start_server(current_date, table_name = 'temp_sql'):
         # 27
         try:
             group_fund_code = get_group_idx(i)
-            print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表")
+            print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
             history_input = get_history_data(group_fund_code, current_date, config)
             print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
@@ -172,5 +172,5 @@ def start_server(current_date, table_name = 'temp_sql'):
 
 if __name__ == '__main__':
     # current_date = '2025-4-15'
-    current_date = '2025-6-16'
+    current_date = '2025-6-18'
     pred_value = start_server(current_date)

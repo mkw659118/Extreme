@@ -1,6 +1,9 @@
 #!/bin/bash
 #python run_cluster.py
-for i in {1..126}
+
+# for i in {84..125}
+all_idx=(0 23 28 30 36 37 55 64 66 72 79 120)
+for i in "${all_idx[@]}"
 do
     python run_train.py --idx $i
 done

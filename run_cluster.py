@@ -112,6 +112,8 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
         plt.tight_layout()
         plt.savefig(os.path.join(group_dir, f'{fund_code}.png'))
         plt.close()
+
+        
 def balanced_cluster(data, cluster_num, group_size_limit=70):
     import random
     import pickle
