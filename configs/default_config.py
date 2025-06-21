@@ -14,6 +14,7 @@ class TrainingConfig:
     verbose: int = 10
     device: str = 'cuda'
     monitor_metric: str = 'MAE'
+    use_amp: bool = False
 
 
 @dataclass

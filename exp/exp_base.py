@@ -1,18 +1,20 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月27日23:33:32）
+import contextlib
 import torch
 from time import time
 
 from exp.exp_loss import compute_loss
 from exp.exp_metrics import ErrorMetrics
 from utils.model_trainer import get_loss_function, get_optimizer
-
+from torch.cuda.amp import autocast
 
 class BasicModel(torch.nn.Module):
     def __init__(self, config):
         super(BasicModel, self).__init__()
         self.config = config
+        self.scaler = torch.amp.GradScaler(config.device)  # ✅ 初始化 GradScaler
 
     def forward(self, *x):
         y = self.model(*x)
@@ -30,18 +32,27 @@ class BasicModel(torch.nn.Module):
         self.train()
         torch.set_grad_enabled(True)
         t1 = time()
-        for train_batch in (dataModule.train_loader):
+
+        for train_batch in dataModule.train_loader:
             all_item = [item.to(self.config.device) for item in train_batch]
-            if len(all_item) == 5:  # 特殊模型，如 TransformerLibrary
-                x_enc, x_mark_enc, x_dec, x_mark_dec, label = all_item
-                pred = self.model(x_enc, x_mark_enc, x_dec, x_mark_dec)
-            else:
-                inputs, label = all_item[:-1], all_item[-1]
-                pred = self.forward(*inputs)
-            loss = compute_loss(self, pred, label)
+            inputs, label = all_item[:-1], all_item[-1]
+
             self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+
+            if self.config.use_amp:
+                with torch.amp.autocast(device_type=self.config.device):
+                    pred = self.forward(*inputs)
+                    loss = compute_loss(self, pred, label)
+
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                pred = self.forward(*inputs)
+                loss = compute_loss(self, pred, label)
+                loss.backward()
+                self.optimizer.step()
+
         t2 = time()
         self.eval()
         torch.set_grad_enabled(False)
@@ -52,26 +63,35 @@ class BasicModel(torch.nn.Module):
         torch.set_grad_enabled(False)
         dataloader = dataModule.valid_loader if mode == 'valid' and len(dataModule.valid_loader.dataset) != 0 else dataModule.test_loader
         preds, reals, val_loss = [], [], 0.
-        for batch in (dataloader):
-            all_item = [item.to(self.config.device) for item in batch]
-            if len(all_item) == 5:
-                x_enc, x_mark_enc, x_dec, x_mark_dec, label = all_item
-                pred = self.model(x_enc, x_mark_enc, x_dec, x_mark_dec)
-            else:
+
+        context = (
+            torch.amp.autocast(device_type=self.config.device)
+            if self.config.use_amp else
+            contextlib.nullcontext()
+        )
+
+        with context:
+            for batch in dataloader:
+                all_item = [item.to(self.config.device) for item in batch]
                 inputs, label = all_item[:-1], all_item[-1]
                 pred = self.forward(*inputs)
-            if mode == 'valid':
-                val_loss += self.loss_function(pred, label)
-            if self.config.classification:
-                pred = torch.max(pred, 1)[1]
-            reals.append(label)
-            preds.append(pred)
+
+                if mode == 'valid':
+                    val_loss += self.loss_function(pred, label)
+
+                if self.config.classification:
+                    pred = torch.max(pred, 1)[1]
+
+                reals.append(label)
+                preds.append(pred)
+
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
+
         if self.config.dataset != 'weather':
             reals, preds = dataModule.y_scaler.inverse_transform(reals), dataModule.y_scaler.inverse_transform(preds)
-        
+
         if mode == 'valid':
             self.scheduler.step(val_loss)
-        metrics_error = ErrorMetrics(reals, preds, self.config)
-        return metrics_error
+
+        return ErrorMetrics(reals, preds, self.config)
