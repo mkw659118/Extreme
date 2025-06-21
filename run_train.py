@@ -19,7 +19,7 @@ def get_experiment_name(config):
          f"Dataset : {config.dataset.upper()}, "
          f"Model : {config.model}, "
          f"Density : {config.density:.3f}, "
-         f"Rank : {config.rank}, "
+         f"d_model : {config.d_model}, "
          f"Seq_len : {config.seq_len}, "
          f"Pred_len : {config.pred_len}, "
     )
@@ -80,6 +80,6 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    config = get_config('FinancialConfig')
-    # config = get_config('RNNConfig')
+    # config = get_config('FinancialConfig')
+    config = get_config('TransformerConfig')
     run(config)

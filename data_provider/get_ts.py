@@ -17,7 +17,7 @@ def get_ts(dataset, config):
 
     # 把第一列转成 datetime
     timestamps = pd.to_datetime(df[:, 0])
-    timestamps = np.array([[ts.year, ts.month, ts.day, ts.weekday()] for ts in timestamps])
+    timestamps = np.array([[ts.month, ts.day, ts.weekday(), ts.hour] for ts in timestamps])
 
     # 根据训练集对input进行特征归一化
     y_scaler = get_scaler(y, config)

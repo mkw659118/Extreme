@@ -13,7 +13,7 @@ do
   for len in "${pred_lens[@]}"
   do
     echo "Running with exp_name=$exp, pred_len=$len"
-    python run_mkw.py --exp_name "$exp" --retrain 1 --pred_len "$len" --revin False --logger mkw
+    python run_train.py --exp_name "$exp" --retrain 1 --pred_len "$len" --revin False --logger mkw
   done
 done
 

@@ -60,6 +60,7 @@ class Model(BasicModel):
             self.model = Transformer(
                 input_size=config.input_size,
                 d_model=config.d_model,
+                revin=config.revin,
                 num_heads=config.n_heads,
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
