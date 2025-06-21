@@ -313,3 +313,19 @@ x + x_seasonal + x_trend
 |2025-06-21 18:01:25| MAE - 0.2947 MSE - 0.2784 RMSE - 0.5276 MAPE - 12.9655 NMAE - 0.4823 NRMSE - 0.6578 Acc_10 - 0.0335 train_time - 8.5857
 |2025-06-21 18:03:39| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 720, 
 |2025-06-21 18:03:39| MAE - 0.3461 MSE - 0.3579 RMSE - 0.5982 MAPE - 12.7606 NMAE - 0.5665 NRMSE - 0.7475 Acc_10 - 0.0275 train_time - 9.9491
+|2025-06-21 18:04:53| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 96, 
+|2025-06-21 18:04:53| MAE - 0.2171 MSE - 0.1748 RMSE - 0.4180 MAPE - 11.8823 NMAE - 0.3565 NRMSE - 0.5229 Acc_10 - 0.0501 train_time - 8.7606
+|2025-06-21 18:06:10| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 192, 
+|2025-06-21 18:06:10| MAE - 0.2579 MSE - 0.2246 RMSE - 0.4739 MAPE - 12.8274 NMAE - 0.4229 NRMSE - 0.5921 Acc_10 - 0.0410 train_time - 7.6077
+|2025-06-21 18:07:45| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 336, 
+|2025-06-21 18:07:45| MAE - 0.3035 MSE - 0.2872 RMSE - 0.5358 MAPE - 12.7249 NMAE - 0.4967 NRMSE - 0.6680 Acc_10 - 0.0323 train_time - 8.7673
+|2025-06-21 18:09:39| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 720, 
+|2025-06-21 18:09:39| MAE - 0.3602 MSE - 0.3866 RMSE - 0.6216 MAPE - 14.7162 NMAE - 0.5896 NRMSE - 0.7767 Acc_10 - 0.0269 train_time - 5.6076
+|2025-06-21 18:11:00| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 96, 
+|2025-06-21 18:11:00| MAE - 0.2107 MSE - 0.1697 RMSE - 0.4120 MAPE - 11.3265 NMAE - 0.3461 NRMSE - 0.5153 Acc_10 - 0.0512 train_time - 10.7908
+|2025-06-21 18:12:17| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 192, 
+|2025-06-21 18:12:17| MAE - 0.2534 MSE - 0.2200 RMSE - 0.4690 MAPE - 12.2365 NMAE - 0.4155 NRMSE - 0.5860 Acc_10 - 0.0415 train_time - 7.7356
+|2025-06-21 18:13:44| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 336, 
+|2025-06-21 18:13:44| MAE - 0.2978 MSE - 0.2797 RMSE - 0.5288 MAPE - 13.2097 NMAE - 0.4874 NRMSE - 0.6593 Acc_10 - 0.0331 train_time - 7.3582
+|2025-06-21 18:15:38| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 720, 
+|2025-06-21 18:15:38| MAE - 0.3565 MSE - 0.3802 RMSE - 0.6166 MAPE - 14.9999 NMAE - 0.5836 NRMSE - 0.7704 Acc_10 - 0.0271 train_time - 5.6483
