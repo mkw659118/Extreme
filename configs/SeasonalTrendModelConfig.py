@@ -19,7 +19,7 @@ class SeasonalTrendModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, 
     verbose: int = 1
     num_layers: int = 2
     revin: bool = True
-    d_model: int = 50
+    d_model: int = 64
     kernel_size: int = 25
     individual: bool = True
     match_mode: str = 'abc'

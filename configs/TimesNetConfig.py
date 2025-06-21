@@ -7,7 +7,7 @@ class TimesNetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     model: str = 'timesnet'  # 模型类型
     bs: int = 32  # 批大小
     epochs: int = 10  # 训练周期
-    d_model: int = 32
+    d_model: int = 64
     d_ff: int = 32  # 前馈层大小
     dropout: float = 0.1  # Dropout 比例
     enc_in: int = 1  # 输入特征数目

@@ -19,7 +19,7 @@ class DFTDecomModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Datas
     verbose: int = 1
     num_layers: int = 2
     revin: bool = True
-    d_model: int = 50
+    d_model: int = 64
     kernel_size: int = 25
     individual: bool = True
     top_k: int = 8

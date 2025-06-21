@@ -15,4 +15,4 @@ class MLPConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     verbose: int = 1
     num_layers: int = 2
     revin: bool = True
-    d_model: int = 50
+    d_model: int = 64

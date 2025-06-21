@@ -10,7 +10,7 @@ class TimeLLMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo
     d_ff: int = 32
     top_k: int = 5
     llm_dim: int = 4096
-    d_model: int = 16
+    d_model: int = 64
     patch_len: int = 16
     stride: int = 8
     llm_model: str = "LLAMA"

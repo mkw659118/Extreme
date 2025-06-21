@@ -10,3 +10,4 @@ class GRUConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     epochs: int = 200
     patience: int = 50
     verbose: int = 1
+    d_model: int = 64
