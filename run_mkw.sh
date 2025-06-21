@@ -44,6 +44,7 @@ do
     echo "Running with mode=$mode, pred_len=$len"
     python run_train.py \
       --exp_name "TransformerConfig" \
+      --rounds 3 \
       --retrain 1 \
       --pred_len "$len" \
       --revin True \

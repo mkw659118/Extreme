@@ -178,9 +178,9 @@ class DataEmbedding(torch.nn.Module):
             elif self.match_mode == 'ab':
                 x_out = self.value_embedding(x) + self.position_embedding(x)
             elif self.match_mode == 'ac':
-                x_out = self.value_embedding(x) + self.temporal_embedding(x)
+                x_out = self.value_embedding(x) + self.temporal_embedding(x_mark)
             elif self.match_mode == 'abc':
-                x_out = self.value_embedding(x) + self.position_embedding(x) + self.temporal_embedding(x)
+                x_out = self.value_embedding(x) + self.position_embedding(x) + self.temporal_embedding(x_mark)
             else:
                 raise ValueError(f"Unknown ablation mode: {self.match_mode}")
 
