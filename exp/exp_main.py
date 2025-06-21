@@ -15,9 +15,6 @@ def RunOnce(config, runId, model, datamodule, log):
     except Exception as e:
         print(f'Skip the model.compile() because {e}')
 
-    log.only_print(
-        f'Train_length : {len(datamodule.train_loader.dataset)} Valid_length : {len(datamodule.valid_loader.dataset)} Test_length : {len(datamodule.test_loader.dataset)}')
-
     # 设置EarlyStopping监控器
     monitor = EarlyStopping(config)
 

@@ -168,6 +168,10 @@ class DataEmbedding(torch.nn.Module):
         if x_mark is None:
             x = self.value_embedding(x) + self.position_embedding(x)
         else:
+            # a 
+            # a b
+            # a c
+            # a b c
             x = self.value_embedding(x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
         return self.dropout(x)
     

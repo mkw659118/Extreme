@@ -10,11 +10,11 @@ from configs.MainConfig import OtherConfig
 class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'transformer'
     bs: int = 32
-    d_model: int = 128
-    epochs: int = 50
-    patience: int = 10
+    d_model: int = 64
+    epochs: int = 20
+    patience: int = 3
     verbose: int = 1
-    num_layers: int = 1
+    num_layers: int = 3
     n_heads: int = 8
     revin: bool = True
     dropout: float = 0.1
