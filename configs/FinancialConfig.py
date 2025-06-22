@@ -6,9 +6,9 @@ from configs.default_config import *
 
 @dataclass
 class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'ours'
+    model: str = 'financial'
     bs: int = 32
-    rank: int = 56
+    d_model: int = 56
     epochs: int = 200
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
     patience: int = 45

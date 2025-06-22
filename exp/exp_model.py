@@ -107,10 +107,12 @@ class Model(BasicModel):
         elif config.model == 'timellm':
             self.model = timeLLM(config)
 
+        elif config.model == 'financial':
+            self.model = Backbone(self.input_size, config)
+            self.distance = PairwiseLoss(method=config.dis_method, reduction='mean')
+
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
 
-        if config.multi_dataset:
-            self.model = Backbone(self.input_size, config)
-            self.distance = PairwiseLoss(method=config.dis_method, reduction='mean')
+        

@@ -12,7 +12,7 @@ class Backbone(torch.nn.Module):
     def __init__(self, enc_in, config):
         super(Backbone, self).__init__()
         self.config = config
-        self.rank = config.rank
+        self.d_model = config.d_model
         self.pred_len = config.pred_len
         self.seq_len = config.seq_len
         self.revin = config.revin
@@ -23,17 +23,17 @@ class Backbone(torch.nn.Module):
         if self.fft:
             self.seasonality_and_trend_decompose = DFT(2)
 
-        self.projection = torch.nn.Linear(enc_in, config.rank, bias=True)
-        # self.projection = TokenEmbedding(enc_in, config.rank)
-        self.position_embedding = PositionEncoding(d_model=self.rank, max_len=config.seq_len, method='bert')
-        self.fund_embedding = torch.nn.Embedding(999999, config.rank)
-        # self.temporal_embedding = TemporalEmbedding(self.rank, 'embeds')
+        self.projection = torch.nn.Linear(enc_in, config.d_model, bias=True)
+        # self.projection = TokenEmbedding(enc_in, config.d_model)
+        self.position_embedding = PositionEncoding(d_model=self.d_model, max_len=config.seq_len, method='bert')
+        self.fund_embedding = torch.nn.Embedding(999999, config.d_model)
+        # self.temporal_embedding = TemporalEmbedding(self.d_model, 'embeds')
         self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len + config.seq_len)
 
         # self.timer = get_timer(config)
 
         self.encoder = Transformer(
-            self.rank,
+            self.d_model,
             num_heads=4,
             num_layers=config.num_layers,
             norm_method=config.norm_method,
@@ -42,19 +42,19 @@ class Backbone(torch.nn.Module):
         )
 
         self.encoder2 = Transformer(
-            self.rank,
+            self.d_model,
             num_heads=4,
             num_layers=config.num_layers,
             norm_method=config.norm_method,
             ffn_method=config.ffn_method,
             att_method=config.att_method
         )
-        # self.moe = MoE(d_model=self.rank, d_ff=self.rank, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
-        # self.moe = MoE(d_model=self.rank * 33, d_ff=self.rank * 33, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
-        self.decoder = torch.nn.Linear(config.rank, 1)
-        # self.moe = SparseMoE(self.rank * (config.seq_len + config.pred_len), self.rank * (config.seq_len + config.pred_len), 8, noisy_gating=True, num_k=1, loss_coef=1e-3)
+        # self.moe = MoE(d_model=self.d_model, d_ff=self.d_model, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
+        # self.moe = MoE(d_model=self.d_model * 33, d_ff=self.d_model * 33, num_m=1, num_router_experts=8, num_share_experts=1, num_k=2, loss_coef=0.001)
+        self.decoder = torch.nn.Linear(config.d_model, 1)
+        # self.moe = SparseMoE(self.d_model * (config.seq_len + config.pred_len), self.d_model * (config.seq_len + config.pred_len), 8, noisy_gating=True, num_k=1, loss_coef=1e-3)
         # self.encoder = torch.nn.ModuleList([TimesBlock(config) for _ in range(config.num_layers)])
-        # self.layer_norm = torch.nn.LayerNorm(self.rank)
+        # self.layer_norm = torch.nn.LayerNorm(self.d_model)
 
     def forward(self, x, x_mark, x_fund):
         # x.shape = torch.Size([bs, seq, channels, d])
