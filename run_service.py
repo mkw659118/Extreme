@@ -43,7 +43,6 @@ def get_start_date(end_date: str, window_size: int) -> str:
     start_dt = end_dt - timedelta(days=window_size)
     return start_dt.strftime("%Y-%m-%d")
 
-
 def get_history_data(get_group_idx, current_date, config):
     all_history_input = []
     for i in range(len(get_group_idx)):

@@ -11,7 +11,7 @@ class DataScalerStander:
         self.config = config
         y = self.__check_input__(y)
         self.original_shape = None
-        if y.ndim == 3:
+        if y.ndim != 2:
             self.original_shape = y.shape
             y = y.reshape(-1, y.shape[-1])
         train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
@@ -21,7 +21,7 @@ class DataScalerStander:
     def transform(self, y):
         y = self.__check_input__(y)
         orig_shape = y.shape
-        if y.ndim == 3:
+        if y.ndim != 2:
             y = y.reshape(-1, y.shape[-1])
             y = self.scaler.transform(y)
             return y.reshape(orig_shape)
@@ -30,7 +30,7 @@ class DataScalerStander:
     def inverse_transform(self, y):
         y = self.__check_input__(y)
         orig_shape = y.shape
-        if y.ndim == 3:
+        if y.ndim != 2:
             y = y.reshape(-1, y.shape[-1])
             y = self.scaler.inverse_transform(y)
             return y.reshape(orig_shape)
@@ -47,7 +47,7 @@ class DataScalerMinMax:
         self.config = config
         y = self.__check_input__(y)
         self.original_shape = None
-        if y.ndim == 3:
+        if y.ndim != 2:
             self.original_shape = y.shape
             y = y.reshape(-1, y.shape[-1])
         train_data = y[:int(len(y) * self.config.density)].astype(np.float32)
@@ -57,7 +57,7 @@ class DataScalerMinMax:
     def transform(self, y):
         y = self.__check_input__(y)
         orig_shape = y.shape
-        if y.ndim == 3:
+        if y.ndim != 2:
             y = y.reshape(-1, y.shape[-1])
             y = self.scaler.transform(y)
             return y.reshape(orig_shape)
@@ -66,7 +66,7 @@ class DataScalerMinMax:
     def inverse_transform(self, y):
         y = self.__check_input__(y)
         orig_shape = y.shape
-        if y.ndim == 3:
+        if y.ndim != 2:
             y = y.reshape(-1, y.shape[-1])
             y = self.scaler.inverse_transform(y)
             return y.reshape(orig_shape)

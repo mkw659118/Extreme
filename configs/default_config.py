@@ -38,8 +38,6 @@ class DatasetInfo:
     spliter_ratio: str = '7:1:2'
 
 
-
-
 @dataclass
 class ExperimentConfig:
     seed: int = 0
@@ -50,7 +48,6 @@ class ExperimentConfig:
     continue_train: bool = False
 
 
-
 @dataclass
 class LoggerConfig:
-    logger: str = 'None'
+    logger: str = 'zyx'

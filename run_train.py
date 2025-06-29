@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 import collections
-from data_provider.exp_dataloader import DataModule
+from data_provider.data_loader import DataModule
 from exp.exp_train import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
@@ -60,7 +60,6 @@ def RunExperiments(log, config):
         log.save_result(metrics)
         log.plotter.record_metric(metrics)
     log('*' * 20 + 'Experiment Success' + '*' * 20)
-
     log.end_the_experiment(model)
     return metrics
 

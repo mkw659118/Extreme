@@ -5,7 +5,7 @@
 from data_provider.generate_financial import generate_data
 from data_provider.get_financial import get_financial_data, multi_dataset
 from data_provider.get_ts import get_ts
-from data_provider.exp_dataset import TensorDataset, TimeSeriesDataset
+from data_provider.data_getitem import TensorDataset, TimeSeriesDataset
 
 def load_data(config):
     if config.dataset == 'financial':

@@ -8,8 +8,8 @@ from torch.utils.data import DataLoader
 from tqdm import *
 import numpy as np
 
-from data_provider.exp_dataloader import DataModule
-from data_provider.exp_dataset import TensorDataset, custom_collate_fn
+from data_provider.data_loader import DataModule
+from data_provider.data_getitem import TensorDataset, custom_collate_fn
 from exp.exp_model import Model
 from run_train import get_experiment_name
 from utils.utils import set_seed

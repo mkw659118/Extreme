@@ -14,10 +14,6 @@ def get_config(Config='MainConfig'):
 
     # 动态设置 config_path
     args.config_path = f'configs/{args.exp_name}.py'
-    # print(args, unknown_args)
-    # for arg in iter(unknown_args):
-        # print(arg)
-    # exit()
     args = load_config(args.config_path, args.exp_name)
     args = update_config_from_args(args, unknown_args)
     return args

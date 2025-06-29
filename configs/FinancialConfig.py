@@ -30,7 +30,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     att_method: str = 'self'
     dis_method: str = 'cosine'
     fft: bool = False
-    revin: bool = False
+    revin: bool = True
     idx: int = 0
 
     # start_date: str = '2022-07-13'

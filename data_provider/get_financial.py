@@ -57,13 +57,13 @@ def multi_dataset(config):
             print(e)
     data = np.stack(raw_data, axis=0)
     data = data.transpose(1, 0, 2)
-    x, y = data[:, :, :], data[:, :, -1]
+    x, y = data[:, :, :], data[:, :, -3:]
 
     x[:, :, -3:] = x[:, :, -3:].astype(np.float32)
-    x_scaler = get_scaler(x[:, :, -3:], config, 'None')
+    x_scaler = get_scaler(x[:, :, -3:], config, 'stander')
     x[:, :, -3:] = x_scaler.transform(x[:, :, -3:])
 
-    y_scaler = get_scaler(y, config, 'None')
+    y_scaler = get_scaler(y, config, 'stander')
     y = y_scaler.transform(y)
     return x, y, x_scaler, y_scaler
 
