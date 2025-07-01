@@ -16,6 +16,8 @@ class Backbone(torch.nn.Module):
         self.seq_len = config.seq_len
         self.revin = config.revin
         self.fft = config.fft
+
+
         if self.revin:
             self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
 
@@ -27,7 +29,7 @@ class Backbone(torch.nn.Module):
         self.fund_embedding = torch.nn.Embedding(999999, config.d_model)
         self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len + config.seq_len)
 
-        self.encoder = Transformer(
+        self.encoder1 = Transformer(
             self.d_model,
             num_heads=4,
             num_layers=config.num_layers,
@@ -35,7 +37,6 @@ class Backbone(torch.nn.Module):
             ffn_method=config.ffn_method,
             att_method=config.att_method
         )
-
 
         self.encoder2 = Transformer(
             self.d_model,
@@ -64,15 +65,18 @@ class Backbone(torch.nn.Module):
         x_enc = self.projection(x)
         # x_enc = self.fund_embedding(x_fund)
         x_enc = self.predict_linear(x_enc.permute(0, 3, 2, 1)).permute(0, 3, 2, 1)
+
         bs, pred_len, channels, dim = x_enc.shape
         x_enc = x_enc.permute(2, 0, 1, 3).reshape(channels, bs * pred_len, dim)
-        x_enc = self.encoder(x_enc)
+        x_enc = self.encoder1(x_enc)
         x_enc = x_enc.reshape(channels, bs, pred_len, dim).permute(1, 2, 0, 3)
         x_enc = x_enc.permute(1, 0, 2, 3).reshape(pred_len, bs * channels, dim)
         x_enc = self.encoder2(x_enc)
         x_enc = x_enc.reshape(pred_len, bs, channels, dim).permute(1, 0, 2, 3)
+
         x_enc = self.decoder(x_enc)
         y = x_enc[:, -self.pred_len:, :].squeeze(-1)
+        
         if self.revin:
             y = self.revin_layer(y, 'denorm')
         return y

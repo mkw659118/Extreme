@@ -21,7 +21,6 @@ def get_benchmark_code():
 
 
 def get_group_idx(group_index):
-    # './results/func_code_to_label_{n_clusters}.pkl'
     # with open('./results/func_code_to_label_150_balanced.pkl', 'rb') as f:
     with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
         data = pickle.load(f)
@@ -38,17 +37,17 @@ def multi_dataset(config):
     min_length = 1e9
     all_data = []
     fund_dict = query_fund_data(now_fund_code, config.start_date, config.end_date)
-    for fund_code, df in fund_dict.items():
+    for fund_code, value in fund_dict.items():
         try:
             # df = get_data(config.start_date, config.end_date, fund_code)
-            min_length = min(len(df), min_length)
-            df = process_date_columns(df)
-            all_data.append(df)
+            min_length = min(len(value), min_length)
+            value = process_date_columns(value)
+            all_data.append(value)
         except Exception as e:
             print(e)
             process_fund(0, fund_code, config.start_date, config.end_date)
 
-    print(f"Min_length = {min_length}")
+    print(f"Num_code = {len(now_fund_code)} Min_length = {min_length}")
     raw_data = []
     for df in all_data:
         try:
@@ -62,10 +61,10 @@ def multi_dataset(config):
     x, y = data[:, :, :], data[:, :, -3:]
 
     x[:, :, -3:] = x[:, :, -3:].astype(np.float32)
-    x_scaler = get_scaler(x[:, :, -3:], config, 'None')
+    x_scaler = get_scaler(x[:, :, -3:], config, 'minmax')
     x[:, :, -3:] = x_scaler.transform(x[:, :, -3:])
 
-    y_scaler = get_scaler(y, config, 'None')
+    y_scaler = get_scaler(y, config, 'minmax')
     y = y_scaler.transform(y)
     return x, y, x_scaler, y_scaler
 

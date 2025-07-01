@@ -143,7 +143,6 @@ def start_server(current_date, table_name = 'temp_sql'):
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
-
     for i in range(group_num):
         # 27
         try:

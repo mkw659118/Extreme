@@ -27,7 +27,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     norm_method: str = 'rms'
     ffn_method: str = 'ffn'
     att_method: str = 'self'
-    dis_method: str = 'cosine'
+    dis_method: str = 'None'
     fft: bool = False
     revin: bool = True
     idx: int = 0
