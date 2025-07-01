@@ -23,6 +23,11 @@ def get_experiment_name(config):
          f"Seq_len : {config.seq_len}, "
          f"Pred_len : {config.pred_len}, "
     )
+    try:
+        exper_detail += f"Idx : {config.idx}, "
+    except AttributeError:
+        pass
+
     return log_filename, exper_detail
 
 

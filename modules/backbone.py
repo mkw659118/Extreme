@@ -46,8 +46,8 @@ class Backbone(torch.nn.Module):
             att_method=config.att_method
         )
 
-        self.encoder1 = torch.nn.Linear(config.d_model, config.d_model, bias=True)
-        self.encoder2 = torch.nn.Linear(config.d_model, config.d_model, bias=True)
+        # self.encoder1 = torch.nn.Linear(config.d_model, config.d_model, bias=True)
+        # self.encoder2 = torch.nn.Linear(config.d_model, config.d_model, bias=True)
 
         self.decoder = torch.nn.Linear(config.d_model, 3)
 
@@ -62,7 +62,7 @@ class Backbone(torch.nn.Module):
             x = x.unsqueeze(-1)
 
         x_enc = self.projection(x)
-        x_enc = self.fund_embedding(x_fund)
+        # x_enc = self.fund_embedding(x_fund)
         x_enc = self.predict_linear(x_enc.permute(0, 3, 2, 1)).permute(0, 3, 2, 1)
         bs, pred_len, channels, dim = x_enc.shape
         x_enc = x_enc.permute(2, 0, 1, 3).reshape(channels, bs * pred_len, dim)

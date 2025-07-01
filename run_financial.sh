@@ -1,12 +1,14 @@
 #!/bin/bash
 #python run_cluster.py
 
-# for i in {84..125}
-all_idx=(0 23 28 30 36 37 55 64 66 72 79 120)
-for i in "${all_idx[@]}"
+#all_idx=(0 23 28 30 36 37 55 64 66 72 79 120)
+#for i in "${all_idx[@]}"
+for i in {0..149}
 do
     python run_train.py --idx $i
 done
+
+python run_service.py
 # pred_lens=(12 96 192 336 720)
 # exp_names=(MLPConfig RNNConfig LSTMConfig GRUConfig CrossformerConfig TimesNetConfig)
 

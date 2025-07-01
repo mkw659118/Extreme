@@ -84,6 +84,28 @@ def query_fund_data(fund, start_date, end_date):
         print(f"[{fund}] 数据库查询失败: {str(e)}")
         return pd.DataFrame()
 
+def query_fund_data(fund, start_date, end_date):
+    """查询数据库中某支基金的净值数据
+        SELECT fund_code, date, nav, accnav, adj_nav
+    """
+    sql = text("""
+        SELECT fund_code, date, accnav, adj_nav, nav
+        FROM b_fund_nav_details_new
+        WHERE fund_code IN :codes
+          AND date BETWEEN :start AND :end
+        ORDER BY date
+    """)
+    try:
+        df = pd.read_sql_query(
+            sql.bindparams(codes=tuple(fund), start=start_date, end=end_date),
+            engine
+        )
+        fund_dict = {code: df_group.reset_index(drop=True)
+                     for code, df_group in df.groupby("fund_code")}
+        return fund_dict
+    except Exception as e:
+        print(f"[{fund}] 数据库查询失败: {str(e)}")
+        return pd.DataFrame()
 
 def process_date_columns(df):
     """将 date 拆成 year, month, day, weekday 四列"""
@@ -128,34 +150,34 @@ def generate_data(start_date, end_date):
     print(f'共需处理基金数量：{len(code_list)}')
 
     # 线性处理方式
-    # for i, fund in enumerate(code_list):
-    #     df = query_fund_data(fund, start_date, end_date)
-    #     if df.empty:
-    #         continue
-    #     df = process_date_columns(df)
-    #     save_fund_data(df, fund, i)
+    for i, fund in enumerate(code_list):
+        df = query_fund_data(fund, start_date, end_date)
+        if df.empty:
+            continue
+        df = process_date_columns(df)
+        save_fund_data(df, fund, i, start_date, end_date)
 
     # 多线程处理
-    print(f'共需处理基金数量：{len(code_list)}')
-    from concurrent.futures import ThreadPoolExecutor
+    # print(f'共需处理基金数量：{len(code_list)}')
+    # from concurrent.futures import ThreadPoolExecutor
 
-    # 获取 CPU 核心数，并计算线程数（取至少为1）
-    cpu_count = os.cpu_count()
-    max_workers = max(1, cpu_count // 4)
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [
-            executor.submit(process_fund, i, fund, start_date, end_date)
-            for i, fund in enumerate(code_list)
-        ]
-        for future in as_completed(futures):
-            # 可加入异常处理反馈
-            try:
-                future.result()
-            except Exception as e:
-                print(f"线程执行出错: {e}")
+    # # 获取 CPU 核心数，并计算线程数（取至少为1）
+    # cpu_count = os.cpu_count()
+    # max_workers = max(1, cpu_count // 4)
+    # with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    #     futures = [
+    #         executor.submit(process_fund, i, fund, start_date, end_date)
+    #         for i, fund in enumerate(code_list)
+    #     ]
+    #     for future in as_completed(futures):
+    #         # 可加入异常处理反馈
+    #         try:
+    #             future.result()
+    #         except Exception as e:
+    #             print(f"线程执行出错: {e}")
     engine.dispose()
     return True
 
 
 if __name__ == '__main__':
-    generate_data('2020-07-13', '2025-03-08')
+    generate_data('2020-07-13', '2025-06-28')

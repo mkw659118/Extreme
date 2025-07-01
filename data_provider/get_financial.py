@@ -8,7 +8,7 @@ import pickle
 
 from tqdm import tqdm
 
-from data_provider.generate_financial import get_all_fund_list, generate_data, process_fund
+from data_provider.generate_financial import get_all_fund_list, generate_data, process_date_columns, process_fund, query_fund_data
 from data_provider.data_scaler import get_scaler
 
 
@@ -22,7 +22,8 @@ def get_benchmark_code():
 
 def get_group_idx(group_index):
     # './results/func_code_to_label_{n_clusters}.pkl'
-    with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
+    # with open('./results/func_code_to_label_150_balanced.pkl', 'rb') as f:
+    with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
         data = pickle.load(f)
     all_func_code = []
     for i in range(len(data)):
@@ -36,17 +37,18 @@ def multi_dataset(config):
     now_fund_code = get_group_idx(config.idx)
     min_length = 1e9
     all_data = []
-    for fund_code in tqdm(now_fund_code, desc='SQL'):
+    fund_dict = query_fund_data(now_fund_code, config.start_date, config.end_date)
+    for fund_code, df in fund_dict.items():
         try:
             # df = get_data(config.start_date, config.end_date, fund_code)
-            df = process_fund(0, fund_code, config.start_date, config.end_date)
-            print(f"{fund_code} -- len = {len(df)}, now min_length = {min_length}")
             min_length = min(len(df), min_length)
+            df = process_date_columns(df)
             all_data.append(df)
         except Exception as e:
             print(e)
             process_fund(0, fund_code, config.start_date, config.end_date)
 
+    print(f"Min_length = {min_length}")
     raw_data = []
     for df in all_data:
         try:
@@ -60,10 +62,10 @@ def multi_dataset(config):
     x, y = data[:, :, :], data[:, :, -3:]
 
     x[:, :, -3:] = x[:, :, -3:].astype(np.float32)
-    x_scaler = get_scaler(x[:, :, -3:], config, 'stander')
+    x_scaler = get_scaler(x[:, :, -3:], config, 'None')
     x[:, :, -3:] = x_scaler.transform(x[:, :, -3:])
 
-    y_scaler = get_scaler(y, config, 'stander')
+    y_scaler = get_scaler(y, config, 'None')
     y = y_scaler.transform(y)
     return x, y, x_scaler, y_scaler
 

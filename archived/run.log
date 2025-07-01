@@ -3331,3 +3331,155 @@ Value: 124, Metric: 0.1985
 Running at 2025-06-25 15:16: python run_train.py --exp_name FinancialConfig --retrain 1 --idx 4
 [2025-06-25 15:19:16] All commands executed successfully.
 
+
+[2025-06-29 16:46:08] Experiment Start!!!
+
+[2025-06-29 16:46:27] Experiment Start!!!
+Value: 0, Metric: 0.0619
+
+[2025-06-29 16:48:18] Experiment Start!!!
+Value: 0, Metric: 0.0619
+Value: 1, Metric: 0.1010
+Value: 2, Metric: 0.1189
+
+[2025-06-29 16:52:54] Experiment Start!!!
+Value: 0, Metric: 0.0613
+Value: 1, Metric: 0.1006
+
+[2025-06-29 16:56:17] Experiment Start!!!
+
+[2025-06-29 17:09:43] Experiment Start!!!
+Value: 0, Metric: 0.0872
+
+[2025-06-29 17:12:09] Experiment Start!!!
+Value: 0, Metric: 0.0409
+Value: 1, Metric: 0.0159
+Value: 2, Metric: 0.0205
+Value: 3, Metric: 0.0252
+Value: 4, Metric: 0.1017
+Value: 5, Metric: 0.0167
+Value: 6, Metric: 0.1074
+Value: 7, Metric: 0.0823
+Value: 8, Metric: 0.0795
+Value: 9, Metric: 0.0195
+Value: 10, Metric: 0.0163
+Value: 11, Metric: 0.0165
+Value: 12, Metric: 0.0194
+Value: 13, Metric: 0.1091
+Value: 14, Metric: 0.1033
+Value: 15, Metric: 0.0955
+Value: 16, Metric: 0.1061
+Value: 17, Metric: 0.1164
+Value: 18, Metric: 0.1136
+Value: 19, Metric: 0.1357
+Value: 20, Metric: 0.1547
+Value: 21, Metric: 0.0901
+Value: 22, Metric: 0.1066
+Value: 23, Metric: 0.1183
+Value: 24, Metric: 0.0950
+Value: 25, Metric: 0.0810
+Value: 26, Metric: 0.0833
+Value: 27, Metric: 0.0759
+Value: 28, Metric: 0.0922
+Value: 29, Metric: 0.0953
+Value: 30, Metric: 0.3565
+Value: 31, Metric: 0.0566
+Value: 32, Metric: 0.0609
+Value: 33, Metric: 0.0646
+Value: 34, Metric: 0.0500
+Value: 35, Metric: 0.0156
+Value: 36, Metric: 0.0967
+Value: 37, Metric: 0.1179
+Value: 38, Metric: 0.0912
+Value: 39, Metric: 0.0934
+Value: 40, Metric: 0.1035
+Value: 41, Metric: 0.0897
+Value: 42, Metric: 0.0944
+Value: 43, Metric: 0.1141
+Value: 44, Metric: 0.0861
+Value: 45, Metric: 0.0595
+Value: 46, Metric: 0.1038
+Value: 47, Metric: 0.0933
+Value: 48, Metric: 0.0913
+Value: 49, Metric: 0.0990
+Value: 50, Metric: 0.0817
+Value: 51, Metric: 0.0715
+Value: 52, Metric: 0.1157
+Value: 53, Metric: 0.0802
+Value: 54, Metric: 0.1033
+Value: 55, Metric: 0.0769
+
+[2025-06-29 18:26:16] Experiment Start!!!
+Value: 56, Metric: 0.0991
+Value: 57, Metric: 0.1069
+Value: 58, Metric: 0.0807
+Value: 59, Metric: 0.0845
+Value: 60, Metric: 0.0682
+Value: 61, Metric: 0.1073
+Value: 62, Metric: 0.0871
+Value: 63, Metric: 0.1029
+Value: 64, Metric: 0.0932
+Value: 65, Metric: 0.0962
+Value: 66, Metric: 0.0992
+Value: 67, Metric: 0.0557
+Value: 68, Metric: 0.0447
+Value: 69, Metric: 0.1004
+Value: 70, Metric: 0.0925
+Value: 71, Metric: 0.1087
+Value: 72, Metric: 0.0923
+Value: 73, Metric: 0.0930
+Value: 74, Metric: 0.0793
+Value: 75, Metric: 0.1301
+Value: 76, Metric: 0.1453
+Value: 77, Metric: 0.1084
+Value: 78, Metric: 0.1074
+Value: 79, Metric: 0.0917
+Value: 80, Metric: 0.1119
+Value: 81, Metric: 0.1076
+Value: 82, Metric: 0.1047
+Value: 83, Metric: 0.1272
+Value: 84, Metric: 0.1235
+Value: 85, Metric: 0.1300
+Value: 86, Metric: 0.0894
+Value: 87, Metric: 0.0758
+Value: 88, Metric: 0.0852
+Value: 89, Metric: 0.1467
+Value: 90, Metric: 0.1452
+Value: 91, Metric:   nan
+Value: 92, Metric: 0.1003
+Value: 93, Metric: 0.1133
+Value: 94, Metric: 0.0117
+Value: 95, Metric: 0.0816
+Value: 96, Metric: 0.1036
+Value: 97, Metric: 0.0923
+Value: 98, Metric: 0.0222
+Value: 99, Metric: 0.0226
+Value: 100, Metric: 0.0209
+Value: 101, Metric: 0.0229
+Value: 102, Metric: 0.0207
+Value: 103, Metric: 0.1680
+Value: 104, Metric: 0.1254
+Value: 105, Metric: 0.1065
+Value: 106, Metric: 0.1453
+Value: 107, Metric: 0.0555
+Value: 108, Metric: 0.0791
+Value: 109, Metric: 0.1163
+Value: 110, Metric: 0.0236
+Value: 111, Metric: 0.0936
+Value: 112, Metric: 0.1077
+Value: 113, Metric: 0.0304
+Value: 114, Metric: 0.1329
+Value: 115, Metric: 0.0836
+Value: 116, Metric: 0.0617
+Value: 117, Metric: 0.0306
+Value: 118, Metric: 0.0818
+Value: 119, Metric: 0.0575
+Value: 120, Metric: 0.1200
+Value: 121, Metric: 0.0658
+Value: 122, Metric: 0.0954
+Value: 123, Metric: 0.0930
+Value: 124, Metric: 0.1120
+==> Best idx: 94, local_best_metric: 0.0117
+Running at 2025-06-29 19:53: python run_train.py --exp_name FinancialConfig --retrain 1 --idx 94
+[2025-06-29 19:54:18] All commands executed successfully.
+

@@ -32,11 +32,13 @@ def get_each_cluster_group_idx(n_clusters, start_date, end_date):
     print(len(all_address))
 
     min_length = 1e9
-    for file in all_address:
-        with open(os.path.join(f'./datasets/financial/{dir_name}', file), 'rb') as f:
-            now_df = pickle.load(f)
-            min_length = min(min_length, len(now_df))
+    # for file in all_address:
+        # with open(os.path.join(f'./datasets/financial/{dir_name}', file), 'rb') as f:
+            # now_df = pickle.load(f)
+            # min_length = min(min_length, len(now_df))
 
+    # 这里假设所有数据的长度都大于等于 776，实际使用时可以根据需要调整
+    min_length = 827  
     train_length = int(min_length * 0.7)
 
     X = []
@@ -48,7 +50,7 @@ def get_each_cluster_group_idx(n_clusters, start_date, end_date):
             continue
         selected_seq = now_df[-min_length:, :]
         selected_seq = selected_seq[:train_length, :]
-        X.append(selected_seq[:, -3])  # 只取特征部分
+        X.append(selected_seq[:, -1])  # 只取特征部分
         all_func_code_list.append(selected_seq[:, 0])  # 保存 func_code
 
     X = np.array(X, dtype=object)  # list of (train_length, 3)
@@ -61,14 +63,13 @@ def get_each_cluster_group_idx(n_clusters, start_date, end_date):
     representative_func_codes = all_func_code[:, 0]
     mapping_array = np.column_stack((representative_func_codes, labels))
 
-    os.makedirs('./results', exist_ok=True)
-    with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'wb') as f:
+    os.makedirs('./datasets', exist_ok=True)
+    with open(f'./datasets/func_code_to_label_{n_clusters}.pkl', 'wb') as f:
         pickle.dump(mapping_array, f)
 
-    print(f"映射表已保存至 './results/func_code_to_label_{n_clusters}.pkl'")
+    print(f"映射表已保存至 './datasets/func_code_to_label_{n_clusters}.pkl'")
 
     return mapping_array
-
 
 
 def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clusters'):
@@ -97,7 +98,7 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
         # 重新对数据截取相同片段（注意需与聚类时一致）
         selected_seq = now_df[-min_length:, :]
         selected_seq = selected_seq[:train_length, :]
-        seq = selected_seq[:, -3]  # 特征值
+        seq = selected_seq[:, -1]  # 特征值
 
         # 保存图像
         group_dir = os.path.join(output_dir, str(int(label)))
@@ -157,7 +158,7 @@ def balanced_cluster(data, cluster_num, group_size_limit=70):
     new_arr = np.array(new_samples)
 
     # 保存
-    with open(f'./results/func_code_to_label_{cluster_num}_balanced.pkl', 'wb') as f:
+    with open(f'./datasets/func_code_to_label_{cluster_num}_balanced.pkl', 'wb') as f:
         pickle.dump(new_arr.tolist(), f)
 
     print(f"✅ 新数据保存完毕，组数: {len(all_batches)}，总样本数: {len(new_samples)}，shape: {new_arr.shape}")
@@ -168,9 +169,9 @@ if __name__ == '__main__':
     from utils.exp_config import get_config
     config = get_config('FinancialConfig')
 
-    n_clusters = 40
-    # mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
-    with open(f'./results/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
+    n_clusters = 150
+    mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
+    with open(f'./datasets/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)
 
     # 构造数据目录名（必须和聚类用的保持一致）
@@ -180,4 +181,4 @@ if __name__ == '__main__':
     # 绘图
     # plot_clusters_from_mapping(mapping_array, data_dir, output_dir)
 
-    mapping_array = balanced_cluster(mapping_array, n_clusters)
+    # mapping_array = balanced_cluster(mapping_array, n_clusters)

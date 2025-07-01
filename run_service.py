@@ -2,6 +2,7 @@ import torch
 from exp.exp_model import Model
 from data_provider.generate_financial import process_date_columns, query_fund_data
 from data_provider.get_financial import get_group_idx
+from run_train import get_experiment_name
 from utils.exp_config import get_config
 from sqlalchemy import create_engine, text
 import numpy as np
@@ -10,6 +11,9 @@ import pickle
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
+
+from utils.exp_logger import Logger
+from utils.exp_metrics_plotter import MetricsPlotter
 
 def drop_sql_temp(tabel_name):
     try:
@@ -45,10 +49,10 @@ def get_start_date(end_date: str, window_size: int) -> str:
 
 def get_history_data(get_group_idx, current_date, config):
     all_history_input = []
-    for i in range(len(get_group_idx)):
-        start_date = get_start_date(current_date, window_size=64)
-        df = query_fund_data(get_group_idx[i], start_date, current_date)
-        df = process_date_columns(df)
+    start_date = get_start_date(current_date, window_size=64)
+    fund_dict = query_fund_data(get_group_idx, start_date, current_date)
+    for key, value in fund_dict.items():
+        df = process_date_columns(value)
         df = df[-config.seq_len:, :]
         all_history_input.append(df)
     data = all_history_input
@@ -57,13 +61,17 @@ def get_history_data(get_group_idx, current_date, config):
 def check_input(all_history_input, config):
     data = np.stack(all_history_input, axis=0)
     data = data.transpose(1, 0, 2)
+    
     # 只取符合模型的历史天数
     data = data[-config.seq_len:, :, :]
     return data
 
 def get_pretrained_model(config):
     model = Model(config)
-    model.load_state_dict(torch.load('./checkpoints/ours/Model_ours_Dataset_financial_Multi_round_0.pt', weights_only=False))
+    runId = 0
+    model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
+    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    # model.load_state_dict(torch.load('./checkpoints/ours/Model_ours_Dataset_financial_Multi_round_0.pt', weights_only=False))
     return model 
 
 def predict_torch_model(model, history_input, config):
@@ -72,10 +80,9 @@ def predict_torch_model(model, history_input, config):
     # unsqueeze 代表 batch size = 1
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
     pred_value = model(x, None, None).squeeze(0).detach().numpy()
-    # fund_code = history_input[-config.pred_len:, :, 0]
-    fund_code = history_input
-    # print(history_input.shape, x.shape, pred_value.shape, fund_code.shape)
-    # pred_value = np.stack([fund_code, pred_value], axis=0)
+
+    # 因为模型改成了多变量预测多变量，按照预测结果的最后一个变量作为预测值
+    pred_value = pred_value[:, :, -1]
     return pred_value
 
 def get_sql_format_data(pred_value, cleaned_input):
@@ -126,9 +133,6 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    config = get_config('FinancialConfig')
-    print("✅ 配置加载完成。")
-    
     drop_sql_temp(table_name)
 
     print(f"\n📅 当前预测日期: {current_date}")
@@ -143,6 +147,7 @@ def start_server(current_date, table_name = 'temp_sql'):
     for i in range(group_num):
         # 27
         try:
+            config.idx = i
             group_fund_code = get_group_idx(i)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
@@ -164,12 +169,20 @@ def start_server(current_date, table_name = 'temp_sql'):
 
             insert_pred_to_sql(pred_value_sql, table_name)
         except Exception as e:
+            raise e
             print(e)
             continue
 
     return pred_value_sql
 
 if __name__ == '__main__':
+    config = get_config('FinancialConfig')
+    log_filename, exper_detail = get_experiment_name(config)
+    plotter = MetricsPlotter(log_filename, config)
+    log = Logger(log_filename, exper_detail, plotter, config)
+    print("✅ 配置加载完成。")
+
+
     # current_date = '2025-4-15'
-    current_date = '2025-6-18'
+    current_date = '2025-7-01'
     pred_value = start_server(current_date)
