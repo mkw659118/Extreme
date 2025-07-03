@@ -230,11 +230,6 @@ class Transformer(torch.nn.Module):
             x = ff(norm2(x)) + x
         x = self.norm(x)
         x = self.projection(x)
-        # x = self.dec_embedding(x, None)  # 
-        # x = self.output_projection(self.norm(x))
-        # x = rearrange(x, 'Bs seq_len D -> Bs D seq_len')
-        # x = self.seq_to_pred_Linear(x)
-        # x = rearrange(x, 'Bs D pred_len -> Bs pred_len D')
         if self.revin:
             x = self.revin_layer(x, 'denorm')
         return x[:, -self.pred_len:, :]
