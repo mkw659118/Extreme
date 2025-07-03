@@ -1315,3 +1315,294 @@
 |2025-07-01 15:38:52| MAE - 0.0066 MSE - 0.0001 RMSE - 0.0103 MAPE - 0.0547 NMAE - 0.0414 NRMSE - 0.0489 Acc_10 - 0.8607 train_time - 63.3576
 |2025-07-01 15:48:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 0, 
 |2025-07-01 15:48:35| MAE - 0.0066 MSE - 0.0001 RMSE - 0.0103 MAPE - 0.0547 NMAE - 0.0414 NRMSE - 0.0489 Acc_10 - 0.8607 train_time - 62.9330
+|2025-07-01 16:15:14| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 0, 
+|2025-07-01 16:15:14| MAE - 0.0066 MSE - 0.0001 RMSE - 0.0103 MAPE - 0.0547 NMAE - 0.0414 NRMSE - 0.0489 Acc_10 - 0.8607 train_time - 63.6577
+|2025-07-01 16:16:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 1, 
+|2025-07-01 16:16:35| MAE - 0.0081 MSE - 0.0002 RMSE - 0.0135 MAPE - 0.0289 NMAE - 0.0273 NRMSE - 0.0379 Acc_10 - 0.9644 train_time - 31.3524
+|2025-07-01 16:17:51| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 2, 
+|2025-07-01 16:17:51| MAE - 0.0096 MSE - 0.0002 RMSE - 0.0142 MAPE - 0.0857 NMAE - 0.0488 NRMSE - 0.0570 Acc_10 - 0.7940 train_time - 31.4269
+|2025-07-01 16:18:17| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 3, 
+|2025-07-01 16:18:17| MAE - 0.0180 MSE - 0.0007 RMSE - 0.0266 MAPE - 0.0367 NMAE - 0.0243 NRMSE - 0.0341 Acc_10 - 0.9033 train_time - 4.4013
+|2025-07-01 16:19:23| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 4, 
+|2025-07-01 16:19:23| MAE - 0.0084 MSE - 0.0002 RMSE - 0.0123 MAPE - 0.0472 NMAE - 0.0423 NRMSE - 0.0539 Acc_10 - 0.8944 train_time - 24.3668
+|2025-07-01 16:20:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 5, 
+|2025-07-01 16:20:10| MAE - 0.0066 MSE - 0.0001 RMSE - 0.0113 MAPE - 0.0489 NMAE - 0.0361 NRMSE - 0.0417 Acc_10 - 0.9071 train_time - 12.8921
+|2025-07-01 16:20:42| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 6, 
+|2025-07-01 16:20:42| MAE - 0.0080 MSE - 0.0002 RMSE - 0.0137 MAPE - 0.0400 NMAE - 0.0323 NRMSE - 0.0434 Acc_10 - 0.9250 train_time - 6.7067
+|2025-07-01 16:21:55| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 7, 
+|2025-07-01 16:21:55| MAE - 0.0143 MSE - 0.0004 RMSE - 0.0191 MAPE - 0.0404 NMAE - 0.0393 NRMSE - 0.0481 Acc_10 - 0.9571 train_time - 31.7158
+|2025-07-01 16:22:44| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 8, 
+|2025-07-01 16:22:44| MAE - 0.0152 MSE - 0.0006 RMSE - 0.0243 MAPE - 0.0600 NMAE - 0.0512 NRMSE - 0.0654 Acc_10 - 0.8389 train_time - 13.9869
+|2025-07-01 16:23:58| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 9, 
+|2025-07-01 16:23:58| MAE - 0.0049 MSE - 0.0001 RMSE - 0.0085 MAPE - 0.0657 NMAE - 0.0436 NRMSE - 0.0503 Acc_10 - 0.8191 train_time - 33.0893
+|2025-07-01 16:24:58| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 10, 
+|2025-07-01 16:24:58| MAE - 0.0071 MSE - 0.0002 RMSE - 0.0132 MAPE - 0.0354 NMAE - 0.0343 NRMSE - 0.0491 Acc_10 - 0.9478 train_time - 23.6187
+|2025-07-01 16:25:38| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 11, 
+|2025-07-01 16:25:38| MAE - 0.0052 MSE - 0.0001 RMSE - 0.0095 MAPE - 0.1709 NMAE - 0.0276 NRMSE - 0.0326 Acc_10 - 0.9305 train_time - 9.5507
+|2025-07-01 16:26:55| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 12, 
+|2025-07-01 16:26:55| MAE - 0.0067 MSE - 0.0001 RMSE - 0.0109 MAPE - 0.0726 NMAE - 0.0457 NRMSE - 0.0516 Acc_10 - 0.8054 train_time - 35.5677
+|2025-07-01 16:27:55| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 13, 
+|2025-07-01 16:27:55| MAE - nan MSE - nan RMSE - nan MAPE - nan NMAE - nan NRMSE - nan Acc_10 - 0.0000 train_time - 19.3040
+|2025-07-01 16:29:37| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 14, 
+|2025-07-01 16:29:37| MAE - 0.0063 MSE - 0.0001 RMSE - 0.0104 MAPE - 0.0631 NMAE - 0.0455 NRMSE - 0.0552 Acc_10 - 0.8257 train_time - 57.8292
+|2025-07-01 16:29:57| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 15, 
+|2025-07-01 16:29:57| MAE - 0.0159 MSE - 0.0010 RMSE - 0.0324 MAPE - 0.0799 NMAE - 0.0338 NRMSE - 0.0563 Acc_10 - 0.8923 train_time - 2.7256
+|2025-07-01 16:30:38| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 16, 
+|2025-07-01 16:30:38| MAE - 0.0078 MSE - 0.0001 RMSE - 0.0119 MAPE - 0.0801 NMAE - 0.0274 NRMSE - 0.0332 Acc_10 - 0.9432 train_time - 7.9786
+|2025-07-01 16:32:29| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 17, 
+|2025-07-01 16:32:29| MAE - 0.0042 MSE - 0.0001 RMSE - 0.0076 MAPE - 0.0299 NMAE - 0.0236 NRMSE - 0.0340 Acc_10 - 0.9615 train_time - 58.6205
+|2025-07-01 16:34:18| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 18, 
+|2025-07-01 16:34:18| MAE - 0.0064 MSE - 0.0001 RMSE - 0.0106 MAPE - 0.0718 NMAE - 0.0458 NRMSE - 0.0522 Acc_10 - 0.7953 train_time - 20.2992
+|2025-07-01 16:34:55| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 19, 
+|2025-07-01 16:34:55| MAE - 0.0094 MSE - 0.0002 RMSE - 0.0139 MAPE - 0.0355 NMAE - 0.0230 NRMSE - 0.0295 Acc_10 - 0.9501 train_time - 9.7297
+|2025-07-01 16:35:32| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 20, 
+|2025-07-01 16:35:32| MAE - 0.0116 MSE - 0.0005 RMSE - 0.0214 MAPE - 0.0741 NMAE - 0.0443 NRMSE - 0.0636 Acc_10 - 0.8490 train_time - 8.8619
+|2025-07-01 16:36:47| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 21, 
+|2025-07-01 16:36:47| MAE - 0.0052 MSE - 0.0001 RMSE - 0.0091 MAPE - 0.0232 NMAE - 0.0201 NRMSE - 0.0288 Acc_10 - 0.9814 train_time - 30.9331
+|2025-07-01 16:37:05| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 22, 
+|2025-07-01 16:37:05| MAE - 0.0115 MSE - 0.0005 RMSE - 0.0219 MAPE - 0.0591 NMAE - 0.0347 NRMSE - 0.0517 Acc_10 - 0.8475 train_time - 2.3291
+|2025-07-01 16:39:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 23, 
+|2025-07-01 16:39:35| MAE - 0.0039 MSE - 0.0001 RMSE - 0.0076 MAPE - 0.0239 NMAE - 0.0191 NRMSE - 0.0303 Acc_10 - 0.9797 train_time - 96.6049
+|2025-07-01 16:40:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 24, 
+|2025-07-01 16:40:10| MAE - 0.0043 MSE - 0.0000 RMSE - 0.0060 MAPE - 0.0367 NMAE - 0.0119 NRMSE - 0.0127 Acc_10 - 0.9048 train_time - 6.7193
+|2025-07-01 16:41:00| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 25, 
+|2025-07-01 16:41:00| MAE - 0.0056 MSE - 0.0001 RMSE - 0.0120 MAPE - inf NMAE - 0.0604 NRMSE - 0.0621 Acc_10 - 0.7182 train_time - 14.0597
+|2025-07-01 16:42:03| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 26, 
+|2025-07-01 16:42:03| MAE - 0.0087 MSE - 0.0003 RMSE - 0.0173 MAPE - 0.0512 NMAE - 0.0392 NRMSE - 0.0621 Acc_10 - 0.8685 train_time - 24.9381
+|2025-07-01 16:42:59| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 27, 
+|2025-07-01 16:42:59| MAE - 0.0079 MSE - 0.0002 RMSE - 0.0136 MAPE - 0.0456 NMAE - 0.0362 NRMSE - 0.0487 Acc_10 - 0.9272 train_time - 21.2541
+|2025-07-01 16:44:28| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 28, 
+|2025-07-01 16:44:28| MAE - 0.0061 MSE - 0.0001 RMSE - 0.0096 MAPE - 0.0813 NMAE - 0.0359 NRMSE - 0.0460 Acc_10 - 0.8894 train_time - 39.2789
+|2025-07-01 16:45:40| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 29, 
+|2025-07-01 16:45:40| MAE - 0.0075 MSE - 0.0001 RMSE - 0.0116 MAPE - 0.0611 NMAE - 0.0434 NRMSE - 0.0528 Acc_10 - 0.8618 train_time - 32.8237
+|2025-07-01 16:46:02| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 30, 
+|2025-07-01 16:46:02| MAE - 0.0132 MSE - 0.0007 RMSE - 0.0257 MAPE - 0.0348 NMAE - 0.0276 NRMSE - 0.0476 Acc_10 - 0.9214 train_time - 3.1502
+|2025-07-01 16:47:01| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 31, 
+|2025-07-01 16:47:01| MAE - 0.0109 MSE - 0.0003 RMSE - 0.0168 MAPE - 0.0535 NMAE - 0.0412 NRMSE - 0.0517 Acc_10 - 0.8951 train_time - 21.4673
+|2025-07-01 16:48:21| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 32, 
+|2025-07-01 16:48:21| MAE - 0.0084 MSE - 0.0002 RMSE - 0.0138 MAPE - 0.2299 NMAE - 0.0640 NRMSE - 0.0697 Acc_10 - 0.5878 train_time - 30.9350
+|2025-07-01 16:49:13| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 33, 
+|2025-07-01 16:49:13| MAE - 0.0153 MSE - 0.0004 RMSE - 0.0211 MAPE - 0.0936 NMAE - 0.0694 NRMSE - 0.0785 Acc_10 - 0.7021 train_time - 13.8948
+|2025-07-01 16:50:14| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 34, 
+|2025-07-01 16:50:14| MAE - 0.0062 MSE - 0.0001 RMSE - 0.0106 MAPE - 0.0732 NMAE - 0.0537 NRMSE - 0.0620 Acc_10 - 0.7825 train_time - 21.7672
+|2025-07-01 16:52:19| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 35, 
+|2025-07-01 16:52:19| MAE - 0.0064 MSE - 0.0001 RMSE - 0.0107 MAPE - 0.0568 NMAE - 0.0464 NRMSE - 0.0581 Acc_10 - 0.8661 train_time - 65.9528
+|2025-07-01 16:53:36| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 36, 
+|2025-07-01 16:53:36| MAE - 0.0065 MSE - 0.0001 RMSE - 0.0106 MAPE - 0.1104 NMAE - 0.0453 NRMSE - 0.0548 Acc_10 - 0.8098 train_time - 27.5863
+|2025-07-01 16:54:12| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 37, 
+|2025-07-01 16:54:12| MAE - 0.0090 MSE - 0.0001 RMSE - 0.0119 MAPE - 0.0384 NMAE - 0.0305 NRMSE - 0.0347 Acc_10 - 0.9225 train_time - 7.7928
+|2025-07-01 16:55:09| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 38, 
+|2025-07-01 16:55:09| MAE - 0.0087 MSE - 0.0002 RMSE - 0.0138 MAPE - 0.0397 NMAE - 0.0347 NRMSE - 0.0479 Acc_10 - 0.9279 train_time - 21.0037
+|2025-07-01 16:55:50| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 39, 
+|2025-07-01 16:55:50| MAE - 0.0070 MSE - 0.0001 RMSE - 0.0108 MAPE - 0.1160 NMAE - 0.0566 NRMSE - 0.0630 Acc_10 - 0.6932 train_time - 13.0911
+|2025-07-01 16:56:27| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 40, 
+|2025-07-01 16:56:27| MAE - 0.0145 MSE - 0.0005 RMSE - 0.0227 MAPE - 0.0674 NMAE - 0.0488 NRMSE - 0.0596 Acc_10 - 0.8428 train_time - 7.2305
+|2025-07-01 16:58:40| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 41, 
+|2025-07-01 16:58:40| MAE - 0.0093 MSE - 0.0004 RMSE - 0.0200 MAPE - 0.0490 NMAE - 0.0465 NRMSE - 0.0683 Acc_10 - 0.8692 train_time - 83.6809
+|2025-07-01 16:59:01| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 42, 
+|2025-07-01 16:59:01| MAE - 0.0058 MSE - 0.0001 RMSE - 0.0093 MAPE - 0.0376 NMAE - 0.0232 NRMSE - 0.0271 Acc_10 - 0.9361 train_time - 3.4528
+|2025-07-01 17:00:23| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 43, 
+|2025-07-01 17:00:23| MAE - 0.0052 MSE - 0.0001 RMSE - 0.0112 MAPE - 0.0593 NMAE - 0.0458 NRMSE - 0.0705 Acc_10 - 0.8430 train_time - 35.2717
+|2025-07-01 17:01:05| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 44, 
+|2025-07-01 17:01:05| MAE - 0.0077 MSE - 0.0001 RMSE - 0.0106 MAPE - 0.0293 NMAE - 0.0216 NRMSE - 0.0248 Acc_10 - 0.9581 train_time - 9.6170
+|2025-07-01 17:03:19| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 45, 
+|2025-07-01 17:03:19| MAE - 0.0058 MSE - 0.0001 RMSE - 0.0102 MAPE - 0.0466 NMAE - 0.0309 NRMSE - 0.0442 Acc_10 - 0.9435 train_time - 65.8032
+|2025-07-01 17:05:47| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 46, 
+|2025-07-01 17:05:47| MAE - 0.0024 MSE - 0.0000 RMSE - 0.0047 MAPE - 0.0725 NMAE - 0.0499 NRMSE - 0.0545 Acc_10 - 0.7965 train_time - 82.2566
+|2025-07-01 17:06:40| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 48, 
+|2025-07-01 17:06:40| MAE - 0.0121 MSE - 0.0003 RMSE - 0.0180 MAPE - 0.0748 NMAE - 0.0390 NRMSE - 0.0439 Acc_10 - 0.7900 train_time - 5.7715
+|2025-07-01 17:07:03| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 49, 
+|2025-07-01 17:07:03| MAE - 0.0173 MSE - 0.0010 RMSE - 0.0321 MAPE - 0.5435 NMAE - 0.0742 NRMSE - 0.1074 Acc_10 - 0.6882 train_time - 3.0044
+|2025-07-01 17:07:41| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 50, 
+|2025-07-01 17:07:41| MAE - 0.0125 MSE - 0.0006 RMSE - 0.0245 MAPE - 0.0564 NMAE - 0.0433 NRMSE - 0.0753 Acc_10 - 0.9058 train_time - 10.1467
+|2025-07-01 17:08:46| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 51, 
+|2025-07-01 17:08:46| MAE - 0.0070 MSE - 0.0002 RMSE - 0.0139 MAPE - 0.0833 NMAE - 0.0457 NRMSE - 0.0673 Acc_10 - 0.8610 train_time - 24.2393
+|2025-07-01 17:10:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 52, 
+|2025-07-01 17:10:10| MAE - 0.0061 MSE - 0.0001 RMSE - 0.0097 MAPE - 0.0954 NMAE - 0.0515 NRMSE - 0.0587 Acc_10 - 0.7417 train_time - 38.4528
+|2025-07-01 17:11:01| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 53, 
+|2025-07-01 17:11:01| MAE - 0.0055 MSE - 0.0001 RMSE - 0.0091 MAPE - 0.0286 NMAE - 0.0235 NRMSE - 0.0309 Acc_10 - 0.9750 train_time - 16.9918
+|2025-07-01 17:11:59| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 54, 
+|2025-07-01 17:11:59| MAE - 0.0074 MSE - 0.0002 RMSE - 0.0123 MAPE - 0.0963 NMAE - 0.0627 NRMSE - 0.0799 Acc_10 - 0.7462 train_time - 18.5597
+|2025-07-01 17:13:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 55, 
+|2025-07-01 17:13:10| MAE - 0.0062 MSE - 0.0001 RMSE - 0.0101 MAPE - 0.0710 NMAE - 0.0545 NRMSE - 0.0523 Acc_10 - 0.7813 train_time - 24.5429
+|2025-07-01 17:15:30| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 56, 
+|2025-07-01 17:15:30| MAE - 0.0041 MSE - 0.0000 RMSE - 0.0069 MAPE - 0.0548 NMAE - 0.0374 NRMSE - 0.0455 Acc_10 - 0.8721 train_time - 85.7738
+|2025-07-01 17:16:28| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 57, 
+|2025-07-01 17:16:28| MAE - 0.0053 MSE - 0.0001 RMSE - 0.0083 MAPE - 0.0604 NMAE - 0.0272 NRMSE - 0.0337 Acc_10 - 0.9254 train_time - 19.9782
+|2025-07-01 17:17:16| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 58, 
+|2025-07-01 17:17:16| MAE - 0.0090 MSE - 0.0004 RMSE - 0.0187 MAPE - 0.0321 NMAE - 0.0318 NRMSE - 0.0556 Acc_10 - 0.9481 train_time - 14.9388
+|2025-07-01 17:19:33| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 59, 
+|2025-07-01 17:19:33| MAE - 0.0057 MSE - 0.0001 RMSE - 0.0098 MAPE - 0.0744 NMAE - 0.0460 NRMSE - 0.0549 Acc_10 - 0.8105 train_time - 80.7149
+|2025-07-01 17:19:59| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 60, 
+|2025-07-01 17:19:59| MAE - 0.0273 MSE - 0.0015 RMSE - 0.0393 MAPE - 0.0723 NMAE - 0.0664 NRMSE - 0.0827 Acc_10 - 0.7610 train_time - 4.5326
+|2025-07-01 17:21:01| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 61, 
+|2025-07-01 17:21:01| MAE - 0.0113 MSE - 0.0003 RMSE - 0.0165 MAPE - 0.0649 NMAE - 0.0383 NRMSE - 0.0445 Acc_10 - 0.8546 train_time - 20.0853
+|2025-07-01 17:21:47| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 62, 
+|2025-07-01 17:21:47| MAE - 0.0099 MSE - 0.0003 RMSE - 0.0165 MAPE - 0.0403 NMAE - 0.0323 NRMSE - 0.0418 Acc_10 - 0.9182 train_time - 13.8463
+|2025-07-01 17:23:30| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 63, 
+|2025-07-01 17:23:30| MAE - 0.0037 MSE - 0.0001 RMSE - 0.0078 MAPE - 0.1145 NMAE - 0.0371 NRMSE - 0.0433 Acc_10 - 0.7302 train_time - 50.3331
+|2025-07-01 17:24:19| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 64, 
+|2025-07-01 17:24:19| MAE - 0.0072 MSE - 0.0001 RMSE - 0.0098 MAPE - 0.0603 NMAE - 0.0319 NRMSE - 0.0311 Acc_10 - 0.8651 train_time - 13.0563
+|2025-07-01 17:25:13| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 65, 
+|2025-07-01 17:25:13| MAE - 0.0061 MSE - 0.0002 RMSE - 0.0125 MAPE - 0.0175 NMAE - 0.0156 NRMSE - 0.0302 Acc_10 - 0.9708 train_time - 19.5862
+|2025-07-01 17:26:27| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 66, 
+|2025-07-01 17:26:27| MAE - 0.0141 MSE - 0.0425 RMSE - 0.2061 MAPE - 0.2179 NMAE - 0.0747 NRMSE - 0.3539 Acc_10 - 0.7898 train_time - 30.4951
+|2025-07-01 17:27:37| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 67, 
+|2025-07-01 17:27:37| MAE - 0.0062 MSE - 0.0001 RMSE - 0.0111 MAPE - 0.0533 NMAE - 0.0317 NRMSE - 0.0423 Acc_10 - 0.9116 train_time - 26.5879
+|2025-07-01 17:28:13| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 68, 
+|2025-07-01 17:28:13| MAE - 0.0079 MSE - 0.0001 RMSE - 0.0120 MAPE - 0.0337 NMAE - 0.0260 NRMSE - 0.0329 Acc_10 - 0.9443 train_time - 8.1837
+|2025-07-01 17:28:53| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 69, 
+|2025-07-01 17:28:53| MAE - 0.0107 MSE - 0.0003 RMSE - 0.0166 MAPE - 0.0333 NMAE - 0.0279 NRMSE - 0.0362 Acc_10 - 0.9488 train_time - 8.8661
+|2025-07-01 17:29:48| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 70, 
+|2025-07-01 17:29:48| MAE - 0.0083 MSE - 0.0002 RMSE - 0.0138 MAPE - 0.0645 NMAE - 0.0334 NRMSE - 0.0418 Acc_10 - 0.8797 train_time - 13.0357
+|2025-07-01 17:30:57| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 72, 
+|2025-07-01 17:30:57| MAE - 0.0099 MSE - 0.0003 RMSE - 0.0173 MAPE - 0.0446 NMAE - 0.0344 NRMSE - 0.0484 Acc_10 - 0.8954 train_time - 22.9814
+
+|2025-07-01 17:32:14| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 74, 
+|2025-07-01 17:32:14| MAE - 0.0100 MSE - 0.0004 RMSE - 0.0191 MAPE - 23.8361 NMAE - 0.0260 NRMSE - 0.0389 Acc_10 - 0.9048 train_time - 9.6048
+|2025-07-01 17:33:07| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 76, 
+|2025-07-01 17:33:07| MAE - 0.0109 MSE - 0.0004 RMSE - 0.0205 MAPE - 0.0411 NMAE - 0.0403 NRMSE - 0.0616 Acc_10 - 0.9202 train_time - 13.2231
+|2025-07-01 17:33:57| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 77, 
+|2025-07-01 17:33:57| MAE - 0.0265 MSE - 0.0013 RMSE - 0.0367 MAPE - 0.1063 NMAE - 0.0696 NRMSE - 0.0795 Acc_10 - 0.6825 train_time - 12.7251
+|2025-07-01 17:34:47| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 78, 
+|2025-07-01 17:34:47| MAE - 0.0124 MSE - 0.0005 RMSE - 0.0229 MAPE - 0.0550 NMAE - 0.0381 NRMSE - 0.0578 Acc_10 - 0.8737 train_time - 14.5434
+|2025-07-01 17:35:31| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 79, 
+|2025-07-01 17:35:31| MAE - 0.0111 MSE - 0.0002 RMSE - 0.0151 MAPE - 0.0458 NMAE - 0.0350 NRMSE - 0.0395 Acc_10 - 0.9049 train_time - 11.8521
+|2025-07-01 17:36:39| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 80, 
+|2025-07-01 17:36:39| MAE - 0.0096 MSE - 0.0002 RMSE - 0.0151 MAPE - 0.0424 NMAE - 0.0371 NRMSE - 0.0512 Acc_10 - 0.9154 train_time - 27.4608
+|2025-07-01 17:37:20| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 81, 
+|2025-07-01 17:37:20| MAE - 0.0229 MSE - 0.0008 RMSE - 0.0290 MAPE - 0.0638 NMAE - 0.0301 NRMSE - 0.0337 Acc_10 - 0.8030 train_time - 7.9536
+|2025-07-01 17:38:05| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 82, 
+|2025-07-01 17:38:05| MAE - 0.0068 MSE - 0.0002 RMSE - 0.0141 MAPE - 0.0294 NMAE - 0.0324 NRMSE - 0.0556 Acc_10 - 0.9562 train_time - 13.0301
+|2025-07-01 17:38:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 83, 
+|2025-07-01 17:38:35| MAE - 0.0119 MSE - 0.0004 RMSE - 0.0190 MAPE - 3.2959 NMAE - 0.0372 NRMSE - 0.0459 Acc_10 - 0.6714 train_time - 5.2455
+|2025-07-01 17:39:17| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 84, 
+|2025-07-01 17:39:17| MAE - 0.0141 MSE - 0.0004 RMSE - 0.0199 MAPE - 0.0311 NMAE - 0.0239 NRMSE - 0.0315 Acc_10 - 0.9584 train_time - 10.0430
+|2025-07-01 17:40:49| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 85, 
+|2025-07-01 17:40:49| MAE - 0.0084 MSE - 0.0002 RMSE - 0.0128 MAPE - 0.0584 NMAE - 0.0405 NRMSE - 0.0462 Acc_10 - 0.8624 train_time - 41.5402
+|2025-07-01 17:42:46| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 86, 
+|2025-07-01 17:42:46| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0109 MAPE - 0.0568 NMAE - 0.0428 NRMSE - 0.0565 Acc_10 - 0.8532 train_time - 57.6253
+|2025-07-01 17:44:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 87, 
+|2025-07-01 17:44:10| MAE - 0.0069 MSE - 0.0001 RMSE - 0.0113 MAPE - 0.0529 NMAE - 0.0411 NRMSE - 0.0495 Acc_10 - 0.8747 train_time - 41.7793
+|2025-07-01 17:44:46| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 88, 
+|2025-07-01 17:44:46| MAE - 0.0082 MSE - 0.0002 RMSE - 0.0145 MAPE - 0.0389 NMAE - 0.0337 NRMSE - 0.0458 Acc_10 - 0.9295 train_time - 9.7777
+|2025-07-01 17:45:37| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 89, 
+|2025-07-01 17:45:37| MAE - 0.0057 MSE - 0.0001 RMSE - 0.0113 MAPE - 0.1709 NMAE - 0.0249 NRMSE - 0.0332 Acc_10 - 0.7167 train_time - 20.0194
+|2025-07-01 17:46:13| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 90, 
+|2025-07-01 17:46:13| MAE - 0.0114 MSE - 0.0003 RMSE - 0.0178 MAPE - 0.0481 NMAE - 0.0365 NRMSE - 0.0459 Acc_10 - 0.9007 train_time - 7.5448
+|2025-07-01 17:47:11| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 91, 
+|2025-07-01 17:47:11| MAE - 0.0050 MSE - 0.0001 RMSE - 0.0094 MAPE - 0.0379 NMAE - 0.0237 NRMSE - 0.0312 Acc_10 - 0.9459 train_time - 19.8586
+|2025-07-01 17:47:39| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 92, 
+|2025-07-01 17:47:39| MAE - 0.0311 MSE - 0.0026 RMSE - 0.0505 MAPE - 0.0972 NMAE - 0.0518 NRMSE - 0.0762 Acc_10 - 0.8117 train_time - 4.7754
+|2025-07-01 17:48:20| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 93, 
+|2025-07-01 17:48:20| MAE - 0.0073 MSE - 0.0001 RMSE - 0.0115 MAPE - 0.0251 NMAE - 0.0210 NRMSE - 0.0284 Acc_10 - 0.9737 train_time - 10.1200
+|2025-07-01 17:50:05| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 94, 
+|2025-07-01 17:50:05| MAE - 0.0051 MSE - 0.0001 RMSE - 0.0087 MAPE - 0.0577 NMAE - 0.0407 NRMSE - 0.0494 Acc_10 - 0.8601 train_time - 48.3574
+|2025-07-01 17:50:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 95, 
+|2025-07-01 17:50:35| MAE - 0.0111 MSE - 0.0003 RMSE - 0.0178 MAPE - 0.0409 NMAE - 0.0270 NRMSE - 0.0390 Acc_10 - 0.9315 train_time - 6.1686
+|2025-07-01 17:52:05| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 96, 
+|2025-07-01 17:52:05| MAE - nan MSE - nan RMSE - nan MAPE - nan NMAE - nan NRMSE - nan Acc_10 - 0.0000 train_time - 42.9198
+|2025-07-01 17:52:41| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 97, 
+|2025-07-01 17:52:41| MAE - 0.0162 MSE - 0.0006 RMSE - 0.0237 MAPE - 0.0498 NMAE - 0.0343 NRMSE - 0.0423 Acc_10 - 0.8717 train_time - 7.4474
+|2025-07-01 17:54:30| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 98, 
+|2025-07-01 17:54:30| MAE - 0.0042 MSE - 0.0000 RMSE - 0.0067 MAPE - 0.1924 NMAE - 0.0537 NRMSE - 0.0585 Acc_10 - 0.7518 train_time - 62.4161
+|2025-07-01 17:55:00| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 99, 
+|2025-07-01 17:55:00| MAE - 0.0095 MSE - 0.0002 RMSE - 0.0150 MAPE - 0.0680 NMAE - 0.0415 NRMSE - 0.0546 Acc_10 - 0.8413 train_time - 5.8840
+|2025-07-01 17:55:38| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 100, 
+|2025-07-01 17:55:38| MAE - 0.0078 MSE - 0.0002 RMSE - 0.0130 MAPE - 0.0592 NMAE - 0.0360 NRMSE - 0.0425 Acc_10 - 0.8353 train_time - 10.2350
+|2025-07-01 17:56:42| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 101, 
+|2025-07-01 17:56:42| MAE - 0.0064 MSE - 0.0001 RMSE - 0.0107 MAPE - 0.0613 NMAE - 0.0460 NRMSE - 0.0552 Acc_10 - 0.8420 train_time - 24.0553
+|2025-07-01 17:57:47| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 102, 
+|2025-07-01 17:57:47| MAE - 0.0140 MSE - 0.0004 RMSE - 0.0196 MAPE - 364.9683 NMAE - 0.0668 NRMSE - 0.0747 Acc_10 - 0.6585 train_time - 24.9190
+|2025-07-01 17:58:30| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 103, 
+|2025-07-01 17:58:30| MAE - 0.0050 MSE - 0.0001 RMSE - 0.0073 MAPE - 1.0097 NMAE - 0.0296 NRMSE - 0.0256 Acc_10 - 0.6448 train_time - 8.6726
+|2025-07-01 17:59:37| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 104, 
+|2025-07-01 17:59:37| MAE - 0.0080 MSE - 0.0002 RMSE - 0.0123 MAPE - 0.0525 NMAE - 0.0421 NRMSE - 0.0518 Acc_10 - 0.8682 train_time - 25.8900
+|2025-07-01 18:00:03| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 105, 
+|2025-07-01 18:00:03| MAE - 0.0207 MSE - 0.0010 RMSE - 0.0311 MAPE - 0.0427 NMAE - 0.0335 NRMSE - 0.0456 Acc_10 - 0.9001 train_time - 3.9914
+|2025-07-01 18:00:52| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 106, 
+|2025-07-01 18:00:52| MAE - 0.0128 MSE - 0.0004 RMSE - 0.0203 MAPE - 0.0464 NMAE - 0.0297 NRMSE - 0.0408 Acc_10 - 0.8994 train_time - 12.6159
+|2025-07-01 18:01:17| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 107, 
+|2025-07-01 18:01:17| MAE - 0.0076 MSE - 0.0001 RMSE - 0.0108 MAPE - 0.0454 NMAE - 0.0238 NRMSE - 0.0263 Acc_10 - 0.8963 train_time - 4.1861
+|2025-07-01 18:01:49| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 108, 
+|2025-07-01 18:01:49| MAE - 0.0183 MSE - 0.0010 RMSE - 0.0322 MAPE - 0.0451 NMAE - 0.0308 NRMSE - 0.0488 Acc_10 - 0.9132 train_time - 6.0444
+|2025-07-01 18:02:44| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 109, 
+|2025-07-01 18:02:44| MAE - 0.0061 MSE - 0.0001 RMSE - 0.0088 MAPE - 0.0113 NMAE - 0.0105 NRMSE - 0.0144 Acc_10 - 0.9939 train_time - 18.4015
+|2025-07-01 18:03:08| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 110, 
+|2025-07-01 18:03:08| MAE - 0.0130 MSE - 0.0004 RMSE - 0.0188 MAPE - 0.0351 NMAE - 0.0188 NRMSE - 0.0240 Acc_10 - 0.9497 train_time - 3.7808
+|2025-07-01 18:03:48| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 111, 
+|2025-07-01 18:03:48| MAE - 0.0066 MSE - 0.0001 RMSE - 0.0105 MAPE - 0.0532 NMAE - 0.0390 NRMSE - 0.0465 Acc_10 - 0.8576 train_time - 11.9579
+|2025-07-01 18:04:17| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 112, 
+|2025-07-01 18:04:17| MAE - 0.0181 MSE - 0.0007 RMSE - 0.0268 MAPE - 31.3746 NMAE - 0.0465 NRMSE - 0.0584 Acc_10 - 0.7889 train_time - 5.1474
+|2025-07-01 18:04:46| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 113, 
+|2025-07-01 18:04:46| MAE - 0.0262 MSE - 0.0013 RMSE - 0.0363 MAPE - 0.0590 NMAE - 0.0482 NRMSE - 0.0627 Acc_10 - 0.8704 train_time - 6.4761
+|2025-07-01 18:05:52| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 114, 
+|2025-07-01 18:05:52| MAE - 0.0051 MSE - 0.0001 RMSE - 0.0092 MAPE - 0.0413 NMAE - 0.0378 NRMSE - 0.0531 Acc_10 - 0.9015 train_time - 25.6266
+|2025-07-01 18:07:20| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 115, 
+|2025-07-01 18:07:20| MAE - 0.0052 MSE - 0.0001 RMSE - 0.0101 MAPE - 0.0473 NMAE - 0.0372 NRMSE - 0.0547 Acc_10 - 0.8950 train_time - 41.6862
+|2025-07-01 18:09:18| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 116, 
+|2025-07-01 18:09:18| MAE - 0.0050 MSE - 0.0001 RMSE - 0.0084 MAPE - 0.0913 NMAE - 0.0556 NRMSE - 0.0678 Acc_10 - 0.7790 train_time - 63.3991
+|2025-07-01 18:10:26| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 117, 
+|2025-07-01 18:10:26| MAE - 0.0127 MSE - 0.0003 RMSE - 0.0183 MAPE - 0.0512 NMAE - 0.0458 NRMSE - 0.0578 Acc_10 - 0.8661 train_time - 27.9119
+|2025-07-01 18:12:09| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 118, 
+|2025-07-01 18:12:09| MAE - 0.0041 MSE - 0.0000 RMSE - 0.0069 MAPE - 0.0596 NMAE - 0.0420 NRMSE - 0.0502 Acc_10 - 0.8505 train_time - 57.1559
+|2025-07-01 18:14:26| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 119, 
+|2025-07-01 18:14:26| MAE - 0.0031 MSE - 0.0000 RMSE - 0.0055 MAPE - 0.1080 NMAE - 0.0447 NRMSE - 0.0493 Acc_10 - 0.7979 train_time - 86.3020
+|2025-07-01 18:14:43| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 120, 
+|2025-07-01 18:14:43| MAE - 0.0290 MSE - 0.0018 RMSE - 0.0420 MAPE - 0.0722 NMAE - 0.0543 NRMSE - 0.0699 Acc_10 - 0.8038 train_time - 2.1643
+|2025-07-01 18:15:07| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 121, 
+|2025-07-01 18:15:07| MAE - 0.0093 MSE - 0.0002 RMSE - 0.0142 MAPE - 0.0710 NMAE - 0.0457 NRMSE - 0.0481 Acc_10 - 0.7790 train_time - 4.5058
+|2025-07-01 18:15:38| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 122, 
+|2025-07-01 18:15:38| MAE - 0.0137 MSE - 0.0006 RMSE - 0.0247 MAPE - 0.0295 NMAE - 0.0290 NRMSE - 0.0491 Acc_10 - 0.9471 train_time - 6.2547
+|2025-07-01 18:16:23| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 123, 
+|2025-07-01 18:16:23| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0107 MAPE - 0.0303 NMAE - 0.0242 NRMSE - 0.0343 Acc_10 - 0.9550 train_time - 14.6773
+|2025-07-01 18:17:21| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 124, 
+|2025-07-01 18:17:21| MAE - 0.0037 MSE - 0.0000 RMSE - 0.0066 MAPE - 0.0729 NMAE - 0.0441 NRMSE - 0.0454 Acc_10 - 0.8132 train_time - 21.0630
+|2025-07-01 18:18:10| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 125, 
+|2025-07-01 18:18:10| MAE - 0.0113 MSE - 0.0003 RMSE - 0.0177 MAPE - 0.0460 NMAE - 0.0378 NRMSE - 0.0497 Acc_10 - 0.8991 train_time - 14.7672
+|2025-07-01 18:18:34| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 126, 
+|2025-07-01 18:18:34| MAE - 0.0185 MSE - 0.0010 RMSE - 0.0321 MAPE - 0.0320 NMAE - 0.0247 NRMSE - 0.0406 Acc_10 - 0.9251 train_time - 3.9621
+|2025-07-01 18:19:19| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 127, 
+|2025-07-01 18:19:19| MAE - 0.0191 MSE - 0.0010 RMSE - 0.0314 MAPE - 0.0636 NMAE - 0.0343 NRMSE - 0.0504 Acc_10 - 0.8740 train_time - 10.6132
+|2025-07-01 18:20:04| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 128, 
+|2025-07-01 18:20:04| MAE - 0.0094 MSE - 0.0004 RMSE - 0.0194 MAPE - 0.2094 NMAE - 0.0287 NRMSE - 0.0378 Acc_10 - 0.6504 train_time - 9.3760
+|2025-07-01 18:20:35| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 129, 
+|2025-07-01 18:20:35| MAE - 0.0052 MSE - 0.0001 RMSE - 0.0106 MAPE - 931.8356 NMAE - 0.0212 NRMSE - 0.0314 Acc_10 - 0.8704 train_time - 6.1893
+|2025-07-01 18:21:45| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 130, 
+|2025-07-01 18:21:45| MAE - 0.0089 MSE - 0.0003 RMSE - 0.0159 MAPE - 0.0667 NMAE - 0.0323 NRMSE - 0.0422 Acc_10 - 0.8605 train_time - 23.8008
+|2025-07-01 18:22:41| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 131, 
+|2025-07-01 18:22:41| MAE - 0.0133 MSE - 0.0006 RMSE - 0.0248 MAPE - 0.0724 NMAE - 0.0317 NRMSE - 0.0509 Acc_10 - 0.9185 train_time - 16.8367
+|2025-07-01 18:23:14| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 132, 
+|2025-07-01 18:23:14| MAE - 0.0161 MSE - 0.0005 RMSE - 0.0221 MAPE - 0.0770 NMAE - 0.0632 NRMSE - 0.0763 Acc_10 - 0.7675 train_time - 8.3732
+|2025-07-01 18:24:14| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 133, 
+|2025-07-01 18:24:14| MAE - 0.0147 MSE - 0.0004 RMSE - 0.0202 MAPE - 0.0597 NMAE - 0.0526 NRMSE - 0.0630 Acc_10 - 0.8319 train_time - 19.3904
+|2025-07-01 18:24:34| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 134, 
+|2025-07-01 18:24:34| MAE - 0.0217 MSE - 0.0017 RMSE - 0.0407 MAPE - 0.0545 NMAE - 0.0347 NRMSE - 0.0602 Acc_10 - 0.8895 train_time - 2.8574
+|2025-07-01 18:25:18| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 135, 
+|2025-07-01 18:25:18| MAE - 0.0098 MSE - 0.0002 RMSE - 0.0147 MAPE - 0.1036 NMAE - 0.0311 NRMSE - 0.0371 Acc_10 - 0.8981 train_time - 10.6917
+|2025-07-01 18:25:54| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 136, 
+|2025-07-01 18:25:54| MAE - 0.0064 MSE - 0.0001 RMSE - 0.0089 MAPE - 0.0423 NMAE - 0.0277 NRMSE - 0.0293 Acc_10 - 0.9007 train_time - 9.6456
+|2025-07-01 18:26:53| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 137, 
+|2025-07-01 18:26:53| MAE - 0.0115 MSE - 0.0007 RMSE - 0.0260 MAPE - 0.0509 NMAE - 0.0530 NRMSE - 0.0874 Acc_10 - 0.8908 train_time - 18.8349
+|2025-07-01 18:27:21| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 138, 
+|2025-07-01 18:27:21| MAE - 0.0091 MSE - 0.0002 RMSE - 0.0144 MAPE - 0.1615 NMAE - 0.0386 NRMSE - 0.0418 Acc_10 - 0.8794 train_time - 5.0328
+|2025-07-01 18:28:56| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 139, 
+|2025-07-01 18:28:56| MAE - 0.0051 MSE - 0.0001 RMSE - 0.0082 MAPE - 0.0495 NMAE - 0.0348 NRMSE - 0.0430 Acc_10 - 0.9125 train_time - 48.7778
+|2025-07-01 18:30:22| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 140, 
+|2025-07-01 18:30:22| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0089 MAPE - 9345.5880 NMAE - 0.0430 NRMSE - 0.0502 Acc_10 - 0.8612 train_time - 38.9696
+|2025-07-01 18:31:21| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 141, 
+|2025-07-01 18:31:21| MAE - 0.0097 MSE - 0.0003 RMSE - 0.0176 MAPE - 0.0696 NMAE - 0.0447 NRMSE - 0.0561 Acc_10 - 0.8617 train_time - 16.6266
+|2025-07-01 18:33:11| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 142, 
+|2025-07-01 18:33:11| MAE - 0.0063 MSE - 0.0001 RMSE - 0.0103 MAPE - 0.0581 NMAE - 0.0456 NRMSE - 0.0557 Acc_10 - 0.8554 train_time - 55.5981
+|2025-07-01 18:34:08| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 143, 
+|2025-07-01 18:34:08| MAE - 0.0100 MSE - 0.0002 RMSE - 0.0151 MAPE - 0.1110 NMAE - 0.0587 NRMSE - 0.0617 Acc_10 - 0.6728 train_time - 20.3792
+|2025-07-01 18:35:42| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 144, 
+|2025-07-01 18:35:42| MAE - 0.0063 MSE - 0.0001 RMSE - 0.0106 MAPE - 0.0659 NMAE - 0.0443 NRMSE - 0.0533 Acc_10 - 0.8305 train_time - 45.4416
+|2025-07-01 18:36:08| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 145, 
+|2025-07-01 18:36:08| MAE - 0.0169 MSE - 0.0006 RMSE - 0.0254 MAPE - 0.0467 NMAE - 0.0328 NRMSE - 0.0421 Acc_10 - 0.8912 train_time - 4.6459
+|2025-07-01 18:36:53| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 146, 
+|2025-07-01 18:36:53| MAE - 0.0138 MSE - 0.0004 RMSE - 0.0209 MAPE - 0.0850 NMAE - 0.0348 NRMSE - 0.0439 Acc_10 - 0.8812 train_time - 11.0137
+|2025-07-01 18:37:57| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 148, 
+|2025-07-01 18:37:57| MAE - 0.0106 MSE - 0.0002 RMSE - 0.0156 MAPE - 0.0545 NMAE - 0.0429 NRMSE - 0.0504 Acc_10 - 0.8665 train_time - 14.7305
+|2025-07-01 18:39:00| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 149, 
+|2025-07-01 18:39:00| MAE - 0.0073 MSE - 0.0002 RMSE - 0.0126 MAPE - 0.0417 NMAE - 0.0394 NRMSE - 0.0539 Acc_10 - 0.9150 train_time - 23.0145

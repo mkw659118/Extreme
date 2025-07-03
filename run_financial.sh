@@ -3,29 +3,26 @@
 
 #all_idx=(0 23 28 30 36 37 55 64 66 72 79 120)
 #for i in "${all_idx[@]}"
-for i in {0..149}
-do
-    python run_train.py --idx $i
-done
+#for i in {0..149}
+#do
+#    python run_train.py --idx $i --pred_len 7
+#done
 
-python run_service.py
-# pred_lens=(12 96 192 336 720)
-# exp_names=(MLPConfig RNNConfig LSTMConfig GRUConfig CrossformerConfig TimesNetConfig)
+python run_service.py --pred_len 7
 
-# # 跑对手的模型
-# for exp in "${exp_names[@]}"
+# for i in {0..149}
 # do
-#   for len in "${pred_lens[@]}"
-#   do
-#     echo "run_train.py --exp_name $exp --retrain 1 --pred_len $len"
-#     python -u run_train.py --exp_name "$exp" --retrain 1 --pred_len "$len"
-#   done
+#     python run_train.py --idx $i --seq_len 36 --pred_len 30
 # done
 
-# # 跑自己的模型
-# exp_names=(TimeSeriesConfig)
-# for len in "${pred_lens[@]}"
-#   do
-#     echo "run_train.py --exp_name $exp --retrain 1 --pred_len $len"
-#     python -u run_train.py --exp_name "$exp" --retrain 1 --pred_len "$len"
-#   done
+
+# for i in {0..149}
+# do
+#     python run_train.py --idx $i --seq_len 96 --pred_len 60
+# done
+
+# for i in {0..149}
+# do
+    # python run_train.py --idx $i --seq_len 96 --pred_len 90
+# done
+# python run_service.py

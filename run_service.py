@@ -90,7 +90,7 @@ def get_sql_format_data(pred_value, cleaned_input):
     now_df = []
     cleaned_input = cleaned_input[0, :, :]
     for j in range(pred_value.shape[1]):
-        idx = np.random.randint(0, 10)  # 生成一个 0 到 9（包含 0，不包含 10）之间的整数
+        idx = config.idx
         fund_code = cleaned_input[j][0]
         forcast_date = current_date
         pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'
@@ -133,7 +133,7 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    drop_sql_temp(table_name)
+    # drop_sql_temp(table_name)
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
@@ -183,5 +183,5 @@ if __name__ == '__main__':
 
 
     # current_date = '2025-4-15'
-    current_date = '2025-7-01'
+    current_date = '2025-7-02'
     pred_value = start_server(current_date)

@@ -4,13 +4,14 @@ import pickle
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 数据库配置
-with open('./datasets/sql_token.pkl', 'rb') as f:
-    DB_URI = pickle.load(f)
-engine = create_engine(DB_URI)
 
 
 def get_all_fund_list():
+    # 数据库配置
+    with open('./datasets/sql_token.pkl', 'rb') as f:
+        DB_URI = pickle.load(f)
+    engine = create_engine(DB_URI)
+
     create_date = '2023-7-13'
     date_list = create_date.split('-')
     base_date = str(int(date_list[0]) - 1) + '-' + date_list[1] + '-' + date_list[2]  # 筛选成立1年以上的基金
@@ -64,6 +65,9 @@ def get_all_fund_list():
 
 
 def query_fund_data(fund, start_date, end_date):
+    with open('./datasets/sql_token.pkl', 'rb') as f:
+        DB_URI = pickle.load(f)
+    engine = create_engine(DB_URI)
     """查询数据库中某支基金的净值数据
         SELECT fund_code, date, nav, accnav, adj_nav
     """
@@ -85,6 +89,9 @@ def query_fund_data(fund, start_date, end_date):
         return pd.DataFrame()
 
 def query_fund_data(fund, start_date, end_date):
+    with open('./datasets/sql_token.pkl', 'rb') as f:
+        DB_URI = pickle.load(f)
+    engine = create_engine(DB_URI)
     """查询数据库中某支基金的净值数据
         SELECT fund_code, date, nav, accnav, adj_nav
     """
