@@ -74,15 +74,47 @@ def get_pretrained_model(config):
     # model.load_state_dict(torch.load('./checkpoints/ours/Model_ours_Dataset_financial_Multi_round_0.pt', weights_only=False))
     return model 
 
+
+def constrain_nav_prediction(predictions, bar=0.05, scale=0.9):
+    """
+    检测单位净值预测中是否存在超过bar的相邻涨跌幅，
+    如果是，则整条基金的净值序列按相对首日值重新缩放（温和调整）
+
+    参数：
+    - predictions: np.ndarray [7, 64]，表示64支基金7天的预测单位净值
+    - bar: float，单位净值日涨跌幅上限（如0.05表示5%）
+    - scale: float，检测异常后，使用的趋势缩放系数（如0.9）
+
+    返回：
+    - adjusted: np.ndarray [7, 64]，处理后的单位净值预测
+    - mask: np.ndarray [64]，表示哪些基金被缩放（True为缩放）
+    """
+    adjusted = predictions.copy()
+    mask = np.zeros(predictions.shape[1], dtype=bool)
+    for fund_idx in range(predictions.shape[1]):
+        nav_series = predictions[:, fund_idx]
+        # 计算相邻涨跌幅
+        returns = nav_series[1:] / nav_series[:-1] - 1
+        if np.any(np.abs(returns) > bar):
+            # 以首日为锚点，重构温和曲线
+            base = nav_series[0]
+            relative_change = (nav_series - base) / base
+            softened = base * (1 + relative_change * scale)
+            adjusted[:, fund_idx] = softened
+            mask[fund_idx] = True
+    return adjusted, mask
+
+
 def predict_torch_model(model, history_input, config):
     # 因为我加了时间戳特征
     x = history_input[:, :, -3:]
     # unsqueeze 代表 batch size = 1
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
     pred_value = model(x, None, None).squeeze(0).detach().numpy()
-
     # 因为模型改成了多变量预测多变量，按照预测结果的最后一个变量作为预测值
     pred_value = pred_value[:, :, -1]
+    pred_value = np.abs(pred_value)
+    pred_value, _ = constrain_nav_prediction(pred_value)
     return pred_value
 
 def get_sql_format_data(pred_value, cleaned_input):
@@ -137,7 +169,6 @@ def start_server(current_date, table_name = 'temp_sql'):
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
-    
     
     with open('./results/func_code_to_label_40_balanced.pkl', 'rb') as f:
         data = np.array(pickle.load(f))
