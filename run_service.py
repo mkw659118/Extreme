@@ -170,7 +170,7 @@ def start_server(current_date, table_name = 'temp_sql'):
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
     
-    with open('./results/func_code_to_label_150.pkl', 'rb') as f:
+    with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
