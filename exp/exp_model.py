@@ -28,7 +28,6 @@ class Model(BasicModel):
         
         self.input_size = config.input_size
         self.hidden_size = config.rank
-
         if config.model == 'ours':
             self.model = TimeSeriesModel(self.input_size, config)
         # 2025年05月30日11:45:49 这里只使用了一层的Linear，效果：
@@ -72,10 +71,12 @@ class Model(BasicModel):
             self.model = Transformer2(
                 input_size=config.input_size,
                 d_model=config.d_model,
+                revin=config.revin,
                 num_heads=config.n_heads,
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
+                match_mode=config.match_mode,
             )
 
         elif config.model in ['rnn', 'lstm', 'gru']:

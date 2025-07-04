@@ -12,7 +12,8 @@ from layers.feedforward.moe import MoE
 from layers.att.self_attention import Attention
 from layers.feedforward.smoe import SparseMoE
 from einops import rearrange
-
+import layers.diffusion.gaussian_diffusion as gd
+from layers.diffusion.DNN import DNN
 from layers.revin import RevIN
 
 
@@ -216,16 +217,30 @@ class Transformer2(torch.nn.Module):
             )
         self.norm = get_norm(d_model, norm_method)
         self.projection = torch.nn.Linear(d_model, input_size)
-        # self.diffusion =
-        # self.reverse =
+        self.diffusion_loss = 0
+        self.diffusion = gd.GaussianDiffusion(
+                mean_type=gd.ModelMeanType.EPSILON,
+                noise_schedule='linear',
+                noise_scale=1,   # 何向南的做法就是把这里改成0.01
+                noise_min=0.0001,
+                noise_max=0.02,
+                steps=100,
+                device=torch.device('cuda')
+        )
+        self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len], out_dims=[input_size * seq_len, input_size * seq_len], emb_size=d_model).to(torch.device('cuda'))
 
-
-    def forward(self, x, x_mark=None):
+    def forward(self, x, x_mark=None,timesteps=None):
         # 在这里加扩散去噪，使得x变成一个新的x
-
         if self.revin:
             x = self.revin_layer(x, 'norm')
+
         # 在这里加扩散去噪，使得x变成一个新的x
+        raw_shape = x.shape
+        x = x.reshape(x.shape[0], -1)
+        diff_output = self.diffusion.training_losses(self.reverse, x, True)
+        x = diff_output["pred_xstart"]
+        x = x.reshape(raw_shape)
+        self.diffusion_loss = diff_output["loss"].mean()
 
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')

@@ -87,4 +87,5 @@ if __name__ == '__main__':
     # config = get_config('FinancialConfig')
     # config = get_config('TransformerConfig')
     config = get_config('Transformer2Config')
+    print(config)
     run(config)

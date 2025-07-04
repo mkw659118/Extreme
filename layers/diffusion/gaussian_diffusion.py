@@ -133,6 +133,7 @@ class GaussianDiffusion(nn.Module):
             x_t = x_start
 
         terms = {}
+        # ts = ts.unsqueeze(1).unsqueeze(2).expand(-1, x_t.shape[1], x_t.shape[2])
         model_output = model(x_t, ts)
         target = {
             ModelMeanType.START_X: x_start,
@@ -158,6 +159,11 @@ class GaussianDiffusion(nn.Module):
             weight = th.tensor([1.0] * len(target)).to(device)
 
         terms["loss"] = weight * loss
+
+        if self.mean_type == ModelMeanType.START_X:
+            terms["pred_xstart"] = model_output
+        else:
+            terms["pred_xstart"] = self._predict_xstart_from_eps(x_t, ts, model_output)
 
         # update Lt_history & Lt_count
         for t, loss in zip(ts, terms["loss"]):

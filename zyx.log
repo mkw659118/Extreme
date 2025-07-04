@@ -1606,3 +1606,9 @@
 |2025-07-01 18:37:57| MAE - 0.0106 MSE - 0.0002 RMSE - 0.0156 MAPE - 0.0545 NMAE - 0.0429 NRMSE - 0.0504 Acc_10 - 0.8665 train_time - 14.7305
 |2025-07-01 18:39:00| Dataset : FINANCIAL, Model : financial, Density : 0.700, d_model : 56, Seq_len : 16, Pred_len : 7, Idx : 149, 
 |2025-07-01 18:39:00| MAE - 0.0073 MSE - 0.0002 RMSE - 0.0126 MAPE - 0.0417 NMAE - 0.0394 NRMSE - 0.0539 Acc_10 - 0.9150 train_time - 23.0145
+|2025-07-03 15:25:27| Dataset : WEATHER, Model : transformer, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 96, 
+|2025-07-03 15:25:27| MAE - 0.2097 MSE - 0.1702 RMSE - 0.4125 MAPE - 12.2651 NMAE - 0.3444 NRMSE - 0.5160 Acc_10 - 0.0515 train_time - 10.1129
+|2025-07-04 11:02:41| Dataset : WEATHER, Model : transformer2, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 96, 
+|2025-07-04 11:02:41| MAE - 0.2097 MSE - 0.1702 RMSE - 0.4125 MAPE - 12.2651 NMAE - 0.3444 NRMSE - 0.5160 Acc_10 - 0.0515 train_time - 10.2428
+|2025-07-04 16:42:50| Dataset : WEATHER, Model : transformer2, Density : 0.700, d_model : 64, Seq_len : 96, Pred_len : 96, 
+|2025-07-04 16:42:50| MAE - 0.2044 MSE - 0.1656 RMSE - 0.4069 MAPE - 10.5801 NMAE - 0.3356 NRMSE - 0.5090 Acc_10 - 0.0526 train_time - 19.4877

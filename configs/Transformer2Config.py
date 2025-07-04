@@ -8,7 +8,7 @@ from configs.MainConfig import OtherConfig
 
 @dataclass
 class Transformer2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'transformer'
+    model: str = 'transformer2'
     bs: int = 32
     d_model: int = 64
     epochs: int = 20
@@ -20,6 +20,4 @@ class Transformer2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, Datase
     dropout: float = 0.1
     amp: bool = True
     match_mode: str = 'abc'
-
-
 

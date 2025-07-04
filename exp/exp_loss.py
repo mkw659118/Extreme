@@ -8,10 +8,12 @@ def compute_loss(model, pred, label):
     try:
         # for i in range(len(model.model.encoder.layers)):
         #     loss += model.model.encoder.layers[i][3].aux_loss
-        if model.config.dis_method == 'cosine':
-            loss += 1e-3 * model.distance(pred, label)
-        loss += 1e-3 * model.model.aux_loss
+        # if model.config.dis_method == 'cosine':
+        #     loss += 1e-3 * model.distance(pred, label)
+        # loss += 1e-3 * model.model.aux_loss
+        loss += model.diffusion_loss
     except:
         pass
+
 
     return loss
