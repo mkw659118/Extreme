@@ -242,6 +242,7 @@ class Transformer2(torch.nn.Module):
         x = x.reshape(raw_shape)
         self.diffusion_loss = diff_output["loss"].mean()
 
+
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
         x = self.predict_linear(x)
