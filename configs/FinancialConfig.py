@@ -9,15 +9,16 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     model: str = 'financial'
     bs: int = 16
     d_model: int = 32
-    epochs: int = 50
+    epochs: int = 100
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
-    patience: int = 5
+    patience: int = 10
     verbose: int = 5
     try_exp: int = 1
     dataset: str = 'financial'  # financial  weather
     scaler_method: str = 'global'
 
     multi_dataset: bool = False  # False True
+    spliter_ratio: str = '6:2:2'
 
     seq_len: int = 17
     pred_len: int = 7
@@ -31,7 +32,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     dis_method: str = 'None'
     fft: bool = False
     revin: bool = True
-    idx: int = 99
+    idx: int = 0
 
     # start_date: str = '2022-07-13'
     # end_date: str = '2023-07-13'

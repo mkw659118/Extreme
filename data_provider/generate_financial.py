@@ -162,7 +162,7 @@ def generate_data(start_date, end_date):
 
     # 线性处理方式
     for i, fund in enumerate(code_list):
-        df = query_fund_data(fund, start_date, end_date)
+        df = query_fund_data([fund], start_date, end_date)[fund]
         if df.empty:
             continue
         df = process_date_columns(df)

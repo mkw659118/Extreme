@@ -210,8 +210,5 @@ if __name__ == '__main__':
     plotter = MetricsPlotter(log_filename, config)
     log = Logger(log_filename, exper_detail, plotter, config)
     print("✅ 配置加载完成。")
-
-
-    # current_date = '2025-4-15'
-    current_date = '2025-7-02'
+    current_date = datetime.now().strftime('%Y-%m-%d')
     pred_value = start_server(current_date)

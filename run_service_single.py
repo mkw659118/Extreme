@@ -152,7 +152,8 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    drop_sql_temp(table_name)
+    if config.drop:
+        drop_sql_temp(table_name)
     print("✅ 配置加载完成。")
 
     print(f"\n📅 当前预测日期: {current_date}")
@@ -169,6 +170,9 @@ def start_server(current_date, table_name = 'temp_sql'):
             print(f"📊 获取基金组第 {i} 个基金，基金号为 {all_code_list[i]}")
 
             history_input = get_history_data(all_code_list[i], current_date, config)
+            if len(history_input) < 827: 
+                print('❗跳过，此基金长度过短，无法训练得到有效模型')
+                continue
             print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
 
             cleaned_input = check_input(history_input, config)
@@ -195,5 +199,5 @@ def start_server(current_date, table_name = 'temp_sql'):
 if __name__ == '__main__':
     config = get_config('FinancialConfig')
     # current_date = '2025-4-15'
-    current_date = '2025-7-02'
+    current_date = datetime.now().strftime('%Y-%m-%d')
     pred_value = start_server(current_date)

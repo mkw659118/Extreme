@@ -70,6 +70,8 @@ def single_dataset(config):
     now_fund_code = all_fund_code[config.idx]
     fund_dict = query_fund_data([now_fund_code], config.start_date, config.end_date)
     data = process_date_columns(fund_dict[now_fund_code])
+    if len(data) < 827: 
+        exit()
     # [n, d]
     x, y = data[:, :], data[:, -3:]
     x[:, -3:] = x[:, -3:].astype(np.float32)

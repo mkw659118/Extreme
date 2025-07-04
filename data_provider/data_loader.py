@@ -14,6 +14,8 @@ class DataModule:
         self.config = config
         self.path = config.path
         self.x, self.y, self.x_scaler, self.y_scaler = load_data(config)
+        self.x, self.y = self.x[:873], self.y[:873]
+
         if config.debug:
             self.x, self.y = self.x[:int(len(self.x) * 0.10)], self.y[:int(len(self.x) * 0.10)]
         self.train_x, self.train_y, self.valid_x, self.valid_y, self.test_x, self.test_y = self.get_split_dataset(self.x, self.y, config)
