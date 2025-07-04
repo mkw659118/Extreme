@@ -12,14 +12,6 @@ from data_provider.generate_financial import get_all_fund_list, generate_data, p
 from data_provider.data_scaler import get_scaler
 
 
-# 为了对齐实验，现在加上this one  20250513 15时47分
-def get_benchmark_code():
-    with open('./datasets/benchmark.pkl', 'rb') as f:
-        group = pickle.load(f)
-        group = group['stock-270000']
-    return group
-
-
 def get_group_idx(group_index):
     # with open('./results/func_code_to_label_150_balanced.pkl', 'rb') as f:
     with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
@@ -32,8 +24,9 @@ def get_group_idx(group_index):
 
 
 def multi_dataset(config):
-    # now_fund_code = get_benchmark_code()
     now_fund_code = get_group_idx(config.idx)
+    # now_fund_code = get_benchmark_code()
+    # now_fund_code = get_group_idx(config.idx)
     min_length = 1e9
     all_data = []
     fund_dict = query_fund_data(now_fund_code, config.start_date, config.end_date)
@@ -69,40 +62,19 @@ def multi_dataset(config):
     return x, y, x_scaler, y_scaler
 
 
-def get_financial_data(start_date, end_date, idx, config):
-    # fund_code = get_all_fund_list()[idx]
-    # 为了对齐实验，现在加上this one  20250513 15时47分
-    fund_code = get_benchmark_code()[idx]
-    try:
-        data = get_data(start_date, end_date, fund_code)
-        # data = process_fund(0, fund_code, config.start_date, config.end_date)
-    except Exception as e:
-        print(e)
-        generate_data(start_date, end_date)
-        data = get_data(start_date, end_date, fund_code)
 
-    data = data.astype(np.float32)
-
-    x, y = data, data[:, -1].astype(np.float32)
-    scaler = None
-
-    if not config.multi_dataset:
-        for i in range(len(input_keys)):
-            x[:, -i] = x[:, -i].astype(np.float32)
-            scaler = get_scaler(x[:, -i], config)
-            x[:, -i] = scaler.transform(x[:, -i])
-
-        scaler = get_scaler(y, config)
-        y = scaler.transform(y)
-
-    y = y.astype(np.float32)
-    # 构建
-    X_window, y_window = x, y
-    # X_window, y_window = create_window_dataset(x, y, config.seq_len, config.pred_len)
-    print(X_window.shape, y_window.shape)
-    return X_window, y_window, scaler
-
-
-
-
-
+def single_dataset(config):
+    # now_fund_code = get_group_idx(config.idx)
+    # 2025年07月04日20:06:51，这个代码数据库暂时有点问题
+    all_fund_code = get_all_fund_list()
+    now_fund_code = all_fund_code[config.idx]
+    fund_dict = query_fund_data([now_fund_code], config.start_date, config.end_date)
+    data = process_date_columns(fund_dict[now_fund_code])
+    # [n, d]
+    x, y = data[:, :], data[:, -3:]
+    x[:, -3:] = x[:, -3:].astype(np.float32)
+    x_scaler = get_scaler(x[:, -3:], config, 'minmax')
+    x[:, -3:] = x_scaler.transform(x[:, -3:])
+    y_scaler = get_scaler(y, config, 'minmax')
+    y = y_scaler.transform(y)
+    return x, y, x_scaler, y_scaler

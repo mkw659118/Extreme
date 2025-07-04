@@ -3,7 +3,7 @@
 # 根据需要来改变这里的内容
 
 from data_provider.generate_financial import generate_data
-from data_provider.get_financial import get_financial_data, multi_dataset
+from data_provider.get_financial import *
 from data_provider.get_ts import get_ts
 from data_provider.data_getitem import TensorDataset, TimeSeriesDataset
 
@@ -12,7 +12,7 @@ def load_data(config):
         if config.multi_dataset:
             x, y, x_scaler, y_scaler = multi_dataset(config)
         else:
-            x, y, x_scaler, y_scaler = get_financial_data(config.start_date, config.end_date, config.idx, config)
+            x, y, x_scaler, y_scaler = single_dataset(config)
     elif config.dataset == 'weather':
         x, y, x_scaler, y_scaler = get_ts(config.dataset, config)
     return x, y, x_scaler, y_scaler

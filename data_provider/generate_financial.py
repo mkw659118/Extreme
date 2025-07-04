@@ -61,6 +61,10 @@ def get_all_fund_list():
     df = df.drop(['tu_invest_type'], axis=1)
     df = df.drop(['market'], axis=1)
     code_list = df['fund_code']
+
+    # 2025年07月04日20:10:32，暂时用这里
+    with open('./datasets/all_code_list.pkl', 'rb') as f:
+        code_list = pickle.load(f)
     return code_list
 
 

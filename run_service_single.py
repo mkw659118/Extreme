@@ -1,6 +1,6 @@
 import torch
 from exp.exp_model import Model
-from data_provider.generate_financial import process_date_columns, query_fund_data
+from data_provider.generate_financial import get_all_fund_list, process_date_columns, query_fund_data
 from data_provider.get_financial import get_group_idx
 from run_train import get_experiment_name
 from utils.exp_config import get_config
@@ -47,31 +47,22 @@ def get_start_date(end_date: str, window_size: int) -> str:
     start_dt = end_dt - timedelta(days=window_size)
     return start_dt.strftime("%Y-%m-%d")
 
-def get_history_data(get_group_idx, current_date, config):
-    all_history_input = []
+def get_history_data(now_code, current_date, config):
     start_date = get_start_date(current_date, window_size=64)
-    fund_dict = query_fund_data(get_group_idx, start_date, current_date)
-    for key, value in fund_dict.items():
-        df = process_date_columns(value)
-        df = df[-config.seq_len:, :]
-        all_history_input.append(df)
-    data = all_history_input
+    data = query_fund_data([now_code], start_date, current_date)[now_code]
+    data = np.array(data)
     return data
 
-def check_input(all_history_input, config):
-    data = np.stack(all_history_input, axis=0)
-    data = data.transpose(1, 0, 2)
-    
-    # 只取符合模型的历史天数
-    data = data[-config.seq_len:, :, :]
+def check_input(single_history_input, config):
+    data = single_history_input[-config.seq_len:, :]
     return data
 
-def get_pretrained_model(config):
+def get_pretrained_model(log, config):
     model = Model(config)
     runId = 0
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
-    # model.load_state_dict(torch.load('./checkpoints/ours/Model_ours_Dataset_financial_Multi_round_0.pt', weights_only=False))
+    print(model_path)
+    # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     return model 
 
 
@@ -106,30 +97,27 @@ def constrain_nav_prediction(predictions, bar=0.05, scale=0.9):
 
 def predict_torch_model(model, history_input, config):
     # 因为我加了时间戳特征
-    x = history_input[:, :, -3:]
+    x = history_input[:, -3:]
     # unsqueeze 代表 batch size = 1
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
     pred_value = model(x, None, None).squeeze(0).detach().numpy()
     # 因为模型改成了多变量预测多变量，按照预测结果的最后一个变量作为预测值
-    pred_value = pred_value[:, :, -1]
+    pred_value = pred_value[:, -1]
     pred_value = np.abs(pred_value)
-    pred_value, _ = constrain_nav_prediction(pred_value)
+    # pred_value, _ = constrain_nav_prediction(pred_value, bar=1.0, scale=0.1)
     return pred_value
 
 def get_sql_format_data(pred_value, cleaned_input):
     from datetime import datetime
     now_df = []
-    cleaned_input = cleaned_input[0, :, :]
-    for j in range(pred_value.shape[1]):
-        idx = config.idx
-        fund_code = cleaned_input[j][0]
-        forcast_date = current_date
-        pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'
-        model_version = 'v2025'
-        create_date = update_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        now_df.append([idx, fund_code, forcast_date, pred, model_version, create_date, update_date])
-        # break
-    # now_df
+    cleaned_input = cleaned_input[0, :]
+    idx = config.idx
+    fund_code = cleaned_input[0]
+    forcast_date = current_date
+    pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:]) + ']}'
+    model_version = 'v2025'
+    create_date = update_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now_df.append([idx, fund_code, forcast_date, pred, model_version, create_date, update_date])
     now_df = np.array(now_df)
     now_df = pd.DataFrame(now_df, columns=['id', 'fund_code', 'forecast_date', 'pre_data', 'model_version',
        'create_time', 'update_time'])
@@ -164,29 +152,29 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    # drop_sql_temp(table_name)
+    drop_sql_temp(table_name)
+    print("✅ 配置加载完成。")
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
     
-    with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
-        data = np.array(pickle.load(f))
-        df = data[:, 1].astype(np.float32)
-    group_num = int(df.max() + 1)
-    for i in range(group_num):
+    all_code_list = get_all_fund_list()
+    for i in range(len(all_code_list)):
         # 27
         try:
+            log_filename, exper_detail = get_experiment_name(config)
+            plotter = MetricsPlotter(log_filename, config)
+            log = Logger(log_filename, exper_detail, plotter, config, show_params=False)
             config.idx = i
-            group_fund_code = get_group_idx(i)
-            print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
+            print(f"📊 获取基金组第 {i} 个基金，基金号为 {all_code_list[i]}")
 
-            history_input = get_history_data(group_fund_code, current_date, config)
+            history_input = get_history_data(all_code_list[i], current_date, config)
             print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
 
             cleaned_input = check_input(history_input, config)
             print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
 
-            model = get_pretrained_model(config)
+            model = get_pretrained_model(log, config)
             print("🤖 模型加载完成。")
 
             pred_value = predict_torch_model(model, cleaned_input, config)
@@ -206,12 +194,6 @@ def start_server(current_date, table_name = 'temp_sql'):
 
 if __name__ == '__main__':
     config = get_config('FinancialConfig')
-    log_filename, exper_detail = get_experiment_name(config)
-    plotter = MetricsPlotter(log_filename, config)
-    log = Logger(log_filename, exper_detail, plotter, config)
-    print("✅ 配置加载完成。")
-
-
     # current_date = '2025-4-15'
     current_date = '2025-7-02'
     pred_value = start_server(current_date)

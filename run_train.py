@@ -13,8 +13,11 @@ torch.set_float32_matmul_precision('high')
 
 def get_experiment_name(config):
     log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
-    if config.multi_dataset:
-        log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi_{config.idx}_pred_{config.pred_len}'
+    if config.dataset == 'financial':
+        if config.multi_dataset:
+            log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi_{config.idx}_pred_{config.pred_len}'
+        else:
+            log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}_F{config.idx}_pred_{config.pred_len}'
     exper_detail = (
          f"Dataset : {config.dataset.upper()}, "
          f"Model : {config.model}, "
@@ -84,8 +87,7 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    # config = get_config('FinancialConfig')
+    config = get_config('FinancialConfig')
     # config = get_config('TransformerConfig')
-    config = get_config('Transformer2Config')
-    print(config)
+    # config = get_config('Transformer2Config')
     run(config)

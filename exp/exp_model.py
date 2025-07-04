@@ -18,6 +18,7 @@ from layers.metric.distance import PairwiseLoss
 from exp.exp_base import BasicModel
 from modules.backbone import Backbone
 from baselines.encoder_seq import SeqEncoder
+from modules.backbone_single import SingleModel
 from modules.ts_model import TimeSeriesModel
 
 
@@ -109,9 +110,11 @@ class Model(BasicModel):
             self.model = timeLLM(config)
 
         elif config.model == 'financial':
-            self.model = Backbone(self.input_size, config)
+            if config.multi_dataset:
+                self.model = Backbone(self.input_size, config)
+            else:
+                self.model = SingleModel(self.input_size, config)
             self.distance = PairwiseLoss(method=config.dis_method, reduction='mean')
-
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
