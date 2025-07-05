@@ -104,6 +104,7 @@ def predict_torch_model(model, history_input, config):
     # 因为模型改成了多变量预测多变量，按照预测结果的最后一个变量作为预测值
     pred_value = pred_value[:, -1]
     pred_value = np.abs(pred_value)
+    pred_value = pred_value[:config.pred_len]
     # pred_value, _ = constrain_nav_prediction(pred_value, bar=1.0, scale=0.1)
     return pred_value
 

@@ -17,7 +17,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     dataset: str = 'financial'  # financial  weather
     scaler_method: str = 'global'
 
-    multi_dataset: bool = False  # False True
+    multi_dataset: bool = True  # False True
     spliter_ratio: str = '6:2:2'
 
     seq_len: int = 17
