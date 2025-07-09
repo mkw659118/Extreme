@@ -154,10 +154,8 @@ class TimeFeatureEmbedding(torch.nn.Module):
 
 
 class DataEmbedding(torch.nn.Module):
-    def __init__(self, c_in, d_model, match_mode, embed_type='fixed', freq='h', dropout=0.1):
+    def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
         super(DataEmbedding, self).__init__()
-        self.match_mode = match_mode
-
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
         # self.value_embedding = torch.nn.Linear(c_in, d_model)
         self.position_embedding = PositionalEmbedding(d_model=d_model)
@@ -173,35 +171,21 @@ class DataEmbedding(torch.nn.Module):
         if x_mark is None:
             x_out = self.value_embedding(x) + self.position_embedding(x)
         else:
-            # a
-            # a b
-            # a c
-            # a b c
-            if self.match_mode == 'a':
-                x_out = self.value_embedding(x)
-            elif self.match_mode == 'ab':
-                x_out = self.value_embedding(x) + self.position_embedding(x)
-            elif self.match_mode == 'ac':
-                x_out = self.value_embedding(x) + self.temporal_embedding(x_mark)
-            elif self.match_mode == 'abc':
-                x_out = self.value_embedding(x) + self.position_embedding(x) + self.temporal_embedding(x_mark)
-            else:
-                raise ValueError(f"Unknown ablation mode: {self.match_mode}")
+            x_out = self.value_embedding(x) + self.position_embedding(x) + self.temporal_embedding(x_mark)
 
         return self.dropout(x_out)
 
 
 class Transformer2(torch.nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, diffusion=False, noise_scale=1, noise_steps=100,
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, diffusion=False, noise_scale=1, noise_steps=100,
                  norm_method='layer', ffn_method='ffn', att_method='self'):
         super().__init__()
         self.revin = revin
         self.seq_len = seq_len
         self.pred_len = pred_len
-        self.match_mode = match_mode
         if self.revin:
             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
-        self.enc_embedding = DataEmbedding(input_size, d_model, self.match_mode)
+        self.enc_embedding = DataEmbedding(input_size, d_model)
         self.predict_linear = torch.nn.Linear(seq_len, seq_len + pred_len)
         self.layers = torch.nn.ModuleList([])
         for _ in range(num_layers):

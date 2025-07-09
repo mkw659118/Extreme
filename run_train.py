@@ -27,6 +27,9 @@ def get_experiment_name(config):
          f"Pred_len : {config.pred_len}, "
     )
     try:
+        exper_detail += f"noise_steps : {config.noise_steps}, "
+        exper_detail += f"noise_scale : {config.noise_scale}, "
+        exper_detail += f"lamda : {config.lamda}"
         exper_detail += f"Idx : {config.idx}, "
     except AttributeError:
         pass

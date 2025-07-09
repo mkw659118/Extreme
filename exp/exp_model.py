@@ -77,7 +77,6 @@ class Model(BasicModel):
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
-                match_mode=config.match_mode,
                 diffusion=config.diffusion,
                 noise_scale=config.noise_scale,
                 noise_steps=config.noise_steps,
