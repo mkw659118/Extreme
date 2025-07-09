@@ -192,7 +192,7 @@ class DataEmbedding(torch.nn.Module):
 
 
 class Transformer2(torch.nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode,
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, diffusion=False, noise_scale=1, noise_steps=100,
                  norm_method='layer', ffn_method='ffn', att_method='self'):
         super().__init__()
         self.revin = revin
@@ -218,30 +218,35 @@ class Transformer2(torch.nn.Module):
         self.norm = get_norm(d_model, norm_method)
         self.projection = torch.nn.Linear(d_model, input_size)
         self.diffusion_loss = 0
-        self.diffusion = gd.GaussianDiffusion(
+
+        if diffusion:
+            self.diffusion = gd.GaussianDiffusion(
                 mean_type=gd.ModelMeanType.EPSILON,
                 noise_schedule='linear',
-                noise_scale=1,   # 何向南的做法就是把这里改成0.01
+                noise_scale=noise_scale,   # 何向南的做法就是把这里改成0.01
                 noise_min=0.0001,
                 noise_max=0.02,
-                steps=100,
+                steps=noise_steps,
                 device=torch.device('cuda')
-        )
-        self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len], out_dims=[input_size * seq_len, input_size * seq_len], emb_size=d_model).to(torch.device('cuda'))
+            )
+            self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len], out_dims=[input_size * seq_len, input_size * seq_len], emb_size=d_model).to(torch.device('cuda'))
+        else:
+            self.diffusion = None
+            self.reverse = None
 
+        
     def forward(self, x, x_mark=None,timesteps=None):
-        # 在这里加扩散去噪，使得x变成一个新的x
         if self.revin:
             x = self.revin_layer(x, 'norm')
 
         # 在这里加扩散去噪，使得x变成一个新的x
-        raw_shape = x.shape
-        x = x.reshape(x.shape[0], -1)
-        diff_output = self.diffusion.training_losses(self.reverse, x, True)
-        x = diff_output["pred_xstart"]
-        x = x.reshape(raw_shape)
-        self.diffusion_loss = diff_output["loss"].mean()
-
+        if self.diffusion is not None:
+            raw_shape = x.shape
+            x = x.reshape(x.shape[0], -1)
+            diff_output = self.diffusion.training_losses(self.reverse, x, True)
+            x = diff_output["pred_xstart"]
+            x = x.reshape(raw_shape)
+            self.diffusion_loss = diff_output["loss"].mean()
 
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')

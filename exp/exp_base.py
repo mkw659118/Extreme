@@ -42,14 +42,14 @@ class BasicModel(torch.nn.Module):
             if self.config.use_amp:
                 with torch.amp.autocast(device_type=self.config.device):
                     pred = self.forward(*inputs)
-                    loss = compute_loss(self, pred, label)
+                    loss = compute_loss(self, pred, label, self.config)
 
                 self.scaler.scale(loss).backward()
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
             else:
                 pred = self.forward(*inputs)
-                loss = compute_loss(self, pred, label)
+                loss = compute_loss(self, pred, label, self.config)
                 loss.backward()
                 self.optimizer.step()
 
@@ -77,7 +77,7 @@ class BasicModel(torch.nn.Module):
                 pred = self.forward(*inputs)
 
                 if mode == 'valid':
-                    val_loss += self.loss_function(pred, label)
+                    val_loss += compute_loss(self, pred, label, self.config)
 
                 if self.config.classification:
                     pred = torch.max(pred, 1)[1]

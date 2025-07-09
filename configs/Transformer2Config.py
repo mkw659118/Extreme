@@ -20,4 +20,7 @@ class Transformer2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, Datase
     dropout: float = 0.1
     amp: bool = True
     match_mode: str = 'abc'
-
+    diffusion: bool = True
+    noise_scale: float = 1
+    noise_steps: float = 100
+    lamda: float = 0.5  # 用于控制扩散损失的权重
