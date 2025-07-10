@@ -21,5 +21,5 @@ class Transformer2Config(ExperimentConfig, BaseModelConfig, LoggerConfig, Datase
     amp: bool = False
     diffusion: bool = True
     noise_scale: float = 1.0
-    noise_steps: int = 100
+    noise_steps: int = 40
     lamda: float = 0.5  # 用于控制扩散损失的权重

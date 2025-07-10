@@ -8,7 +8,7 @@ def compute_loss(model, pred, label, config):
     
     try:
         if config.diffusion:
-            loss = loss * config.lamda + (1 - config.lamda) * model.model.diffusion_loss
+            loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
         # for i in range(len(model.model.encoder.layers)):
         #     loss += model.model.encoder.layers[i][3].aux_loss
         # if model.config.dis_method == 'cosine':
