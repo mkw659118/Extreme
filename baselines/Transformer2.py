@@ -206,7 +206,7 @@ class Transformer2(torch.nn.Module):
         if diffusion:
             self.diffusion = gd.GaussianDiffusion(
                 mean_type=gd.ModelMeanType.EPSILON,
-                noise_schedule='linear',
+                noise_schedule='linear-var',
                 noise_scale=noise_scale,   # 何向南的做法就是把这里改成0.01
                 noise_min=0.0001,
                 noise_max=0.02,
