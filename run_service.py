@@ -55,7 +55,7 @@ def check_bad_model(all_scnerios, log, config):
             config.pred_len = pred_len
             filename, exper_detail = get_experiment_name(config)
             log.filename = filename
-            with open(f'./results/metrics/{log.filename}', 'rb') as f:
+            with open(f'./results/metrics/{log.filename}.pkl', 'rb') as f:
                 metrics = pickle.load(f)
                 Acc = metrics['Acc_10']
                 all_acc.append(Acc)
@@ -132,7 +132,7 @@ def predict_torch_model(model, history_input, config):
     pred_value = model(x, x_mark, x_fund, x_features).squeeze(0).detach().numpy()
     pred_value = pred_value[:, :, -1]
     pred_value = np.abs(pred_value)
-    # pred_value, _ = constrain_nav_prediction(pred_value)
+    pred_value, _ = constrain_nav_prediction(pred_value)
     return pred_value
 
 def get_final_pred(group_fund_code, current_date, log, config):
@@ -141,7 +141,7 @@ def get_final_pred(group_fund_code, current_date, log, config):
     print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
     all_pred = np.zeros((90, len(history_input)))
 
-    all_scnerios = [[16, 7], [36, 30], [36, 60], [36, 90]]
+    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
     prev_len = 0
     for seq_len, pred_len in all_scnerios:
         config.seq_len = seq_len
@@ -222,7 +222,7 @@ def start_server(current_date, table_name = 'temp_sql'):
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
-    all_scnerios = [[16, 7], [36, 30], [36, 60], [36, 90]]
+    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
 
     for i in range(group_num):
         # 27
@@ -232,7 +232,7 @@ def start_server(current_date, table_name = 'temp_sql'):
             log = Logger(log_filename, exper_detail, plotter, config, show_params=False)
 
             config.idx = i
-            group_fund_code = get_group_idx(i)
+            group_fund_code = get_group_idx(i, config)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
             if check_bad_model(all_scnerios, log, config):
