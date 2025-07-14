@@ -31,9 +31,8 @@ def get_experiment_name(config):
 
     # === 构建字符串 ===
     exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
-    log_filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
-
-    return log_filename, exper_detail
+    filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
+    return filename, exper_detail
 
 
 def RunExperiments(log, config):
@@ -79,9 +78,9 @@ def run(config):
     from utils.exp_metrics_plotter import MetricsPlotter
     from utils.utils import set_settings
     set_settings(config)
-    log_filename, exper_detail = get_experiment_name(config)
-    plotter = MetricsPlotter(log_filename, config)
-    log = Logger(log_filename, exper_detail, plotter, config)
+    filename, exper_detail = get_experiment_name(config)
+    plotter = MetricsPlotter(filename, config)
+    log = Logger(filename, exper_detail, plotter, config)
     metrics = RunExperiments(log, config)
     return metrics
 

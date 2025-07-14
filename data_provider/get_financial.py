@@ -12,9 +12,9 @@ from data_provider.generate_financial import get_all_fund_list, generate_data, p
 from data_provider.data_scaler import get_scaler
 
 
-def get_group_idx(group_index):
+def get_group_idx(group_index, config):
     # with open('./results/func_code_to_label_150_balanced.pkl', 'rb') as f:
-    with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
+    with open(f'./datasets/func_code_to_label_{config.n_clusters}.pkl', 'rb') as f:
         data = pickle.load(f)
     all_func_code = []
     for i in range(len(data)):
@@ -24,7 +24,7 @@ def get_group_idx(group_index):
 
 
 def multi_dataset(config):
-    now_fund_code = get_group_idx(config.idx)
+    now_fund_code = get_group_idx(config.idx, config)
     # now_fund_code = get_benchmark_code()
     # now_fund_code = get_group_idx(config.idx)
     min_length = 1e9

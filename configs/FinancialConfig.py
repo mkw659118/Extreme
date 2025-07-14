@@ -38,3 +38,5 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     # end_date: str = '2023-07-13'
     start_date: str = '2020-07-13'
     end_date: str = '2025-06-28'
+
+    n_clusters: int = 160

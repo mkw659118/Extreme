@@ -47,21 +47,20 @@ def get_start_date(end_date: str, window_size: int) -> str:
     start_dt = end_dt - timedelta(days=window_size)
     return start_dt.strftime("%Y-%m-%d")
 
-def check_bad_model(log, config):
-    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
+def check_bad_model(all_scnerios, log, config):
     all_acc = []
     try:
         for seq_len, pred_len in all_scnerios:
-        config.seq_len = seq_len
-        config.pred_len = pred_len
-        log_filename, exper_detail = get_experiment_name(config)
-        log.log_filename = log_filename
-        with open(f'./results/metrics/{log.filename}.pkl', 'rb') as f:
-            metrics = pickle.load(f)
-            Acc = metrics['Acc_10']
-            all_acc.append(Acc)
-    except FileNotFoundError:
-        print(f"❌ 没有找到模型结果文件 {log.filename}.pkl，可能是模型未收敛。")
+            config.seq_len = seq_len
+            config.pred_len = pred_len
+            filename, exper_detail = get_experiment_name(config)
+            log.filename = filename
+            with open(f'./results/metrics/{log.filename}', 'rb') as f:
+                metrics = pickle.load(f)
+                Acc = metrics['Acc_10']
+                all_acc.append(Acc)
+    except FileNotFoundError as e:
+        print(f"❌ {e}，可能是模型未收敛。")
         return True
     
     return np.mean(all_acc) < 0.5
@@ -88,7 +87,7 @@ def get_pretrained_model(log, config):
     model = Model(config)
     runId = 0
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     return model 
 
 
@@ -142,13 +141,13 @@ def get_final_pred(group_fund_code, current_date, log, config):
     print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
     all_pred = np.zeros((90, len(history_input)))
 
-    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
+    all_scnerios = [[16, 7], [36, 30], [36, 60], [36, 90]]
     prev_len = 0
     for seq_len, pred_len in all_scnerios:
         config.seq_len = seq_len
         config.pred_len = pred_len
-        log_filename, exper_detail = get_experiment_name(config)
-        log.log_filename = log_filename
+        filename, exper_detail = get_experiment_name(config)
+        log.filename = filename
         cleaned_input = check_input(history_input, config)
         print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
 
@@ -223,6 +222,8 @@ def start_server(current_date, table_name = 'temp_sql'):
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
+    all_scnerios = [[16, 7], [36, 30], [36, 60], [36, 90]]
+
     for i in range(group_num):
         # 27
         try:
@@ -234,12 +235,11 @@ def start_server(current_date, table_name = 'temp_sql'):
             group_fund_code = get_group_idx(i)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
-            if check_bad_model(log, config):
+            if check_bad_model(all_scnerios, log, config):
                 print(f"❗️ 模型效果不佳，跳过基金组 {i} 的预测。")
                 continue
 
-            print(f"🔍 正在处理基金组 {i}，基金代码: {group_fund_code}")
-
+            print(f"🔍 正在处理基金组 {i}，部分基金代码: {group_fund_code[:10]}")
             pred_value, cleaned_input = get_final_pred(group_fund_code, current_date, log, config)
 
             pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
