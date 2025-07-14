@@ -11,28 +11,27 @@ import utils.utils
 torch.set_default_dtype(torch.float32)
 torch.set_float32_matmul_precision('high')
 
+
 def get_experiment_name(config):
-    log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}'
-    if config.dataset == 'financial':
-        if config.multi_dataset:
-            log_filename = f'Model_{config.model}_Dataset_{config.dataset}_Multi_{config.idx}_pred_{config.pred_len}'
-        else:
-            log_filename = f'Model_{config.model}_Dataset_{config.dataset}_R{config.rank}_F{config.idx}_pred_{config.pred_len}'
-    exper_detail = (
-         f"Dataset : {config.dataset.upper()}, "
-         f"Model : {config.model}, "
-         f"Density : {config.density:.3f}, "
-         f"d_model : {config.d_model}, "
-         f"Seq_len : {config.seq_len}, "
-         f"Pred_len : {config.pred_len}, "
-    )
-    try:
-        exper_detail += f"noise_steps : {config.noise_steps}, "
-        exper_detail += f"noise_scale : {config.noise_scale}, "
-        exper_detail += f"lamda : {config.lamda}"
-        exper_detail += f"Idx : {config.idx}, "
-    except AttributeError:
-        pass
+    # === 构建 exper_detail 字典（基础字段）===
+    detail_fields = {
+        'Dataset': config.dataset,
+        'Model': config.model,
+        'Density': f"{config.density:.3f}",
+        'd_model': config.d_model,
+        'Rank': config.rank,
+    }
+
+    # === 动态添加字段（只有在 config 中存在才加入）===
+    optional_fields = ['seq_len', 'pred_len', 'noise_steps', 'noise_scale', 'lamda', 'idx']
+    for field in optional_fields:
+        if hasattr(config, field):
+            key = field.replace('_', ' ').title().replace(' ', '_')  # e.g. seq_len -> Seq_Len
+            detail_fields[key] = getattr(config, field)
+
+    # === 构建字符串 ===
+    exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
+    log_filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
 
     return log_filename, exper_detail
 
@@ -90,7 +89,7 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    # config = get_config('FinancialConfig')
+    config = get_config('FinancialConfig')
     # config = get_config('TransformerConfig')
-    config = get_config('Transformer2Config')
+    # config = get_config('Transformer2Config')
     run(config)

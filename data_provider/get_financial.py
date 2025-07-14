@@ -53,9 +53,9 @@ def multi_dataset(config):
     data = data.transpose(1, 0, 2)
     x, y = data[:, :, :], data[:, :, -3:]
 
-    x[:, :, -3:] = x[:, :, -3:].astype(np.float32)
-    x_scaler = get_scaler(x[:, :, -3:], config, 'minmax')
-    x[:, :, -3:] = x_scaler.transform(x[:, :, -3:])
+    x[:, :, 3:] = x[:, :, 3:].astype(np.float32)
+    x_scaler = get_scaler(x[:, :, 3:], config, 'minmax')
+    x[:, :, 3:] = x_scaler.transform(x[:, :, 3:])
 
     y_scaler = get_scaler(y, config, 'minmax')
     y = y_scaler.transform(y)

@@ -49,11 +49,11 @@ def get_start_date(end_date: str, window_size: int) -> str:
 
 def get_history_data(get_group_idx, current_date, config):
     all_history_input = []
-    start_date = get_start_date(current_date, window_size=64)
+    start_date = get_start_date(current_date, window_size=200)
     fund_dict = query_fund_data(get_group_idx, start_date, current_date)
     for key, value in fund_dict.items():
         df = process_date_columns(value)
-        df = df[-config.seq_len:, :]
+        df = df[-90:, :]
         all_history_input.append(df)
     data = all_history_input
     return data
@@ -66,11 +66,11 @@ def check_input(all_history_input, config):
     data = data[-config.seq_len:, :, :]
     return data
 
-def get_pretrained_model(config):
+def get_pretrained_model(log, config):
     model = Model(config)
     runId = 0
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     # model.load_state_dict(torch.load('./checkpoints/ours/Model_ours_Dataset_financial_Multi_round_0.pt', weights_only=False))
     return model 
 
@@ -107,14 +107,45 @@ def constrain_nav_prediction(predictions, bar=0.05, scale=0.9):
 def predict_torch_model(model, history_input, config):
     # 因为我加了时间戳特征
     x = history_input[:, :, -3:]
+    x_fund = history_input[:, :, 0]
+    x_mark = history_input[:, :, :3] 
+    x_features = history_input[:, :, 3:-3]
     # unsqueeze 代表 batch size = 1
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
-    pred_value = model(x, None, None).squeeze(0).detach().numpy()
-    # 因为模型改成了多变量预测多变量，按照预测结果的最后一个变量作为预测值
+    x_features = torch.from_numpy(x_features.astype(np.float32)).unsqueeze(0)
+    pred_value = model(x, x_mark, x_fund, x_features).squeeze(0).detach().numpy()
     pred_value = pred_value[:, :, -1]
     pred_value = np.abs(pred_value)
-    pred_value, _ = constrain_nav_prediction(pred_value)
+    # pred_value, _ = constrain_nav_prediction(pred_value)
     return pred_value
+
+def get_final_pred(group_fund_code, current_date, log, config):
+
+    history_input = get_history_data(group_fund_code, current_date, config)
+    print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
+    all_pred = np.zeros((90, len(history_input)))
+
+    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
+    prev_len = 0
+    for seq_len, pred_len in all_scnerios:
+        config.seq_len = seq_len
+        config.pred_len = pred_len
+
+        cleaned_input = check_input(history_input, config)
+        print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
+
+        model = get_pretrained_model(log, config)
+        print("🤖 模型加载完成。")
+
+        pred_value = predict_torch_model(model, cleaned_input, config)
+        print(f"📉 预测结果维度: {pred_value.shape}")
+        start_idx = prev_len
+        end_idx = config.pred_len
+        prev_len = config.pred_len
+        all_pred[start_idx:end_idx, :] = pred_value[start_idx:end_idx, :]
+        print(f"📊 预测结果已存入 all_pred，从 {start_idx} 到 {end_idx}。")
+
+    return pred_value, cleaned_input
 
 def get_sql_format_data(pred_value, cleaned_input):
     from datetime import datetime
@@ -131,8 +162,7 @@ def get_sql_format_data(pred_value, cleaned_input):
         # break
     # now_df
     now_df = np.array(now_df)
-    now_df = pd.DataFrame(now_df, columns=['id', 'fund_code', 'forecast_date', 'pre_data', 'model_version',
-       'create_time', 'update_time'])
+    now_df = pd.DataFrame(now_df, columns=['id', 'fund_code', 'forecast_date', 'pre_data', 'model_version', 'create_time', 'update_time'])
     return now_df
 
 def insert_pred_to_sql(df, table_name):
@@ -162,6 +192,7 @@ def insert_pred_to_sql(df, table_name):
     except Exception as e:
         print(f"❌ 发生未知错误: {e}")
 
+
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
     # drop_sql_temp(table_name)
@@ -176,21 +207,16 @@ def start_server(current_date, table_name = 'temp_sql'):
     for i in range(group_num):
         # 27
         try:
+            log_filename, exper_detail = get_experiment_name(config)
+            plotter = MetricsPlotter(log_filename, config)
+            log = Logger(log_filename, exper_detail, plotter, config, show_params=False)
+
             config.idx = i
             group_fund_code = get_group_idx(i)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
-            history_input = get_history_data(group_fund_code, current_date, config)
-            print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
 
-            cleaned_input = check_input(history_input, config)
-            print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
-
-            model = get_pretrained_model(config)
-            print("🤖 模型加载完成。")
-
-            pred_value = predict_torch_model(model, cleaned_input, config)
-            print(f"📉 预测结果维度: {pred_value.shape}")
+            pred_value, cleaned_input = get_final_pred(group_fund_code, current_date, log, config)
 
             pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
             print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")
@@ -206,9 +232,6 @@ def start_server(current_date, table_name = 'temp_sql'):
 
 if __name__ == '__main__':
     config = get_config('FinancialConfig')
-    log_filename, exper_detail = get_experiment_name(config)
-    plotter = MetricsPlotter(log_filename, config)
-    log = Logger(log_filename, exper_detail, plotter, config)
     print("✅ 配置加载完成。")
     current_date = datetime.now().strftime('%Y-%m-%d')
     pred_value = start_server(current_date)

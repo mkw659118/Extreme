@@ -7,7 +7,7 @@ def compute_loss(model, pred, label, config):
     loss = model.loss_function(pred, label)
     
     try:
-        if config.diffusion:
+        if config.model == 'transformer2':
             loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
         # for i in range(len(model.model.encoder.layers)):
         #     loss += model.model.encoder.layers[i][3].aux_loss

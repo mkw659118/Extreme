@@ -61,7 +61,6 @@ class Transformer(torch.nn.Module):
                     ]
                 )
             )
-        self.norm = get_norm(d_model, norm_method)
 
     def forward(self, x, x_mark=None):
         for norm1, attn, norm2, ff in self.layers:
