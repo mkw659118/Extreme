@@ -175,6 +175,8 @@
 加入了其他统计特征
 |2025-07-14 16:26:09| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
 |2025-07-14 16:26:09| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0340 NMAE - 0.0248 NRMSE - 0.0282 Acc_10 - 0.9432 train_time - 16.1078
+
+
 |2025-07-14 18:14:49| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
 |2025-07-14 18:14:49| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0339 NMAE - 0.0247 NRMSE - 0.0282 Acc_10 - 0.9435 train_time - 23.0872
 |2025-07-14 18:15:50| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 1
