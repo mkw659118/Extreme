@@ -9,9 +9,12 @@ class Attention(torch.nn.Module):
         super().__init__()
         self.att = torch.nn.MultiheadAttention(d_model, num_heads, dropout)
 
-    def forward(self, x):
+    def forward(self, x, weight=False):
         out, weights = self.att(x, x, x)
-        return out
+        if weight:
+            return out, weights
+        else:
+            return out
 
 if __name__ == '__main__':
     inputs = torch.randn(1, 10, 64)

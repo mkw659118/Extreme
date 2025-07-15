@@ -16,6 +16,7 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     try_exp: int = 1
     dataset: str = 'financial'  # financial  weather
     scaler_method: str = 'global'
+    monitor_metric: str = 'NMAE'
 
     multi_dataset: bool = True  # False True
     spliter_ratio: str = '6:2:2'

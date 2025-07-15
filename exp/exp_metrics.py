@@ -4,7 +4,8 @@
 import torch as t
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-
+from fastdtw import fastdtw
+from scipy.spatial.distance import euclidean
 
 
 def ErrorMetrics(realVec, estiVec, config):
@@ -42,6 +43,20 @@ def compute_regression_metrics(realVec, estiVec):
     thresholds = [0.01, 0.05, 0.10]
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
 
+    # === 修复后的 DTW ===
+    B = realVec.shape[0]
+    realVec_flat = realVec.transpose(0, 2, 1, 3).reshape(B, realVec.shape[2], -1)  # (B, N_code, 7*3)
+    estiVec_flat = estiVec.transpose(0, 2, 1, 3).reshape(B, estiVec.shape[2], -1)  # (B, N_code, 7*3)
+
+    dtw_list = []
+    for i in range(B):
+        # 每个样本为一个长度为 N_code 的序列，序列中每个“时间步”是维度为 (7×3,) 的向量
+        real_seq = realVec_flat[i]
+        esti_seq = estiVec_flat[i]
+        dtw_distance, _ = fastdtw(real_seq, esti_seq, dist=euclidean)
+        dtw_list.append(dtw_distance)
+    dtw_mean = np.mean(dtw_list)
+
     return {
         'MAE': MAE,
         'MSE': MSE,
@@ -50,6 +65,7 @@ def compute_regression_metrics(realVec, estiVec):
         'NMAE': NMAE,
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],
+        'DTW': dtw_mean,
     }
 
 

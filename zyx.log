@@ -184,7 +184,7 @@
 |2025-07-14 18:16:35| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 2
 |2025-07-14 18:16:35| MAE - 0.0050 MSE - 0.0001 RMSE - 0.0081 MAPE - 0.0433 NMAE - 0.0256 NRMSE - 0.0327 Acc_10 - 0.9081 train_time - 6.0116
 |2025-07-14 18:17:57| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 3
-|2025-07-14 18:17:57| MAE - 0.0085 MSE - 0.0003 RMSE - 0.0163 MAPE - 0.0201 NMAE - 0.0115 NRMSE - 0.0208 Acc_10 - 0.9480 train_time - 11.9925
+|2025-07-14 18:17:57| MAE - 0.0085 MSE - 0.0003 RMSE - 0.0163 MAPE - 0.0201 NMAE - 0.0115 NRMSE - 0.0208 Acc_1 - 0.9480 train_time - 11.9925
 |2025-07-14 18:19:01| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 4
 |2025-07-14 18:19:01| MAE - 0.0057 MSE - 0.0001 RMSE - 0.0087 MAPE - 0.0332 NMAE - 0.0290 NRMSE - 0.0381 Acc_10 - 0.9434 train_time - 10.8698
 |2025-07-14 18:20:15| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 5
@@ -265,3 +265,89 @@
 |2025-07-14 18:54:33| MAE - 0.0093 MSE - 0.0002 RMSE - 0.0150 MAPE - 0.1179 NMAE - 0.0821 NRMSE - 0.0884 Acc_10 - 0.5361 train_time - 5.9584
 |2025-07-14 18:55:49| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 90, Idx : 10
 |2025-07-14 18:55:49| MAE - 0.0088 MSE - 0.0003 RMSE - 0.0169 MAPE - 0.0438 NMAE - 0.0424 NRMSE - 0.0623 Acc_10 - 0.8825 train_time - 13.3527
+|2025-07-15 15:13:45| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:13:45| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0091 MAPE - 0.0512 NMAE - 0.0369 NRMSE - 0.0428 Acc_10 - 0.8662 train_time - 0.9370
+|2025-07-15 15:14:35| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+
+|2025-07-15 15:14:35| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0091 MAPE - 0.0512 NMAE - 0.0369 NRMSE - 0.0428 Acc_10 - 0.8662 train_time - 0.9380
+
+
+
+|2025-07-15 15:17:05| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:17:05| MAE - 0.0060 MSE - 0.0001 RMSE - 0.0091 MAPE - 0.0512 NMAE - 0.0369 NRMSE - 0.0428 Acc_10 - 0.8662 train_time - 0.9332
+
+
+|2025-07-15 15:17:55| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:17:55| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0336 NMAE - 0.0244 NRMSE - 0.0280 Acc_10 - 0.9434 train_time - 15.9205
+
+
+
+|2025-07-15 15:19:34| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:19:34| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0336 NMAE - 0.0244 NRMSE - 0.0280 Acc_10 - 0.9434 train_time - 16.0316
+|2025-07-15 15:20:21| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:20:21| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0336 NMAE - 0.0244 NRMSE - 0.0280 Acc_10 - 0.9434 train_time - 15.8796
+
+
+# 没有 加入 Toeplitz 正则项的损失
+|2025-07-15 15:20:21| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 15:20:21| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0336 NMAE - 0.0244 NRMSE - 0.0280 Acc_10 - 0.9434 train_time - 15.8796
+
+# 加上了 Toeplitz 正则项的损失 1e-1
+|2025-07-15 16:07:23| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 16:07:23| MAE - 0.0042 MSE - 0.0000 RMSE - 0.0063 MAPE - 0.0366 NMAE - 0.0262 NRMSE - 0.0299 Acc_10 - 0.9311 train_time - 48.7869
+
+# 加上了 Toeplitz 正则项的损失 1e-2
+|2025-07-15 16:03:10| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 16:03:10| MAE - 0.0040 MSE - 0.0000 RMSE - 0.0060 MAPE - 0.0340 NMAE - 0.0247 NRMSE - 0.0284 Acc_10 - 0.9422 train_time - 17.1750
+
+# 加上了 Toeplitz 正则项的损失 1e-3
+|2025-07-15 16:05:38| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 16:05:38| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0330 NMAE - 0.0240 NRMSE - 0.0276 Acc_10 - 0.9462 train_time - 19.6260
+
+# 加上了 Toeplitz 正则项的损失 1e-4
+|2025-07-15 16:09:37| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 16:09:37| MAE - 0.0040 MSE - 0.0000 RMSE - 0.0059 MAPE - 0.0336 NMAE - 0.0245 NRMSE - 0.0280 Acc_10 - 0.9438 train_time - 19.6177
+|2025-07-15 17:11:25| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 17:11:25| MAE - 0.0040 MSE - 0.0000 RMSE - 0.0060 MAPE - 0.0340 NMAE - 0.0247 NRMSE - 0.0284 Acc_10 - 0.9422 DTW - 2.8046 train_time - 16.6805
+|2025-07-15 17:12:26| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 1
+|2025-07-15 17:12:26| MAE - 0.0032 MSE - 0.0001 RMSE - 0.0074 MAPE - 0.0109 NMAE - 0.0089 NRMSE - 0.0179 Acc_10 - 0.9936 DTW - 0.5325 train_time - 13.9379
+|2025-07-15 17:12:52| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 2
+|2025-07-15 17:12:52| MAE - 0.0050 MSE - 0.0001 RMSE - 0.0083 MAPE - 0.0354 NMAE - 0.0257 NRMSE - 0.0333 Acc_10 - 0.9282 DTW - 1.6168 train_time - 2.1220
+|2025-07-15 17:13:29| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 3
+|2025-07-15 17:13:29| MAE - 0.0089 MSE - 0.0003 RMSE - 0.0170 MAPE - 0.0212 NMAE - 0.0119 NRMSE - 0.0218 Acc_10 - 0.9437 DTW - 0.5495 train_time - 8.3900
+|2025-07-15 17:14:42| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 4
+|2025-07-15 17:14:42| MAE - 0.0058 MSE - 0.0001 RMSE - 0.0088 MAPE - 0.0334 NMAE - 0.0288 NRMSE - 0.0372 Acc_10 - 0.9437 DTW - 2.6235 train_time - 13.1382
+|2025-07-15 17:15:19| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 5
+|2025-07-15 17:15:19| MAE - 0.0035 MSE - 0.0000 RMSE - 0.0070 MAPE - 0.0241 NMAE - 0.0192 NRMSE - 0.0254 Acc_10 - 0.9683 DTW - 0.9520 train_time - 5.6095
+|2025-07-15 17:16:00| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 6
+|2025-07-15 17:16:00| MAE - 0.0028 MSE - 0.0000 RMSE - 0.0066 MAPE - 0.0160 NMAE - 0.0127 NRMSE - 0.0232 Acc_10 - 0.9858 DTW - 0.6055 train_time - 7.1191
+|2025-07-15 17:16:41| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 7
+|2025-07-15 17:16:41| MAE - 0.0088 MSE - 0.0002 RMSE - 0.0129 MAPE - 0.0235 NMAE - 0.0240 NRMSE - 0.0321 Acc_10 - 0.9900 DTW - 2.9905 train_time - 6.0026
+|2025-07-15 17:17:46| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 8
+|2025-07-15 17:17:46| MAE - 0.0106 MSE - 0.0004 RMSE - 0.0192 MAPE - 0.0337 NMAE - 0.0326 NRMSE - 0.0482 Acc_10 - 0.9404 DTW - 1.8212 train_time - 15.2063
+|2025-07-15 17:18:32| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 9
+|2025-07-15 17:18:32| MAE - 0.0049 MSE - 0.0001 RMSE - 0.0087 MAPE - 0.0343 NMAE - 0.0269 NRMSE - 0.0364 Acc_10 - 0.9304 DTW - 2.0459 train_time - 6.7688
+|2025-07-15 17:19:47| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 10
+|2025-07-15 17:19:47| MAE - 0.0029 MSE - 0.0000 RMSE - 0.0057 MAPE - 0.0149 NMAE - 0.0138 NRMSE - 0.0212 Acc_10 - 0.9893 DTW - 1.3668 train_time - 14.3010
+|2025-07-15 17:20:22| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 11
+|2025-07-15 17:20:22| MAE - 0.0011 MSE - 0.0000 RMSE - 0.0024 MAPE - 0.0141 NMAE - 0.0060 NRMSE - 0.0085 Acc_10 - 0.9909 DTW - 0.1767 train_time - 6.4074
+|2025-07-15 17:21:51| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 12
+|2025-07-15 17:21:51| MAE - 0.0039 MSE - 0.0000 RMSE - 0.0065 MAPE - 0.0415 NMAE - 0.0274 NRMSE - 0.0313 Acc_10 - 0.9109 DTW - 2.3729 train_time - 17.6659
+|2025-07-15 17:22:28| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 13
+|2025-07-15 17:22:28| MAE - 0.0025 MSE - 0.0000 RMSE - 0.0063 MAPE - 20.0101 NMAE - 0.0120 NRMSE - 0.0202 Acc_10 - 0.6352 DTW - 0.4480 train_time - 6.2878
+|2025-07-15 17:23:47| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 14
+|2025-07-15 17:23:47| MAE - 0.0047 MSE - 0.0001 RMSE - 0.0075 MAPE - 0.0373 NMAE - 0.0281 NRMSE - 0.0333 Acc_10 - 0.9372 DTW - 2.4127 train_time - 15.1935
+|2025-07-15 17:24:16| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 15
+|2025-07-15 17:24:16| MAE - 0.0076 MSE - 0.0004 RMSE - 0.0207 MAPE - 0.0518 NMAE - 0.0162 NRMSE - 0.0361 Acc_10 - 0.9184 DTW - 0.3226 train_time - 6.2715
+|2025-07-15 17:24:37| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 16
+|2025-07-15 17:24:37| MAE - 0.0026 MSE - 0.0000 RMSE - 0.0040 MAPE - 0.0166 NMAE - 0.0093 NRMSE - 0.0113 Acc_10 - 0.9875 DTW - 0.3691 train_time - 2.6720
+|2025-07-15 17:25:30| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 17
+|2025-07-15 17:25:30| MAE - 0.0017 MSE - 0.0000 RMSE - 0.0056 MAPE - 0.0108 NMAE - 0.0090 NRMSE - 0.0228 Acc_10 - 0.9939 DTW - 0.4313 train_time - 9.9898
+|2025-07-15 17:26:21| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 18
+|2025-07-15 17:26:21| MAE - 0.0048 MSE - 0.0001 RMSE - 0.0074 MAPE - 0.0481 NMAE - 0.0297 NRMSE - 0.0336 Acc_10 - 0.8884 DTW - 2.5443 train_time - 7.4060
+|2025-07-15 17:26:52| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 19
+|2025-07-15 17:26:52| MAE - 0.0039 MSE - 0.0001 RMSE - 0.0073 MAPE - 0.0151 NMAE - 0.0095 NRMSE - 0.0156 Acc_10 - 0.9857 DTW - 0.6784 train_time - 4.5097
+|2025-07-15 17:27:34| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 20
+|2025-07-15 17:27:34| MAE - 0.0038 MSE - 0.0001 RMSE - 0.0110 MAPE - 0.0219 NMAE - 0.0133 NRMSE - 0.0301 Acc_10 - 0.9627 DTW - 0.5834 train_time - 8.6838
+|2025-07-15 17:44:41| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 17, Pred_Len : 7, Idx : 0
+|2025-07-15 17:44:41| MAE - 0.0040 MSE - 0.0000 RMSE - 0.0060 MAPE - 0.0340 NMAE - 0.0247 NRMSE - 0.0284 Acc_10 - 0.9422 DTW - 2.8046 train_time - 16.9712

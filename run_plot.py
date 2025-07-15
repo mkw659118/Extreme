@@ -32,28 +32,35 @@ def data_to_dataloader(data_input, label):
     )
     return pred_dataloader, flag
 
+def save_figure(inputs, label, pred, cnt, code_idx, config):
+    import os
+    import numpy as np
+    import matplotlib.pyplot as plt
 
-def save_figure(inputs, label, pred, cnt, scaler, code_idx, config):
     plt.figure(figsize=(12, 6), dpi=300)
     os.makedirs(f'./figs/{config.model}/{code_idx}', exist_ok=True)
-    inputs, label, pred = scaler.inverse_transform(inputs), scaler.inverse_transform(label), scaler.inverse_transform(pred)
+
     input_seq = inputs.reshape(-1)
     real_seq = label.reshape(-1)
     pred_seq = pred.reshape(-1)
 
-    # 计算x轴时间索引
     input_len = len(input_seq)
     future_len = len(pred_seq)
 
-    input_time = np.arange(input_len)  # inputs对应的时间
-    future_time = np.arange(input_len, input_len + future_len)  # 预测区间时间
-    # 画图：前面是inputs，后面是label和pred
-    plt.plot(input_time, input_seq, label='Input', linestyle='-.', marker='s', markersize=3)
-    plt.plot(future_time, real_seq, label='Real', linestyle='--', marker='o', markersize=3)
-    plt.plot(future_time, pred_seq, label='Pred', linestyle='-', marker='x', markersize=3)
+    input_time = np.arange(input_len)  # 原始输入时间
+    future_time = np.arange(input_len - 1, input_len + future_len)  # 从前一个时间点衔接
+
+    # 构建衔接后的 real/pred 序列：前接一个 input 的最后值
+    real_seq_plot = np.concatenate([[input_seq[-1]], real_seq])
+    pred_seq_plot = np.concatenate([[input_seq[-1]], pred_seq])
+
+    # 画图
+    plt.plot(input_time, input_seq, label='History Adj Nav', linestyle='-.', marker='s', markersize=3)
+    plt.plot(future_time, real_seq_plot, label='Future Adj Nav', linestyle='--', marker='o', markersize=3)
+    plt.plot(future_time, pred_seq_plot, label='Future Predicted Adj Nav', linestyle='-', marker='x', markersize=3)
+
     plt.legend()
     plt.title(f'Prediction vs Real - Sample {cnt}')
-    # plt.ylim([0, 1.5])
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
@@ -72,15 +79,20 @@ def predict(model, data_input, label, scaler, config):
         inputs, label = all_item[:-1], all_item[-1]
         pred = model.forward(*inputs)
 
-        history_value = inputs[0][:, :, :, -1].detach().cpu().numpy()
         pred_value = pred.detach().cpu().numpy()
         real_value = label.detach().cpu().numpy()
 
+        history_value = scaler.inverse_transform(inputs[0])[:, :, :, -1]
+        # history_value = history_value[:, :, :, -1]
+        pred_value = scaler.inverse_transform(pred_value)[:, :, :, -1]
+        real_value = scaler.inverse_transform(real_value)[:, :, :, -1]
+
+        print(history_value.shape, real_value.shape, pred_value.shape)
         for k in range(history_value.shape[-1]):
             now_idx = cnt
             for i in trange(history_value.shape[0]):
                 now_idx += 1
-                save_figure(history_value[i, :, k], real_value[i, :, k], pred_value[i, :, k], now_idx, scaler, k, config)
+                save_figure(history_value[i, :, k], real_value[i, :, k], pred_value[i, :, k], now_idx, k, config)
 
         cnt += label.shape[0]
 
@@ -90,7 +102,7 @@ def predict(model, data_input, label, scaler, config):
 def RunOnce(config, runId, log):
     set_seed(config.seed + runId)
     datamodule = DataModule(config)
-    model = Model(datamodule, config)
+    model = Model(config)
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
     sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
     try:
@@ -105,7 +117,7 @@ def RunOnce(config, runId, log):
         log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
     results['train_time'] = sum_time
     config.record = False
-    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.scaler, config)
+    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.y_scaler, config)
     return results
 
 
@@ -119,8 +131,5 @@ def run(config):
 
 if __name__ == '__main__':
     from utils.exp_config import get_config
-    config = get_config()
-    # config = get_config('MLPConfig')
-    # config = get_config('CrossformerConfig')
-    # config = get_config('TimesNetConfig')
+    config = get_config('FinancialConfig')
     run(config)
