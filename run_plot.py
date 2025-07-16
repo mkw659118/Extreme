@@ -123,11 +123,14 @@ def predict_7_30_60_90(all_model, all_dataloader, all_y_scaler, config):
 
     # 已经获取了90长度的内容了
     # [bs, pred_len, 131]
-    for k in range(all_reals.shape[-1], 30):
+    print(all_reals.shape)
+    for k in range(all_reals.shape[-1]):
         now_idx = 0
         for i in trange(all_reals.shape[0]):
             save_figure(all_history[i, :, k], all_reals[i, :, k], all_preds[i, :, k], now_idx, k, config)
             now_idx += 1
+        if k >= 20:
+            break
     return True
 
 

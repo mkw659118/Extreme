@@ -8,3 +8,19 @@
 |2025-07-16 15:31:30| MAE - 0.0172 MSE - 0.0005 RMSE - 0.0230 MAPE - 0.1473 NMAE - 0.1053 NRMSE - 0.1080 Acc_10 - 0.4913 DTW - 41.6147 train_time - 22.0150
 
 
+|2025-07-16 15:47:32| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 7, Constraint : False, Idx : 0
+|2025-07-16 15:47:32| MAE - 0.0047 MSE - 0.0000 RMSE - 0.0069 MAPE - 0.0400 NMAE - 0.0286 NRMSE - 0.0324 Acc_10 - 0.9169 DTW - 3.1941 train_time - 42.2656
+|2025-07-16 15:49:18| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 30, Constraint : False, Idx : 0
+|2025-07-16 15:49:18| MAE - 0.0112 MSE - 0.0002 RMSE - 0.0158 MAPE - 0.0974 NMAE - 0.0689 NRMSE - 0.0741 Acc_10 - 0.6729 DTW - 15.8602 train_time - 12.3514
+|2025-07-16 15:51:26| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 60, Constraint : False, Idx : 0
+|2025-07-16 15:51:26| MAE - 0.0130 MSE - 0.0004 RMSE - 0.0188 MAPE - 0.1114 NMAE - 0.0796 NRMSE - 0.0883 Acc_10 - 0.6240 DTW - 26.6459 train_time - 24.2650
+|2025-07-16 15:53:21| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 90, Constraint : False, Idx : 0
+|2025-07-16 15:53:21| MAE - 0.0170 MSE - 0.0005 RMSE - 0.0228 MAPE - 0.1453 NMAE - 0.1039 NRMSE - 0.1070 Acc_10 - 0.4983 DTW - 41.1604 train_time - 24.1033
+|2025-07-16 15:58:36| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 7, Constraint : True, Idx : 0
+|2025-07-16 15:58:36| MAE - 0.0046 MSE - 0.0000 RMSE - 0.0069 MAPE - 0.0400 NMAE - 0.0286 NRMSE - 0.0324 Acc_10 - 0.9174 DTW - 3.1902 train_time - 50.7342
+|2025-07-16 16:00:42| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 30, Constraint : True, Idx : 0
+|2025-07-16 16:00:42| MAE - 0.0112 MSE - 0.0002 RMSE - 0.0158 MAPE - 0.0968 NMAE - 0.0688 NRMSE - 0.0741 Acc_10 - 0.6721 DTW - 15.8361 train_time - 16.0398
+|2025-07-16 16:02:59| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 60, Constraint : True, Idx : 0
+|2025-07-16 16:02:59| MAE - 0.0130 MSE - 0.0004 RMSE - 0.0188 MAPE - 0.1112 NMAE - 0.0795 NRMSE - 0.0883 Acc_10 - 0.6258 DTW - 26.5880 train_time - 30.3433
+|2025-07-16 16:04:51| Dataset : financial, Model : financial, Density : 0.700, d_model : 32, Rank : 40, Seq_Len : 36, Pred_Len : 90, Constraint : True, Idx : 0
+|2025-07-16 16:04:51| MAE - 0.0172 MSE - 0.0005 RMSE - 0.0230 MAPE - 0.1473 NMAE - 0.1053 NRMSE - 0.1080 Acc_10 - 0.4913 DTW - 41.6147 train_time - 22.0060
