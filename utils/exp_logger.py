@@ -60,7 +60,7 @@ class Logger:
         device_tag = device_name.replace(" ", "-").replace("/", "-").replace("(", "").replace(")", "")
 
         # === 构造日志文件路径 ===
-        log_path = f"./{device_tag}_{self.config.logger}.log"
+        log_path = f"./{device_tag}_{self.config.logger}"
 
         with open(f"./{log_path}.log", 'a') as f:
             timestamp = time.strftime('|%Y-%m-%d %H:%M:%S| ')

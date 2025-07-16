@@ -42,5 +42,4 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
 
     n_clusters: int = 160
 
-    topelize: bool = True  # 是否使用Toeplitz矩阵
     constraint: bool = True  # 是否使用约束

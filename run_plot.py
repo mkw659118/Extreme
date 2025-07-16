@@ -38,7 +38,8 @@ def save_figure(inputs, label, pred, cnt, code_idx, config):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(12, 6), dpi=300)
-    os.makedirs(f'./figs/{config.model}/{code_idx}', exist_ok=True)
+    file_root = f'./figs/{config.model}/{config.constraint}/{code_idx}'
+    os.makedirs(file_root, exist_ok=True)
 
     input_seq = inputs.reshape(-1)
     real_seq = label.reshape(-1)
@@ -64,7 +65,7 @@ def save_figure(inputs, label, pred, cnt, code_idx, config):
     plt.xlabel('Time Index')
     plt.ylabel('Value' if not config.classification else 'Class Label')
     plt.grid(True)
-    plt.savefig(f'./figs/{config.model}/{code_idx}/{cnt}.jpg')
+    plt.savefig(f'{file_root}/{cnt}.jpg')
     plt.close()
     # print(f"Figure {cnt} has done!")
 
