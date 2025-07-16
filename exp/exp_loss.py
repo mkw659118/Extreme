@@ -7,7 +7,7 @@ import torch.nn.functional as F
 def compute_loss(model, inputs, pred, label, config):
     loss = model.loss_function(pred, label)
 
-    if config.Constraint:
+    if config.constraint:
         loss += model.distance(pred, label) * 1e-4                             # 添加Consine损失
         loss += model.model.toeplitz_loss * 1e-2                               # 添加 Toeplitz 正则项的损失
         # loss += torch.abs(torch.sum(pred) - torch.sum(label)) * 1e-3         # 添加 Sigcomm 数量和约束

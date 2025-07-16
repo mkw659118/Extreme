@@ -38,7 +38,7 @@ def save_figure(inputs, label, pred, cnt, code_idx, config):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(12, 6), dpi=300)
-    file_root = f'./figs/{config.model}/{config.constraint}/{code_idx}'
+    file_root = f'./figs/{config.model}/constraint_{config.constraint}/{code_idx}'
     os.makedirs(file_root, exist_ok=True)
 
     input_seq = inputs.reshape(-1)
@@ -123,7 +123,7 @@ def predict_7_30_60_90(all_model, all_dataloader, all_y_scaler, config):
 
     # 已经获取了90长度的内容了
     # [bs, pred_len, 131]
-    for k in range(all_reals.shape[-1]):
+    for k in range(all_reals.shape[-1], 30):
         now_idx = 0
         for i in trange(all_reals.shape[0]):
             save_figure(all_history[i, :, k], all_reals[i, :, k], all_preds[i, :, k], now_idx, k, config)
@@ -150,6 +150,7 @@ def RunOnce(config, runId):
         datamodule = DataModule(config)
         model = Model(config)
         model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
+        print(model_path)
         try:
             model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
             sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
