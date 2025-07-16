@@ -3,10 +3,12 @@
 
 import os
 import glob
+import platform
 import time
 import logging
 import pickle
 import numpy as np
+import torch
 import yagmail
 
 from utils.model_efficiency import get_efficiency
@@ -43,7 +45,24 @@ class Logger:
 
     # 保存运行日志到run.log文件
     def save_in_log(self, metrics):
-        with open(f"./{self.config.logger}.log", 'a') as f:
+        # === 获取 CPU 名称 ===
+        cpu_name = platform.processor()
+        if not cpu_name:
+            cpu_name = platform.machine()
+        device_name = f"CPU-{cpu_name}"
+
+        # === 如果有 GPU，添加 GPU 名称 ===
+        if torch.cuda.is_available():
+            gpu_name = torch.cuda.get_device_name(0)
+            device_name += f"_GPU-{gpu_name}"
+
+        # === 清理非法字符，生成文件名 tag ===
+        device_tag = device_name.replace(" ", "-").replace("/", "-").replace("(", "").replace(")", "")
+
+        # === 构造日志文件路径 ===
+        log_path = f"./{device_tag}_{self.config.logger}.log"
+
+        with open(f"./{log_path}.log", 'a') as f:
             timestamp = time.strftime('|%Y-%m-%d %H:%M:%S| ')
             f.write(timestamp + self.exper_detail + '\n')
             metric_str = ' '.join([f"{k} - {np.mean(v):.4f}" for k, v in metrics.items()])
