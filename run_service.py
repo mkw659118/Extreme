@@ -123,8 +123,8 @@ def predict_torch_model(model, history_input, config):
     # 因为我加了时间戳特征
     x = history_input[:, :, -3:]
     x_fund = history_input[:, :, 0]
-    x_mark = history_input[:, :, :3] 
-    x_features = history_input[:, :, 3:-3]
+    x_mark = history_input[:, :, 1:4] 
+    x_features = history_input[:, :, 4:-3]
     # unsqueeze 代表 batch size = 1
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
     x_features = torch.from_numpy(x_features.astype(np.float32)).unsqueeze(0)
@@ -170,7 +170,6 @@ def get_sql_format_data(pred_value, cleaned_input):
     cleaned_input = cleaned_input[0, :, :]
     for j in range(pred_value.shape[1]):
         idx = config.idx
-
         fund_code = cleaned_input[j][0]
         forcast_date = current_date
         pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'

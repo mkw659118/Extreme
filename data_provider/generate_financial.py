@@ -123,7 +123,6 @@ def query_fund_data(fund, start_date, end_date):
 def process_date_columns(df):
     """处理基金数据，返回包含统计指标的 numpy 数组"""
     df = df.copy()
-    
     # 构造 datetime 列用于排序和时间索引
     df['date'] = pd.to_datetime(df['date'])
     df['year'] = df['date'].dt.year
@@ -156,7 +155,7 @@ def process_date_columns(df):
 
     # 选择输出列
     df.reset_index(inplace=True)
-    df = df[['month', 'day', 'weekday',
+    df = df[['fund_code', 'month', 'day', 'weekday',
              'daily_return', 'cumulative', 'annual_volatility',
              'stability', 'monthwin', 'winning_day', 'maxDrawdown', 'accnav', 'adj_nav', 'nav',]]
     df = df.fillna(0)  # 填充缺失值为0

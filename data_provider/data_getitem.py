@@ -26,8 +26,8 @@ class TensorDataset(Dataset):
         if self.config.multi_dataset:
             x = self.x[s_begin:s_end][:, :, -3:]
             x_fund = self.x[s_begin:s_end][:, :, 0]
-            x_mark = self.x[s_begin:s_end][:, :, :3] 
-            x_features = self.x[s_begin:s_end][:, :, 3:-3]
+            x_mark = self.x[s_begin:s_end][:, :, 1:4] 
+            x_features = self.x[s_begin:s_end][:, :, 4:-3]
             y = self.y[r_begin:r_end]
             # print(f"x.shape = {x.shape}, x_mark.shape = {x_mark.shape}, x_fund.shape = {x_fund.shape}, x_features.shape = {x_features.shape}, y.shape = {y.shape}")
             return x, x_mark, x_fund, x_features, y
