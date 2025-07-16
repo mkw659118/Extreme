@@ -7,7 +7,7 @@ from configs.default_config import *
 @dataclass
 class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'financial'
-    bs: int = 16
+    bs: int = 64
     d_model: int = 32
     epochs: int = 100
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
@@ -41,3 +41,6 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     end_date: str = '2025-06-28'
 
     n_clusters: int = 160
+
+    topelize: bool = True  # 是否使用Toeplitz矩阵
+    constraint: bool = True  # 是否使用约束

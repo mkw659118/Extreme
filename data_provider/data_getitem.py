@@ -10,16 +10,18 @@ class TensorDataset(Dataset):
         self.x = x
         self.y = y
         self.mode = mode
+        self.seq_len = config.seq_len
+        self.pred_len = config.pred_len
 
     def __len__(self):
         # return len(self.x)
-        return len(self.x) - self.config.seq_len - self.config.pred_len + 1
+        return len(self.x) - self.seq_len - self.pred_len + 1
 
     def __getitem__(self, idx):
         s_begin = idx
-        s_end = s_begin + self.config.seq_len
+        s_end = s_begin + self.seq_len
         r_begin = s_end
-        r_end = r_begin + self.config.pred_len
+        r_end = r_begin + self.pred_len
 
         if self.config.multi_dataset:
             x = self.x[s_begin:s_end][:, :, -3:]

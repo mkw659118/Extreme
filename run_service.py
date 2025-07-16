@@ -87,9 +87,8 @@ def get_pretrained_model(log, config):
     model = Model(config)
     runId = 0
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     return model 
-
 
 def constrain_nav_prediction(predictions, bar=0.05, scale=0.9):
     """
@@ -141,7 +140,7 @@ def get_final_pred(group_fund_code, current_date, log, config):
     print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
     all_pred = np.zeros((90, len(history_input)))
 
-    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
+    all_scnerios = [[36, 7], [36, 30], [36, 60], [36, 90]]
     prev_len = 0
     for seq_len, pred_len in all_scnerios:
         config.seq_len = seq_len
@@ -171,6 +170,7 @@ def get_sql_format_data(pred_value, cleaned_input):
     cleaned_input = cleaned_input[0, :, :]
     for j in range(pred_value.shape[1]):
         idx = config.idx
+
         fund_code = cleaned_input[j][0]
         forcast_date = current_date
         pred = '{"pre": [' + ', '.join(f'{item:.6f}' for item in pred_value[:, j]) + ']}'

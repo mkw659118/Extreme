@@ -21,7 +21,7 @@ torch.set_default_dtype(torch.float32)
 
 def data_to_dataloader(data_input, label):
     data_set = TensorDataset(data_input, label, 'pred', config)
-    bs = 256
+    bs = 512
     flag = 'test'
     pred_dataloader = DataLoader(
         data_set,
@@ -71,6 +71,7 @@ def save_figure(inputs, label, pred, cnt, code_idx, config):
 
 def predict(model, data_input, label, scaler, config):
     dataloader, flag = data_to_dataloader(data_input, label)
+    
     model.setup_optimizer(config)
     cnt = 0
     print(len(dataloader.dataset))
@@ -83,7 +84,6 @@ def predict(model, data_input, label, scaler, config):
         real_value = label.detach().cpu().numpy()
 
         history_value = scaler.inverse_transform(inputs[0])[:, :, :, -1]
-        # history_value = history_value[:, :, :, -1]
         pred_value = scaler.inverse_transform(pred_value)[:, :, :, -1]
         real_value = scaler.inverse_transform(real_value)[:, :, :, -1]
 
@@ -99,34 +99,79 @@ def predict(model, data_input, label, scaler, config):
     return True
 
 
-def RunOnce(config, runId, log):
+
+def predict_7_30_60_90(all_model, all_dataloader, all_y_scaler, config):
+    all_history = np.zeros((len(all_dataloader[-1].dataset), all_dataloader[-1].dataset.seq_len, all_dataloader[-1].dataset.y.shape[1]))
+    all_reals = np.zeros((len(all_dataloader[-1].dataset), all_dataloader[-1].dataset.pred_len, all_dataloader[-1].dataset.y.shape[1]))
+    all_preds = np.zeros((len(all_dataloader[-1].dataset), all_dataloader[-1].dataset.pred_len, all_dataloader[-1].dataset.y.shape[1]))
+    for i in range(len(all_model) - 1, 0, -1):
+        # print(len(all_dataloader[i].dataset))
+        for batch in (all_dataloader[i]):
+            all_item = [item.to(config.device) for item in batch]
+            inputs, label = all_item[:-1], all_item[-1]
+            pred = all_model[i].forward(*inputs)
+            pred_value = pred.detach().cpu().numpy()
+            real_value = label.detach().cpu().numpy()
+            history_value = all_y_scaler[i].inverse_transform(inputs[0])[:, :, :, -1]
+            pred_value = all_y_scaler[i].inverse_transform(pred_value)[:, :, :, -1]
+            real_value = all_y_scaler[i].inverse_transform(real_value)[:, :, :, -1]
+            # print(history_value.shape, real_value.shape, pred_value.shape)
+            all_history[:len(all_dataloader[-1].dataset), :all_dataloader[i].dataset.seq_len, :all_dataloader[i].dataset.y.shape[1]] = history_value[:len(all_dataloader[-1].dataset)]
+            all_reals[:len(all_dataloader[-1].dataset), :all_dataloader[i].dataset.pred_len, :all_dataloader[i].dataset.y.shape[1]] = real_value[:len(all_dataloader[-1].dataset)]
+            all_preds[:len(all_dataloader[-1].dataset), :all_dataloader[i].dataset.pred_len, :all_dataloader[i].dataset.y.shape[1]] = pred_value[:len(all_dataloader[-1].dataset)]
+
+    # 已经获取了90长度的内容了
+    # [bs, pred_len, 131]
+    for k in range(all_reals.shape[-1]):
+        now_idx = 0
+        for i in trange(all_reals.shape[0]):
+            save_figure(all_history[i, :, k], all_reals[i, :, k], all_preds[i, :, k], now_idx, k, config)
+            now_idx += 1
+    return True
+
+
+def RunOnce(config, runId):
     set_seed(config.seed + runId)
-    datamodule = DataModule(config)
-    model = Model(config)
-    model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
-    try:
-        model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
-    except:
-        pass
-    model.setup_optimizer(config)
-    results = model.evaluate_one_epoch(datamodule, 'test')
-    if not config.classification:
-        log(f'MAE={results["MAE"]:.4f} RMSE={results["RMSE"]:.4f} NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} time={sum_time:.1f} s ')
-    else:
-        log(f'Ac={results["AC"]:.4f} Pr={results["PR"]:.4f} Rc={results["RC"]:.4f} F1={results["F1"]:.4f} time={sum_time:.1f} s ')
-    results['train_time'] = sum_time
-    config.record = False
-    results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.y_scaler, config)
+    log_filename, exper_detail = get_experiment_name(config)
+    plotter = MetricsPlotter(log_filename, config)
+    log = Logger(log_filename, exper_detail, plotter, config)
+    all_model = []
+    all_test_x = []
+    all_test_y = []
+    all_y_scaler = []
+    all_dataloader = []
+    all_scnerios = [[36, 7], [36, 30], [36, 60], [36, 90]]
+    for seq_len, pred_len in all_scnerios:
+        config.seq_len = seq_len
+        config.pred_len = pred_len
+        filename, exper_detail = get_experiment_name(config)
+        log.filename = filename
+        datamodule = DataModule(config)
+        model = Model(config)
+        model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
+        try:
+            model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+            sum_time = pickle.load(open(f'./results/metrics/' + log.filename + '.pkl', 'rb'))['train_time'][runId]
+            results['train_time'] = sum_time
+        except Exception as e:
+            # raise e
+            pass
+        model.setup_optimizer(config)
+        results = model.evaluate_one_epoch(datamodule, 'test')
+        log(f'NMAE={results["NMAE"]:.4f} NRMSE={results["NRMSE"]:.4f} Acc_10={results["Acc_10"]:.4f} DTW={results["DTW"]:.4f}')
+        all_model.append(model)
+        dataloader, flag = data_to_dataloader(datamodule.test_set.x, datamodule.test_set.y)
+        all_dataloader.append(dataloader)
+        all_y_scaler.append(datamodule.y_scaler)
+        config.record = False
+    # results = predict(model, datamodule.test_set.x, datamodule.test_set.y, datamodule.y_scaler, config)
+    results = predict_7_30_60_90(all_model, all_dataloader, all_y_scaler, config)
     return results
 
 
 def run(config):
     set_settings(config)
-    log_filename, exper_detail = get_experiment_name(config)
-    plotter = MetricsPlotter(log_filename, config)
-    log = Logger(log_filename, exper_detail, plotter, config)
-    metrics = RunOnce(config, 0, log)
+    metrics = RunOnce(config, 0)
     return metrics
 
 if __name__ == '__main__':
