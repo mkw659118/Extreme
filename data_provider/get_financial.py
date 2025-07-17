@@ -13,8 +13,8 @@ from data_provider.data_scaler import get_scaler
 
 
 def get_group_idx(group_index, config):
-    # with open('./results/func_code_to_label_150_balanced.pkl', 'rb') as f:
-    with open(f'./datasets/func_code_to_label_{config.n_clusters}.pkl', 'rb') as f:
+    with open(f'./datasets/func_code_to_label_{config.n_clusters}_balanced.pkl', 'rb') as f:
+    # with open(f'./datasets/func_code_to_label_{config.n_clusters}.pkl', 'rb') as f:
         data = pickle.load(f)
     all_func_code = []
     for i in range(len(data)):

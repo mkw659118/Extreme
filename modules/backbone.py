@@ -91,9 +91,6 @@ class Backbone(torch.nn.Module):
         self.revin = config.revin
         self.fft = config.fft
 
-        if self.revin:
-            self.revin_layer = RevIN(num_features=enc_in, affine=False, subtract_last=False)
-
         if self.fft:
             self.seasonality_and_trend_decompose = DFT(2)
 
