@@ -7,7 +7,7 @@ from configs.default_config import *
 @dataclass
 class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'financial'
-    bs: int = 64
+    bs: int = 32
     d_model: int = 32
     epochs: int = 100
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss

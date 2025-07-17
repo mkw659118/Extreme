@@ -98,8 +98,8 @@ class Backbone(torch.nn.Module):
             self.seasonality_and_trend_decompose = DFT(2)
 
         self.projection = torch.nn.Linear(enc_in, config.d_model, bias=True)
-        self.position_embedding = PositionEncoding(d_model=self.d_model, max_len=config.seq_len, method='bert')
-        self.fund_embedding = torch.nn.Embedding(999999, config.d_model)
+        # self.position_embedding = PositionEncoding(d_model=self.d_model, max_len=config.seq_len, method='bert')
+        # self.fund_embedding = torch.nn.Embedding(999999, config.d_model)
         self.predict_linear = torch.nn.Linear(config.seq_len, config.pred_len + config.seq_len)
 
         self.feature_linear = torch.nn.Linear(7, config.d_model, bias=True)

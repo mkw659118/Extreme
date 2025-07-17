@@ -134,13 +134,12 @@ def predict_torch_model(model, history_input, config):
     pred_value, _ = constrain_nav_prediction(pred_value)
     return pred_value
 
-def get_final_pred(group_fund_code, current_date, log, config):
+def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
 
     history_input = get_history_data(group_fund_code, current_date, config)
     print(f"📈 历史数据已获取。列表长度: {len(history_input)}")
     all_pred = np.zeros((90, len(history_input)))
 
-    all_scnerios = [[36, 7], [36, 30], [36, 60], [36, 90]]
     prev_len = 0
     for seq_len, pred_len in all_scnerios:
         config.seq_len = seq_len
@@ -212,7 +211,7 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    # drop_sql_temp(table_name)
+    drop_sql_temp(table_name)
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
@@ -221,7 +220,7 @@ def start_server(current_date, table_name = 'temp_sql'):
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
-    all_scnerios = [[17, 7], [36, 30], [36, 60], [36, 90]]
+    all_scnerios = [[36, 7], [36, 30], [36, 60], [36, 90]]
 
     for i in range(group_num):
         # 27
@@ -239,7 +238,7 @@ def start_server(current_date, table_name = 'temp_sql'):
                 continue
 
             print(f"🔍 正在处理基金组 {i}，部分基金代码: {group_fund_code[:10]}")
-            pred_value, cleaned_input = get_final_pred(group_fund_code, current_date, log, config)
+            pred_value, cleaned_input = get_final_pred(all_scnerios, group_fund_code, current_date, log, config)
 
             pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
             print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")

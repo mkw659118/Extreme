@@ -6,12 +6,10 @@ import torch.nn.functional as F
 # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
 def compute_loss(model, inputs, pred, label, config):
     loss = model.loss_function(pred, label)
-
     if config.constraint:
         loss += model.distance(pred, label) * 1e-4                             # 添加Consine损失
         loss += model.model.toeplitz_loss * 1e-2                               # 添加 Toeplitz 正则项的损失
         # loss += torch.abs(torch.sum(pred) - torch.sum(label)) * 1e-3         # 添加 Sigcomm 数量和约束
-
         # 构建差分约束，不宜超过历史最大最小涨跌
         hist = inputs[0]                        # [bs, seq_len, channels, 3]
         # Step 1: 历史相邻差分

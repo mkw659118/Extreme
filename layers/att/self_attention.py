@@ -7,7 +7,7 @@ from einops import rearrange
 class Attention(torch.nn.Module):
     def __init__(self, d_model, num_heads, dropout=0.10):
         super().__init__()
-        self.att = torch.nn.MultiheadAttention(d_model, num_heads, dropout)
+        self.att = torch.nn.MultiheadAttention(d_model, num_heads, dropout, batch_first=True)
 
     def forward(self, x, weight=False):
         out, weights = self.att(x, x, x)

@@ -114,8 +114,8 @@ def plot_clusters_from_mapping(mapping_array, data_dir, output_dir='./figs/clust
         plt.savefig(os.path.join(group_dir, f'{fund_code}.png'))
         plt.close()
 
-        
-def balanced_cluster(data, cluster_num, group_size_limit=70):
+
+def balanced_cluster(data, cluster_num, group_size_limit=100):
     import random
     import pickle
     import numpy as np
@@ -131,22 +131,21 @@ def balanced_cluster(data, cluster_num, group_size_limit=70):
 
     # 累积所有切好的 batch（每个组大小不超过 group_size_limit）
     all_batches = []
-    tail_samples = []
+    tail_samples = []  # 存储无法完全达到 group_size_limit 的样本
 
     for fund_codes in group_to_samples.values():
         random.shuffle(fund_codes)
         for i in range(0, len(fund_codes), group_size_limit):
             batch = fund_codes[i:i + group_size_limit]
-            if len(batch) < group_size_limit // 2:
-                tail_samples.extend(batch)  # 留作合并
+            if len(batch) < group_size_limit:
+                tail_samples.append(batch)  # 单独保留的小组
             else:
                 all_batches.append(batch)
 
-    # 把剩余样本拼接成尽量接近 group_size_limit 的组
+    # 如果有剩余样本单独作为一个新的组
     if tail_samples:
-        random.shuffle(tail_samples)
-        for i in range(0, len(tail_samples), group_size_limit):
-            batch = tail_samples[i:i + group_size_limit]
+        # 每个残余的组单独做为一个新的 group
+        for batch in tail_samples:
             all_batches.append(batch)
 
     # 重新分配连续组号
@@ -165,12 +164,13 @@ def balanced_cluster(data, cluster_num, group_size_limit=70):
     return new_arr
 
 
+
 if __name__ == '__main__':
     from utils.exp_config import get_config
     config = get_config('FinancialConfig')
 
     n_clusters = config.n_clusters
-    mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
+    # mapping_array = get_each_cluster_group_idx(n_clusters, config.start_date, config.end_date)
     with open(f'./datasets/func_code_to_label_{n_clusters}.pkl', 'rb') as f:
         mapping_array = pickle.load(f)
 
@@ -181,4 +181,4 @@ if __name__ == '__main__':
     # 绘图
     # plot_clusters_from_mapping(mapping_array, data_dir, output_dir)
 
-    # mapping_array = balanced_cluster(mapping_array, n_clusters)
+    mapping_array = balanced_cluster(mapping_array, n_clusters)
