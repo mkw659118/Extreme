@@ -225,10 +225,12 @@ class Transformer(torch.nn.Module):
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
         x = self.predict_linear(x)
         x = rearrange(x, 'bs d_model seq_pred_len -> bs seq_pred_len d_model')
+
         for norm1, attn, norm2, ff in self.layers:
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
         x = self.norm(x)
+        
         x = self.projection(x)
         if self.revin:
             x = self.revin_layer(x, 'denorm')

@@ -62,7 +62,6 @@ def multi_dataset(config):
     return x, y, x_scaler, y_scaler
 
 
-
 def single_dataset(config):
     # now_fund_code = get_group_idx(config.idx)
     # 2025年07月04日20:06:51，这个代码数据库暂时有点问题
@@ -72,7 +71,6 @@ def single_dataset(config):
     data = process_date_columns(fund_dict[now_fund_code])
     if len(data) < 827: 
         exit()
-    # [n, d]
     x, y = data[:, :], data[:, -3:]
 
     x[:, 4:] = x[:, 4:].astype(np.float32)
