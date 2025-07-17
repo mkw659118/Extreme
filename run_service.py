@@ -1,4 +1,5 @@
 import torch
+from data_provider.data_loader import DataModule
 from exp.exp_model import Model
 from data_provider.generate_financial import process_date_columns, query_fund_data
 from data_provider.get_financial import get_group_idx
@@ -11,7 +12,7 @@ import pickle
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
-
+import os 
 from utils.exp_logger import Logger
 from utils.exp_metrics_plotter import MetricsPlotter
 
@@ -91,7 +92,8 @@ def get_pretrained_model(log, config):
     model = Model(config)
     runId = 0
     model_path = f'./checkpoints/{config.model}/{log.filename}_round_{runId}.pt'
-    # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
+    print(model_path)
+    model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     return model 
 
 
@@ -140,8 +142,9 @@ def apply_delta_with_hist_constraints(hist, pred):
 
     return pred_clipped.T  # shape: [T_pred, n]
 
-def predict_torch_model(model, history_input, config):
+def predict_torch_model(model, history_input, x_scaler, y_scaler, config):
     # 因为我加了时间戳特征
+    history_input[:, :, 3:] = x_scaler.transform(history_input[:, :, 3:])
     x = history_input[:, :, -3:]
     x_fund = history_input[:, :, 0]
     x_mark = history_input[:, :, 1:4] 
@@ -150,6 +153,7 @@ def predict_torch_model(model, history_input, config):
     x = torch.from_numpy(x.astype(np.float32)).unsqueeze(0)
     x_features = torch.from_numpy(x_features.astype(np.float32)).unsqueeze(0)
     pred_value = model(x, x_mark, x_fund, x_features).squeeze(0).detach().numpy()
+    pred_value = y_scaler.inverse_transform(pred_value)
     pred_value = pred_value[:, :, -1]
     pred_value = np.abs(pred_value)
     return pred_value
@@ -165,6 +169,9 @@ def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
         config.seq_len = seq_len
         config.pred_len = pred_len
         filename, exper_detail = get_experiment_name(config)
+        datamodule = DataModule(config)
+        x_scaler, y_scaler = datamodule.x_scaler, datamodule.y_scaler
+        del datamodule
         log.filename = filename
         cleaned_input = check_input(history_input, config)
         print(f"🧹 清洗后的输入数据维度: {cleaned_input.shape}")  # 应为 [seq_len, group_num, feature_dim]
@@ -172,7 +179,7 @@ def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
         model = get_pretrained_model(log, config)
         print("🤖 模型加载完成。")
 
-        pred_value = predict_torch_model(model, cleaned_input, config)
+        pred_value = predict_torch_model(model, cleaned_input, x_scaler, y_scaler, config)
         print(f"📉 预测结果维度: {pred_value.shape}")
         
         start_idx = prev_len
@@ -180,7 +187,6 @@ def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
         prev_len = config.pred_len
         all_pred[start_idx:end_idx, :] = pred_value[start_idx:end_idx, :]
         print(f"📊 预测结果已存入 all_pred，从 {start_idx} 到 {end_idx}。")
-
 
     hist = np.stack(history_input, axis=0).transpose(1, 0, 2)[:, :, -1]
     pred_value = apply_delta_with_hist_constraints(hist, pred_value)
@@ -204,15 +210,22 @@ def get_sql_format_data(pred_value, cleaned_input):
     now_df = pd.DataFrame(now_df, columns=['id', 'fund_code', 'forecast_date', 'pre_data', 'model_version', 'create_time', 'update_time'])
     return now_df
 
+
+
 def insert_pred_to_sql(df, table_name):
     try:
+        # 1. First save to CSV in results/csv directory
+        os.makedirs('./results/csv', exist_ok=True)  # Create directory if it doesn't exist
+        csv_path = f'./results/csv/{table_name}_predictions.csv'
+        df.to_csv(csv_path, index=False)
+        print(f"✅ 数据成功保存到CSV文件: {csv_path}")
+        
+        # 2. Then proceed with SQL insertion as before
         # 读取数据库连接字符串
         with open('./datasets/sql_token.pkl', 'rb') as f:
             DB_URI = pickle.load(f)
-
         # 创建数据库引擎
         engine = create_engine(DB_URI)
-
         # 插入数据
         df.to_sql(
             name=table_name,   # 表名
@@ -221,25 +234,23 @@ def insert_pred_to_sql(df, table_name):
             index=False                   # 不插入索引列
         )
         print(f"✅ 数据成功写入数据库{table_name}。")
-
+        
     except FileNotFoundError:
         print("❌ 无法找到 sql_token.pkl 文件。请检查路径是否正确。")
-
     except SQLAlchemyError as e:
         print(f"❌ 数据库插入失败: {e}")
-
     except Exception as e:
         print(f"❌ 发生未知错误: {e}")
 
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    # drop_sql_temp(table_name)
+    drop_sql_temp(table_name)
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
     
-    with open('./datasets/func_code_to_label_150.pkl', 'rb') as f:
+    with open('./datasets/func_code_to_label_160_balanced.pkl', 'rb') as f:
         data = np.array(pickle.load(f))
         df = data[:, 1].astype(np.float32)
     group_num = int(df.max() + 1)
@@ -256,24 +267,25 @@ def start_server(current_date, table_name = 'temp_sql'):
             group_fund_code = get_group_idx(i, config)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
-            # if check_bad_model(all_scnerios, log, config):
-                # print(f"❗️ 模型效果不佳，跳过基金组 {i} 的预测。")
-                # continue
+            if check_bad_model(all_scnerios, log, config):
+                print(f"❗️ 模型效果不佳，跳过基金组 {i} 的预测。")
+                continue
 
             print(f"🔍 正在处理基金组 {i}，部分基金代码: {group_fund_code[:10]}")
             pred_value, cleaned_input = get_final_pred(all_scnerios, group_fund_code, current_date, log, config)
 
             pred_value_sql = get_sql_format_data(pred_value, cleaned_input)
             print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")
-            print(pred_value_sql.head(2))  # 打印前两行以核验内容结构
-
-            # insert_pred_to_sql(pred_value_sql, table_name)
+            print(pred_value_sql.head(5))  # 打印前两行以核验内容结构
+            
+            insert_pred_to_sql(pred_value_sql, table_name)
         except Exception as e:
             raise e
             print(e)
             continue
-
     return pred_value_sql
+
+
 
 if __name__ == '__main__':
     config = get_config('FinancialConfig')

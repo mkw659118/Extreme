@@ -49,8 +49,9 @@ class DataModule:
     def get_dataloaders(self, train_set, valid_set, test_set, config):
 
         if platform.system() == 'Linux' and 'ubuntu' in platform.version().lower():
-            max_workers = multiprocessing.cpu_count() // 4
-            prefetch_factor = 4
+            # max_workers = multiprocessing.cpu_count() // 4
+            max_workers = 2
+            prefetch_factor = 2
         else:
             max_workers = 0
             prefetch_factor = None
