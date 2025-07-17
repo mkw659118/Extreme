@@ -67,11 +67,15 @@ def check_bad_model(all_scnerios, log, config):
 
 def get_history_data(get_group_idx, current_date, config):
     all_history_input = []
-    start_date = get_start_date(current_date, window_size=200)
+    start_date = get_start_date(current_date, window_size=2000)
     fund_dict = query_fund_data(get_group_idx, start_date, current_date)
+    min_len = 1e9
+    for key, value in fund_dict.items():
+        min_len = min(len(value), min_len)
+
     for key, value in fund_dict.items():
         df = process_date_columns(value)
-        df = df[-90:, :]
+        df = df[-min_len:, :]
         all_history_input.append(df)
     data = all_history_input
     return data
@@ -90,34 +94,51 @@ def get_pretrained_model(log, config):
     # model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
     return model 
 
-def constrain_nav_prediction(predictions, bar=0.05, scale=0.9):
-    """
-    检测单位净值预测中是否存在超过bar的相邻涨跌幅，
-    如果是，则整条基金的净值序列按相对首日值重新缩放（温和调整）
 
-    参数：
-    - predictions: np.ndarray [7, 64]，表示64支基金7天的预测单位净值
-    - bar: float，单位净值日涨跌幅上限（如0.05表示5%）
-    - scale: float，检测异常后，使用的趋势缩放系数（如0.9）
-
-    返回：
-    - adjusted: np.ndarray [7, 64]，处理后的单位净值预测
-    - mask: np.ndarray [64]，表示哪些基金被缩放（True为缩放）
+def apply_delta_with_hist_constraints(hist, pred):
     """
-    adjusted = predictions.copy()
-    mask = np.zeros(predictions.shape[1], dtype=bool)
-    for fund_idx in range(predictions.shape[1]):
-        nav_series = predictions[:, fund_idx]
-        # 计算相邻涨跌幅
-        returns = nav_series[1:] / nav_series[:-1] - 1
-        if np.any(np.abs(returns) > bar):
-            # 以首日为锚点，重构温和曲线
-            base = nav_series[0]
-            relative_change = (nav_series - base) / base
-            softened = base * (1 + relative_change * scale)
-            adjusted[:, fund_idx] = softened
-            mask[fund_idx] = True
-    return adjusted, mask
+    hist: shape [seq_len, n]
+    pred: shape [T_pred, n]
+    """
+    pred_clipped = pred.copy().T  # shape: [n, T_pred]
+    hist = hist.copy().T          # shape: [n, seq_len]
+    N, T_pred = pred_clipped.shape
+
+    # Step 1: 计算历史最大涨跌
+    hist_diff = hist[:, 1:] - hist[:, :-1]
+    max_gain = np.max(hist_diff, axis=1)  # [n]
+    max_drop = np.min(hist_diff, axis=1)  # [n]
+
+    # print("基金历史最大涨跌幅：")
+    # for i in range(N):
+        # print(f"基金{i}: max_gain = {max_gain[i]:.4f}, max_drop = {max_drop[i]:.4f}")
+
+    # Step 2: 应用递推约束
+    for i in range(N):
+        for t in range(1, T_pred):
+            prev = pred_clipped[i, t - 1]
+            curr = pred_clipped[i, t]
+            delta = curr - prev
+
+            if delta > max_gain[i]:
+                low = prev
+                high = prev + max_gain[i]
+                if high < low:
+                    low, high = high, low
+                new_val = np.random.uniform(low, high)
+                print(f"[基金{i}] 第{t}步: 涨幅超限 (Δ={delta:.4f} > {max_gain[i]:.4f})，原值={curr:.4f} → 新值={new_val:.4f}")
+                pred_clipped[i, t] = new_val
+
+            elif delta < max_drop[i]:
+                low = prev + max_drop[i]  # 注意是 prev + max_drop（max_drop 是负数）
+                high = prev
+                if high < low:
+                    low, high = high, low
+                new_val = np.random.uniform(low, high)
+                print(f"[基金{i}] 第{t}步: 跌幅超限 (Δ={delta:.4f} < {max_drop[i]:.4f})，原值={curr:.4f} → 新值={new_val:.4f}")
+                pred_clipped[i, t] = new_val
+
+    return pred_clipped.T  # shape: [T_pred, n]
 
 def predict_torch_model(model, history_input, config):
     # 因为我加了时间戳特征
@@ -131,7 +152,6 @@ def predict_torch_model(model, history_input, config):
     pred_value = model(x, x_mark, x_fund, x_features).squeeze(0).detach().numpy()
     pred_value = pred_value[:, :, -1]
     pred_value = np.abs(pred_value)
-    pred_value, _ = constrain_nav_prediction(pred_value)
     return pred_value
 
 def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
@@ -161,6 +181,9 @@ def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):
         all_pred[start_idx:end_idx, :] = pred_value[start_idx:end_idx, :]
         print(f"📊 预测结果已存入 all_pred，从 {start_idx} 到 {end_idx}。")
 
+
+    hist = np.stack(history_input, axis=0).transpose(1, 0, 2)[:, :, -1]
+    pred_value = apply_delta_with_hist_constraints(hist, pred_value)
     return pred_value, cleaned_input
 
 def get_sql_format_data(pred_value, cleaned_input):
@@ -211,7 +234,7 @@ def insert_pred_to_sql(df, table_name):
 
 # [128, 16, 33, 3])
 def start_server(current_date, table_name = 'temp_sql'):
-    drop_sql_temp(table_name)
+    # drop_sql_temp(table_name)
 
     print(f"\n📅 当前预测日期: {current_date}")
     print(f"➡️ 输入序列长度: {config.seq_len}, 预测长度: {config.pred_len}")
@@ -233,9 +256,9 @@ def start_server(current_date, table_name = 'temp_sql'):
             group_fund_code = get_group_idx(i, config)
             print(f"📊 获取基金组共 {len(group_fund_code)} 个基金列表中")
 
-            if check_bad_model(all_scnerios, log, config):
-                print(f"❗️ 模型效果不佳，跳过基金组 {i} 的预测。")
-                continue
+            # if check_bad_model(all_scnerios, log, config):
+                # print(f"❗️ 模型效果不佳，跳过基金组 {i} 的预测。")
+                # continue
 
             print(f"🔍 正在处理基金组 {i}，部分基金代码: {group_fund_code[:10]}")
             pred_value, cleaned_input = get_final_pred(all_scnerios, group_fund_code, current_date, log, config)
@@ -244,7 +267,7 @@ def start_server(current_date, table_name = 'temp_sql'):
             print(f"🧾 预测结果已转为 DataFrame，准备写入数据库。表格 shape: {pred_value_sql.shape}")
             print(pred_value_sql.head(2))  # 打印前两行以核验内容结构
 
-            insert_pred_to_sql(pred_value_sql, table_name)
+            # insert_pred_to_sql(pred_value_sql, table_name)
         except Exception as e:
             raise e
             print(e)
