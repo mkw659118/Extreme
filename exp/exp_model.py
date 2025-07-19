@@ -65,7 +65,9 @@ class Model(BasicModel):
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
-                match_mode=config.match_mode
+                match_mode=config.match_mode,
+                win_size=config.win_size,
+                device=config.device
             )
 
         elif config.model == 'transformer2':  # 添加 transformer 支持

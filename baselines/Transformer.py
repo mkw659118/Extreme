@@ -9,11 +9,22 @@ from layers.att.multilatent_attention import MLA
 from layers.att.multiquery_attention import MultiQueryAttentionBatched
 from layers.feedforward.ffn import FeedForward
 from layers.feedforward.moe import MoE
-from layers.att.self_attention import Attention
 from layers.feedforward.smoe import SparseMoE
 from einops import rearrange
 
 from layers.revin import RevIN
+
+
+class Attention(torch.nn.Module):
+    def __init__(self, d_model, num_heads, dropout=0.10):
+        super().__init__()
+        self.att = torch.nn.MultiheadAttention(d_model, num_heads, dropout, batch_first=True)
+
+    def forward(self, x, attn_mask=None, weight=False):
+        out, weights = self.att(x, x, x, attn_mask=attn_mask)
+        return (out, weights) if weight else out
+
+
 
 def get_norm(d_model, method):
     if method == 'batch':
@@ -185,15 +196,26 @@ class DataEmbedding(torch.nn.Module):
                 raise ValueError(f"Unknown ablation mode: {self.match_mode}")
 
         return self.dropout(x_out)
-    
+
+
+def generate_causal_window_mask(seq_len, win_size, device):
+    mask = torch.ones(seq_len, seq_len, dtype=torch.bool, device=device).triu(1)  # 上三角屏蔽未来
+    for i in range(seq_len):
+        left = max(0, i - win_size + 1)
+        mask[i, :left] = True  # 屏蔽太早的历史
+    return mask.masked_fill(mask, float('-inf'))  #  保持为 (T, T)
+
+
 
 class Transformer(torch.nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, norm_method='layer', ffn_method='ffn', att_method='self'):
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, win_size, device, norm_method='layer', ffn_method='ffn', att_method='self'):
         super().__init__()
         self.revin = revin
         self.seq_len = seq_len
         self.pred_len = pred_len
         self.match_mode = match_mode
+        self.win_size = win_size
+        self.device = device
         if self.revin:
             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
         # self.enc_embedding = torch.nn.Linear(input_size, d_model)
@@ -213,6 +235,8 @@ class Transformer(torch.nn.Module):
             )
         self.norm = get_norm(d_model, norm_method)
         self.projection = torch.nn.Linear(d_model, input_size)
+        self.attn_mask = generate_causal_window_mask(seq_len + pred_len, self.win_size, self.device) if self.win_size else None
+
         # self.dec_embedding = DataEmbedding(input_size, d_model)
         # self.output_projection = torch.nn.Linear(d_model, input_size)  # 特征还原原始维度
         # self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
@@ -226,8 +250,10 @@ class Transformer(torch.nn.Module):
         x = self.predict_linear(x)
         x = rearrange(x, 'bs d_model seq_pred_len -> bs seq_pred_len d_model')
 
+        # attn_mask = generate_causal_window_mask(self.seq_len, self.win_size, x.device) if self.win_size else None
+
         for norm1, attn, norm2, ff in self.layers:
-            x = attn(norm1(x)) + x
+            x = attn(norm1(x), attn_mask=self.attn_mask) + x
             x = ff(norm2(x)) + x
         x = self.norm(x)
         
@@ -235,3 +261,4 @@ class Transformer(torch.nn.Module):
         if self.revin:
             x = self.revin_layer(x, 'denorm')
         return x[:, -self.pred_len:, :]
+
