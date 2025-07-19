@@ -2,7 +2,8 @@
 conda init
 conda activate ts
 # python run_cluster.py
-for i in {0..0}
+# python run_service.py
+for i in {94..160}
 do
     python run_train.py --idx $i --seq_len 36 --pred_len 7 --constraint True 
     python run_train.py --idx $i --seq_len 36 --pred_len 30 --constraint True 

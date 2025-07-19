@@ -144,7 +144,8 @@ def apply_delta_with_hist_constraints(hist, pred):
 
 def predict_torch_model(model, history_input, x_scaler, y_scaler, config):
     # 因为我加了时间戳特征
-    history_input[:, :, 3:] = x_scaler.transform(history_input[:, :, 3:])
+    x = history_input
+    x[:, :, 4:] = x_scaler.transform(x[:, :, 4:])
     x = history_input[:, :, -3:]
     x_fund = history_input[:, :, 0]
     x_mark = history_input[:, :, 1:4] 
@@ -154,8 +155,10 @@ def predict_torch_model(model, history_input, x_scaler, y_scaler, config):
     x_features = torch.from_numpy(x_features.astype(np.float32)).unsqueeze(0)
     pred_value = model(x, x_mark, x_fund, x_features).squeeze(0).detach().numpy()
     pred_value = y_scaler.inverse_transform(pred_value)
+    
     pred_value = pred_value[:, :, -1]
     pred_value = np.abs(pred_value)
+    
     return pred_value
 
 def get_final_pred(all_scnerios, group_fund_code, current_date, log, config):

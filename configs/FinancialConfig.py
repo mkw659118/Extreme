@@ -9,9 +9,9 @@ class FinancialConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     model: str = 'financial'
     bs: int = 16
     d_model: int = 32
-    epochs: int = 100
+    epochs: int = 30
     loss_func: str = 'MSELoss'  # L1Loss  MSELoss
-    patience: int = 10
+    patience: int = 3
     verbose: int = 5
     try_exp: int = 1
     dataset: str = 'financial'  # financial  weather

@@ -51,11 +51,12 @@ def multi_dataset(config):
             print(e)
     data = np.stack(raw_data, axis=0)
     data = data.transpose(1, 0, 2)
-    x, y = data[:, :, :], data[:, :, -3:]
+    x = data[:, :, :].copy()  # 所有特征除
+    y = data[:, :, -3:].copy()  # 只取最后3列作为目标变量
 
-    x[:, :, 3:] = x[:, :, 3:].astype(np.float32)
-    x_scaler = get_scaler(x[:, :, 3:], config, 'minmax')
-    x[:, :, 3:] = x_scaler.transform(x[:, :, 3:])
+    x[:, :, 4:] = x[:, :, 4:].astype(np.float32)
+    x_scaler = get_scaler(x[:, :, 4:], config, 'minmax')
+    x[:, :, 4:] = x_scaler.transform(x[:, :, 4:])
 
     y_scaler = get_scaler(y, config, 'minmax')
     y = y_scaler.transform(y)
