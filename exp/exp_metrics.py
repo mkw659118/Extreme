@@ -21,13 +21,13 @@ def ErrorMetrics(realVec, estiVec, config):
         estiVec = estiVec.cpu().detach().numpy().astype(float)
 
     if config.classification:
-        return compute_classification_metrics(realVec, estiVec)
+        return compute_classification_metrics(realVec, estiVec, config)
     else:
-        return compute_regression_metrics(realVec, estiVec)
+        return compute_regression_metrics(realVec, estiVec, config)
 
 
 
-def compute_regression_metrics(realVec, estiVec):
+def compute_regression_metrics(realVec, estiVec, config):
     """ 计算回归任务的误差指标 """
     absError = np.abs(estiVec - realVec)
 
@@ -42,22 +42,7 @@ def compute_regression_metrics(realVec, estiVec):
     # 计算不同阈值下的准确率
     thresholds = [0.01, 0.05, 0.10]
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
-
-    # === 修复后的 DTW ===
-    B = realVec.shape[0]
-    realVec_flat = realVec.transpose(0, 2, 1, 3).reshape(B, realVec.shape[2], -1)  # (B, N_code, 7*3)
-    estiVec_flat = estiVec.transpose(0, 2, 1, 3).reshape(B, estiVec.shape[2], -1)  # (B, N_code, 7*3)
-
-    dtw_list = []
-    for i in range(B):
-        # 每个样本为一个长度为 N_code 的序列，序列中每个“时间步”是维度为 (7×3,) 的向量
-        real_seq = realVec_flat[i]
-        esti_seq = estiVec_flat[i]
-        dtw_distance, _ = fastdtw(real_seq, esti_seq, dist=euclidean)
-        dtw_list.append(dtw_distance)
-    dtw_mean = np.mean(dtw_list)
-
-    return {
+    all_metrics = {
         'MAE': MAE,
         'MSE': MSE,
         'RMSE': RMSE,
@@ -65,11 +50,27 @@ def compute_regression_metrics(realVec, estiVec):
         'NMAE': NMAE,
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],
-        'DTW': dtw_mean,
     }
+    # === 修复后的 DTW ===
+    if config.model == 'financial':
+        B = realVec.shape[0]
+        realVec_flat = realVec.transpose(0, 2, 1, 3).reshape(B, realVec.shape[2], -1)  # (B, N_code, 7*3)
+        estiVec_flat = estiVec.transpose(0, 2, 1, 3).reshape(B, estiVec.shape[2], -1)  # (B, N_code, 7*3)
+
+        dtw_list = []
+        for i in range(B):
+            # 每个样本为一个长度为 N_code 的序列，序列中每个“时间步”是维度为 (7×3,) 的向量
+            real_seq = realVec_flat[i]
+            esti_seq = estiVec_flat[i]
+            dtw_distance, _ = fastdtw(real_seq, esti_seq, dist=euclidean)
+            dtw_list.append(dtw_distance)
+        dtw_mean = np.mean(dtw_list)
+        all_metrics['dtw_mean'] = dtw_mean
+
+    return all_metrics
 
 
-def compute_classification_metrics(realVec, estiVec):
+def compute_classification_metrics(realVec, estiVec, config):
     """ 计算分类任务的指标 """
     AC = accuracy_score(realVec, estiVec)
     PR = precision_score(realVec, estiVec, average='macro', zero_division=0)
