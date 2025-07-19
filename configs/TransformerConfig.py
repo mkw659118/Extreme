@@ -20,6 +20,6 @@ class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     dropout: float = 0.1
     amp: bool = True
     match_mode: str = 'abc'
-
+    constraint: bool = False
 
 
