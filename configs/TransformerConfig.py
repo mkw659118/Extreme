@@ -21,5 +21,6 @@ class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     amp: bool = True
     match_mode: str = 'abc'
     constraint: bool = False
+    win_size: int = 48
 
 
