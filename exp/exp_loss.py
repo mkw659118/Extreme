@@ -6,7 +6,8 @@ import torch.nn.functional as F
 # 在这里加上每个Batch的loss，如果有其他的loss，请在这里添加，
 def compute_loss(model, inputs, pred, label, config):
     loss = model.loss_function(pred, label)
-    if config.constraint:
+    
+    if getattr(config, 'constraint', False):
         loss += model.distance(pred, label) * 1e-4                             # 添加Consine损失
         loss += model.model.toeplitz_loss * 1e-2                               # 添加 Toeplitz 正则项的损失
         # loss += torch.abs(torch.sum(pred) - torch.sum(label)) * 1e-3         # 添加 Sigcomm 数量和约束
@@ -23,17 +24,8 @@ def compute_loss(model, inputs, pred, label, config):
         overflow = F.relu(pred_diff - max_hist_gain.unsqueeze(1))   # 涨太猛
         constraint_penalty = (underflow + overflow).mean()
         loss += constraint_penalty * 1e-3
-        
 
-    try:
-        if config.model == 'transformer2':
-            loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
-        # for i in range(len(model.model.encoder.layers)):
-        #     loss += model.model.encoder.layers[i][3].aux_loss
-        # if model.config.dis_method == 'cosine':
-        # loss += 1e-3 * model.model.aux_loss
-    except Exception as e:
-        print(f"Error in computing loss: {e}")
-        pass
+    if getattr(config, 'model', 'transformer2'):
+        loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
 
     return loss

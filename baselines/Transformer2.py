@@ -225,13 +225,19 @@ class Transformer2(torch.nn.Module):
 
         # 在这里加扩散去噪，使得x变成一个新的x
         if self.diffusion is not None:
-            raw_shape = x.shape
-            x = x.reshape(x.shape[0], -1)
-            diff_output = self.diffusion.training_losses(self.reverse, x, True)
-            x = diff_output["pred_xstart"]
-            x = x.reshape(raw_shape)
-            self.diffusion_loss = diff_output["loss"].mean()
-
+            if self.training:
+                raw_shape = x.shape
+                x = x.reshape(x.shape[0], -1)
+                diff_output = self.diffusion.training_losses(self.reverse, x, True)
+                x = diff_output["pred_xstart"]
+                x = x.reshape(raw_shape)
+                self.diffusion_loss = diff_output["loss"].mean()
+            else:
+                raw_shape = x.shape
+                x = x.reshape(x.shape[0], -1)
+                x = self.diffusion.p_sample(self.reverse, x, 5, False)
+                x = x.reshape(raw_shape)
+                
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
         x = self.predict_linear(x)

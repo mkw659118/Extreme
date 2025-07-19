@@ -25,7 +25,6 @@ class Attention(torch.nn.Module):
         return (out, weights) if weight else out
 
 
-
 def get_norm(d_model, method):
     if method == 'batch':
         return torch.nn.BatchNorm1d(d_model)
