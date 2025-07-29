@@ -242,7 +242,11 @@ class Transformer(torch.nn.Module):
 
     def forward(self, x, x_mark=None):
         if self.revin:
-            x = self.revin_layer(x, 'norm')
+            means = x.mean(1, keepdim=True).detach()
+            x = x - means
+            stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
+            x /= stdev
+
 
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
@@ -256,8 +260,11 @@ class Transformer(torch.nn.Module):
             x = ff(norm2(x)) + x
         x = self.norm(x)
         
-        x = self.projection(x)
+        y = self.projection(x)
+        
         if self.revin:
-            x = self.revin_layer(x, 'denorm')
-        return x[:, -self.pred_len:, :]
+            y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
+            y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
+            
+        return y[:, -self.pred_len:, :]
 

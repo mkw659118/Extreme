@@ -8,7 +8,7 @@ class TrainingConfig:
     lr: float = 0.001
     decay: float = 0.0001
     loss_func: str = 'L1Loss'  # L1Loss  MSELoss
-    optim: str = 'AdamW'
+    optim: str = 'Adam'
     epochs: int = 200
     patience: int = 20
     verbose: int = 10

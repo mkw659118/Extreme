@@ -218,26 +218,32 @@ class Transformer2(torch.nn.Module):
             self.diffusion = None
             self.reverse = None
 
-        
-    def forward(self, x, x_mark=None,timesteps=None):
-        if self.revin:
-            x = self.revin_layer(x, 'norm')
-
+    def diffusion_forward(self, y):
         # 在这里加扩散去噪，使得x变成一个新的x
         if self.diffusion is not None:
             if self.training:
-                raw_shape = x.shape
-                x = x.reshape(x.shape[0], -1)
-                diff_output = self.diffusion.training_losses(self.reverse, x, True)
-                x = diff_output["pred_xstart"]
-                x = x.reshape(raw_shape)
+                raw_shape = y.shape
+                y = y.reshape(y.shape[0], -1)
+                diff_output = self.diffusion.training_losses(self.reverse, y, False)
+                y = diff_output["pred_xstart"]
+                y = y.reshape(raw_shape)
                 self.diffusion_loss = diff_output["loss"].mean()
             else:
-                raw_shape = x.shape
-                x = x.reshape(x.shape[0], -1)
-                x = self.diffusion.p_sample(self.reverse, x, 5, False)
-                x = x.reshape(raw_shape)
-                
+                raw_shape = y.shape
+                y = y.reshape(y.shape[0], -1)
+                y = self.diffusion.p_sample(self.reverse, y, 5, False)
+                y = y.reshape(raw_shape)
+        return y
+    
+    def forward(self, x, x_mark=None,timesteps=None):
+        if self.revin:
+            means = x.mean(1, keepdim=True).detach()
+            x = x - means
+            stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
+            x /= stdev
+            
+        x = self.diffusion_forward(x)
+            
         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
         x = self.predict_linear(x)
@@ -246,7 +252,26 @@ class Transformer2(torch.nn.Module):
             x = attn(norm1(x)) + x
             x = ff(norm2(x)) + x
         x = self.norm(x)
-        x = self.projection(x)
+        
+        y = self.projection(x)[:, -self.pred_len:, :]
+        
         if self.revin:
-            x = self.revin_layer(x, 'denorm')
-        return x[:, -self.pred_len:, :]
+            y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
+            y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
+        
+        
+        return y
+
+    
+    def apply_noise(self, user_emb, item_emb, diff_model):
+        # cat_emb shape: (batch_size*3, emb_size)
+        emb_size = user_emb.shape[0]
+        ts, pt = diff_model.sample_timesteps(emb_size, 'uniform')
+        # ts_ = torch.tensor([self.config['steps'] - 1] * cat_emb.shape[0]).to(cat_emb.device)
+
+        # add noise to users
+        user_noise = torch.randn_like(user_emb)
+        item_noise = torch.randn_like(item_emb)
+        user_noise_emb = diff_model.q_sample(user_emb, ts, user_noise)
+        item_noise_emb = diff_model.q_sample(item_emb, ts, item_noise)
+        return user_noise_emb, item_noise_emb, ts, pt

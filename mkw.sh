@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/bash
 #
 #
 #pred_lens=(96 192 336)

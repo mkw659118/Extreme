@@ -25,7 +25,9 @@ def compute_loss(model, inputs, pred, label, config):
         constraint_penalty = (underflow + overflow).mean()
         loss += constraint_penalty * 1e-3
 
-    if getattr(config, 'model', 'transformer2'):
-        loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
-
+    # if getattr(config, 'model', 'transformer2'):
+    #     # loss = loss * (1 - config.lamda) + config.lamda * model.model.diffusion_loss
+    #     loss = loss  + config.lamda * model.model.diffusion_loss
+    if getattr(config, 'model', None) == 'transformer2':
+        loss = loss + config.lamda * model.model.diffusion_loss
     return loss

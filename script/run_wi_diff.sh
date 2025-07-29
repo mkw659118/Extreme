@@ -1,8 +1,8 @@
 #!/bin/bash
 pred_lens=(96 192 336 720)
 diffusion_flags=(True)
-noise_steps=40
-lamda=0.7
+noise_steps=100
+lamda=1e-4
 for len in "${pred_lens[@]}"
 do
   for diffusion in "${diffusion_flags[@]}"
@@ -16,6 +16,7 @@ do
         --revin True \
         --diffusion "$diffusion" \
         --noise_steps "$noise_steps" \
-        --lamda "$lamda"
+        --lamda "$lamda" \
+        --patience 5
   done
 done
