@@ -67,6 +67,7 @@ class Model(BasicModel):
                 pred_len=config.pred_len,
                 match_mode=config.match_mode,
                 win_size=config.win_size,
+                patch_len=config.patch_len,
                 device=config.device
             )
 

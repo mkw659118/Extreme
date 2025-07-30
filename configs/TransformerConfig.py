@@ -22,5 +22,6 @@ class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     match_mode: str = 'abc'
     constraint: bool = False
     win_size: int = 48
+    patch_len: int = 12
 
 
