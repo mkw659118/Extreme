@@ -233,6 +233,7 @@ class Transformer(torch.nn.Module):
                 )
             )
         self.norm = get_norm(d_model, norm_method)
+        
         self.projection = torch.nn.Linear(d_model, input_size)
         self.attn_mask = generate_causal_window_mask(seq_len + pred_len, self.win_size, self.device) if self.win_size else None
 
