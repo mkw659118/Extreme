@@ -206,8 +206,73 @@ def generate_causal_window_mask(seq_len, win_size, device):
 
 
 
+# class Transformer(torch.nn.Module):
+#     def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, win_size, device, norm_method='layer', ffn_method='ffn', att_method='self'):
+#         super().__init__()
+#         self.revin = revin
+#         self.seq_len = seq_len
+#         self.pred_len = pred_len
+#         self.match_mode = match_mode
+#         self.win_size = win_size
+#         self.device = device
+#         if self.revin:
+#             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
+#         # self.enc_embedding = torch.nn.Linear(input_size, d_model)
+#         self.enc_embedding = DataEmbedding(input_size, d_model, self.match_mode)
+#         self.predict_linear = torch.nn.Linear(seq_len, seq_len + pred_len)
+#         self.layers = torch.nn.ModuleList([])
+#         for _ in range(num_layers):
+#             self.layers.append(
+#                 torch.nn.ModuleList(
+#                     [
+#                         get_norm(d_model, norm_method),
+#                         get_att(d_model, num_heads, att_method),
+#                         get_norm(d_model, norm_method),
+#                         get_ffn(d_model, ffn_method)
+#                     ]
+#                 )
+#             )
+#         self.norm = get_norm(d_model, norm_method)
+#         self.projection = torch.nn.Linear(d_model, input_size)
+#         self.attn_mask = generate_causal_window_mask(seq_len + pred_len, self.win_size, self.device) if self.win_size else None
+
+#         # self.dec_embedding = DataEmbedding(input_size, d_model)
+#         # self.output_projection = torch.nn.Linear(d_model, input_size)  # 特征还原原始维度
+#         # self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
+
+#     def forward(self, x, x_mark=None):
+#         if self.revin:
+#             means = x.mean(1, keepdim=True).detach()
+#             x = x - means
+#             stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
+#             x /= stdev
+
+
+#         x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
+#         x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
+#         x = self.predict_linear(x)
+#         x = rearrange(x, 'bs d_model seq_pred_len -> bs seq_pred_len d_model')
+
+#         # attn_mask = generate_causal_window_mask(self.seq_len, self.win_size, x.device) if self.win_size else None
+
+#         for norm1, attn, norm2, ff in self.layers:
+#             x = attn(norm1(x), attn_mask=self.attn_mask) + x
+#             x = ff(norm2(x)) + x
+#         x = self.norm(x)
+        
+#         y = self.projection(x)
+        
+#         if self.revin:
+#             y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
+#             y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
+            
+#         return y[:, -self.pred_len:, :]
+
+
 class Transformer(torch.nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, match_mode, win_size, device, norm_method='layer', ffn_method='ffn', att_method='self'):
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers,
+                 seq_len, pred_len, match_mode, win_size, patch_len, device,
+                 norm_method='layer', ffn_method='ffn', att_method='self',):
         super().__init__()
         self.revin = revin
         self.seq_len = seq_len
@@ -215,30 +280,34 @@ class Transformer(torch.nn.Module):
         self.match_mode = match_mode
         self.win_size = win_size
         self.device = device
+        self.total_len = seq_len + pred_len
+        self.patch_len = patch_len
+        assert self.total_len % patch_len == 0, "total_len must be divisible by patch_len"
+        self.num_patches = self.total_len // patch_len
+
         if self.revin:
             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
-        # self.enc_embedding = torch.nn.Linear(input_size, d_model)
+
         self.enc_embedding = DataEmbedding(input_size, d_model, self.match_mode)
-        self.predict_linear = torch.nn.Linear(seq_len, seq_len + pred_len)
-        self.layers = torch.nn.ModuleList([])
-        for _ in range(num_layers):
-            self.layers.append(
-                torch.nn.ModuleList(
-                    [
-                        get_norm(d_model, norm_method),
-                        get_att(d_model, num_heads, att_method),
-                        get_norm(d_model, norm_method),
-                        get_ffn(d_model, ffn_method)
-                    ]
-                )
-            )
+
+        # 1. 映射到 seq_len + pred_len 长度
+        self.predict_linear = torch.nn.Linear(seq_len, self.total_len)
+
+        # 2. 为每个 patch 分配一个独立的 Transformer block
+        self.patch_transformers = torch.nn.ModuleList([
+            torch.nn.Sequential(*[
+                torch.nn.Sequential(
+                    get_norm(d_model, norm_method),
+                    get_att(d_model, num_heads, att_method),
+                    get_norm(d_model, norm_method),
+                    get_ffn(d_model, ffn_method)
+                ) for _ in range(num_layers)
+            ]) for _ in range(self.num_patches)
+        ])
+
         self.norm = get_norm(d_model, norm_method)
         self.projection = torch.nn.Linear(d_model, input_size)
-        self.attn_mask = generate_causal_window_mask(seq_len + pred_len, self.win_size, self.device) if self.win_size else None
 
-        # self.dec_embedding = DataEmbedding(input_size, d_model)
-        # self.output_projection = torch.nn.Linear(d_model, input_size)  # 特征还原原始维度
-        # self.seq_to_pred_Linear = torch.nn.Linear(seq_len, pred_len)  # FFN层后接Linear
 
     def forward(self, x, x_mark=None):
         if self.revin:
@@ -247,24 +316,37 @@ class Transformer(torch.nn.Module):
             stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
             x /= stdev
 
+        # [B, L, C] → [B, L, d_model]
+        x = self.enc_embedding(x, x_mark)
 
-        x = self.enc_embedding(x, x_mark)  # 调整形状为 [B, L, d_model]
-        x = rearrange(x, 'bs seq_len d_model -> bs d_model seq_len')
-        x = self.predict_linear(x)
-        x = rearrange(x, 'bs d_model seq_pred_len -> bs seq_pred_len d_model')
+        # [B, L, d_model] → [B, d_model, L] → project to total_len
+        x = rearrange(x, 'b l d -> b d l')  # for predict_linear
+        x = self.predict_linear(x)         # [B, d_model, total_len]
+        x = rearrange(x, 'b d l -> b l d')  # back to [B, total_len, d_model]
 
-        # attn_mask = generate_causal_window_mask(self.seq_len, self.win_size, x.device) if self.win_size else None
+        # Split into patches: [B, total_len, d_model] → [B, num_patches, patch_len, d_model]
+        x = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
 
-        for norm1, attn, norm2, ff in self.layers:
-            x = attn(norm1(x), attn_mask=self.attn_mask) + x
-            x = ff(norm2(x)) + x
-        x = self.norm(x)
-        
-        y = self.projection(x)
-        
+        # Pass each patch into its own Transformer block
+        outs = []
+        for i in range(self.num_patches):
+            patch = x[:, i]  # [B, patch_len, d_model]
+            out = patch
+            for block in self.patch_transformers[i]:
+                norm1, attn, norm2, ff = block
+                out = attn(norm1(out)) + out
+                out = ff(norm2(out)) + out
+            out = self.norm(out)  # optional
+            outs.append(out)
+
+        # Concat back: list of [B, patch_len, d_model] → [B, total_len, d_model]
+        x = torch.cat(outs, dim=1)
+
+        # Project back to input_size
+        y = self.projection(x)  # [B, total_len, input_size]
+
         if self.revin:
-            y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
-            y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.seq_len + self.pred_len, 1)
-            
-        return y[:, -self.pred_len:, :]
+            y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.total_len, 1)
+            y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.total_len, 1)
 
+        return y[:, -self.pred_len:, :]
