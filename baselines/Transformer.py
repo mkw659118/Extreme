@@ -305,6 +305,17 @@ class Transformer(torch.nn.Module):
             ]) for _ in range(self.num_patches)
         ])
 
+
+        self.patch_inter_transformer = torch.nn.Sequential(*[
+            torch.nn.Sequential(
+                get_norm(d_model, norm_method),
+                get_att(d_model, num_heads, att_method),
+                get_norm(d_model, norm_method),
+                get_ffn(d_model, ffn_method)
+            ) for _ in range(num_layers)
+        ])
+
+
         self.norm = get_norm(d_model, norm_method)
         self.projection = torch.nn.Linear(d_model, input_size)
 
@@ -339,8 +350,20 @@ class Transformer(torch.nn.Module):
             out = self.norm(out)  # optional
             outs.append(out)
 
-        # Concat back: list of [B, patch_len, d_model] → [B, total_len, d_model]
-        x = torch.cat(outs, dim=1)
+        # Patch 内处理后拼接
+        x = torch.cat(outs, dim=1)  # [B, total_len, d_model]
+
+        # Patch 表征 pooling + patch 间 Transformer
+        x_patch_tokens = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
+        x_patch_tokens = x_patch_tokens.mean(dim=2)  # [B, num_patches, d_model]
+        x_patch_tokens = self.patch_inter_transformer(x_patch_tokens)  # [B, num_patches, d_model]
+
+        # 融合 patch 间上下文
+        x_patch_tokens = x_patch_tokens.unsqueeze(2).repeat(1, 1, self.patch_len, 1)  # [B, np, pl, d]
+        x = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
+        x = x + x_patch_tokens  # 加残差
+        x = rearrange(x, 'b np pl d -> b (np pl) d')  # [B, total_len, d_model]
+
 
         # Project back to input_size
         y = self.projection(x)  # [B, total_len, input_size]
