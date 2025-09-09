@@ -10,7 +10,7 @@ from configs.MainConfig import OtherConfig
 class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'transformer'
     bs: int = 32
-    d_model: int = 64
+    d_model: int = 128
     epochs: int = 20
     patience: int = 4
     verbose: int = 1
