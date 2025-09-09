@@ -1,28 +1,28 @@
 #!/bin/bash
 
+# 定义需要跑的 reservoir 数据集
+reservoir_sensors=(
+  "reservoir_stor_4001_sof24"
+  "reservoir_stor_4005_sof24"
+  "reservoir_stor_4007_sof24"
+  "reservoir_stor_4009_sof24"
+  "reservoir_stor_4011_sof24"
+)
 
-pred_lens=(192 336 720)
+# 定义预测长度
+pred_lens=(8 72)
 
+# 外循环：预测长度
 for pred in "${pred_lens[@]}"
 do
-
-   python "run_train.py" --config "TransformerConfig" --pred_len "$pred"  --revin True 
-
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "TransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --revin True
+  done
 done
-
-# pred_lens=(96 192 336 720)
-# win_sizes=(24 48 64 96)
-
-# for win_size in "${win_sizes[@]}"
-# do
-#   for pred in "${pred_lens[@]}"
-#   do
-#     echo ">> Running with win_size=${win_size}, pred_len=${pred}"
-#     python "run_train.py" \
-#       --config "TransformerConfig" \
-#       --pred_len "$pred" \
-#       --win_size "$win_size" \
-#       --revin True \
-#       --logger 'mkw'
-#   done
-# done

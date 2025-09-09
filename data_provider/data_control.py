@@ -2,19 +2,17 @@
 # Author : yuxiang Zeng
 # 根据需要来改变这里的内容
 
-from data_provider.generate_financial import generate_data
-from data_provider.get_financial import *
 from data_provider.get_ts import get_ts
 from data_provider.get_water import get_water
 from data_provider.data_getitem import TensorDataset, TimeSeriesDataset
 
 def load_data(config):
-    if config.dataset == 'financial':
-        if config.multi_dataset:
-            x, y, x_scaler, y_scaler = multi_dataset(config)
-        else:
-            x, y, x_scaler, y_scaler = single_dataset(config)
-    elif config.dataset == 'weather':
+    # if config.dataset == 'financial':
+    #     if config.multi_dataset:
+    #         x, y, x_scaler, y_scaler = multi_dataset(config)
+    #     else:
+    #         x, y, x_scaler, y_scaler = single_dataset(config)
+    if config.dataset == 'weather':
         x, y, x_scaler, y_scaler = get_ts(config.dataset, config) 
     elif config.dataset == 'water':
         x, y, x_scaler, y_scaler = get_water(config.dataset, config)

@@ -19,7 +19,7 @@ def get_experiment_name(config):
         'Model': config.model,
         'Density': f"{config.density:.3f}",
         'd_model': config.d_model,
-        'Rank': config.rank,
+        'reservoir': config.reservoir_sensor,
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===
@@ -88,8 +88,7 @@ def run(config):
 if __name__ == '__main__':
     # Experiment Settings, logger, plotter
     from utils.exp_config import get_config
-    # config = get_config('FinancialConfig')
-    # config = get_config('TransformerConfig')
+    config = get_config('TransformerConfig')
     # config = get_config('Transformer2Config')
-    config = get_config('MLPTestConfig')
+    # config = get_config('MLPTestConfig')
     run(config)

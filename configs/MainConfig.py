@@ -7,14 +7,11 @@ class OtherConfig:
     classification: bool = False
     ablation: int = 0
     try_exp: int = -1
-
-    ts_var: int = 1
     water_var : int = 1
-    input_size: int = 21
-    
+    input_size: int = 1
     multi_dataset: bool = False
-    seq_len: int = 96
-    pred_len: int = 96
+    seq_len: int = 360
+    pred_len: int = 72
 
 
 
