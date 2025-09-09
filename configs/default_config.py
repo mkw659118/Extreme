@@ -9,8 +9,8 @@ class TrainingConfig:
     decay: float = 0.0001
     loss_func: str = 'L1Loss'  # L1Loss  MSELoss
     optim: str = 'Adam'
-    epochs: int = 200
-    patience: int = 20
+    epochs: int = 10
+    patience: int = 3
     verbose: int = 10
     device: str = 'cuda'
     monitor_metric: str = 'MAE'
@@ -28,7 +28,7 @@ class BaseModelConfig:
 @dataclass
 class DatasetInfo:
     path: str = './datasets/'
-    dataset: str = 'weather'
+    dataset: str = 'water'
     train_size: int = 500
     use_train_size: bool = False
     density: float = 0.70
@@ -36,6 +36,7 @@ class DatasetInfo:
     shuffle: bool = False
     scaler_method: str = 'stander'
     spliter_ratio: str = '7:1:2'
+    reservoir_sensor: str = 'reservoir_stor_4001_sof24'
 
 
 @dataclass
@@ -50,4 +51,4 @@ class ExperimentConfig:
 
 @dataclass
 class LoggerConfig:
-    logger: str = 'zyx'
+    logger: str = 'mkw'

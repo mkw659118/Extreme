@@ -2,6 +2,7 @@
 # Author : Yuxiang Zeng
 # 每次开展新实验都改一下这里
 from baselines.CrossFormer.Crossformer import Crossformer
+from baselines.mlp_test import MLPTest
 from baselines.Linear import Linear
 from baselines.Linear2 import Linear2
 from baselines.Linear3 import Linear3
@@ -31,6 +32,9 @@ class Model(BasicModel):
         self.hidden_size = config.rank
         if config.model == 'ours':
             self.model = TimeSeriesModel(self.input_size, config)
+        # 2025年9月8日21:34:04 测试水文数据集效果
+        elif config.model == 'mlp_test':
+            self.model = MLPTest(self.input_size, config)
         # 2025年05月30日11:45:49 这里只使用了一层的Linear，效果：
         elif config.model == 'mlp':
             self.model = Linear(self.input_size, config)

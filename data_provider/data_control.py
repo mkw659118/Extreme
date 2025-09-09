@@ -5,6 +5,7 @@
 from data_provider.generate_financial import generate_data
 from data_provider.get_financial import *
 from data_provider.get_ts import get_ts
+from data_provider.get_water import get_water
 from data_provider.data_getitem import TensorDataset, TimeSeriesDataset
 
 def load_data(config):
@@ -14,7 +15,9 @@ def load_data(config):
         else:
             x, y, x_scaler, y_scaler = single_dataset(config)
     elif config.dataset == 'weather':
-        x, y, x_scaler, y_scaler = get_ts(config.dataset, config)
+        x, y, x_scaler, y_scaler = get_ts(config.dataset, config) 
+    elif config.dataset == 'water':
+        x, y, x_scaler, y_scaler = get_water(config.dataset, config)
     return x, y, x_scaler, y_scaler
 
 def get_dataset(train_x, train_y, valid_x, valid_y, test_x, test_y, config):

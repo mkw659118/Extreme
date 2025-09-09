@@ -1,0 +1,2 @@
+|2025-09-08 22:15:45| Dataset : water, Model : mlp_test, Density : 0.700, d_model : 64, Rank : 32, Seq_Len : 96, Pred_Len : 96
+|2025-09-08 22:15:45| MAE - 18.5615 MSE - 4806.9542 RMSE - 69.3322 MAPE - 0.0189 NMAE - 0.0202 NRMSE - 0.0696 Acc_10 - 0.9598 train_time - 69.0567
