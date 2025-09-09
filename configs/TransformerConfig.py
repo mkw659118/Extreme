@@ -11,8 +11,8 @@ class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     model: str = 'transformer'
     bs: int = 32
     d_model: int = 128
-    epochs: int = 20
-    patience: int = 4
+    epochs: int = 50
+    patience: int = 8
     verbose: int = 1
     num_layers: int = 3
     n_heads: int = 4
