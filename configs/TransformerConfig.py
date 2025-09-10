@@ -9,8 +9,8 @@ from configs.MainConfig import OtherConfig
 @dataclass
 class TransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'transformer'
-    bs: int = 32
-    d_model: int = 128
+    bs: int = 256
+    d_model: int = 64
     epochs: int = 50
     patience: int = 8
     verbose: int = 1
