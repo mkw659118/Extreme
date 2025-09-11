@@ -49,6 +49,7 @@ class DatasetInfo:
     split_mode: str = 'ds'
     val_seed: int = 2007
     train_seed: int = 1010
+    roll: int = 4
 
 
 

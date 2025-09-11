@@ -1,8 +1,11 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年06月22日15:57:27）
+import os
+import random
 import platform
 import numpy as np
+import pandas as pd 
 import multiprocessing
 from torch.utils.data import DataLoader
 from data_provider.data_control import get_dataset, load_data
@@ -21,15 +24,15 @@ class DataModule:
         self.train_loader, self.valid_loader, self.test_loader = self.get_dataloaders(self.train_set, self.valid_set, self.test_set, config)
         config.log.only_print(f'Train_length : {len(self.train_loader.dataset)} Valid_length : {len(self.valid_loader.dataset)} Test_length : {len(self.test_loader.dataset)}')
     
-    def preprocess_data(self, x, y, config):
+    def preprocess_data(self, x, y):
         x = np.array(x).astype(np.float32)
         y = np.array(y).astype(np.float32)
         return x, y
     
     def get_split_dataset(self, x, y, config):
-        x, y = self.preprocess_data(x, y, config)
+        x, y = self.preprocess_data(x, y)
          # 新增：切换模式
-        if getattr(config, "split_mode", "ratio") == "ds":
+        if config.split_mode == "ds":
             return ds_like_split_dataset(x, y, config)
          # 旧逻辑：比例切分
         train_ratio, valid_ratio, _ = parse_split_ratio(config.spliter_ratio)
@@ -66,7 +69,7 @@ class DataModule:
             drop_last=False,
             shuffle=True,
             pin_memory=True,
-            collate_fn=lambda batch: train_set.custom_collate_fn(batch, config),
+            collate_fn=lambda batch: train_set.custom_collate_fn(batch),
             num_workers=max_workers,
             prefetch_factor=prefetch_factor
         )
@@ -76,7 +79,7 @@ class DataModule:
             drop_last=False,
             shuffle=False,
             pin_memory=True,
-            collate_fn=lambda batch: valid_set.custom_collate_fn(batch, config),
+            collate_fn=lambda batch: valid_set.custom_collate_fn(batch),
             num_workers=max_workers,
             prefetch_factor=prefetch_factor
         )
@@ -86,7 +89,7 @@ class DataModule:
             drop_last=False,
             shuffle=False,
             pin_memory=True,
-            collate_fn=lambda batch: test_set.custom_collate_fn(batch, config),
+            collate_fn=lambda batch: test_set.custom_collate_fn(batch),
             num_workers=max_workers,
             prefetch_factor=prefetch_factor
         )
@@ -95,7 +98,7 @@ class DataModule:
 
 
 def parse_split_ratio(ratio_str):
-    """解析如 '7:1:2' 的字符串为归一化比例 [0.7, 0.1, 0.2]"""
+    # 解析如 '7:1:2' 的字符串为归一化比例 [0.7, 0.1, 0.2]
     parts = list(map(int, ratio_str.strip().split(':')))
     total = sum(parts)
     return [p / total for p in parts]
@@ -114,7 +117,7 @@ def get_train_valid_test_dataset(x, y, train_size, valid_size, config):
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 
-def get_train_valid_test_classification_dataset(x, y, train_size, valid_size, config):
+def get_train_valid_test_classification_dataset(x, y, train_size, valid_size):
     from collections import defaultdict
     import random
     class_data = defaultdict(list)
@@ -134,6 +137,7 @@ def get_train_valid_test_classification_dataset(x, y, train_size, valid_size, co
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 def ds_like_split_dataset(x, y, config):
+
     """
     DS风格切分 (带过采样/极值/邻域屏蔽):
     - start_point / train_end / test_start / test_end 都是字符串时间戳
@@ -141,11 +145,7 @@ def ds_like_split_dataset(x, y, config):
     - 验证集: 随机 anchor + 邻域屏蔽
     - 测试集: 滚动窗口
     """
-    import pandas as pd
-    import numpy as np
-    import random
-    import os
-
+    
     # ==== 读 CSV 获取时间列 ====
     csv_path = os.path.join(config.path, f"{config.reservoir_sensor}.tsv")
     df = pd.read_csv(csv_path, sep = '\t')
@@ -159,19 +159,19 @@ def ds_like_split_dataset(x, y, config):
         return idxs[0]
 
     # ==== 转 index ====
-    s_idx   = to_idx(config.start_point)
-    tr_idx  = to_idx(getattr(config, "train_end"))
-    te_sidx = to_idx(config.test_start)
-    te_eidx = to_idx(config.test_end)
+    start_point_idx   = to_idx(config.start_point)
+    train_end_idx  = to_idx(config.train_end)
+    test_start_idx = to_idx(config.test_start)
+    test_end_idx = to_idx(config.test_end)
 
     # ==== 长度参数 ====
-    L_in  = int(config.seq_len)
-    L_out = int(config.pred_len)
-    roll  = int(getattr(config, "roll", 8))
+    L_in  = config.seq_len
+    L_out = config.pred_len
+    roll  = config.roll
 
     # ==== 候选池 ====
-    cand_lo = s_idx + L_in
-    cand_hi = tr_idx - L_out
+    cand_lo = start_point_idx + L_in
+    cand_hi = train_end_idx - L_out
     assert cand_hi > cand_lo, "训练候选区间不足，请检查 start/train_end 与 seq_len/pred_len"
 
     # ==== extreme 阈值 ====
@@ -183,7 +183,7 @@ def ds_like_split_dataset(x, y, config):
         return (np.nanmax(seg) >= q_high) or (np.nanmin(seg) <= q_low)
 
     # ==== 验证集 ====
-    random.seed(getattr(config, "val_seed", 2024))
+    random.seed(config.val_seed)
     val_points = []
     tag = np.zeros(len(x), dtype=np.int8)
     near_len = L_out
@@ -203,13 +203,13 @@ def ds_like_split_dataset(x, y, config):
     valid_y = np.array([y[i:i + L_out] for i in val_points], dtype=np.float32)
 
     # ==== 训练集 (含过采样) ====
-    random.seed(getattr(config, "train_seed", 2025))
+    random.seed(config.train_seed)
     train_x, train_y = [], []
     train_volume = config.train_volume
-    oversampling_pct = int(getattr(config, "oversampling", 0))
-    os_steps = int(getattr(config, "os_s", 0))
-    os_stride = int(getattr(config, "os_v", 1))
-    n_over_keep = int(train_volume * (oversampling_pct / 100))
+    oversampling_pct = config.oversampling
+    os_steps = config.os_s
+    os_stride = config.os_v
+    n_over_keep = train_volume * (oversampling_pct / 100)
     n_over_now = 0
 
     while len(train_x) < train_volume:
@@ -250,7 +250,7 @@ def ds_like_split_dataset(x, y, config):
 
     # ==== 测试集 ====
     test_x, test_y = [], []
-    for s in range(te_sidx, te_eidx - L_out + 1, roll):
+    for s in range(test_start_idx, test_end_idx - L_out + 1, roll):
         wp_x = x[s - L_in:s]
         wf_y = y[s:s + L_out]
         if np.isnan(wp_x).any() or np.isnan(wf_y).any():
