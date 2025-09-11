@@ -23,6 +23,7 @@ do
       --config "TransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --revin True
+      --revin True \
+      --d_model 128
   done
 done

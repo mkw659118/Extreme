@@ -13,7 +13,7 @@ class TrainingConfig:
     patience: int = 3
     verbose: int = 10
     device: str = 'cuda'
-    monitor_metric: str = 'MAE'
+    monitor_metric: str = 'RMSE'
     use_amp: bool = False
 
 

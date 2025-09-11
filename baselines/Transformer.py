@@ -197,12 +197,28 @@ class DataEmbedding(torch.nn.Module):
         return self.dropout(x_out)
 
 
-def generate_causal_window_mask(seq_len, win_size, device):
-    mask = torch.ones(seq_len, seq_len, dtype=torch.bool, device=device).triu(1)  # 上三角屏蔽未来
+# def generate_causal_window_mask(seq_len, win_size, device):
+#     mask = torch.ones(seq_len, seq_len, dtype=torch.bool, device=device).triu(1)  # 上三角屏蔽未来
+#     for i in range(seq_len):
+#         left = max(0, i - win_size + 1)
+#         mask[i, :left] = True  # 屏蔽太早的历史
+#     return mask.masked_fill(mask, float('-inf'))  #  保持为 (T, T)
+
+# [REPLACED] —— 生成“加性 mask（允许=0, 屏蔽=-inf）”，兼容 MHA/SDPA
+def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
+    """
+    返回加性mask: 允许=0，屏蔽=-inf（上三角=未来；窗口外=太早历史）
+    形状: [seq_len, seq_len]，可直接传入 nn.MultiheadAttention / SDPA
+    """
+    bad = torch.ones(seq_len, seq_len, dtype=torch.bool, device=device).triu(1)  # 未来全屏蔽
+    # 窗口外（过早的历史）屏蔽
     for i in range(seq_len):
         left = max(0, i - win_size + 1)
-        mask[i, :left] = True  # 屏蔽太早的历史
-    return mask.masked_fill(mask, float('-inf'))  #  保持为 (T, T)
+        bad[i, :left] = True
+
+    attn_bias = torch.zeros(seq_len, seq_len, dtype=dtype, device=device)
+    attn_bias.masked_fill_(bad, torch.finfo(attn_bias.dtype).min)  # -inf
+    return attn_bias
 
 class Transformer(torch.nn.Module):
     def __init__(self, input_size, d_model, revin, num_heads, num_layers,
@@ -215,6 +231,7 @@ class Transformer(torch.nn.Module):
         self.match_mode = match_mode
         self.win_size = win_size
         self.device = device
+        self.att_method = att_method
         self.total_len = seq_len + pred_len
         self.patch_len = patch_len
         assert self.total_len % patch_len == 0, "total_len must be divisible by patch_len"
@@ -241,7 +258,9 @@ class Transformer(torch.nn.Module):
         ])
 
 
-        self.patch_inter_transformer = torch.nn.Sequential(*[
+        # [REPLACED]：原先是 self.patch_inter_transformer = nn.Sequential(...)
+        # 现在改成 ModuleList，方便 forward 时传入 inter_mask
+        self.patch_inter_blocks = torch.nn.ModuleList([  # [REPLACED]
             torch.nn.Sequential(
                 get_norm(d_model, norm_method),
                 get_att(d_model, num_heads, att_method),
@@ -254,6 +273,15 @@ class Transformer(torch.nn.Module):
         self.norm = get_norm(d_model, norm_method)
         
         self.projection = torch.nn.Linear(d_model, input_size)
+
+    # [NEW] 一次性生成 patch 内/patch 间两类 mask
+    def _build_masks(self, device, dtype=torch.float32):  # [NEW]
+        # patch 内（步级别）mask
+        patch_mask = generate_causal_window_mask(self.patch_len, self.win_size, device, dtype)
+        # patch 间（以 patch 为粒度）窗口：把步级窗口折算到 patch 级别
+        inter_win = max(1, math.ceil(self.win_size / self.patch_len))
+        inter_mask = generate_causal_window_mask(self.num_patches, inter_win, device, dtype)
+        return patch_mask, inter_mask
 
 
     def forward(self, x, x_mark=None):
@@ -274,6 +302,9 @@ class Transformer(torch.nn.Module):
         # Split into patches: [B, total_len, d_model] → [B, num_patches, patch_len, d_model]
         x = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
 
+        # [NEW] 生成两种掩码
+        patch_mask, inter_mask = self._build_masks(x.device, x.dtype)  # [NEW]
+        
         # Pass each patch into its own Transformer block
         outs = []
         for i in range(self.num_patches):
@@ -281,7 +312,11 @@ class Transformer(torch.nn.Module):
             out = patch
             for block in self.patch_transformers[i]:
                 norm1, attn, norm2, ff = block
-                out = attn(norm1(out)) + out
+                # [CHANGED] 仅当使用标准 MHA('self') 时传入 patch_mask
+                if self.att_method == 'self':  # [CHANGED]
+                    out = attn(norm1(out), attn_mask=patch_mask) + out
+                else:
+                    out = attn(norm1(out)) + out
                 out = ff(norm2(out)) + out
             out = self.norm(out)  # optional
             outs.append(out)
@@ -289,17 +324,25 @@ class Transformer(torch.nn.Module):
         # Patch 内处理后拼接
         x = torch.cat(outs, dim=1)  # [B, total_len, d_model]
 
-        # Patch 表征 pooling + patch 间 Transformer
+        # Patch 表征 pooling
         x_patch_tokens = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
         x_patch_tokens = x_patch_tokens.mean(dim=2)  # [B, num_patches, d_model]
-        x_patch_tokens = self.patch_inter_transformer(x_patch_tokens)  # [B, num_patches, d_model]
+
+        # [NEW] 手动展开 patch 间注意力，传入 inter_mask
+        out_tokens = x_patch_tokens
+        for block in self.patch_inter_blocks:  # [NEW]
+            norm1, attn, norm2, ff = block
+            if self.att_method == 'self':
+                out_tokens = attn(norm1(out_tokens), attn_mask=inter_mask) + out_tokens
+            else:
+                out_tokens = attn(norm1(out_tokens)) + out_tokens
+            out_tokens = ff(norm2(out_tokens)) + out_tokens
 
         # 融合 patch 间上下文
-        x_patch_tokens = x_patch_tokens.unsqueeze(2).repeat(1, 1, self.patch_len, 1)  # [B, np, pl, d]
+        x_patch_ctx = out_tokens.unsqueeze(2).repeat(1, 1, self.patch_len, 1)  # [B, np, pl, d]
         x = rearrange(x, 'b (np pl) d -> b np pl d', np=self.num_patches, pl=self.patch_len)
-        x = x + x_patch_tokens  # 加残差
+        x = x + x_patch_ctx  # 加残差
         x = rearrange(x, 'b np pl d -> b (np pl) d')  # [B, total_len, d_model]
-
 
         # Project back to input_size
         y = self.projection(x)  # [B, total_len, input_size]

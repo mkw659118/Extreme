@@ -8,3 +8,150 @@
 |2025-09-10 08:12:19| MAE - 4.5551 MSE - 597.4443 RMSE - 24.4427 MAPE - 0.0030 NMAE - 0.0027 NRMSE - 0.0127 Acc_10 - 0.9981 train_time - 8894.8925
 |2025-09-10 14:31:26| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
 |2025-09-10 14:31:26| MAE - 1.5698 MSE - 35.4355 RMSE - 5.9528 MAPE - 0.0041 NMAE - 0.0038 NRMSE - 0.0143 Acc_10 - 0.9958 train_time - 22121.9151
+
+
+|2025-09-10 21:30:29| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-10 21:30:29| MAE - 4.6386 MSE - 235.0621 RMSE - 15.3317 MAPE - 0.0038 NMAE - 0.0043 NRMSE - 0.0134 Acc_10 - 0.9969 train_time - 185.7483
+|2025-09-10 21:37:03| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-10 21:37:03| MAE - 33.4207 MSE - 10400.6818 RMSE - 101.9837 MAPE - 0.0027 NMAE - 0.0032 NRMSE - 0.0092 Acc_10 - 0.9995 train_time - 316.3697
+|2025-09-10 21:40:04| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-10 21:40:04| MAE - 57.8491 MSE - 165626.1758 RMSE - 406.9720 MAPE - 0.0055 NMAE - 0.0053 NRMSE - 0.0338 Acc_10 - 0.9952 train_time - 107.9655
+|2025-09-10 21:46:15| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-10 21:46:15| MAE - 6.2649 MSE - 558.2056 RMSE - 23.6264 MAPE - 0.0034 NMAE - 0.0037 NRMSE - 0.0120 Acc_10 - 0.9973 train_time - 294.0615
+|2025-09-10 21:49:08| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-10 21:49:08| MAE - 2.5072 MSE - 54.7884 RMSE - 7.4019 MAPE - 0.0056 NMAE - 0.0055 NRMSE - 0.0161 Acc_10 - 0.9932 train_time - 100.3768
+
+
+|2025-09-10 21:52:48| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-10 21:52:48| MAE - 19.2899 MSE - 4088.1370 RMSE - 63.9385 MAPE - 0.0152 NMAE - 0.0178 NRMSE - 0.0560 Acc_10 - 0.9681 train_time - 135.5936
+|2025-09-10 21:59:03| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-10 21:59:03| MAE - 157.5255 MSE - 276951.3788 RMSE - 526.2617 MAPE - 0.0115 NMAE - 0.0149 NRMSE - 0.0477 Acc_10 - 0.9784 train_time - 287.1515
+|2025-09-10 22:04:39| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-10 22:04:39| MAE - 209.7610 MSE - 767897.2947 RMSE - 876.2975 MAPE - 0.0168 NMAE - 0.0194 NRMSE - 0.0729 Acc_10 - 0.9661 train_time - 250.6987
+|2025-09-10 22:08:19| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-10 22:08:19| MAE - 24.0804 MSE - 7876.0873 RMSE - 88.7473 MAPE - 0.0125 NMAE - 0.0141 NRMSE - 0.0452 Acc_10 - 0.9769 train_time - 135.7037
+|2025-09-10 22:11:22| Dataset : water, Model : transformer, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-10 22:11:22| MAE - 9.1690 MSE - 383.5003 RMSE - 19.5832 MAPE - 0.0206 NMAE - 0.0200 NRMSE - 0.0426 Acc_10 - 0.9501 train_time - 98.7005
+
+
+|2025-09-11 11:31:05| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:31:05| MAE - 3.4096 MSE - 141.9778 RMSE - 11.9154 MAPE - 0.0029 NMAE - 0.0031 NRMSE - 0.0104 Acc_10 - 0.9982 train_time - 13.8433
+|2025-09-11 11:31:31| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:31:31| MAE - 20.3163 MSE - 4590.4751 RMSE - 67.7530 MAPE - 0.0017 NMAE - 0.0019 NRMSE - 0.0061 Acc_10 - 0.9997 train_time - 14.3171
+|2025-09-11 11:31:41| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:31:41| MAE - 507.4814 MSE - 803526.4775 RMSE - 896.3964 MAPE - 0.0423 NMAE - 0.0468 NRMSE - 0.0745 Acc_10 - 0.9182 train_time - 0.4189
+|2025-09-11 11:32:07| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:32:07| MAE - 6.6802 MSE - 707.4225 RMSE - 26.5974 MAPE - 0.0037 NMAE - 0.0039 NRMSE - 0.0136 Acc_10 - 0.9962 train_time - 14.9382
+|2025-09-11 11:32:33| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:32:33| MAE - 1.8177 MSE - 36.0208 RMSE - 6.0017 MAPE - 0.0040 NMAE - 0.0040 NRMSE - 0.0131 Acc_10 - 0.9964 train_time - 15.4835
+
+
+|2025-09-11 11:33:00| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 11:33:00| MAE - 19.4422 MSE - 3944.8841 RMSE - 62.8083 MAPE - 0.0153 NMAE - 0.0179 NRMSE - 0.0550 Acc_10 - 0.9654 train_time - 16.0120
+|2025-09-11 11:33:27| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 11:33:27| MAE - 177.3722 MSE - 334138.9833 RMSE - 578.0476 MAPE - 0.0126 NMAE - 0.0168 NRMSE - 0.0524 Acc_10 - 0.9708 train_time - 15.8139
+|2025-09-11 11:33:38| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 11:33:38| MAE - 453.9892 MSE - 1182483.1695 RMSE - 1087.4204 MAPE - 0.0363 NMAE - 0.0419 NRMSE - 0.0905 Acc_10 - 0.9397 train_time - 0.7649
+|2025-09-11 11:33:50| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 11:33:50| MAE - 71.7510 MSE - 14313.9696 RMSE - 119.6410 MAPE - 0.0528 NMAE - 0.0419 NRMSE - 0.0610 Acc_10 - 0.8629 train_time - 1.9556
+|2025-09-11 11:34:16| Dataset : water, Model : seasonal_trend_model, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 11:34:16| MAE - 8.8564 MSE - 435.1451 RMSE - 20.8601 MAPE - 0.0199 NMAE - 0.0193 NRMSE - 0.0454 Acc_10 - 0.9500 train_time - 15.1398
+
+
+|2025-09-11 11:47:36| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:47:36| MAE - 20.2326 MSE - 813.1985 RMSE - 28.5166 MAPE - 0.0168 NMAE - 0.0186 NRMSE - 0.0249 Acc_10 - 0.9950 train_time - 135.3265
+|2025-09-11 11:51:10| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:51:10| MAE - 91.6025 MSE - 24783.5866 RMSE - 157.4280 MAPE - 0.0080 NMAE - 0.0087 NRMSE - 0.0143 Acc_10 - 0.9977 train_time - 94.7193
+|2025-09-11 11:54:08| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:54:08| MAE - 289.5635 MSE - 355560.1991 RMSE - 596.2887 MAPE - 0.0220 NMAE - 0.0267 NRMSE - 0.0496 Acc_10 - 0.9896 train_time - 55.3482
+|2025-09-11 11:56:34| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 11:56:34| MAE - 38.6054 MSE - 3396.7631 RMSE - 58.2818 MAPE - 0.0189 NMAE - 0.0225 NRMSE - 0.0297 Acc_10 - 0.9926 train_time - 27.3470
+|2025-09-11 12:00:35| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-11 12:00:35| MAE - 8.5603 MSE - 134.5840 RMSE - 11.6010 MAPE - 0.0185 NMAE - 0.0187 NRMSE - 0.0252 Acc_10 - 0.9903 train_time - 121.7175
+
+
+|2025-09-11 12:03:28| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 12:03:28| MAE - 22.2679 MSE - 3725.4828 RMSE - 61.0367 MAPE - 0.0174 NMAE - 0.0205 NRMSE - 0.0535 Acc_10 - 0.9707 train_time - 54.5585
+|2025-09-11 12:07:29| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 12:07:29| MAE - 185.0474 MSE - 316630.2785 RMSE - 562.6991 MAPE - 0.0144 NMAE - 0.0175 NRMSE - 0.0510 Acc_10 - 0.9771 train_time - 121.5041
+|2025-09-11 12:17:36| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 12:17:36| MAE - 407.3049 MSE - 921359.6362 RMSE - 959.8748 MAPE - 0.0286 NMAE - 0.0376 NRMSE - 0.0799 Acc_10 - 0.9603 train_time - 484.4098
+|2025-09-11 12:23:25| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 12:23:25| MAE - 42.5670 MSE - 9604.1031 RMSE - 98.0005 MAPE - 0.0223 NMAE - 0.0249 NRMSE - 0.0500 Acc_10 - 0.9727 train_time - 229.2399
+|2025-09-11 12:27:54| Dataset : water, Model : transformer_library, Density : 0.700, d_model : 64, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-11 12:27:54| MAE - 13.9001 MSE - 508.6557 RMSE - 22.5534 MAPE - 0.0306 NMAE - 0.0303 NRMSE - 0.0491 Acc_10 - 0.9481 train_time - 148.7366
+
+
+transformer d_model = 128  patch內 patch间
+
+|2025-09-11 14:59:56| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 14:59:56| MAE - 4.3772 MSE - 203.1223 RMSE - 14.2521 MAPE - 0.0037 NMAE - 0.0040 NRMSE - 0.0125 Acc_10 - 0.9973 train_time - 131.3919
+|2025-09-11 15:02:19| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:02:19| MAE - 32.9805 MSE - 11834.9244 RMSE - 108.7884 MAPE - 0.0027 NMAE - 0.0031 NRMSE - 0.0099 Acc_10 - 0.9990 train_time - 65.4643
+|2025-09-11 15:08:46| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:08:46| MAE - 59.8225 MSE - 174293.0326 RMSE - 417.4842 MAPE - 0.0056 NMAE - 0.0055 NRMSE - 0.0347 Acc_10 - 0.9969 train_time - 304.8287
+|2025-09-11 15:11:59| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:11:59| MAE - 8.1774 MSE - 692.9941 RMSE - 26.3248 MAPE - 0.0047 NMAE - 0.0048 NRMSE - 0.0134 Acc_10 - 0.9965 train_time - 115.1454
+|2025-09-11 15:14:56| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:14:56| MAE - 2.1237 MSE - 41.1933 RMSE - 6.4182 MAPE - 0.0048 NMAE - 0.0046 NRMSE - 0.0140 Acc_10 - 0.9952 train_time - 98.7251
+
+
+|2025-09-11 15:17:38| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 15:17:38| MAE - 21.6421 MSE - 4452.8066 RMSE - 66.7294 MAPE - 0.0174 NMAE - 0.0199 NRMSE - 0.0584 Acc_10 - 0.9624 train_time - 70.4434
+|2025-09-11 15:21:22| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 15:21:22| MAE - 171.1498 MSE - 312605.4776 RMSE - 559.1113 MAPE - 0.0126 NMAE - 0.0162 NRMSE - 0.0506 Acc_10 - 0.9709 train_time - 130.4047
+|2025-09-11 15:24:44| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 15:24:44| MAE - 211.8951 MSE - 823558.9411 RMSE - 907.5015 MAPE - 0.0170 NMAE - 0.0196 NRMSE - 0.0755 Acc_10 - 0.9660 train_time - 110.1671
+|2025-09-11 15:27:37| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 15:27:37| MAE - 24.5130 MSE - 8193.1947 RMSE - 90.5163 MAPE - 0.0128 NMAE - 0.0143 NRMSE - 0.0462 Acc_10 - 0.9753 train_time - 80.2370
+|2025-09-11 15:36:15| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 15:36:15| MAE - 9.5865 MSE - 420.7128 RMSE - 20.5113 MAPE - 0.0216 NMAE - 0.0209 NRMSE - 0.0446 Acc_10 - 0.9457 train_time - 460.0769
+
+
+transformer d_model = 128  patch內 
+|2025-09-11 15:47:06| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:47:06| MAE - 4.3956 MSE - 212.8536 RMSE - 14.5895 MAPE - 0.0037 NMAE - 0.0040 NRMSE - 0.0128 Acc_10 - 0.9974 train_time - 187.8677
+|2025-09-11 15:53:33| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:53:33| MAE - 30.5673 MSE - 10085.9471 RMSE - 100.4288 MAPE - 0.0025 NMAE - 0.0029 NRMSE - 0.0091 Acc_10 - 0.9991 train_time - 306.4654
+|2025-09-11 15:57:58| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 15:57:58| MAE - 59.7046 MSE - 174174.2763 RMSE - 417.3419 MAPE - 0.0056 NMAE - 0.0055 NRMSE - 0.0347 Acc_10 - 0.9961 train_time - 188.4159
+|2025-09-11 16:02:55| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 16:02:55| MAE - 6.4745 MSE - 596.3826 RMSE - 24.4209 MAPE - 0.0035 NMAE - 0.0038 NRMSE - 0.0124 Acc_10 - 0.9966 train_time - 220.0010
+|2025-09-11 16:07:37| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 16:07:37| MAE - 2.3110 MSE - 44.6994 RMSE - 6.6858 MAPE - 0.0052 NMAE - 0.0050 NRMSE - 0.0145 Acc_10 - 0.9949 train_time - 204.3430
+
+
+|2025-09-11 16:09:14| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 16:09:14| MAE - 22.6865 MSE - 4748.7440 RMSE - 68.9111 MAPE - 0.0182 NMAE - 0.0209 NRMSE - 0.0604 Acc_10 - 0.9597 train_time - 9.8254
+|2025-09-11 16:12:00| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 16:12:00| MAE - 192.8481 MSE - 357231.8634 RMSE - 597.6888 MAPE - 0.0143 NMAE - 0.0182 NRMSE - 0.0541 Acc_10 - 0.9693 train_time - 77.1187
+|2025-09-11 16:13:47| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 16:13:47| MAE - 289.6524 MSE - 959818.0180 RMSE - 979.7030 MAPE - 0.0234 NMAE - 0.0268 NRMSE - 0.0815 Acc_10 - 0.9502 train_time - 19.3706
+|2025-09-11 16:15:33| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 16:15:33| MAE - 38.0701 MSE - 10165.5152 RMSE - 100.8242 MAPE - 0.0223 NMAE - 0.0223 NRMSE - 0.0514 Acc_10 - 0.9613 train_time - 19.3344
+|2025-09-11 16:19:36| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 16:19:36| MAE - 9.3448 MSE - 424.9769 RMSE - 20.6150 MAPE - 0.0211 NMAE - 0.0204 NRMSE - 0.0448 Acc_10 - 0.9471 train_time - 153.2280
+
+
+|2025-09-11 16:59:54| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 16:59:54| MAE - 4.5713 MSE - 222.0485 RMSE - 14.9013 MAPE - 0.0038 NMAE - 0.0042 NRMSE - 0.0130 Acc_10 - 0.9972 train_time - 166.6670
+|2025-09-11 17:03:36| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 17:03:36| MAE - 31.1956 MSE - 9650.4454 RMSE - 98.2367 MAPE - 0.0025 NMAE - 0.0029 NRMSE - 0.0089 Acc_10 - 0.9993 train_time - 141.8714
+|2025-09-11 17:07:00| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 17:07:00| MAE - 75.5512 MSE - 183270.0383 RMSE - 428.1005 MAPE - 0.0069 NMAE - 0.0070 NRMSE - 0.0356 Acc_10 - 0.9958 train_time - 124.7899
+|2025-09-11 17:10:42| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 17:10:42| MAE - 7.6234 MSE - 601.5127 RMSE - 24.5258 MAPE - 0.0043 NMAE - 0.0045 NRMSE - 0.0125 Acc_10 - 0.9973 train_time - 142.2527
+|2025-09-11 17:14:32| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8, Constraint : False
+|2025-09-11 17:14:32| MAE - 2.2520 MSE - 43.7246 RMSE - 6.6125 MAPE - 0.0051 NMAE - 0.0049 NRMSE - 0.0144 Acc_10 - 0.9955 train_time - 150.5603
+
+
+|2025-09-11 17:16:35| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 17:16:35| MAE - 20.0461 MSE - 4144.8679 RMSE - 64.3806 MAPE - 0.0158 NMAE - 0.0185 NRMSE - 0.0564 Acc_10 - 0.9674 train_time - 30.7178
+|2025-09-11 17:20:22| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 17:20:22| MAE - 155.5267 MSE - 276386.9806 RMSE - 525.7252 MAPE - 0.0114 NMAE - 0.0147 NRMSE - 0.0476 Acc_10 - 0.9763 train_time - 132.5872
+|2025-09-11 17:23:58| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 17:23:58| MAE - 195.2917 MSE - 735800.0149 RMSE - 857.7879 MAPE - 0.0160 NMAE - 0.0180 NRMSE - 0.0714 Acc_10 - 0.9676 train_time - 121.9591
+|2025-09-11 17:26:01| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 17:26:01| MAE - 22.8303 MSE - 7860.2978 RMSE - 88.6583 MAPE - 0.0121 NMAE - 0.0133 NRMSE - 0.0452 Acc_10 - 0.9763 train_time - 30.7292
+|2025-09-11 17:30:18| Dataset : water, Model : transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72, Constraint : False
+|2025-09-11 17:30:18| MAE - 9.3387 MSE - 432.9807 RMSE - 20.8082 MAPE - 0.0210 NMAE - 0.0204 NRMSE - 0.0453 Acc_10 - 0.9488 train_time - 162.0465
