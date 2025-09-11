@@ -1,6 +1,7 @@
-# coding : utf-8
-# Author : Yuxiang Zeng
-# 注意，这里的代码已经几乎完善，非必要不要改动（2025年06月22日15:57:27）
+#Author  :   mkw 
+#Time    :   2025/09/11 11:12:13
+#Desc    :   None
+
 import os
 import random
 import platform
@@ -9,7 +10,6 @@ import pandas as pd
 import multiprocessing
 from torch.utils.data import DataLoader
 from data_provider.data_control import get_dataset, load_data
-
 
 # 数据集定义
 class DataModule:
@@ -35,24 +35,8 @@ class DataModule:
         if config.split_mode == "ds":
             return ds_like_split_dataset(x, y, config)
          # 旧逻辑：比例切分
-        train_ratio, valid_ratio, _ = parse_split_ratio(config.spliter_ratio)
-
-        if config.use_train_size:
-            train_size = int(config.train_size)
-        else:
-            train_size = int(len(x) * train_ratio)
-
-        if config.eval_set:
-            valid_size = int(len(x) * valid_ratio)
-        else:
-            valid_size = 0
-
-        if config.classification:
-            return get_train_valid_test_classification_dataset(x, y, train_size, valid_size, config)
-        else:
-            return get_train_valid_test_dataset(x, y, train_size, valid_size, config)
-        
-
+        else: return split_dataset_by_ratio(x, y, config)
+    
     def get_dataloaders(self, train_set, valid_set, test_set, config):
 
         if platform.system() == 'Linux' and 'ubuntu' in platform.version().lower():
@@ -95,14 +79,11 @@ class DataModule:
         )
         return train_loader, valid_loader, test_loader
 
-
-
 def parse_split_ratio(ratio_str):
     # 解析如 '7:1:2' 的字符串为归一化比例 [0.7, 0.1, 0.2]
     parts = list(map(int, ratio_str.strip().split(':')))
     total = sum(parts)
     return [p / total for p in parts]
-
 
 def get_train_valid_test_dataset(x, y, train_size, valid_size, config):
     if config.shuffle:
@@ -115,7 +96,6 @@ def get_train_valid_test_dataset(x, y, train_size, valid_size, config):
     test_x = x[train_size + valid_size:]
     test_y = y[train_size + valid_size:]
     return train_x, train_y, valid_x, valid_y, test_x, test_y
-
 
 def get_train_valid_test_classification_dataset(x, y, train_size, valid_size):
     from collections import defaultdict
@@ -136,6 +116,23 @@ def get_train_valid_test_classification_dataset(x, y, train_size, valid_size):
         test_y.extend([label] * len(now_x[train_size + valid_size:]))
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
+def split_dataset_by_ratio(x, y, config):
+        train_ratio, valid_ratio, _ = parse_split_ratio(config.spliter_ratio)
+        if config.use_train_size:
+            train_size = int(config.train_size)
+        else:
+            train_size = int(len(x) * train_ratio)
+
+        if config.eval_set:
+            valid_size = int(len(x) * valid_ratio)
+        else:
+            valid_size = 0
+
+        if config.classification:
+            return get_train_valid_test_classification_dataset(x, y, train_size, valid_size, config)
+        else:
+            return get_train_valid_test_dataset(x, y, train_size, valid_size, config)
+        
 def ds_like_split_dataset(x, y, config):
 
     """
@@ -145,7 +142,7 @@ def ds_like_split_dataset(x, y, config):
     - 验证集: 随机 anchor + 邻域屏蔽
     - 测试集: 滚动窗口
     """
-    
+
     # ==== 读 CSV 获取时间列 ====
     csv_path = os.path.join(config.path, f"{config.reservoir_sensor}.tsv")
     df = pd.read_csv(csv_path, sep = '\t')
@@ -260,6 +257,5 @@ def ds_like_split_dataset(x, y, config):
     test_x = np.array(test_x, dtype=np.float32)
     test_y = np.array(test_y, dtype=np.float32)
     print(f"[ds_like_split_dataset] train_x={train_x.shape}, valid_x={valid_x.shape}, test_x={test_x.shape}")
-
 
     return train_x, train_y, valid_x, valid_y, test_x, test_y

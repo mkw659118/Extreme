@@ -42,15 +42,6 @@ def RunExperiments(log, config):
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
         datamodule = DataModule(config)
-        # 取一个 batch 看
-        for batch in datamodule.train_loader:
-            x, x_mark, y = batch          # ← 别写 x, y = batch[:2]
-            print("x:", x.shape)          # [B, seq_len, c_in]
-            print("x_mark:", x_mark.shape)# [B, seq_len, 4]
-            print("y:", y.shape)          # 预测: [B, pred_len, c_out]；插补: [B, seq_len, c_out]
-            print("x sample:", x[0])
-            print("y sample:", y[0])
-            break
         model = Model(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)
