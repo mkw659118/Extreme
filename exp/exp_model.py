@@ -12,6 +12,7 @@ from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 from baselines.Transformer2 import Transformer2
+from baselines.PatchExtremeMemoryTransformer import PatchExtremeMemoryTransformer
 from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
@@ -73,6 +74,16 @@ class Model(BasicModel):
                 win_size=config.win_size,
                 patch_len=config.patch_len,
                 device=config.device
+            )
+
+        elif config.model == 'patch_extreme_memory_transformer':  # 添加 transformer 支持
+            self.model = PatchExtremeMemoryTransformer(
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                patch_len=config.patch_len,
+                d_model=config.d_model,
+                revin=config.revin,
+                num_heads=config.n_heads
             )
 
         elif config.model == 'transformer2':  # 添加 transformer 支持

@@ -256,6 +256,101 @@ def ds_like_split_dataset(x, y, config):
         test_y.append(wf_y)
     test_x = np.array(test_x, dtype=np.float32)
     test_y = np.array(test_y, dtype=np.float32)
+
     print(f"[ds_like_split_dataset] train_x={train_x.shape}, valid_x={valid_x.shape}, test_x={test_x.shape}")
+
+# ======== (new) Visualization: original candidate vs oversampled training vs uniform control ========
+    try:
+        import matplotlib
+        matplotlib.use("Agg")  # server/headless environment
+        import matplotlib.pyplot as plt
+
+        # 1) Candidate pool y distribution (same ref segment used for percentile calc)
+        ref_flat = ref.reshape(-1)
+
+        # 2) Oversampled training set y distribution: flatten each wf_y (length L_out)
+        train_y_flat = train_y.reshape(-1)
+
+        # 3) Control: uniformly sample the same number of indices without oversampling
+        cand_indices = [i for i in range(cand_lo, cand_hi + 1) if tag[i] not in (2, 3)]
+        if len(cand_indices) >= len(train_x):
+            rng = np.random.default_rng(1234)
+            u_idxs = rng.choice(cand_indices, size=len(train_x), replace=False)
+        else:
+            # fallback to sampling with replacement
+            rng = np.random.default_rng(1234)
+            u_idxs = rng.choice(cand_indices, size=len(train_x), replace=True)
+        uni_y = np.array([y[i:i + L_out] for i in u_idxs], dtype=np.float32)
+        uni_y_flat = uni_y.reshape(-1)
+
+        # calculate extreme ratio (<=q_low or >=q_high)
+        def extreme_ratio(arr, lo, hi):
+            arr = arr.reshape(-1)
+            return float(((arr <= lo) | (arr >= hi)).mean())
+
+        r_ref = extreme_ratio(ref_flat, q_low, q_high)
+        r_uni = extreme_ratio(uni_y_flat, q_low, q_high)
+        r_os  = extreme_ratio(train_y_flat, q_low, q_high)
+
+        print(f"[dist] q_low={q_low:.4f}, q_high={q_high:.4f}")
+        print(f"[dist] extreme ratio  Candidate: {r_ref:.3f} | Uniform: {r_uni:.3f} | Oversampled: {r_os:.3f}")
+
+        # histogram overlay
+        def _plot_hist_overlay(arrs, labels, bins=200, title="", fname="fig.png"):
+            plt.figure(figsize=(8,5))
+            for a, lb in zip(arrs, labels):
+                plt.hist(a, bins=bins, alpha=0.45, density=True, label=lb)
+            plt.title(title)
+            plt.xlabel("y value"); plt.ylabel("Density")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(fname, dpi=150)
+            plt.close()
+            print(f"[dist] saved {fname}")
+
+        _plot_hist_overlay(
+            [ref_flat, uni_y_flat, train_y_flat],
+            ["Candidate Pool (ref)", "Uniform Sample (no-OS)", "Oversampled (OS)"],
+            bins=200,
+            title="y Distribution: ref vs uniform vs oversampled",
+            fname="dist_y_ref_vs_uniform_vs_oversampled.png"
+        )
+
+        # plot each individually
+        def _plot_single(a, title, fname, bins=200):
+            plt.figure(figsize=(8,5))
+            plt.hist(a, bins=bins, density=True)
+            plt.title(title); plt.xlabel("y value"); plt.ylabel("Density")
+            plt.tight_layout(); plt.savefig(fname, dpi=150); plt.close()
+            print(f"[dist] saved {fname}")
+
+        _plot_single(ref_flat,  "Candidate Pool y distribution (ref)", "dist_y_ref.png")
+        _plot_single(uni_y_flat, "Uniform Sample y distribution (no-OS)", "dist_y_uniform.png")
+        _plot_single(train_y_flat, "Oversampled y distribution (OS)", "dist_y_oversampled.png")
+
+        # optional: cumulative distribution CDF
+        def _plot_cdf(a, label):
+            a = np.sort(a.reshape(-1))
+            n = a.size
+            ycdf = np.arange(n) / (n - 1 + 1e-8)
+            plt.plot(a, ycdf, label=label, linewidth=1.2)
+
+        plt.figure(figsize=(8,5))
+        _plot_cdf(ref_flat, "Candidate (ref)")
+        _plot_cdf(uni_y_flat, "Uniform (no-OS)")
+        _plot_cdf(train_y_flat, "Oversampled (OS)")
+        plt.title("y CDF: candidate vs uniform vs oversampled")
+        plt.xlabel("y value"); plt.ylabel("Cumulative prob.")
+        plt.grid(True, alpha=0.3); plt.legend()
+        plt.tight_layout(); plt.savefig("dist_y_cdf_compare.png", dpi=150); plt.close()
+        print("[dist] saved dist_y_cdf_compare.png")
+
+    except Exception as e:
+        print(f"[dist] plotting failed: {e}")
+    # ======== (end visualization) ========
+    
+
+
+    
 
     return train_x, train_y, valid_x, valid_y, test_x, test_y

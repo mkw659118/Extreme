@@ -259,7 +259,6 @@ class Transformer2(torch.nn.Module):
             y = y * stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
             y = y + means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
         
-        
         return y
 
     

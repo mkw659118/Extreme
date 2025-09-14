@@ -20,7 +20,7 @@ do
   do
     echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
     python "run_train.py" \
-      --config "TransformerConfig" \
+      --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
       --revin True \
