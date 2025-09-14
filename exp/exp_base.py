@@ -35,10 +35,9 @@ class BasicModel(torch.nn.Module):
         for train_batch in dataModule.train_loader:
             all_item = [item.to(self.config.device) for item in train_batch]
             inputs, label = all_item[:-1], all_item[-1]
-
             self.optimizer.zero_grad()
 
-            if self.config.use_amp:
+            if self.config.use_amp: # 是否启用混合精度训练
                 with torch.amp.autocast(device_type=self.config.device):
                     pred = self.forward(*inputs)
                     loss = compute_loss(self, inputs, pred, label, self.config)
@@ -87,7 +86,6 @@ class BasicModel(torch.nn.Module):
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
 
-        # if self.config.dataset != 'weather':
         reals, preds = dataModule.y_scaler.inverse_transform(reals), dataModule.y_scaler.inverse_transform(preds)
 
         if mode == 'valid':

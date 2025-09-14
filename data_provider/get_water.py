@@ -8,7 +8,7 @@ from data_provider.data_scaler import get_scaler
 
 
 def get_water(dataset, config):
-    df = pd.read_csv(f'./datasets/' + config.reservoir_sensor + '.tsv', sep='\t').to_numpy()
+    df = pd.read_csv(f'./datasets/{config.dataset}/{config.reservoir_sensor}.tsv', sep='\t').to_numpy()
     # x, y = df[:, 1:], df[:, -1]
     if config.water_var == 1:  #多变量预测
         x, y = df[:, 1:], df[:, 1:]

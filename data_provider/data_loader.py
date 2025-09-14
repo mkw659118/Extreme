@@ -144,7 +144,7 @@ def ds_like_split_dataset(x, y, config):
     """
 
     # ==== 读 CSV 获取时间列 ====
-    csv_path = os.path.join(config.path, f"{config.reservoir_sensor}.tsv")
+    csv_path = os.path.join(config.path, config.dataset, f"{config.reservoir_sensor}.tsv")
     df = pd.read_csv(csv_path, sep = '\t')
     time_col = df.columns[0]
     time_series = pd.to_datetime(df[time_col])
