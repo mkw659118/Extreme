@@ -213,7 +213,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.proj_out = nn.Linear(d_model, 1)
 
         # 记忆（按位置分桶）
-        self.use_memory = False
+        self.use_memory = True
         self.memory = BucketedExtremeMemory(
             num_buckets=self.num_patches, d_model=d_model,
             mem_size_per_bucket=mem_size_per_bucket, topk=mem_topk,
@@ -245,7 +245,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
     def _build_masks(self, device, dtype=torch.float32):
      
         # 生成 patch 内部掩码，形状为 [patch_len, patch_len]
-        patch_mask = generate_causal_window_mask(self.patch_len, self.patch_len, device, dtype)
+        intra_patch_mask = generate_causal_window_mask(self.patch_len, self.patch_len, device, dtype)
         
         # 生成 patch 间掩码，形状为 [num_patches, num_patches]
         inter_mask = generate_causal_window_mask(self.num_patches, self.num_patches, device, dtype)
@@ -254,7 +254,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         inter_mask_full = torch.zeros(self.total_len, self.total_len, dtype=dtype, device=device)
         inter_mask_full[:self.num_patches, :self.num_patches] = inter_mask
 
-        return patch_mask, inter_mask_full
+        return intra_patch_mask, inter_mask_full
 
     # ---------- 极端 patch 掩码 ----------
     def _patch_extreme_mask(self, x_raw, means, stdev):
@@ -352,36 +352,36 @@ class PatchExtremeMemoryTransformer(nn.Module):
 
         # ---------- Embedding ----------
         x_emb = self.embedding(x)                          # [B, L, d]
-        x_emb = rearrange(x_emb, 'b l d -> b d l')
+        x_emb = rearrange(x_emb, 'b l d -> b d l')         # [B, d, L]
         x_emb = self.predict_linear(x_emb)                 # [B, d, total_len]
-        x_emb = rearrange(x_emb, 'b d l -> b l d')         # [B, total, d]
+        x_emb = rearrange(x_emb, 'b d l -> b l d')         # [B, total_len, d]
 
         # ---------- Patchify ----------
-        tokens = rearrange(x_emb, 'b (np pl) d -> b np pl d',np=self.num_patches, pl=self.patch_len)  # [B, P, pl, d]
+        patches = rearrange(x_emb, 'b (np pl) d -> b np pl d',np=self.num_patches, pl=self.patch_len)  # [B, P, pl, d]
 
         # ---------- Masks (float: -inf/0，符合 MHA 要求) ----------
-        patch_mask = generate_causal_window_mask(
+        intra_patch_mask = generate_causal_window_mask(
             seq_len=self.patch_len, win_size=self.patch_len,
-            device=tokens.device, dtype=tokens.dtype
+            device=patches.device, dtype=patches.dtype
         )  # [pl, pl], float(-inf/0)
         
         inter_patch_mask = generate_causal_window_mask(
             seq_len=self.num_patches, win_size=self.num_patches,
-            device=tokens.device, dtype=tokens.dtype
+            device=patches.device, dtype=patches.dtype
         )  # [P, P], float(-inf/0)
 
         # ---------- Intra-patch attention（局部） ----------
         patch_outs = []
         for p in range(self.num_patches):
-            out = tokens[:, p]  # [B, pl, d]
+            out = patches[:, p]  # [B, pl, d]
             for block in self.in_patch_blocks[p]:
-                out = block(out, attn_mask=patch_mask)     # [B, pl, d]
+                out = block(out, attn_mask=intra_patch_mask)     # [B, pl, d]
             # 不再额外 post_norm，避免与 TransformerBlock 内部的 norm 重复
             patch_outs.append(out)
-        tokens_local = torch.cat(patch_outs, dim=1)        # [B, P*pl, d]
+        patches_local = torch.cat(patch_outs, dim=1)        # [B, P*pl, d]
 
-        # ---------- Patch-level tokens ----------
-        patch_reps = tokens_local.view(B, self.num_patches, self.patch_len, -1).mean(dim=2)  # [B, P, d]
+        # ---------- Patch-level patches ----------
+        patch_reps = patches_local.view(B, self.num_patches, self.patch_len, -1).mean(dim=2)  # [B, P, d]
 
         # ---------- Extreme mask（用于选择写入/强融合的 patch） ----------
         mean_for_mask, std_for_mask = stats
@@ -426,10 +426,10 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # ---------- 反 patchify：把 patch 级上下文广播回 token，并与局部表示融合 ----------
         patch_ctx = inter.unsqueeze(2).expand(B, self.num_patches, self.patch_len, inter.size(-1))  # [B,P,pl,d]
         patch_ctx = patch_ctx.reshape(B, -1, inter.size(-1))                                        # [B,P*pl,d]
-        tokens_fused = tokens_local + patch_ctx                                                      # [B,P*pl,d]
+        patches_fused = patches_local + patch_ctx                                                      # [B,P*pl,d]
 
         # ---------- 输出 ----------
-        y = self.proj_out(tokens_fused)     # [B, total, 1]
+        y = self.proj_out(patches_fused)     # [B, total, 1]
         y = y[:, -self.pred_len:, :]        # [B, pred_len, 1]
 
         # ---------- RevIN inverse ----------
