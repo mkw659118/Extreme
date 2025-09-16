@@ -42,6 +42,8 @@ def RunExperiments(log, config):
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
         datamodule = DataModule(config)
+        print("[debug] datamodule 获取成功")
+        # raise SystemExit
         model = Model(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)

@@ -199,6 +199,17 @@ def split_dataset_by_timestamp(x, y, config):
     valid_x = np.array([x[i - L_in:i] for i in val_points], dtype=np.float32)
     valid_y = np.array([y[i:i + L_out] for i in val_points], dtype=np.float32)
 
+        # ==== 保存验证集时间戳到根目录 ====
+    val_timestamps = [time_series.iloc[i] for i in val_points]
+
+    out_file = "val_timestamps.txt"  # 根目录下
+    with open(out_file, "w", encoding="utf-8") as f:
+        for t in val_timestamps:
+            f.write(str(t) + "\n")
+
+    print(f"[split] 验证集时间戳已保存到: {out_file}")
+
+
     # ==== 训练集 (含过采样) ====
     random.seed(config.train_seed)
     train_x, train_y = [], []
