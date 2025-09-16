@@ -446,6 +446,8 @@
 #Time    :   2025/09/12 19:31:08
 #Desc    :   None
 
+# 双分支并行版本patch
+
 import copy
 import torch
 import torch.nn as nn

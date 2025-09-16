@@ -180,34 +180,96 @@ def split_dataset_by_timestamp(x, y, config):
         return (np.nanmax(seg) >= q_high) or (np.nanmin(seg) <= q_low)
 
     # ==== 验证集 ====
-    random.seed(config.val_seed)
-    val_points = []
-    tag = np.zeros(len(x), dtype=np.int8)
-    near_len = L_out
-    while len(val_points) < config.val_size:
-        i = random.randint(cand_lo, cand_hi)
-        win_x = x[i - L_in:i + L_out]
-        win_y = y[i - L_in:i + L_out]
-        if np.isnan(win_x).any() or np.isnan(win_y).any():
-            continue
-        if tag[i] != 0:
-            continue
-        tag[i] = 2  # 验证 anchor
-        tag[max(i - near_len, 0):min(i + near_len + 1, len(x))] = 3  # 屏蔽邻域
-        val_points.append(i)
+    # random.seed(config.val_seed)
+    # val_points = []
+    # tag = np.zeros(len(x), dtype=np.int8)
+    # near_len = L_out
+    # while len(val_points) < config.val_size:
+    #     i = random.randint(cand_lo, cand_hi)
+    #     win_x = x[i - L_in:i + L_out]
+    #     win_y = y[i - L_in:i + L_out]
+    #     if np.isnan(win_x).any() or np.isnan(win_y).any():
+    #         continue
+    #     if tag[i] != 0:
+    #         continue
+    #     tag[i] = 2  # 验证 anchor
+    #     tag[max(i - near_len, 0):min(i + near_len + 1, len(x))] = 3  # 屏蔽邻域
+    #     val_points.append(i)
 
+    # valid_x = np.array([x[i - L_in:i] for i in val_points], dtype=np.float32)
+    # valid_y = np.array([y[i:i + L_out] for i in val_points], dtype=np.float32)
+
+    #     # ==== 保存验证集时间戳到根目录 ====
+    # val_timestamps = [time_series.iloc[i] for i in val_points]
+
+    # out_file = "val_timestamps.txt"  # 根目录下
+    # with open(out_file, "w", encoding="utf-8") as f:
+    #     for t in val_timestamps:
+    #         f.write(str(t) + "\n")
+
+    # print(f"[split] 验证集时间戳已保存到: {out_file}")
+
+
+
+        # ==== 验证集 ====
+        # ==== 验证集（支持固定文件 + 统一打标）====
+    val_points = []
+    tag = np.zeros(len(x), dtype=np.int8)     # <-- 确保训练阶段可用
+    near_len = L_out
+
+    # 固定验证时间戳文件放在数据集目录
+    val_file = os.path.join(config.path, config.dataset, "validation_timestamps_24avg.tsv")
+
+    if os.path.exists(val_file):
+        print(f"[split] 直接加载固定验证集时间戳: {val_file}")
+        val_timestamps = pd.read_csv(val_file, sep="\t")["Hold Out Start"].tolist()
+
+        for t in val_timestamps:
+            idxs = df.index[time_series == pd.to_datetime(t)].tolist()
+            if not idxs:
+                raise ValueError(f"验证时间戳 {t} 不在数据集中，请检查文件和数据对齐")
+            anchor = idxs[0]
+            val_points.append(anchor)
+
+            # 与随机逻辑一致：锚点=2，邻域=3
+            tag[anchor] = 2
+            L = max(anchor - near_len, 0)
+            R = min(anchor + near_len + 1, len(x))
+            tag[L:R] = np.maximum(tag[L:R], 3)
+
+    else:
+        print("[split] 未找到固定验证集文件，回退到随机划分逻辑")
+        random.seed(config.val_seed)
+
+        while len(val_points) < config.val_size:
+            i = random.randint(cand_lo, cand_hi)
+
+            # 检查窗口无 NaN（历史 L_in + 未来 L_out）
+            win_x = x[i - L_in:i]
+            win_y = y[i:i + L_out]
+            if np.isnan(win_x).any() or np.isnan(win_y).any():
+                continue
+
+            # 只跳过已是锚点(2)或已屏蔽(3/4)的位置
+            if tag[i] != 0:
+                continue
+
+            # 命中：锚点=2，邻域=3
+            tag[i] = 2
+            L = max(i - near_len, 0)
+            R = min(i + near_len + 1, len(x))
+            tag[L:R] = np.maximum(tag[L:R], 3)
+            val_points.append(i)
+
+        # 保存一次固定文件，便于以后复用
+        val_timestamps = [time_series.iloc[i] for i in val_points]
+        pd.DataFrame({"Hold Out Start": val_timestamps}).to_csv(val_file, sep="\t", index=False)
+        print(f"[split] 验证集时间戳已保存到: {val_file}")
+
+    # 构造验证集数据
     valid_x = np.array([x[i - L_in:i] for i in val_points], dtype=np.float32)
     valid_y = np.array([y[i:i + L_out] for i in val_points], dtype=np.float32)
 
-        # ==== 保存验证集时间戳到根目录 ====
-    val_timestamps = [time_series.iloc[i] for i in val_points]
-
-    out_file = "val_timestamps.txt"  # 根目录下
-    with open(out_file, "w", encoding="utf-8") as f:
-        for t in val_timestamps:
-            f.write(str(t) + "\n")
-
-    print(f"[split] 验证集时间戳已保存到: {out_file}")
 
 
     # ==== 训练集 (含过采样) ====
