@@ -21,7 +21,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     amp: bool = True
     match_mode: str = 'abc'
     constraint: bool = False
-    win_size: int = 48
+    win_size: int = 10
     patch_len: int = 16
 
 

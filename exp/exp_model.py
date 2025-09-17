@@ -82,6 +82,7 @@ class Model(BasicModel):
                 pred_len=config.pred_len,
                 patch_len=config.patch_len,
                 d_model=config.d_model,
+                win_size=config.win_size,
                 revin=config.revin,
                 num_heads=config.n_heads
             )
