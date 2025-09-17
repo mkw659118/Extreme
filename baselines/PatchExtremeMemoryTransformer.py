@@ -70,7 +70,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         win_size: int,
         revin: bool,
         num_heads: int,
-        num_layers_in_patch: int = 2,
+        num_layers_intra_patch: int = 1,
         num_layers_inter_patch: int = 1,
         d_ff: int = None,
         dropout: float = 0.1,
@@ -87,8 +87,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
         warmup_ratio: float = 0.10,
         force_top1_steps: int = 50,
         # ---- 其他 ----
-        enable_memory: bool = False,
-        enable_extreme_gate: bool = False,
+        enable_memory: bool = True,
+        enable_extreme_gate: bool = True,
     ):
         super().__init__()
 
@@ -114,7 +114,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.in_patch_blocks = nn.ModuleList([
             nn.ModuleList([
                 TransformerBlock(d_model, num_heads, d_ff=d_ff, dropout=dropout)
-                for _ in range(num_layers_in_patch)
+                for _ in range(num_layers_intra_patch)
             ])
             for _ in range(self.num_patches)
         ])
@@ -180,7 +180,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self._global_step = 0
 
     # ============= 极端 patch 掩码：复用你现有逻辑（轻调） =============
-    def _patch_extreme_mask(self, x_raw, means, stdev):
+    def patch_extreme_mask(self, x_raw, means, stdev):
         """
         返回: flag ∈ [B,P] 的 bool 掩码，标出“极端”的 patch。
         逻辑：基于值域 z-score 与一阶差分 z-score 的最大值；结合暖身/分位数兜底。
@@ -304,8 +304,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
         )  # [P,P]
 
         # ---------- 极端 patch 掩码（用于记忆与门控） ----------
-        mean_for_mask, std_for_mask = stats
-        extreme_mask = self._patch_extreme_mask(x_raw, mean_for_mask, std_for_mask)  # [B,P] bool
+        mean, std = stats
+        extreme_mask = self.patch_extreme_mask(x_raw, mean, std)  # [B,P] bool
 
         # =====================================================
         # 分支 A：Intra-branch（patch 内并行）
@@ -366,28 +366,25 @@ class PatchExtremeMemoryTransformer(nn.Module):
         #   - key/value: patch 级（来自 inter-branch 的输出）
         #   - 再加残差 & （可选）极端 token 门控强化
         # =====================================================
-        tokens = intra_tokens                 # [B,P*pl,d]
-        global_ctx = inter_ctx                # [B,P,d]
-
+        
         # Cross-Attn 回写（token <- patch）
         tokens_refined, _ = self.fusion_xattn(
-            query=tokens, key=global_ctx, value=global_ctx, need_weights=False
+            query=intra_tokens, key=inter_ctx, value=inter_ctx, need_weights=False
         )  # [B,P*pl,d]
-        tokens_refined = self.fusion_proj(tokens_refined)
-        tokens_refined = self.fusion_dropout(tokens_refined)
+        
 
         if self.enable_extreme_gate:
             # 把 [B,P] 的极端掩码扩展到 token 级 [B,P*pl,1]
             ext_mask_tok = extreme_mask.unsqueeze(-1).expand(-1, -1, self.patch_len)  # [B,P,pl]
             ext_mask_tok = ext_mask_tok.reshape(B, -1).unsqueeze(-1)                  # [B,P*pl,1]
             # data-dependent gate ∈ (0,1)
-            gate = torch.sigmoid(self.cross_gate_proj(torch.cat([tokens, tokens_refined], dim=-1)))  # [B,P*pl,1]
+            gate = torch.sigmoid(self.cross_gate_proj(torch.cat([intra_tokens, tokens_refined], dim=-1)))  # [B,P*pl,1]
             gate = gate * ext_mask_tok
-            fused_tokens = tokens + gate * tokens_refined
+            fused_tokens = intra_tokens + gate * tokens_refined
         else:
-            fused_tokens = tokens + tokens_refined
+            fused_tokens = intra_tokens + tokens_refined
 
-        fused_tokens = self.post_norm(fused_tokens)  # 轻微稳态化
+        fused_tokens = self.post_norm(fused_tokens)  # [B, total_len, d_model]-->[B, total_len, 1]
 
         # ---------- 输出头 ----------
         y = self.proj_out(fused_tokens)         # [B, total_len, 1]
