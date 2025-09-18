@@ -4,7 +4,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from einops import rearrange
 from layers.embedding import DataEmbedding
 from layers.memory import BucketedExtremeMemory
@@ -87,8 +86,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
         warmup_ratio: float = 0.10,
         force_top1_steps: int = 50,
         # ---- 其他 ----
-        enable_memory: bool = True,
-        enable_extreme_gate: bool = True,
+        enable_memory: bool = False,
+        enable_extreme_gate: bool = False,
     ):
         super().__init__()
 
@@ -179,85 +178,96 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.force_top1_steps = force_top1_steps
         self._global_step = 0
 
-    # ============= 极端 patch 掩码：复用你现有逻辑（轻调） =============
-    def patch_extreme_mask(self, x_raw, means, stdev):
+        # ============= 极端 patch 掩码 =============
+    def patch_extreme_mask(self, x_raw, mean, std):
         """
         返回: flag ∈ [B,P] 的 bool 掩码，标出“极端”的 patch。
         逻辑：基于值域 z-score 与一阶差分 z-score 的最大值；结合暖身/分位数兜底。
         """
-        B, L_in, C = x_raw.shape
-        T = self.total_len
-        device = x_raw.device
+        B, L, _ = x_raw.shape                 # B=批大小，L=输入长度，D=通道数（通常=1）
+        T = self.total_len                    # 统一对齐的序列总长度（可能包含padding）
+        device = x_raw.device                 # 当前数据所在的设备（CPU/GPU）
 
-        # 标准化
-        z = (x_raw - means) / (stdev + 1e-5)             # [B,L,1]
-        z_abs = z.abs().amax(dim=-1)                     # [B,L]
+        # ---------- Step 1: 值域 z-score ----------
+        z = (x_raw - mean) / (std + 1e-5)     # 标准化，防止除0：得到逐点 z-score，[B,L,D]
+        z_abs = z.abs().amax(dim=-1)          # 取绝对值并在通道维求最大值 → [B,L]
 
-        # 对齐到 total_len（后段为 0 填充）
-        if L_in < T:
-            pad = torch.zeros(B, T - L_in, device=device, dtype=z_abs.dtype)
-            z_abs_full = torch.cat([z_abs, pad], dim=1)
-        else:
+        # ---------- Step 2: 补齐到 total_len ----------
+        if L < T:                          # 如果输入长度比总长度短 → 补零
+            pad = torch.zeros(B, T - L, device=device, dtype=z_abs.dtype)
+            z_abs_full = torch.cat([z_abs, pad], dim=1)   # 拼接得到完整长度 [B,T]
+        else:                                 # 如果比 T 长 → 截断
             z_abs_full = z_abs[:, :T]
 
-        # 汇聚到 patch
-        z_abs_patch = rearrange(z_abs_full, 'b (np pl) -> b np pl',
-                                np=self.num_patches, pl=self.patch_len)
-        z_per_patch = z_abs_patch.amax(dim=-1)           # [B,P]
-        z_flag = (z_per_patch > self.z_thresh)
+        # ---------- Step 3: 聚合到 patch ----------
+        # [B,num_patches,patch_len]  把序列划分成 patch 结构
+        z_abs_patch = rearrange(z_abs_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
+        z_per_patch = z_abs_patch.amax(dim=-1)  # 每个 patch 内取最大值 [B,P]
+        z_flag = (z_per_patch > self.z_thresh)  # 超过阈值的 patch 标记为 True
 
-        # 一阶差分作为“突变”信号
-        d_flag = torch.zeros_like(z_flag)
-        if self.use_diff:
-            if L_in >= 2:
-                diff = x_raw[:, 1:, :] - x_raw[:, :-1, :]
-                diff_z = diff / (stdev + 1e-5)
-                diff_abs = diff_z.abs().amax(dim=-1)     # [B,L-1]
-                diff_abs = torch.cat([torch.zeros(B, 1, device=device, dtype=diff_abs.dtype), diff_abs], dim=1)
+        # ---------- Step 4: 一阶差分检测突变 ----------
+        d_flag = torch.zeros_like(z_flag)     # 初始化差分掩码 [B,P]
+        if self.use_diff:                     # 如果启用差分检测
+            if L >= 2:                     # 序列长度足够长
+                diff = x_raw[:, 1:, :] - x_raw[:, :-1, :]  # 一阶差分 [B,L-1,C]
+                diff_z = diff / (std + 1e-5)               # 标准化
+                diff_abs = diff_z.abs().amax(dim=-1)       # 按通道取最大 [B,L-1]
+                diff_abs = torch.cat([                   # 开头补0对齐
+                    torch.zeros(B, 1, device=device, dtype=diff_abs.dtype),
+                    diff_abs
+                ], dim=1)                                # [B,L]
             else:
-                diff_abs = torch.zeros(B, L_in, device=device, dtype=z_abs.dtype)
+                diff_abs = torch.zeros(B, L, device=device, dtype=z_abs.dtype)
 
-            if L_in < T:
-                pad2 = torch.zeros(B, T - L_in, device=device, dtype=diff_abs.dtype)
-                diff_full = torch.cat([diff_abs, pad2], dim=1)
+            if L < T:                                # 补齐到 T
+                pad2 = torch.zeros(B, T - L, device=device, dtype=diff_abs.dtype)
+                diff_full = torch.cat([diff_abs, pad2], dim=1)  # [B,T]
             else:
                 diff_full = diff_abs[:, :T]
 
-            diff_patch = rearrange(diff_full, 'b (np pl) -> b np pl',
-                                   np=self.num_patches, pl=self.patch_len)
-            d_per_patch = diff_patch.amax(dim=-1)        # [B,P]
-            d_flag = (d_per_patch > self.diff_z_thresh)
+            diff_patch = rearrange(                     # 划分成 patch
+                diff_full, 'b (np pl) -> b np pl',
+                np=self.num_patches, pl=self.patch_len
+            )                                           # [B,P,pl]
+            d_per_patch = diff_patch.amax(dim=-1)       # 每个 patch 内最大差分值 [B,P]
+            d_flag = (d_per_patch > self.diff_z_thresh) # 超过阈值则置 True
 
-        flag = (z_flag | d_flag)
+        # ---------- Step 5: 综合值域与差分 ----------
+        flag = (z_flag | d_flag)              # 任意一个满足条件即为极端 patch [B,P]
 
-        # 兜底：按强度 top-q / top-k / top-1
+        # ---------- Step 6: 兜底策略 ----------
+        # (1) 如果没有任何 patch 被标记
         if (~flag).all():
-            strength = z_per_patch
-            if self.use_diff:
+            strength = z_per_patch            # 强度 = 值域极值
+            if self.use_diff:                 # 如果用差分，也纳入计算
                 strength = torch.maximum(strength, d_per_patch)
-            q = torch.quantile(strength, self.ext_percentile, dim=1, keepdim=True)
-            flag = (strength >= q)
+            q = torch.quantile(               # 按分位数取阈值
+                strength, self.ext_percentile, dim=1, keepdim=True
+            )
+            flag = (strength >= q)            # 大于分位数阈值的 patch 标记为 True
 
+        # (2) 如果仍然没有，且训练步数 < warmup 阶段
         if (~flag).all() and self._global_step < self.warmup_mem_steps:
             strength = z_per_patch
             if self.use_diff:
                 strength = torch.maximum(strength, d_per_patch)
-            k = max(1, int(self.num_patches * self.warmup_ratio))
-            topk = torch.topk(strength, k=k, dim=1).indices
-            flag = torch.zeros_like(strength, dtype=torch.bool)
-            flag.scatter_(1, topk, True)
+            k = max(1, int(self.num_patches * self.warmup_ratio))  # Top-k
+            topk = torch.topk(strength, k=k, dim=1).indices        # 取最强的 k 个 patch
+            flag = torch.zeros_like(strength, dtype=torch.bool)    # 重新建掩码
+            flag.scatter_(1, topk, True)                           # Top-k 标 True
 
+        # (3) 如果仍然没有，且步数 < 强制 top1 阶段
         if (~flag).all() and self._global_step < self.force_top1_steps:
             strength = z_per_patch
             if self.use_diff:
                 strength = torch.maximum(strength, d_per_patch)
-            top1 = torch.topk(strength, k=1, dim=1).indices
+            top1 = torch.topk(strength, k=1, dim=1).indices        # 取最强的 1 个 patch
             flag = torch.zeros_like(strength, dtype=torch.bool)
-            flag.scatter_(1, top1, True)
+            flag.scatter_(1, top1, True)                           # 该 patch 标 True
 
-        return flag  # [B,P] bool
+        return flag  # 输出 [B,P] 的 bool 掩码，标记哪些 patch 是“极端的”
 
-    # ============================== 前向 ==============================
+
     def forward(self, x, x_mark=None):
         """
         x: [B, seq_len, 1]
@@ -281,69 +291,71 @@ class PatchExtremeMemoryTransformer(nn.Module):
             stats = (mean, std)
 
         # ---------- Token embedding 并预投影到 total_len ----------
-        x_emb = self.embedding(x)                 # [B, L, d]
-        x_emb = rearrange(x_emb, 'b l d -> b d l')  # [B, d, L]
-        x_emb = self.predict_linear(x_emb)        # [B, d, total_len]
-        x_emb = rearrange(x_emb, 'b d l -> b l d')  # [B, total_len, d]
+        x_emb = self.embedding(x)                      # [B, L, d]
+        x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, L]
+        x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
+        x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
 
         # ---------- Patch Division ----------
         # patches: [B, P, pl, d]  （P = total_len // pl）
-        patches = rearrange(x_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
+        patches = rearrange(x_emb, 'b (p pl) d -> b p pl d',p=self.num_patches, pl=self.patch_len)
 
         # ---------- 构造 Mask ----------
-        # Intra-branch：每个 patch 内因果 mask（窗口=pl，等价全因果）
+        # Intra: 每个 patch 内因果 mask
         intra_patch_mask = generate_causal_window_mask(
             seq_len=self.patch_len, win_size=self.win_size,
             device=patches.device, dtype=patches.dtype
-        )  # [pl,pl]
+        )  # [pl, pl]
 
-        # Inter-branch：patch 序列上的因果 mask（窗口=P，等价全因果）
+        # Inter: patch 序列上的因果 mask
         inter_patch_mask = generate_causal_window_mask(
             seq_len=self.num_patches, win_size=self.win_size,
             device=patches.device, dtype=patches.dtype
-        )  # [P,P]
+        )  # [P, P]
 
-        # ---------- 极端 patch 掩码（用于记忆与门控） ----------
+        # ---------- 极端 patch 掩码（用于门控 & memory 写条件） ----------
         mean, std = stats
         extreme_mask = self.patch_extreme_mask(x_raw, mean, std)  # [B,P] bool
 
         # =====================================================
-        # 分支 A：Intra-branch（patch 内并行）
-        #  输入：[B,P,pl,d]，逐 patch 走各自的堆叠；输出保持 token 级：[B,P*pl,d]
+        # 分支 A：Intra-branch
         # =====================================================
         intra_patch_outs = []
         for p in range(self.num_patches):
-            out = patches[:, p, :, :]                       # [B, pl, d]
+            out = patches[:, p, :, :]  # [B, pl, d]
             for block in self.in_patch_blocks[p]:
                 out = block(out, attn_mask=intra_patch_mask)  # 仅在本 patch 内注意
             intra_patch_outs.append(out)
-        intra_tokens = torch.cat(intra_patch_outs, dim=1)     # [B, P*pl, d] —— token 级输出
+        intra_tokens = torch.cat(intra_patch_outs, dim=1)  # [B, P*pl, d] —— token 级
 
         # =====================================================
-        # 分支 B：Inter-branch（patch 间并行）
-        #  1) 可学习池化得到 patch-token：[B,P,d]
-        #  2) 在 patch 序列上堆 Transformer
-        #  3) （可选）对“极端 patch”融合记忆并写入
+        # 分支 B：Inter-branch + Memory（可选）
+        #   - inter 只在 P 维做注意力
+        #   - memory 仅作为 inter 输入的“加性增量”
         # =====================================================
-        # 1) 可学习池化： [B,P,pl,d] -> [B,P,d,pl] -> Linear(pl->1) -> [B,P,d,1] -> squeeze -> [B,P,d]
-        patch_tokens = self.token_pool_lin(rearrange(patches, 'b p pl d -> b p d pl')).squeeze(-1)  # [B,P,d]
+        inter_patches = patches  # [B,P,pl,d] 默认不变
 
-        # 2) 记忆读写（先读后写），只在 inter-branch 的 patch-token 上进行
         if self.use_memory:
-            fused_list = []
+            # 1) 轻量聚合得到每个 patch 的查询向量 q（仅用于检索）
+            q_patch = patches.mean(dim=2)  # [B,P,d]
+
+            q_new_list = []
             for p in range(self.num_patches):
-                q = patch_tokens[:, p, :]  # [B,d]
-                # 读
+                q = q_patch[:, p, :]  # [B,d]
+
+                # 读记忆：按 patch 位置分桶
                 m_read, sim_max, _ = self.memory.read(p, q, topk=None)  # m_read:[B,d], sim_max:[B,1]
+
+                # 相似度感知门控（逐通道）
                 gate = torch.sigmoid(self.gate_proj(torch.cat([q, sim_max], dim=-1)) + self.gate_bias)  # [B,d]
-                fuse = self.mem_fuse(torch.cat([q, m_read], dim=-1)) * self.mem_scale                  # [B,d]
+                fuse = self.mem_fuse(torch.cat([q, m_read], dim=-1)) * self.mem_scale                   # [B,d]
 
-                # 仅在极端 patch 上加强融合
+                # 仅在极端 patch 强化
                 mask = extreme_mask[:, p].float().unsqueeze(-1)  # [B,1]
-                q_new = (1.0 + gate * mask) * q + (gate * mask) * fuse
-                fused_list.append(q_new.unsqueeze(1))            # [B,1,d]
+                q_new = (1.0 + gate * mask) * q + (gate * mask) * fuse  # [B,d]
+                q_new_list.append(q_new.unsqueeze(1))  # [B,1,d]
 
-                # 训练阶段：极端 patch 才写回
+                # 训练期只对极端 patch 写回
                 if self.training:
                     write_mask = extreme_mask[:, p]
                     if write_mask.any():
@@ -353,47 +365,45 @@ class PatchExtremeMemoryTransformer(nn.Module):
                             v_batch=q_new[write_mask].detach(),
                             w_batch=None
                         )
-            patch_tokens = torch.cat(fused_list, dim=1)  # [B,P,d]
+            q_new_all = torch.cat(q_new_list, dim=1)          # [B,P,d]
+            delta = (q_new_all - q_patch).unsqueeze(2)         # [B,P,1,d]
+            inter_patches = patches + delta.expand(-1, -1, self.patch_len, -1)  # [B,P,pl,d]
 
-        # 3) 在 patch 序列上做 Transformer（捕获跨 patch 的全局依赖）
-        inter_ctx = patch_tokens
+        # 对每个“位置 t”，沿 P维度 做 inter 注意力 —— #
+        inter_patches = rearrange(inter_patches, 'B P pl d -> B pl P d')
+        inter_patches = rearrange(inter_patches, 'B pl P d -> (B pl) P d')
+
         for block in self.inter_patch_blocks:
-            inter_ctx = block(inter_ctx, attn_mask=inter_patch_mask)  # [B,P,d]
+            inter_patches = block(inter_patches, attn_mask=inter_patch_mask)          # [B*pl, P, d]
+
+        # === 还原到 token 级：[B*pl,P,d] -> [B,P*pl,d]，用于与 intra_tokens 融合 ===
+        inter_tokens = rearrange(inter_patches, '(B pl) P d -> B (P pl) d', B=B, pl=self.patch_len)  # [B,P*pl,d]
 
         # =====================================================
-        # Fusion：把 inter 的全局表征回写到 token 级，与 intra 的 token 输出融合
-        #   - query: token 级（来自 intra-branch 的输出）
-        #   - key/value: patch 级（来自 inter-branch 的输出）
-        #   - 再加残差 & （可选）极端 token 门控强化
+        # 融合：intra 与 inter 相加（可选极端门控）
         # =====================================================
-        
-        # Cross-Attn 回写（token <- patch）
-        tokens_refined, _ = self.fusion_xattn(
-            query=intra_tokens, key=inter_ctx, value=inter_ctx, need_weights=False
-        )  # [B,P*pl,d]
-        
-
         if self.enable_extreme_gate:
             # 把 [B,P] 的极端掩码扩展到 token 级 [B,P*pl,1]
             ext_mask_tok = extreme_mask.unsqueeze(-1).expand(-1, -1, self.patch_len)  # [B,P,pl]
             ext_mask_tok = ext_mask_tok.reshape(B, -1).unsqueeze(-1)                  # [B,P*pl,1]
             # data-dependent gate ∈ (0,1)
-            gate = torch.sigmoid(self.cross_gate_proj(torch.cat([intra_tokens, tokens_refined], dim=-1)))  # [B,P*pl,1]
+            gate = torch.sigmoid(self.cross_gate_proj(torch.cat([intra_tokens, inter_tokens], dim=-1)))  # [B,P*pl,1]
             gate = gate * ext_mask_tok
-            fused_tokens = intra_tokens + gate * tokens_refined
+            final = intra_tokens + gate * inter_tokens
         else:
-            fused_tokens = intra_tokens + tokens_refined
+            final = intra_tokens + inter_tokens
 
-        fused_tokens = self.post_norm(fused_tokens)  # [B, total_len, d_model]-->[B, total_len, 1]
+        final = self.post_norm(final)  # [B, total_len, d], 对特征做归一化处理
 
         # ---------- 输出头 ----------
-        y = self.proj_out(fused_tokens)         # [B, total_len, 1]
-        y = y[:, -self.pred_len:, :]            # [B, pred_len, 1]
+        y = self.proj_out(final)         # [B, total_len, 1], 投影回原始特征维度
+        y = y[:, -self.pred_len:, :]     # [B, pred_len, 1]
 
         # ---------- RevIN inverse ----------
         if self.revin:
-            mean, std = stats  # [B,1,1]
-            y = y * std.expand(-1, y.size(1), -1) + mean.expand(-1, y.size(1), -1)
+            mean, std = stats
+            y = y * std[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
+            y = y + mean[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
 
         if self.training:
             self._global_step += 1

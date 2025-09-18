@@ -21,3 +21,9 @@ if __name__ == '__main__':
     model = Attention(d_model = 64, num_heads = 8, dropout = 0.10)
     out = model(inputs)
     print(out.shape)
+    
+    
+    inputs = torch.randn(1, 5, 2, 64).reshape(1*5, 2, 64)
+    model = Attention(d_model = 64, num_heads = 8, dropout = 0.10)
+    out = model(inputs)
+    print(out.shape)

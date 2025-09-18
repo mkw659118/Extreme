@@ -392,3 +392,85 @@ memory = False
 |2025-09-17 21:23:03| MAE - 3.8337 MSE - 176.3418 RMSE - 13.2794 MAPE - 0.0032 NMAE - 0.0035 NRMSE - 0.0116 Acc_10 - 0.9975 train_time - 765.0265
 |2025-09-17 21:35:01| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
 |2025-09-17 21:35:01| MAE - 3.5093 MSE - 117.3613 RMSE - 10.8333 MAPE - 0.0030 NMAE - 0.0032 NRMSE - 0.0095 Acc_10 - 0.9984 train_time - 216.9740
+
+
+
+|2025-09-17 22:47:45| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-17 22:47:45| MAE - 3.5093 MSE - 117.3613 RMSE - 10.8333 MAPE - 0.0030 NMAE - 0.0032 NRMSE - 0.0095 Acc_10 - 0.9984 train_time - 217.6546
+|2025-09-17 23:04:47| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-17 23:04:47| MAE - 27.3875 MSE - 8170.3432 RMSE - 90.3900 MAPE - 0.0022 NMAE - 0.0026 NRMSE - 0.0082 Acc_10 - 0.9994 train_time - 681.0722
+|2025-09-17 23:31:12| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-17 23:31:12| MAE - 46.3857 MSE - 166384.5206 RMSE - 407.9026 MAPE - 0.0046 NMAE - 0.0043 NRMSE - 0.0339 Acc_10 - 0.9970 train_time - 1231.5572
+|2025-09-17 23:41:47| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-17 23:41:47| MAE - 5.0864 MSE - 428.7718 RMSE - 20.7068 MAPE - 0.0029 NMAE - 0.0030 NRMSE - 0.0106 Acc_10 - 0.9977 train_time - 302.7442
+|2025-09-17 23:51:31| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-17 23:51:31| MAE - 1.8196 MSE - 34.4563 RMSE - 5.8699 MAPE - 0.0041 NMAE - 0.0040 NRMSE - 0.0128 Acc_10 - 0.9966 train_time - 250.5825
+
+
+|2025-09-18 00:05:24| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 00:05:24| MAE - 19.0263 MSE - 3871.6357 RMSE - 62.2225 MAPE - 0.0150 NMAE - 0.0175 NRMSE - 0.0545 Acc_10 - 0.9675 train_time - 431.2141
+|2025-09-18 00:22:10| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 00:22:10| MAE - 156.3676 MSE - 269272.9872 RMSE - 518.9152 MAPE - 0.0115 NMAE - 0.0148 NRMSE - 0.0470 Acc_10 - 0.9748 train_time - 599.4950
+|2025-09-18 00:33:38| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 00:33:38| MAE - 203.3428 MSE - 884955.7097 RMSE - 940.7208 MAPE - 0.0162 NMAE - 0.0188 NRMSE - 0.0783 Acc_10 - 0.9671 train_time - 290.3243
+|2025-09-18 00:40:32| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 00:40:32| MAE - 24.3368 MSE - 7919.6366 RMSE - 88.9923 MAPE - 0.0127 NMAE - 0.0142 NRMSE - 0.0454 Acc_10 - 0.9754 train_time - 19.1013
+|2025-09-18 00:47:46| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 00:47:46| MAE - 9.2982 MSE - 451.4470 RMSE - 21.2473 MAPE - 0.0210 NMAE - 0.0203 NRMSE - 0.0462 Acc_10 - 0.9483 train_time - 38.0461
+
+
+|2025-09-18 11:20:39| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 11:20:39| MAE - 4.2932 MSE - 207.2192 RMSE - 14.3951 MAPE - 0.0036 NMAE - 0.0039 NRMSE - 0.0126 Acc_10 - 0.9975 train_time - 233.6314
+|2025-09-18 11:40:46| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 11:40:46| MAE - 3.1939 MSE - 112.3176 RMSE - 10.5980 MAPE - 0.0028 NMAE - 0.0029 NRMSE - 0.0093 Acc_10 - 0.9986 train_time - 623.9416
+
+
+
+
+开启记忆库
+|2025-09-18 11:59:27| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 11:59:27| MAE - 3.1939 MSE - 112.3176 RMSE - 10.5980 MAPE - 0.0028 NMAE - 0.0029 NRMSE - 0.0093 Acc_10 - 0.9986 train_time - 629.3156
+|2025-09-18 12:20:38| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 12:20:38| MAE - 24.8029 MSE - 6532.7608 RMSE - 80.8255 MAPE - 0.0021 NMAE - 0.0023 NRMSE - 0.0073 Acc_10 - 0.9995 train_time - 848.8056
+|2025-09-18 12:45:56| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 12:45:56| MAE - 46.5261 MSE - 167197.4050 RMSE - 408.8978 MAPE - 0.0046 NMAE - 0.0043 NRMSE - 0.0340 Acc_10 - 0.9970 train_time - 1108.0038
+|2025-09-18 13:02:00| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 13:02:00| MAE - 5.0809 MSE - 440.3972 RMSE - 20.9856 MAPE - 0.0028 NMAE - 0.0030 NRMSE - 0.0107 Acc_10 - 0.9974 train_time - 564.4143
+|2025-09-18 13:13:27| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 13:13:27| MAE - 1.8132 MSE - 34.8106 RMSE - 5.9001 MAPE - 0.0040 NMAE - 0.0040 NRMSE - 0.0128 Acc_10 - 0.9967 train_time - 294.8526
+
+|2025-09-18 13:28:37| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 13:28:37| MAE - 19.0664 MSE - 3841.2832 RMSE - 61.9781 MAPE - 0.0151 NMAE - 0.0176 NRMSE - 0.0543 Acc_10 - 0.9686 train_time - 435.4144
+|2025-09-18 13:39:09| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 13:39:09| MAE - 164.9692 MSE - 280590.1597 RMSE - 529.7076 MAPE - 0.0121 NMAE - 0.0156 NRMSE - 0.0480 Acc_10 - 0.9742 train_time - 166.6430
+|2025-09-18 13:52:45| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 13:52:45| MAE - 204.7544 MSE - 883860.0269 RMSE - 940.1383 MAPE - 0.0163 NMAE - 0.0189 NRMSE - 0.0782 Acc_10 - 0.9665 train_time - 344.8425
+|2025-09-18 14:00:53| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 14:00:53| MAE - 23.6490 MSE - 7869.7273 RMSE - 88.7115 MAPE - 0.0124 NMAE - 0.0138 NRMSE - 0.0452 Acc_10 - 0.9753 train_time - 22.5562
+|2025-09-18 14:09:49| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 14:09:49| MAE - 9.0447 MSE - 434.5167 RMSE - 20.8451 MAPE - 0.0203 NMAE - 0.0197 NRMSE - 0.0453 Acc_10 - 0.9493 train_time - 67.4885
+
+
+未开启记忆库
+
+
+|2025-09-18 14:57:15| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 14:57:15| MAE - 4.2932 MSE - 207.2192 RMSE - 14.3951 MAPE - 0.0036 NMAE - 0.0039 NRMSE - 0.0126 Acc_10 - 0.9975 train_time - 224.9819
+|2025-09-18 15:09:14| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 15:09:14| MAE - 27.1873 MSE - 8159.8919 RMSE - 90.3321 MAPE - 0.0023 NMAE - 0.0026 NRMSE - 0.0082 Acc_10 - 0.9993 train_time - 431.6979
+|2025-09-18 15:31:40| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 15:31:40| MAE - 45.2217 MSE - 166974.7058 RMSE - 408.6254 MAPE - 0.0045 NMAE - 0.0042 NRMSE - 0.0340 Acc_10 - 0.9965 train_time - 1161.8607
+|2025-09-18 15:37:59| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 15:37:59| MAE - 5.7900 MSE - 495.0999 RMSE - 22.2508 MAPE - 0.0032 NMAE - 0.0034 NRMSE - 0.0113 Acc_10 - 0.9971 train_time - 98.4222
+|2025-09-18 15:48:31| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 8
+|2025-09-18 15:48:31| MAE - 1.8249 MSE - 33.5355 RMSE - 5.7910 MAPE - 0.0041 NMAE - 0.0040 NRMSE - 0.0126 Acc_10 - 0.9965 train_time - 346.6953
+|2025-09-18 15:57:58| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4001_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 15:57:58| MAE - 18.5911 MSE - 3816.7655 RMSE - 61.7800 MAPE - 0.0147 NMAE - 0.0171 NRMSE - 0.0541 Acc_10 - 0.9705 train_time - 219.8349
+|2025-09-18 16:04:22| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4005_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 16:04:22| MAE - 151.4813 MSE - 275687.6854 RMSE - 525.0597 MAPE - 0.0111 NMAE - 0.0143 NRMSE - 0.0476 Acc_10 - 0.9762 train_time - 40.8759
+|2025-09-18 16:15:28| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4007_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 16:15:28| MAE - 193.2107 MSE - 783880.2415 RMSE - 885.3701 MAPE - 0.0157 NMAE - 0.0178 NRMSE - 0.0737 Acc_10 - 0.9703 train_time - 317.3569
+|2025-09-18 16:24:23| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4009_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 16:24:23| MAE - 22.6162 MSE - 7624.6704 RMSE - 87.3194 MAPE - 0.0116 NMAE - 0.0132 NRMSE - 0.0445 Acc_10 - 0.9773 train_time - 187.5691
+|2025-09-18 16:32:20| Dataset : water, Model : patch_extreme_memory_transformer, Density : 0.700, d_model : 128, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72
+|2025-09-18 16:32:20| MAE - 8.7051 MSE - 375.9974 RMSE - 19.3907 MAPE - 0.0196 NMAE - 0.0190 NRMSE - 0.0422 Acc_10 - 0.9514 train_time - 130.6713
