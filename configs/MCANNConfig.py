@@ -16,7 +16,7 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     atten_dim: int = 384
     d_model: int = 512
     input_dim: int = 1
-    input_len: int = 360
+    seq_len: int = 360
     layer: int = 4
     learning_rate: float = 0.001
     lradj: str = "type4"
@@ -27,7 +27,7 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     os_v: int = 4
     outf: str = "./output"
     output_dim: int = 1
-    output_len: int = 72
+    pred_len: int = 72
     oversampling: int = 40
     rain_sensor: str = "reservoir_stor_4001_sof24"
     save: int = 0
@@ -42,6 +42,5 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     val_seed: int = 2007
     val_size: int = 60
     watershed: int = 0
-
 
 

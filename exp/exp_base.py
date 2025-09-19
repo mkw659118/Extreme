@@ -54,6 +54,11 @@ class BasicModel(torch.nn.Module):
         t2 = time()
         self.eval()
         torch.set_grad_enabled(False)
+
+        for i, train_batch in enumerate(dataModule.train_loader):
+            inputs, label = train_batch
+            print(f"inputs: {inputs.shape}, label: {label.shape}")
+            break
         return loss, t2 - t1
 
     def evaluate_one_epoch(self, dataModule, mode='valid'):
