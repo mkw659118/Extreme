@@ -10,7 +10,7 @@ from configs.MainConfig import OtherConfig
 class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'patch_extreme_memory_transformer'
     bs: int = 256
-    d_model: int = 128
+    d_model: int = 256
     epochs: int = 200
     patience: int = 40
     verbose: int = 1

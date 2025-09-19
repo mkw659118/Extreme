@@ -16,12 +16,14 @@ from baselines.PatchExtremeMemoryTransformer import PatchExtremeMemoryTransforme
 from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
+from baselines.MCANN.Group_GMM5 import DAN
 from layers.metric.distance import PairwiseLoss
 from exp.exp_base import BasicModel
 from modules.backbone import Backbone
 from baselines.encoder_seq import SeqEncoder
 from modules.backbone_single import SingleModel
 from modules.ts_model import TimeSeriesModel
+
 
 
 class Model(BasicModel):
@@ -85,6 +87,11 @@ class Model(BasicModel):
                 win_size=config.win_size,
                 revin=config.revin,
                 num_heads=config.n_heads
+            )
+
+        elif config.model == 'mcann':  # 添加 transformer 支持
+            self.model = DAN(
+               config=self.config
             )
 
         elif config.model == 'transformer2':  # 添加 transformer 支持

@@ -86,8 +86,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
         warmup_ratio: float = 0.10,
         force_top1_steps: int = 50,
         # ---- 其他 ----
-        enable_memory: bool = False,
-        enable_extreme_gate: bool = False,
+        enable_memory: bool = True,
+        enable_extreme_gate: bool = True,
     ):
         super().__init__()
 
