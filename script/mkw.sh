@@ -9,45 +9,23 @@ reservoir_sensors=(
   "reservoir_stor_4011_sof24"
 )
 
-# # 定义预测长度
-# pred_lens=(8 72)
-
-# # 外循环：预测长度
-# for pred in "${pred_lens[@]}"
-# do
-#   # 内循环：数据集
-#   for sensor in "${reservoir_sensors[@]}"
-#   do
-#     echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-#     python "run_train.py" \
-#       --config "PatchExtremeMemoryTransformerConfig" \
-#       --reservoir_sensor "$sensor" \
-#       --pred_len "$pred" \
-#       --revin True \
-#       --d_model 256
-#   done
-# done
-
-
 # 定义预测长度
 pred_lens=(8 72)
 
-# 定义 d_model 取值
-d_models=(64 128 256 512)
-
 # 外循环：预测长度
-for pred in "${pred_lens[@]}"; do
-  # 循环 d_model
-  for d_model in "${d_models[@]}"; do
-    # 内循环：数据集
-    for sensor in "${reservoir_sensors[@]}"; do
-      echo ">> Running with pred_len=${pred}, d_model=${d_model}, reservoir_sensor=${sensor}"
-      python "run_train.py" \
-        --config "PatchExtremeMemoryTransformerConfig" \
-        --reservoir_sensor "$sensor" \
-        --pred_len "$pred" \
-        --revin True \
-        --d_model "$d_model"
-    done
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --revin True \
+      --d_model 256
   done
 done
+
+

@@ -23,5 +23,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     constraint: bool = False
     win_size: int = 10
     patch_len: int = 16
+    use_memory: bool = True
+    use_extreme_gate: bool = True
+    share_weights: bool = True
 
 

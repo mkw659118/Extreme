@@ -86,7 +86,11 @@ class Model(BasicModel):
                 d_model=config.d_model,
                 win_size=config.win_size,
                 revin=config.revin,
-                num_heads=config.n_heads
+                num_heads=config.n_heads,
+                use_memory=config.use_memory,
+                use_extreme_gate=config.use_extreme_gate,
+                share_weights=config.share_weights,
+                config=config
             )
 
         elif config.model == 'mcann':  # 添加 transformer 支持

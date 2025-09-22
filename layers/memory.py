@@ -116,3 +116,100 @@ class BucketedExtremeMemory(nn.Module):
         wK.scatter_(-1, topi, w)                   # 将 top-k 权重填入对应位置
 
         return m, s, wK
+
+
+
+# -------------------------
+# Sample-level Memory (new)
+# -------------------------
+
+class SampleMemory(nn.Module):
+    """
+    样本级记忆库：
+      - 全局环形缓冲：keys/vals [M,d]，owners [M] 记录所属 sample_id（-1 表示空）
+      - read: 先在 owners==sample_id 的子集检索；若空则退到全局
+      - write: 每个样本写一条代表性记忆（极端patch聚合而成）
+    """
+    def __init__(self, d_model: int, mem_size: int = 4096, topk: int = 16,
+                 temperature: float = 0.5, ema_momentum: float = 0.2):
+        super().__init__()
+        self.d = d_model
+        self.mem_size = mem_size
+        self.topk = topk
+        self.tau = temperature
+        self.momentum = ema_momentum
+
+        self.register_buffer("keys", torch.zeros(mem_size, d_model))
+        self.register_buffer("vals", torch.zeros(mem_size, d_model))
+        self.register_buffer("owners", torch.full((mem_size,), -1, dtype=torch.long))
+        self.register_buffer("ptr", torch.zeros((), dtype=torch.long))  # 环形指针
+
+    @torch.no_grad()
+    def _alloc_slots(self, n: int):
+        start = int(self.ptr.item())
+        idx = torch.arange(start, start + n, device=self.ptr.device) % self.mem_size
+        self.ptr.copy_(((self.ptr + n) % self.mem_size))
+        return idx
+
+    def _sim(self, q, k):
+        qn = F.normalize(q, dim=-1)
+        kn = F.normalize(k, dim=-1)
+        return qn @ kn.t()  # [B,N]
+
+    def read(self, sample_ids: torch.LongTensor, q_batch: torch.Tensor):
+        """
+        sample_ids: [B] (long)；可为 -1（代表“无主”→全局检索）
+        q_batch:    [B,d]
+        return: m_read [B,d], sim_max [B,1], idx_used(list)
+        """
+        B, d = q_batch.shape
+        device = q_batch.device
+
+        valid = self.owners >= 0
+        m_read = torch.zeros(B, d, device=device, dtype=q_batch.dtype)
+        sim_max = torch.zeros(B, 1, device=device, dtype=q_batch.dtype)
+        idx_used = []
+
+        if not valid.any():
+            return m_read, sim_max, idx_used
+
+        all_k = self.keys[valid]
+        all_v = self.vals[valid]
+        all_o = self.owners[valid]
+
+        for b in range(B):
+            sid = sample_ids[b].item()
+            mask_sid = (all_o == sid) if sid >= 0 else torch.zeros_like(all_o, dtype=torch.bool)
+            k_cand = all_k[mask_sid] if mask_sid.any() else all_k
+            v_cand = all_v[mask_sid] if mask_sid.any() else all_v
+
+            if k_cand.numel() == 0:
+                idx_used.append([])
+                continue
+
+            s = self._sim(q_batch[b:b+1], k_cand).squeeze(0)  # [Nc]
+            topk = min(self.topk, s.numel())
+            val, idx = torch.topk(s, k=topk, dim=0)
+            w = torch.softmax(val / self.tau, dim=0)          # [topk]
+            m = (w.unsqueeze(-1) * v_cand[idx]).sum(dim=0)    # [d]
+
+            m_read[b] = m
+            sim_max[b, 0] = val.max()
+            idx_used.append(idx)
+
+        return m_read, sim_max, idx_used
+
+    @torch.no_grad()
+    def write(self, sample_ids: torch.LongTensor, k_batch: torch.Tensor, v_batch: torch.Tensor = None):
+        """
+        每个样本写一条；超过容量环形覆盖
+        k_batch/v_batch: [B,d]
+        """
+        if k_batch.numel() == 0:
+            return
+        if v_batch is None:
+            v_batch = k_batch
+        slots = self._alloc_slots(k_batch.size(0))
+        self.keys[slots] = k_batch
+        self.vals[slots] = v_batch
+        self.owners[slots] = sample_ids

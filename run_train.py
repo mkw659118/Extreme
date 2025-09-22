@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # config = get_config('TransformerConfig')
     # config = get_config('SeasonalTrendModelConfig')
     # config = get_config('MLPTestConfig')
-    # config = get_config('PatchExtremeMemoryTransformerConfig')
-    config = get_config('MCANNConfig')
+    config = get_config('PatchExtremeMemoryTransformerConfig')
+    #config = get_config('MCANNConfig')
     
     run(config)

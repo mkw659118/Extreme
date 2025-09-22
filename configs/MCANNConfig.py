@@ -10,11 +10,11 @@ from configs.MainConfig import OtherConfig
 @dataclass
 class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'mcann'
-    bs: int = 48
-    epochs: int = 50
+    bs: int = 256
+    epochs: int = 200
     gpu_id: int = 0
     atten_dim: int = 384
-    d_model: int = 512
+    d_model: int = 256
     input_dim: int = 1
     seq_len: int = 360
     layer: int = 4
@@ -42,5 +42,6 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     val_seed: int = 2007
     val_size: int = 60
     watershed: int = 0
+    patience: int = 40
 
 
