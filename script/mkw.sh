@@ -24,8 +24,7 @@ do
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
       --revin True \
-      --d_model 256
+      --d_model 256 \
+      --use_memory False
   done
 done
-
-

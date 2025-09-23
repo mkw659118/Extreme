@@ -1,7 +1,7 @@
 # coding: utf-8
 # Author: mkw
 # Date: 2025-06-10 15:45
-# Description: TransformerConfig
+# Description: PatchExtremeMemoryTransformerConfig
 from configs.default_config import *
 from configs.MainConfig import OtherConfig
 
@@ -23,8 +23,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     constraint: bool = False
     win_size: int = 10
     patch_len: int = 16
-    use_memory: bool = True
-    use_extreme_gate: bool = True
-    share_weights: bool = True
-
+    use_memory: bool = False
+    num_layers_intra_patch: int = 1
+    num_layers_inter_patch: int = 1
 

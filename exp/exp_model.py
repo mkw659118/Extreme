@@ -30,11 +30,27 @@ class Model(BasicModel):
     def __init__(self, config):
         super().__init__(config)
         self.config = config
-        
         self.input_size = config.input_size
         self.hidden_size = config.rank
+
         if config.model == 'ours':
             self.model = TimeSeriesModel(self.input_size, config)
+
+        elif config.model == 'patch_extreme_memory_transformer': 
+            self.model = PatchExtremeMemoryTransformer(
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                patch_len=config.patch_len,
+                d_model=config.d_model,
+                win_size=config.win_size,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                use_memory=config.use_memory,
+                num_layers_intra_patch=config.num_layers_intra_patch,
+                num_layers_inter_patch=config.num_layers_inter_patch,
+                config=config
+            )
+
         # 2025年9月8日21:34:04 测试水文数据集效果
         elif config.model == 'mlp_test':
             self.model = MLPTest(self.input_size, config)
@@ -76,21 +92,6 @@ class Model(BasicModel):
                 win_size=config.win_size,
                 patch_len=config.patch_len,
                 device=config.device
-            )
-
-        elif config.model == 'patch_extreme_memory_transformer':  # 添加 transformer 支持
-            self.model = PatchExtremeMemoryTransformer(
-                seq_len=config.seq_len,
-                pred_len=config.pred_len,
-                patch_len=config.patch_len,
-                d_model=config.d_model,
-                win_size=config.win_size,
-                revin=config.revin,
-                num_heads=config.n_heads,
-                use_memory=config.use_memory,
-                use_extreme_gate=config.use_extreme_gate,
-                share_weights=config.share_weights,
-                config=config
             )
 
         elif config.model == 'mcann':  # 添加 transformer 支持

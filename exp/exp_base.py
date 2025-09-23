@@ -1,9 +1,11 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月27日23:33:32）
-import contextlib
 import torch
 from time import time
+
+import matplotlib.pyplot as plt
+
 
 from exp.exp_loss import compute_loss
 from exp.exp_metrics import ErrorMetrics
@@ -207,4 +209,42 @@ class BasicModel(torch.nn.Module):
             # 若你的 scheduler 期望的是平均 loss，可改为 val_loss / len(dataloader)
             self.scheduler.step(val_loss)
 
+        plot_all_test_results(reals, preds, save_path="pictures/test_results.png")
+
         return ErrorMetrics(reals, preds, self.config)
+
+
+def plot_all_test_results(reals, preds, save_path=None):
+    """
+    绘制整个测试集的真实值 vs 预测值
+    reals: torch.Tensor 或 np.ndarray, shape [N, pred_len, C] 或 [N, C]
+    preds: torch.Tensor 或 np.ndarray, shape [N, pred_len, C] 或 [N, C]
+    save_path: 如果指定，则保存到文件；否则直接 plt.show()
+    """
+    # 转 numpy
+    if torch.is_tensor(reals):
+        reals = reals.detach().cpu().numpy()
+    if torch.is_tensor(preds):
+        preds = preds.detach().cpu().numpy()
+    
+    # 保证是二维 [N, pred_len]
+    reals = reals.squeeze()
+    preds = preds.squeeze()
+    
+    # 如果是 [N, pred_len]，拼接成 1D 长序列
+    if reals.ndim == 2:
+        reals = reals.reshape(-1)
+        preds = preds.reshape(-1)
+
+    plt.figure(figsize=(20, 5))
+    plt.plot(reals, label="Real", color="black")
+    plt.plot(preds, label="Pred", color="red", alpha=0.7, linestyle="--")
+    plt.title("Test set: Real vs Predicted")
+    plt.legend()
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300)
+        print(f"Saved test plot to {save_path}")
+    else:
+        plt.show()
