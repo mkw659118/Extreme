@@ -101,6 +101,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # --------- Embedding & 预投影到 total_len ----------
         self.embedding = DataEmbedding(c_in=1, d_model=d_model, dropout=0.1)
         self.predict_linear = nn.Linear(seq_len, self.total_len)  # [B,d,seq] -> [B,d,total]
+        self.topk_to_total_linear = nn.Linear(mem_topk, self.total_len)
 
         # =====================================================
         # 分支 A：Intra-branch（patch 内）
@@ -341,7 +342,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
 
             # 使用 final 作为查询向量来进行记忆库操作
             q_s = (final * extreme_mask_expanded.float()).sum(dim=1)  # [B, d]
-            m_read, sim_max, _ = self.memory.read(sample_ids, q_s)  # 从记忆库读取
+            m_read, _ , _ = self.memory.read(sample_ids, q_s)  # 从记忆库读取
 
             # 确保 q_s 和 m_read 在同一个设备上
             device = q_s.device  # 获取 q_s 的设备
@@ -357,7 +358,12 @@ class PatchExtremeMemoryTransformer(nn.Module):
             # 使用记忆库的结果进行加权融合
             final_with_memory = (1.0 + gate_s) * q_s_expanded + gate_s * fuse_s  # [B, topk, d]
 
+            final_with_memory = rearrange(final_with_memory,'B topk d -> B d topk')
+            final_with_memory = self.topk_to_total_linear(final_with_memory)
+            final_with_memory = rearrange(final_with_memory,'B d total_len -> B total_len d')
 
+            print(f"ahfa{final_with_memory.shape}")
+            
             # ========================= 写入记忆库 =========================
             # 如果训练阶段，且当前有极端 patch，执行写入操作
             if self.training:
@@ -371,6 +377,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
                     )
         else:
             final_with_memory = final  # 如果没有记忆库，直接用 final
+
+            print(final_with_memory.shape)
 
         final_with_memory = self.post_norm(final_with_memory)  # [B, total_len, d]
 
