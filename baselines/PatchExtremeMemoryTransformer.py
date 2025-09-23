@@ -89,6 +89,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.seq_len = seq_len
         self.pred_len = pred_len
         self.total_len = seq_len + pred_len
+        self.d_model = d_model
         self.use_memory = use_memory
         self.num_layers_intra_patch = num_layers_intra_patch
         self.num_layers_inter_patch = num_layers_inter_patch
@@ -138,10 +139,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
                 nn.GELU(),
                 nn.Linear(d_model, d_model)
             )
-            self.gate_proj = nn.Sequential(
-                nn.Linear(d_model + 1, d_model),
-                nn.Sigmoid()
-            )
+            self.gate_proj = nn.Linear(2 * d_model, d_model)  # 从 1024 到 512
             self.mem_scale = nn.Parameter(torch.tensor(1.0))
             self.gate_bias = nn.Parameter(torch.zeros(1))
 
@@ -306,7 +304,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
 
         # ---------- 极端 patch 掩码 ----------
         mean, std = stats
-        extreme_mask = self.patch_extreme_mask(x_raw, mean, std)  # [B,P] bool
+        extreme_mask = self.patch_extreme_mask(x_raw, mean, std)  # [B, P] bool
 
         # =====================================================
         # 分支 A：Intra-branch
@@ -317,10 +315,10 @@ class PatchExtremeMemoryTransformer(nn.Module):
             for block in self.intra_patch_blocks[p]:
                 out = block(out, attn_mask=intra_patch_mask)
             outs_intra.append(out)
-        intra_tokens = torch.cat(outs_intra, dim=1)  # [B,P*pl,d]
+        intra_tokens = torch.cat(outs_intra, dim=1)  # [B, P*pl, d]
 
         # =====================================================
-        # 分支 B：Inter-branch 
+        # 分支 B：Inter-branch
         # =====================================================
         # Inter：沿 P 维注意力
         inter_patches = rearrange(patches, 'B P pl d -> (B pl) P d')
@@ -331,34 +329,34 @@ class PatchExtremeMemoryTransformer(nn.Module):
         inter_tokens = rearrange(inter_patches, '(B pl) P d -> B (P pl) d', B=B, pl=self.patch_len)
 
         final = intra_tokens + inter_tokens
+       
 
         # =====================================================
         # 使用 final 作为查询向量进行记忆库的存储和读取
         # =====================================================
         if self.use_memory:
-            # 调整 extreme_mask 形状，使其能够与 final 进行广播
-            # 如果 final 的形状是 [B, P*pl, d]，extreme_mask 是 [B, P]，我们需要对 extreme_mask 进行扩展
-            extreme_mask_expanded = extreme_mask.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, self.patch_len, -1)  # [B, P, pl, 1]
-            extreme_mask_expanded = extreme_mask_expanded.reshape(B, -1, 1)  # [B, P*pl, 1]
+            # extreme_mask 的形状是 [B, P]，将其扩展为 [B, P*pl, 1]
+            extreme_mask_expanded = extreme_mask.unsqueeze(-1)  # [B, P, 1]
+            extreme_mask_expanded = extreme_mask_expanded.repeat(1, self.patch_len, 1)  # [B, P*pl, 1]
+
             # 使用 final 作为查询向量来进行记忆库操作
             q_s = (final * extreme_mask_expanded.float()).sum(dim=1)  # [B, d]
             m_read, sim_max, _ = self.memory.read(sample_ids, q_s)  # 从记忆库读取
-
 
             # 确保 q_s 和 m_read 在同一个设备上
             device = q_s.device  # 获取 q_s 的设备
             m_read = m_read.to(device)  # 将 m_read 移动到 q_s 所在的设备
 
-            # 假设 q_s 的形状是 [B, d]，m_read 的形状是 [B, topk, d]
-            # 扩展 q_s 使其变为 [B, topk, d]
+            # 扩展 q_s 使其与 m_read 的形状一致 [B, topk, d]
             q_s_expanded = q_s.unsqueeze(1).expand(-1, m_read.shape[1], -1)  # [B, topk, d]
 
             # 门控融合样本记忆和预测
-            gate_s = torch.sigmoid(self.gate_proj(torch.cat([q_s_expanded, m_read], dim=-1)) + self.gate_bias)  # [B,d]
-            fuse_s = self.mem_fuse(torch.cat([q_s, m_read], dim=-1)) * self.mem_scale  # [B,d]
+            gate_s = torch.sigmoid(self.gate_proj(torch.cat([q_s_expanded, m_read], dim=-1)) + self.gate_bias)  # [B, topk, d]
+            fuse_s = self.mem_fuse(torch.cat([q_s_expanded, m_read], dim=-1)) * self.mem_scale  # [B, topk, d]
 
             # 使用记忆库的结果进行加权融合
-            final_with_memory = (1.0 + gate_s) * q_s + gate_s * fuse_s  # 加权融合结果
+            final_with_memory = (1.0 + gate_s) * q_s_expanded + gate_s * fuse_s  # [B, topk, d]
+
 
             # ========================= 写入记忆库 =========================
             # 如果训练阶段，且当前有极端 patch，执行写入操作
@@ -374,13 +372,11 @@ class PatchExtremeMemoryTransformer(nn.Module):
         else:
             final_with_memory = final  # 如果没有记忆库，直接用 final
 
-
-        final_with_memory = self.post_norm(final_with_memory)   # [B,total_len,d]
-
+        final_with_memory = self.post_norm(final_with_memory)  # [B, total_len, d]
 
         # ---------- 输出 ----------
-        y = self.proj_out(final_with_memory)        # [B,total_len,1]
-        y = y[:, -self.pred_len:, :]    # [B,pred_len,1]
+        y = self.proj_out(final_with_memory)  # [B, total_len, 1]
+        y = y[:, -self.pred_len:, :]  # [B, pred_len, 1]
 
         # ---------- RevIN inverse ----------
         if self.revin:
@@ -391,3 +387,4 @@ class PatchExtremeMemoryTransformer(nn.Module):
             self._global_step += 1
 
         return y
+

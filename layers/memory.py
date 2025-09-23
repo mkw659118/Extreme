@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 
 class SampleMemory(nn.Module):
+    # 初始化部分增加设备属性
     def __init__(self, d_model, mem_size, topk, temperature=0.5, ema_momentum=0.9):
         super().__init__()
         self.d_model = d_model
@@ -15,16 +16,13 @@ class SampleMemory(nn.Module):
         self.topk = topk
         self.temperature = temperature
         self.ema_momentum = ema_momentum
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # 初始化 memory_keys 和 memory_values
-        self.memory_keys = torch.randn(mem_size, d_model)  # [mem_size, d_model]
-        self.memory_values = torch.randn(mem_size, d_model)  # [mem_size, d_model]
-
-        # 初始化 memory_weights
-        self.memory_weights = torch.zeros(mem_size)  # [mem_size]
-        
-        # 记忆库的指针
-        self.memory_ptr = 0  # 当前写入位置
+        # 初始化 memory_keys 和 memory_values，并指定设备
+        self.memory_keys = torch.randn(mem_size, d_model, device=self.device)
+        self.memory_values = torch.randn(mem_size, d_model, device=self.device)
+        self.memory_weights = torch.zeros(mem_size, device=self.device)
+        self.memory_ptr = 0
 
     def read(self, sample_ids, query):
         """
@@ -48,27 +46,28 @@ class SampleMemory(nn.Module):
         return topk_values, topk_sim, topk_idx
 
     def write(self, sample_ids, k_batch, v_batch):
-        """
-        将新的样本写入记忆库。
-        
-        Args:
-        - sample_ids: [B] LongTensor，样本唯一ID。
-        - k_batch: [B, d_model] 样本的键（查询向量）。
-        - v_batch: [B, d_model] 样本的值（记忆内容）。
-        """
         batch_size = sample_ids.shape[0]
         
         for i in range(batch_size):
-            idx = self.memory_ptr % self.mem_size  # 保证内存大小不超过 mem_size
+            idx = self.memory_ptr % self.mem_size
             
-            # 将新的键和值存入记忆库
-            self.memory_keys[idx] = k_batch[i]  # [d_model]
-            self.memory_values[idx] = v_batch[i]  # [d_model]
+            # 确保张量在同一设备上
+            k = k_batch[i].to(self.device)
+            v = v_batch[i].to(self.device)
             
-            # 更新内存写入指针
+            # 统一调整为一维张量
+            k = k.flatten()
+            v = v.flatten()
+            
+            # 确保维度匹配
+            if k.shape != self.memory_keys[idx].shape:
+                k = k.resize_(self.memory_keys[idx].shape)
+            if v.shape != self.memory_values[idx].shape:
+                v = v.resize_(self.memory_values[idx].shape)
+            
+            self.memory_keys[idx] = k
+            self.memory_values[idx] = v
             self.memory_ptr += 1
-
-            # 使用指数加权平均更新每个样本的权重
             self.memory_weights[idx] = self.ema_momentum * self.memory_weights[idx] + (1 - self.ema_momentum) * 1.0
 
     def clear(self):
