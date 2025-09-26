@@ -2,9 +2,12 @@
 # Author : Yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月27日23:33:32）
 import torch
+import os
 from time import time
-
+import contextlib
 import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime
 
 
 from exp.exp_loss import compute_loss
@@ -15,6 +18,8 @@ class BasicModel(torch.nn.Module):
     def __init__(self, config):
         super(BasicModel, self).__init__()
         self.config = config
+        self.pred_len = config.pred_len
+        self.use_memory = config.use_memory
         self.scaler = torch.amp.GradScaler(config.device)  # ✅ 初始化 GradScaler
 
     def forward(self, *x, **kwargs):
@@ -71,15 +76,9 @@ class BasicModel(torch.nn.Module):
 
         for train_batch in dataModule.train_loader:
             # -------- 解包 batch：支持 (x, x_mark, y, ids) 或 (x, y, ids) --------
-            if len(train_batch) == 4:
-                x, x_mark, label, sample_ids = train_batch
-                inputs = (x.to(self.config.device), x_mark.to(self.config.device))
-            elif len(train_batch) == 3:
-                x, label, sample_ids = train_batch
-                inputs = (x.to(self.config.device),)
-            else:
-                raise ValueError(f"Unexpected train_batch size: {len(train_batch)}")
-
+            
+            x, x_mark, label, sample_ids = train_batch
+            inputs = (x.to(self.config.device), x_mark.to(self.config.device))
             label = label.to(self.config.device)
             sample_ids = sample_ids.to(self.config.device).long()  # [B] LongTensor
 
@@ -143,16 +142,15 @@ class BasicModel(torch.nn.Module):
     #         self.scheduler.step(val_loss)
 
     #     return ErrorMetrics(reals, preds, self.config)
-
+    
     def evaluate_one_epoch(self, dataModule, mode='valid'):
-        import contextlib
+        
+        self.eval()  # 切换为评估模式
+        torch.set_grad_enabled(False)  # 关闭梯度计算（评估阶段不需要计算梯度）
 
-        self.eval()
-        torch.set_grad_enabled(False)
-
-        # 选择 dataloader
+        # 选择 dataloader：验证集或测试集
         use_valid = (mode == 'valid') and (len(dataModule.valid_loader.dataset) != 0)
-        dataloader = dataModule.valid_loader if use_valid else dataModule.test_loader
+        dataloader = dataModule.valid_loader if use_valid else dataModule.test_loader  # 使用测试集进行评估
 
         preds, reals, val_loss = [], [], 0.0
 
@@ -164,87 +162,124 @@ class BasicModel(torch.nn.Module):
 
         with ctx:
             for batch in dataloader:
-                # -------- 解包 batch：支持 (x, x_mark, y, ids) 或 (x, y, ids) --------
-                if len(batch) == 4:
-                    x, x_mark, label, sample_ids = batch
-                    x = x.to(self.config.device)
-                    x_mark = x_mark.to(self.config.device)
-                    inputs = (x, x_mark)
-                elif len(batch) == 3:
-                    x, label, sample_ids = batch
-                    x = x.to(self.config.device)
-                    inputs = (x,)
-                else:
-                    raise ValueError(f"Unexpected batch size: {len(batch)}")
-
+                x, x_mark, label, sample_ids = batch
+                x = x.to(self.config.device)
+                x_mark = x_mark.to(self.config.device)
+                inputs = (x, x_mark)
                 label = label.to(self.config.device)
-                sample_ids = sample_ids.to(self.config.device).long()  # [B]
+                sample_ids = sample_ids.to(self.config.device).long()  # 样本 ID 作为输入
 
-                # 前向（评估阶段不会写入记忆库）
+                # 前向传播（评估阶段不会写入记忆库）
                 pred = self.forward(*inputs, sample_ids=sample_ids)
 
-                # 验证集计算 loss（可求标量或张量累计，视你的 compute_loss 返回类型）
+                # 计算验证集损失
                 if use_valid:
                     loss_item = compute_loss(self, inputs, pred, label, self.config)
                     # 若 compute_loss 返回标量张量，下面两行等价；保留求和语义
-                    val_loss = val_loss + (loss_item.item() if torch.is_tensor(loss_item) else float(loss_item))
+                    val_loss += loss_item.item() if torch.is_tensor(loss_item) else float(loss_item)
 
-                # 分类任务：取类别索引
-                if getattr(self.config, "classification", False):
-                    pred = pred.argmax(dim=1)
-
+                # 存储预测和真实标签
                 reals.append(label)
                 preds.append(pred)
 
-        # 拼接
+        # 拼接所有的预测值和真实值
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
 
-        # 反归一化（若你的 y_scaler 期望 numpy，可在内部做 .cpu().numpy()）
-        reals = dataModule.y_scaler.inverse_transform(reals)
-        preds = dataModule.y_scaler.inverse_transform(preds)
+        # 反归一化处理
+        reals = dataModule.y_scaler.inverse_transform(reals.cpu())  # 反归一化真实标签
+        preds = dataModule.y_scaler.inverse_transform(preds.cpu())  # 反归一化预测值
 
-        # 学习率调度（只在 valid 上）
+        # 学习率调度（只在验证集上进行调度）
         if use_valid and hasattr(self, "scheduler") and self.scheduler is not None:
-            # 若你的 scheduler 期望的是平均 loss，可改为 val_loss / len(dataloader)
-            self.scheduler.step(val_loss)
+            self.scheduler.step(val_loss)  # 根据验证集损失调整学习率
 
-        plot_all_test_results(reals, preds, save_path="pictures/test_results.png")
+        # 当 mode 为 'test' 时，进行预测与真实值的可视化
+        if mode == 'test':
+            # 获取测试集数据
+            x_test, x_mark_test, y_test, sample_ids_test = next(iter(dataModule.test_loader))  # 获取测试集的一个 batch
+            x_test = x_test.to(self.config.device)
+            x_mark_test = x_mark_test.to(self.config.device)
+            y_test = y_test.to(self.config.device)
+            sample_ids_test = sample_ids_test.to(self.config.device).long()
+            inputs_test = (x_test, x_mark_test)
 
+            # 预测测试集
+            preds_test = self.forward(*inputs_test, sample_ids=sample_ids_test)
+            x_test = dataModule.y_scaler.inverse_transform(x_test.cpu())  # 反归一化真实标签
+
+            preds_test = dataModule.y_scaler.inverse_transform(preds_test.cpu())  # 反归一化预测值
+
+            # 获取整个测试集的最大值和最小值
+            min_val = min(x_test.min(), preds_test.min())
+            max_val = max(x_test.max(), preds_test.max())
+            mid_val = (min_val + max_val) / 2
+            print("调试专用》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》")
+            print(min_val)
+            print(max_val)
+
+            # 可视化测试集的预测和真实值
+            self.visualize_predictions(x_test, preds_test)  # 调用你的可视化函数
+
+        # 返回误差指标
         return ErrorMetrics(reals, preds, self.config)
 
+  
+    def visualize_predictions(self, x, y_pred):
+        """
+        可视化测试集预测值与真实值的对比
+        x: 输入数据 [B, L, C]
+        y_pred: 预测值 [B, pred_len, 1]
+        min_val: 纵坐标最小值
+        max_val: 纵坐标最大值
+        mid_val: 纵坐标中间值
+        """
+        # 处理真实值 (x)
+        true_values = x[0, -self.pred_len:, 0]  # 获取最后 pred_len 步的真实值
+        if isinstance(true_values, torch.Tensor):
+            true_values = true_values.cpu().numpy()  # 如果是 Tensor 转换为 numpy
 
-def plot_all_test_results(reals, preds, save_path=None):
-    """
-    绘制整个测试集的真实值 vs 预测值
-    reals: torch.Tensor 或 np.ndarray, shape [N, pred_len, C] 或 [N, C]
-    preds: torch.Tensor 或 np.ndarray, shape [N, pred_len, C] 或 [N, C]
-    save_path: 如果指定，则保存到文件；否则直接 plt.show()
-    """
-    # 转 numpy
-    if torch.is_tensor(reals):
-        reals = reals.detach().cpu().numpy()
-    if torch.is_tensor(preds):
-        preds = preds.detach().cpu().numpy()
-    
-    # 保证是二维 [N, pred_len]
-    reals = reals.squeeze()
-    preds = preds.squeeze()
-    
-    # 如果是 [N, pred_len]，拼接成 1D 长序列
-    if reals.ndim == 2:
-        reals = reals.reshape(-1)
-        preds = preds.reshape(-1)
+        # 处理预测值 (y_pred)
+        predicted_values = y_pred[0]  # 获取最后 pred_len 步的预测值
+        if isinstance(predicted_values, torch.Tensor):
+            predicted_values = predicted_values.cpu().detach().numpy()  # 如果是 Tensor 转换为 numpy
 
-    plt.figure(figsize=(20, 5))
-    plt.plot(reals, label="Real", color="black")
-    plt.plot(preds, label="Pred", color="red", alpha=0.7, linestyle="--")
-    plt.title("Test set: Real vs Predicted")
-    plt.legend()
-    plt.tight_layout()
-    
-    if save_path:
-        plt.savefig(save_path, dpi=300)
-        print(f"Saved test plot to {save_path}")
-    else:
-        plt.show()
+        # 设置字体（设置 Times New Roman）
+        plt.rcParams.update({'font.family': 'Times New Roman'})
+
+        # 设置可视化图像
+        plt.figure(figsize=(8, 6))  # 设置图像大小
+        plt.plot(true_values, label='True Values', color='tab:blue', linewidth=2)  # 绘制真实值
+        plt.plot(predicted_values, label='Predicted Values', linestyle='--', color='tab:orange', linewidth=2)  # 绘制预测值
+
+        # 添加标题和标签
+        plt.title('Comparison of Predicted and True Values', fontsize=14)  # 图标题
+        plt.xlabel('Time Steps', fontsize=12)  # X轴标签
+        plt.ylabel('Values', fontsize=12)  # Y轴标签
+
+        # 自动设置 y 轴范围，以适应数据
+        plt.ylim(min(true_values.min(), predicted_values.min()) - 0.1, max(true_values.max(), predicted_values.max()) + 0.1)
+
+        # 添加网格
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+
+        # 添加图例
+        plt.legend(loc='upper right', fontsize=12)
+
+        # 保存图像到固定路径
+        SAVE_DIR = './saved_plots'
+        if not os.path.exists(SAVE_DIR):
+            os.makedirs(SAVE_DIR)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # 使用 self.pred_len 和 self.use_memory 生成文件名，并加上时间戳
+        file_name = f"prediction_predlen_{self.pred_len}_use_memory_{self.use_memory}_{timestamp}.png"
+
+        save_path = os.path.join(SAVE_DIR, file_name)
+        plt.tight_layout()  # 调整布局，避免标签被遮挡
+        plt.savefig(save_path, dpi=300)  # 保存为高分辨率图片
+        plt.close()  # 关闭图形，避免内存泄漏
+        print(f"Plot saved at: {save_path}")
+
+

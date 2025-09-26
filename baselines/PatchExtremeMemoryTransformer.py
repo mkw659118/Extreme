@@ -4,11 +4,13 @@
 
 import torch
 import torch.nn as nn
+import os
 import torch.nn.functional as F
 from einops import rearrange
 from layers.embedding import DataEmbedding
 # from layers.memory import BucketedExtremeMemory   # 保留以便回退
 from layers.memory import SampleMemory              # <<< 新：样本级记忆库
+import matplotlib.pyplot as plt
 
 
 def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
@@ -28,6 +30,83 @@ def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
     attn_bias = torch.zeros(seq_len, seq_len, dtype=dtype, device=device)
     attn_bias.masked_fill_(upper, float('-inf'))
     return attn_bias
+
+
+# ============= 极端 patch 掩码（逐样本兜底） =============
+def patch_extreme_mask(self, x_raw, mean, std):
+    """
+    返回: flag ∈ [B,P] 的 bool 掩码
+    """
+    B, L, _ = x_raw.shape
+    T = self.total_len
+    device = x_raw.device
+
+    # 值域 z-score
+    z = (x_raw - mean) / (std + 1e-5)   # [B,L,1]
+    z_abs = z.abs().amax(dim=-1)        # [B,L]
+
+    # 对齐到 total_len
+    if L < T:
+        pad = torch.zeros(B, T - L, device=device, dtype=z_abs.dtype)
+        z_abs_full = torch.cat([z_abs, pad], dim=1)
+    else:
+        z_abs_full = z_abs[:, :T]
+
+    # 聚合到 patch
+    z_abs_patch = rearrange(z_abs_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
+    z_per_patch = z_abs_patch.amax(dim=-1)           # [B,P]
+    z_flag = (z_per_patch > self.z_thresh)           # [B,P]
+
+    # 差分 z-score（可选）
+    d_flag = torch.zeros_like(z_flag)
+    if self.use_diff:
+        if L >= 2:
+            diff = x_raw[:, 1:, :] - x_raw[:, :-1, :]
+            diff_z = diff / (std + 1e-5)
+            diff_abs = diff_z.abs().amax(dim=-1)     # [B,L-1]
+            diff_abs = torch.cat([torch.zeros(B, 1, device=device, dtype=diff_abs.dtype), diff_abs], dim=1)
+        else:
+            diff_abs = torch.zeros(B, L, device=device, dtype=z_abs.dtype)
+
+        if L < T:
+            pad2 = torch.zeros(B, T - L, device=device, dtype=diff_abs.dtype)
+            diff_full = torch.cat([diff_abs, pad2], dim=1)
+        else:
+            diff_full = diff_abs[:, :T]
+
+        diff_patch = rearrange(diff_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
+        d_per_patch = diff_patch.amax(dim=-1)        # [B,P]
+        d_flag = (d_per_patch > self.diff_z_thresh)
+
+    flag = (z_flag | d_flag)                         # [B,P]
+
+    # -------- 逐样本兜底 --------
+    strength = z_per_patch
+    if self.use_diff:
+        strength = torch.maximum(strength, d_per_patch)
+
+    need_q = ~flag.any(dim=1)
+    if need_q.any():
+        q = torch.quantile(strength[need_q], self.ext_percentile, dim=1, keepdim=True)
+        flag_q = strength[need_q] >= q
+        flag[need_q] = flag_q
+
+    need_warmup = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.warmup_mem_steps, device=flag.device))
+    if need_warmup.any():
+        k = max(1, int(self.num_patches * self.warmup_ratio))
+        topk_idx = torch.topk(strength[need_warmup], k=k, dim=1).indices
+        flag_w = torch.zeros_like(strength[need_warmup], dtype=torch.bool)
+        flag_w.scatter_(1, topk_idx, True)
+        flag[need_warmup] = flag_w
+
+    need_force = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.force_top1_steps, device=flag.device))
+    if need_force.any():
+        top1_idx = torch.topk(strength[need_force], k=1, dim=1).indices
+        flag_f = torch.zeros_like(strength[need_force], dtype=torch.bool)
+        flag_f.scatter_(1, top1_idx, True)
+        flag[need_force] = flag_f
+
+    return flag
 
 
 class TransformerBlock(nn.Module):
@@ -195,82 +274,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
         return self._cached_inter['mask']
 
 
-    # ============= 极端 patch 掩码（逐样本兜底） =============
-    def patch_extreme_mask(self, x_raw, mean, std):
-        """
-        返回: flag ∈ [B,P] 的 bool 掩码
-        """
-        B, L, _ = x_raw.shape
-        T = self.total_len
-        device = x_raw.device
-
-        # 值域 z-score
-        z = (x_raw - mean) / (std + 1e-5)   # [B,L,1]
-        z_abs = z.abs().amax(dim=-1)        # [B,L]
-
-        # 对齐到 total_len
-        if L < T:
-            pad = torch.zeros(B, T - L, device=device, dtype=z_abs.dtype)
-            z_abs_full = torch.cat([z_abs, pad], dim=1)
-        else:
-            z_abs_full = z_abs[:, :T]
-
-        # 聚合到 patch
-        z_abs_patch = rearrange(z_abs_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
-        z_per_patch = z_abs_patch.amax(dim=-1)           # [B,P]
-        z_flag = (z_per_patch > self.z_thresh)           # [B,P]
-
-        # 差分 z-score（可选）
-        d_flag = torch.zeros_like(z_flag)
-        if self.use_diff:
-            if L >= 2:
-                diff = x_raw[:, 1:, :] - x_raw[:, :-1, :]
-                diff_z = diff / (std + 1e-5)
-                diff_abs = diff_z.abs().amax(dim=-1)     # [B,L-1]
-                diff_abs = torch.cat([torch.zeros(B, 1, device=device, dtype=diff_abs.dtype), diff_abs], dim=1)
-            else:
-                diff_abs = torch.zeros(B, L, device=device, dtype=z_abs.dtype)
-
-            if L < T:
-                pad2 = torch.zeros(B, T - L, device=device, dtype=diff_abs.dtype)
-                diff_full = torch.cat([diff_abs, pad2], dim=1)
-            else:
-                diff_full = diff_abs[:, :T]
-
-            diff_patch = rearrange(diff_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
-            d_per_patch = diff_patch.amax(dim=-1)        # [B,P]
-            d_flag = (d_per_patch > self.diff_z_thresh)
-
-        flag = (z_flag | d_flag)                         # [B,P]
-
-        # -------- 逐样本兜底 --------
-        strength = z_per_patch
-        if self.use_diff:
-            strength = torch.maximum(strength, d_per_patch)
-
-        need_q = ~flag.any(dim=1)
-        if need_q.any():
-            q = torch.quantile(strength[need_q], self.ext_percentile, dim=1, keepdim=True)
-            flag_q = strength[need_q] >= q
-            flag[need_q] = flag_q
-
-        need_warmup = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.warmup_mem_steps, device=flag.device))
-        if need_warmup.any():
-            k = max(1, int(self.num_patches * self.warmup_ratio))
-            topk_idx = torch.topk(strength[need_warmup], k=k, dim=1).indices
-            flag_w = torch.zeros_like(strength[need_warmup], dtype=torch.bool)
-            flag_w.scatter_(1, topk_idx, True)
-            flag[need_warmup] = flag_w
-
-        need_force = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.force_top1_steps, device=flag.device))
-        if need_force.any():
-            top1_idx = torch.topk(strength[need_force], k=1, dim=1).indices
-            flag_f = torch.zeros_like(strength[need_force], dtype=torch.bool)
-            flag_f.scatter_(1, top1_idx, True)
-            flag[need_force] = flag_f
-
-        return flag
-
     def forward(self, x, x_mark=None, sample_ids=None):
         
         B, L, C = x.shape
@@ -290,6 +293,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
             std = torch.sqrt(x.var(1, keepdim=True, unbiased=False) + 1e-5)
             stats = (mean, std)
 
+
         # ---------- Embedding & 预投影 ----------
         x_emb = self.embedding(x)                      # [B, L, d]
         x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, L]
@@ -302,10 +306,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # ---------- Mask（缓存） ----------
         intra_patch_mask = self.get_intra_mask(patches.device, patches.dtype)  # [pl, pl]
         inter_patch_mask = self.get_inter_mask(patches.device, patches.dtype)  # [P, P]
-
-        # ---------- 极端 patch 掩码 ----------
-        mean, std = stats
-        extreme_mask = self.patch_extreme_mask(x_raw, mean, std)  # [B, P] bool
 
         # =====================================================
         # 分支 A：Intra-branch
@@ -330,23 +330,19 @@ class PatchExtremeMemoryTransformer(nn.Module):
         inter_tokens = rearrange(inter_patches, '(B pl) P d -> B (P pl) d', B=B, pl=self.patch_len)
 
         final = intra_tokens + inter_tokens
-       
-
+        
+        final = self.post_norm(final)  # [B, total_len, d]
+        
+        
         # =====================================================
         # 使用 final 作为查询向量进行记忆库的存储和读取
         # =====================================================
+    
+        # ---------- 记忆库存入 ----------
         if self.use_memory:
-            # extreme_mask 的形状是 [B, P]，将其扩展为 [B, P*pl, 1]
-            extreme_mask_expanded = extreme_mask.unsqueeze(-1)  # [B, P, 1]
-            extreme_mask_expanded = extreme_mask_expanded.repeat(1, self.patch_len, 1)  # [B, P*pl, 1]
-
-            # 使用 final 作为查询向量来进行记忆库操作
-            q_s = (final * extreme_mask_expanded.float()).sum(dim=1)  # [B, d]
+            # 使用 final 作为查询向量进行记忆库操作
+            q_s = final.sum(dim=1)  # [B, d]
             m_read, _ , _ = self.memory.read(sample_ids, q_s)  # 从记忆库读取
-
-            # 确保 q_s 和 m_read 在同一个设备上
-            device = q_s.device  # 获取 q_s 的设备
-            m_read = m_read.to(device)  # 将 m_read 移动到 q_s 所在的设备
 
             # 扩展 q_s 使其与 m_read 的形状一致 [B, topk, d]
             q_s_expanded = q_s.unsqueeze(1).expand(-1, m_read.shape[1], -1)  # [B, topk, d]
@@ -358,29 +354,22 @@ class PatchExtremeMemoryTransformer(nn.Module):
             # 使用记忆库的结果进行加权融合
             final_with_memory = (1.0 + gate_s) * q_s_expanded + gate_s * fuse_s  # [B, topk, d]
 
-            final_with_memory = rearrange(final_with_memory,'B topk d -> B d topk')
+            # [B, topk, d] -> [B, total_len, d]
+            final_with_memory = rearrange(final_with_memory, 'B topk d -> B d topk')
             final_with_memory = self.topk_to_total_linear(final_with_memory)
-            final_with_memory = rearrange(final_with_memory,'B d total_len -> B total_len d')
+            final_with_memory = rearrange(final_with_memory, 'B d total_len -> B total_len d')
 
-            print(f"ahfa{final_with_memory.shape}")
-            
             # ========================= 写入记忆库 =========================
-            # 如果训练阶段，且当前有极端 patch，执行写入操作
             if self.training:
-                write_mask = extreme_mask.any(dim=1)  # [B]
-                if write_mask.any():
-                    # 使用归一化的 q_s 和 q_base 写入记忆库
-                    self.memory.write(
-                        sample_ids[write_mask].detach(),
-                        k_batch=F.normalize(q_s[write_mask].detach(), dim=-1),
-                        v_batch=F.normalize(final_with_memory[write_mask].detach(), dim=-1)
-                    )
+                write_mask = torch.ones(B, dtype=torch.bool, device=q_s.device)  # 所有样本都写入
+                self.memory.write(
+                    sample_ids[write_mask].detach(),
+                    k_batch=F.normalize(q_s[write_mask].detach(), dim=-1),
+                    v_batch=F.normalize(final_with_memory[write_mask].detach(), dim=-1)
+                )
         else:
             final_with_memory = final  # 如果没有记忆库，直接用 final
 
-            print(final_with_memory.shape)
-
-        final_with_memory = self.post_norm(final_with_memory)  # [B, total_len, d]
 
         # ---------- 输出 ----------
         y = self.proj_out(final_with_memory)  # [B, total_len, 1]
@@ -393,6 +382,5 @@ class PatchExtremeMemoryTransformer(nn.Module):
 
         if self.training:
             self._global_step += 1
-
+            
         return y
-

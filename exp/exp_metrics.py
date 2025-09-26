@@ -51,22 +51,7 @@ def compute_regression_metrics(realVec, estiVec, config):
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],
     }
-    # === 修复后的 DTW ===
-    if config.model == 'financial':
-        B = realVec.shape[0]
-        realVec_flat = realVec.transpose(0, 2, 1, 3).reshape(B, realVec.shape[2], -1)  # (B, N_code, 7*3)
-        estiVec_flat = estiVec.transpose(0, 2, 1, 3).reshape(B, estiVec.shape[2], -1)  # (B, N_code, 7*3)
-
-        dtw_list = []
-        for i in range(B):
-            # 每个样本为一个长度为 N_code 的序列，序列中每个“时间步”是维度为 (7×3,) 的向量
-            real_seq = realVec_flat[i]
-            esti_seq = estiVec_flat[i]
-            dtw_distance, _ = fastdtw(real_seq, esti_seq, dist=euclidean)
-            dtw_list.append(dtw_distance)
-        dtw_mean = np.mean(dtw_list)
-        all_metrics['dtw_mean'] = dtw_mean
-
+    
     return all_metrics
 
 

@@ -145,7 +145,7 @@ def split_dataset_by_timestamp(x, y, config):
     - 测试集: 滚动窗口
     """
 
-    # ==== 读 CSV 获取时间列 ====
+    # ==== 读 CSV 获取时间列 ================================================================
     csv_path = os.path.join(config.path, config.dataset, f"{config.reservoir_sensor}.tsv")
     df = pd.read_csv(csv_path, sep = '\t')
     time_col = df.columns[0]
@@ -162,6 +162,11 @@ def split_dataset_by_timestamp(x, y, config):
     train_end_idx  = to_idx(config.train_end)
     test_start_idx = to_idx(config.test_start)
     test_end_idx = to_idx(config.test_end)
+
+    # 获取测试集的时间戳
+    test_timestamps = time_series[test_start_idx:test_end_idx + 1:config.roll]  # 使用滚动步长来获取时间戳
+    print(f"调试专用》》》》》》》》》》》》》》》》》》》Test timestamps: {test_timestamps}")
+
 
     # ==== 长度参数 ====
     L_in  = config.seq_len
@@ -181,7 +186,7 @@ def split_dataset_by_timestamp(x, y, config):
     def is_extreme(seg):
         return (np.nanmax(seg) >= q_high) or (np.nanmin(seg) <= q_low)
 
-    # ==== 验证集 ====
+    # ==== 验证集 ============================================================
     random.seed(config.val_seed)
     val_points = []
     tag = np.zeros(len(x), dtype=np.int8)
@@ -201,7 +206,17 @@ def split_dataset_by_timestamp(x, y, config):
     valid_x = np.array([x[i - L_in:i] for i in val_points], dtype=np.float32)
     valid_y = np.array([y[i:i + L_out] for i in val_points], dtype=np.float32)
 
-    # ==== 训练集 (含过采样) ====
+    # 打印验证集的长度
+    print(f"调试专用》》》》》》》》》 Validation dataset length: {len(val_points)}")
+
+    # 打印验证集的时间戳
+    print("调试专用》》》》》》》》》 Validation dataset timestamps:")
+    for i in val_points:
+        print(time_series[i + config.seq_len])  # 假设 `time_series` 包含时间戳，i 是索引
+
+
+
+    # ==== 训练集 (含过采样) ====================================================
     random.seed(config.train_seed)
     train_x, train_y = [], []
     train_volume = config.train_volume
@@ -247,7 +262,7 @@ def split_dataset_by_timestamp(x, y, config):
     train_x = np.array(train_x, dtype=np.float32)
     train_y = np.array(train_y, dtype=np.float32)
 
-    # ==== 测试集 ====
+    # ==== 测试集 ============================================================
     test_x, test_y = [], []
     for s in range(test_start_idx, test_end_idx - L_out + 1, roll):
         wp_x = x[s - L_in:s]
@@ -261,80 +276,5 @@ def split_dataset_by_timestamp(x, y, config):
 
     print(f"[split_dataset_by_timestamp] train_x={train_x.shape}, valid_x={valid_x.shape}, test_x={test_x.shape}")
 
-# ======== Visualization (内部函数) ========
-    def _visualize_distributions(ref, train_y, y, cand_lo, cand_hi, L_out, tag, q_low, q_high):
-        try:
-            import matplotlib
-            matplotlib.use("Agg")
-            import matplotlib.pyplot as plt
-            import numpy as np
-
-            ref_flat = ref.reshape(-1)
-            train_y_flat = train_y.reshape(-1)
-
-            # Control uniform sample
-            cand_indices = [i for i in range(cand_lo, cand_hi + 1) if tag[i] not in (2, 3)]
-            rng = np.random.default_rng(1234)
-            if len(cand_indices) >= len(train_y):
-                u_idxs = rng.choice(cand_indices, size=len(train_y), replace=False)
-            else:
-                u_idxs = rng.choice(cand_indices, size=len(train_y), replace=True)
-            uni_y = np.array([y[i:i + L_out] for i in u_idxs], dtype=np.float32)
-            uni_y_flat = uni_y.reshape(-1)
-
-            def extreme_ratio(arr, lo, hi):
-                arr = arr.reshape(-1)
-                return float(((arr <= lo) | (arr >= hi)).mean())
-
-            r_ref = extreme_ratio(ref_flat, q_low, q_high)
-            r_uni = extreme_ratio(uni_y_flat, q_low, q_high)
-            r_os  = extreme_ratio(train_y_flat, q_low, q_high)
-
-            print(f"[dist] q_low={q_low:.4f}, q_high={q_high:.4f}")
-            print(f"[dist] extreme ratio  Candidate: {r_ref:.3f} | Uniform: {r_uni:.3f} | Oversampled: {r_os:.3f}")
-
-            # Histogram overlay
-            def _plot_hist_overlay(arrs, labels, bins=200, title="", fname="fig.png"):
-                plt.figure(figsize=(8,5))
-                for a, lb in zip(arrs, labels):
-                    plt.hist(a, bins=bins, alpha=0.45, density=True, label=lb)
-                plt.title(title)
-                plt.xlabel("y value"); plt.ylabel("Density")
-                plt.legend()
-                plt.tight_layout()
-                plt.savefig(fname, dpi=150)
-                plt.close()
-                print(f"[dist] saved {fname}")
-
-            _plot_hist_overlay(
-                [ref_flat, uni_y_flat, train_y_flat],
-                ["Candidate Pool (ref)", "Uniform Sample (no-OS)", "Oversampled (OS)"],
-                bins=200,
-                title="y Distribution: ref vs uniform vs oversampled",
-                fname="dist_y_ref_vs_uniform_vs_oversampled.png"
-            )
-
-            # CDF
-            def _plot_cdf(a, label):
-                a = np.sort(a.reshape(-1))
-                n = a.size
-                ycdf = np.arange(n) / (n - 1 + 1e-8)
-                plt.plot(a, ycdf, label=label, linewidth=1.2)
-
-            plt.figure(figsize=(8,5))
-            _plot_cdf(ref_flat, "Candidate (ref)")
-            _plot_cdf(uni_y_flat, "Uniform (no-OS)")
-            _plot_cdf(train_y_flat, "Oversampled (OS)")
-            plt.title("y CDF: candidate vs uniform vs oversampled")
-            plt.xlabel("y value"); plt.ylabel("Cumulative prob.")
-            plt.grid(True, alpha=0.3); plt.legend()
-            plt.tight_layout(); plt.savefig("dist_y_cdf_compare.png", dpi=150); plt.close()
-            print("[dist] saved dist_y_cdf_compare.png")
-
-        except Exception as e:
-            print(f"[dist] plotting failed: {e}")
-
-    # 调用可视化
-    _visualize_distributions(ref, train_y, y, cand_lo, cand_hi, L_out, tag, q_low, q_high)
 
     return train_x, train_y, valid_x, valid_y, test_x, test_y

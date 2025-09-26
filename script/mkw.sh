@@ -25,6 +25,8 @@ do
       --pred_len "$pred" \
       --revin True \
       --d_model 256 \
-      --use_memory False
+      --use_memory True
   done
 done
+
+
