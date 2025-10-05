@@ -135,6 +135,8 @@ def split_dataset_by_ratio(x, y, config):
         else:
             return get_train_valid_test_dataset(x, y, train_size, valid_size, config)
         
+        
+        
 def split_dataset_by_timestamp(x, y, config):
 
     """
@@ -158,10 +160,10 @@ def split_dataset_by_timestamp(x, y, config):
         return idxs[0]
 
     # ==== 转 index ====
-    start_point_idx   = to_idx(config.start_point)
-    train_end_idx  = to_idx(config.train_end)
-    test_start_idx = to_idx(config.test_start)
-    test_end_idx = to_idx(config.test_end)
+    start_point_idx = to_idx(config.start_point)
+    train_end_idx  =  to_idx(config.train_end)
+    test_start_idx =  to_idx(config.test_start)
+    test_end_idx =    to_idx(config.test_end)
 
     # 获取测试集的时间戳
     test_timestamps = time_series[test_start_idx:test_end_idx + 1:config.roll]  # 使用滚动步长来获取时间戳
@@ -213,7 +215,6 @@ def split_dataset_by_timestamp(x, y, config):
     print("调试专用》》》》》》》》》 Validation dataset timestamps:")
     for i in val_points:
         print(time_series[i + config.seq_len])  # 假设 `time_series` 包含时间戳，i 是索引
-
 
 
     # ==== 训练集 (含过采样) ====================================================

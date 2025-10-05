@@ -15,6 +15,7 @@ class TrainingConfig:
     device: str = 'cuda'
     monitor_metric: str = 'RMSE'
     use_amp: bool = False
+    mode: str = 'train'
 
 
 @dataclass

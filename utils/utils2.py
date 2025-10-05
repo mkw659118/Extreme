@@ -13,7 +13,6 @@ from torch.utils.data import DataLoader  # unused?
 from torch.utils.data import TensorDataset
 import math
 import numpy as np
-import random  # unused?
 import pandas as pd  # unused?
 from matplotlib import pyplot as plt
 

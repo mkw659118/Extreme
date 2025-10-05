@@ -32,6 +32,7 @@ def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
     return attn_bias
 
 
+
 # ============= 极端 patch 掩码（逐样本兜底） =============
 def patch_extreme_mask(self, x_raw, mean, std):
     """
@@ -175,10 +176,10 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.patch_len = patch_len
         self.win_size = win_size
         assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
-        self.num_patches = self.total_len // self.patch_len  # P
+        self.num_patches = self.total_len*2 // self.patch_len  # P
 
         # --------- Embedding & 预投影到 total_len ----------
-        self.embedding = DataEmbedding(c_in=1, d_model=d_model, dropout=0.1)
+        self.embedding = DataEmbedding(c_in=4, d_model=d_model, dropout=0.1)
         self.predict_linear = nn.Linear(seq_len, self.total_len)  # [B,d,seq] -> [B,d,total]
         self.topk_to_total_linear = nn.Linear(mem_topk, self.total_len)
 
@@ -277,10 +278,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
     def forward(self, x, x_mark=None, sample_ids=None):
         
         B, L, C = x.shape
-        assert L == self.seq_len and C == 1
-
-        x_raw = x
-
         # ---------- RevIN ----------
         if self.revin:
             mean = x.mean(1, keepdim=True).detach()
@@ -292,16 +289,23 @@ class PatchExtremeMemoryTransformer(nn.Module):
             mean = x.mean(1, keepdim=True).detach()
             std = torch.sqrt(x.var(1, keepdim=True, unbiased=False) + 1e-5)
             stats = (mean, std)
-
-
+        
+        
         # ---------- Embedding & 预投影 ----------
         x_emb = self.embedding(x)                      # [B, L, d]
         x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, L]
         x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
         x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
 
+        # ---------- 身份映射（Identity Mapping） ----------
+        # 这里，x_emb 已经是原始数据的嵌入，我们直接复制为 ATS（辅助时间序列）
+        ats_emb = x_emb.clone()  # ATS = x_emb（原始时间序列的复制）
+
+        # 合并原始数据和辅助数据（x_emb 和 ats_emb）进行后续处理
+        combined_emb = torch.cat([x_emb, ats_emb], dim=1)  # [B, total_len * 2, d]
+
         # ---------- Patch Division ----------
-        patches = rearrange(x_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
+        patches = rearrange(combined_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
 
         # ---------- Mask（缓存） ----------
         intra_patch_mask = self.get_intra_mask(patches.device, patches.dtype)  # [pl, pl]

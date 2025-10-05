@@ -52,6 +52,8 @@ def RunOnce(config, runId, model, datamodule, log):
         model.setup_optimizer(config)
         train_time = []
         for epoch in trange(config.epochs):
+            model.current_epoch = epoch + 1  # 从1开始计数，更符合实际习惯
+
             if monitor.early_stop:
                 break  # 若满足early stopping条件则提前终止训练
 

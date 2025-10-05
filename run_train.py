@@ -1,9 +1,11 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 import numpy as np
+import pandas as pd
 import torch
 import collections
 from data_provider.data_loader import DataModule
+from data_provider.DS import DS
 from exp.exp_train import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
@@ -34,15 +36,27 @@ def get_experiment_name(config):
     return filename, exper_detail
 
 
+def prepare_data():
+    # data prepare
+    trainX = pd.read_csv(
+        "./datasets/" + config.dataset + "/" + config.reservoir_sensor + ".tsv", sep="\t"
+    )
+    trainX.columns = ["datetime", "value"]
+    trainX.sort_values("datetime", inplace=True)
+
+    return trainX
+
 def RunExperiments(log, config):
     log('*' * 20 + 'Experiment Start' + '*' * 20)
     metrics = collections.defaultdict(list)
 
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
-        datamodule = DataModule(config)
+        trainX = prepare_data()
+        datamodule = DS(config, trainX)
         print("[debug] datamodule 获取成功")
         # raise SystemExit
+       
         model = Model(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)
