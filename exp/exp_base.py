@@ -155,19 +155,46 @@ class BasicModel(torch.nn.Module):
                 # 存储预测和真实标签
                 reals.append(label)
                 preds.append(pred)
-                
-        # 拼接所有的预测值和真实值
-        reals = torch.cat(reals, dim=0)
-        preds = torch.cat(preds, dim=0)
+
+        # # 拼接所有的预测值和真实值
+        # reals = torch.cat(reals, dim=0)
+        # preds = torch.cat(preds, dim=0)
 
         # # 反归一化处理
-        # reals = r_log_std_normalization_1(reals[:, :, 0].cpu(), dataModule.mean, dataModule.std)  # 反归一化真实标签
-        # preds = r_log_std_normalization_1(preds[:, :, 0].cpu(), dataModule.mean, dataModule.std)  # 反归一化预测值
+        # reals = r_log_std_normalization_1(reals[:, :, 0:1].cpu(), dataModule.mean, dataModule.std)  # 反归一化真实标签
+        # preds = r_log_std_normalization_1(preds[:, :, 0:1].cpu(), dataModule.mean, dataModule.std)  # 反归一化预测值
 
-        # 学习率调度（只在验证集上进行调度）
-        if use_valid and hasattr(self, "scheduler") and self.scheduler is not None:
-            self.scheduler.step(val_loss)  # 根据验证集损失调整学习率
+        # # 学习率调度（只在验证集上进行调度）
+        # if use_valid and hasattr(self, "scheduler") and self.scheduler is not None:
+        #     self.scheduler.step(val_loss)  # 根据验证集损失调整学习率
 
-        # 返回误差指标
-        return ErrorMetrics(reals[:, :, 0], preds[:, :, 0], self.config)
-    
+        # # 返回误差指标
+        # return ErrorMetrics(reals[:, :, 0], preds[:, :, 0], self.config)
+        # 拼接
+        reals = torch.cat(reals, dim=0)   # (N, pred_len, 5)
+        preds = torch.cat(preds, dim=0)   # (N, pred_len, 1) 或 (N, pred_len, C)
+
+        # === 反归一化到原尺度 ===
+        # 1) 从 DataModule 拿到训练阶段的 mean/std
+        mean = float(dataModule.mean)
+        std  = float(dataModule.std)
+
+        # 2) 取出 z-score 的一阶差分序列（第0列是你构造的 label0）
+        real_diff_z = reals[:, :, 0]              # (N, L)
+        pred_diff_z = preds[:, :, 0]              # (N, L) —— 若 preds 有多通道，确保第0通道对应差分z
+
+        # 3) 取出锚点 y_pre：预测窗口前一刻的原始真实值（来自 label4 的第一个时间步）
+        #    你的 label 结构: [ label0(z差分), cos, sin, label4(上一步原始), label5(未来原始) ]
+        y_pre = reals[:, 0, 3]                    # (N,)
+
+        # 4) z-score → 差分空间
+        real_diff = real_diff_z * std + mean      # (N, L)
+        pred_diff = pred_diff_z * std + mean      # (N, L)
+
+        # 5) 累加 + 锚点 = 原尺度
+        #    a3 = y_pre + cumsum(diff)
+        real_raw = y_pre.unsqueeze(1) + torch.cumsum(real_diff, dim=1)   # (N, L)
+        pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)   # (N, L)
+
+        # 6) 用原尺度做评估
+        return ErrorMetrics(real_raw, pred_raw, self.config)

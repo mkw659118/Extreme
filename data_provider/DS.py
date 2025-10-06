@@ -577,7 +577,7 @@ class DS:
         
         # 将新生成的概率特征添加到训练数据中
         DATA = np.concatenate((DATA, prob), 2)
-        print("Train DATA shape, ", np.array(self.DATA).shape)
+        print("Train DATA shape, ", np.array(DATA).shape)
         print("Train Label, ", np.array(Label).shape)
     
 
