@@ -99,15 +99,10 @@ class BasicModel(torch.nn.Module):
                 total_loss += loss.item() * x.size(0)
                 sample_count += x.size(0)
                 
-                # 打印训练进度
-                if (batch_idx + 1) % self.print_freq == 0:
-                    avg_loss = total_loss / sample_count
-                    print(f"[Train] Epoch: {self.current_epoch} | Batch: {batch_idx+1}/{len(dataModule.train_data_loader)} "
-                        f"| Loss: {avg_loss:.6f} | Time: {time.time()-t1:.2f}s")
-        
+    
         except Exception as e:
             print(f"[Train Error] Epoch {self.current_epoch} failed: {str(e)}")
-            raise
+        
         
         finally:
             # 结束训练，设置模型为评估模式
@@ -128,8 +123,8 @@ class BasicModel(torch.nn.Module):
         torch.set_grad_enabled(False)  # 关闭梯度计算（评估阶段不需要计算梯度）
 
         # 选择 dataloader：验证集或测试集
-        use_valid = (mode == 'valid') and (len(dataModule.valid_loader.dataset) != 0)
-        dataloader = dataModule.valid_loader if use_valid else dataModule.test_loader  # 使用测试集进行评估
+        use_valid = (mode == 'valid') and (len(dataModule.val_data_loader) != 0)
+        dataloader = dataModule.val_data_loader if use_valid else dataModule.test_data_loader  # 使用测试集进行评估
 
         preds, reals, val_loss = [], [], 0.0
 
@@ -160,18 +155,19 @@ class BasicModel(torch.nn.Module):
                 # 存储预测和真实标签
                 reals.append(label)
                 preds.append(pred)
-
+                
         # 拼接所有的预测值和真实值
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
 
-        # 反归一化处理
-        reals = dataModule.y_scaler.inverse_transform(reals.cpu())  # 反归一化真实标签
-        preds = dataModule.y_scaler.inverse_transform(preds.cpu())  # 反归一化预测值
+        # # 反归一化处理
+        # reals = r_log_std_normalization_1(reals[:, :, 0].cpu(), dataModule.mean, dataModule.std)  # 反归一化真实标签
+        # preds = r_log_std_normalization_1(preds[:, :, 0].cpu(), dataModule.mean, dataModule.std)  # 反归一化预测值
 
         # 学习率调度（只在验证集上进行调度）
         if use_valid and hasattr(self, "scheduler") and self.scheduler is not None:
             self.scheduler.step(val_loss)  # 根据验证集损失调整学习率
 
         # 返回误差指标
-        return ErrorMetrics(reals, preds, self.config)
+        return ErrorMetrics(reals[:, :, 0], preds[:, :, 0], self.config)
+    

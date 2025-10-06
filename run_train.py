@@ -66,7 +66,7 @@ def RunExperiments(log, config):
 
     log('*' * 20 + 'Experiment Results:' + '*' * 20)
     log(log.exper_detail)
-    log(f'Train_length : {len(datamodule.train_loader.dataset)} Valid_length : {len(datamodule.valid_loader.dataset)} Test_length : {len(datamodule.test_loader.dataset)}')
+    log(f'Train_length : {len(datamodule.train_data_loader.dataset)} Valid_length : {len(datamodule.val_data_loader.dataset)} Test_length : {len(datamodule.test_data_loader.dataset)}')
 
     for key in metrics:
         log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')

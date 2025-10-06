@@ -91,11 +91,13 @@ class DS:
         np.savetxt(self.expr_dir + "/" + "Norm.txt", norm)
         norm = np.loadtxt(self.expr_dir + "/" + "Norm.txt", dtype=float, delimiter=None)
         print("norm is: ", norm)
+
         if self.config.mode == "train":
             self.val_dataloader()     # 生成验证集数据加载器
             self.train_dataloader()   # 生成训练集数据加载器
-        else:
             self.refresh_dataset(trainX)  # 刷新数据集
+            print("[TEST] 构建测试集...")
+            self.gen_test_data()           # <<< 必须调用，生成 test_points 并在内部构建 test_dataloader
 
     # ----------------------- 数据获取方法 -----------------------
     def get_trainX(self):
@@ -575,8 +577,8 @@ class DS:
         
         # 将新生成的概率特征添加到训练数据中
         DATA = np.concatenate((DATA, prob), 2)
-        print("DATA shape, ", np.array(self.DATA).shape)
-        print("Label, ", np.array(Label).shape)
+        print("Train DATA shape, ", np.array(self.DATA).shape)
+        print("Train Label, ", np.array(Label).shape)
     
 
         # 创建数据集和数据加载器
@@ -805,26 +807,21 @@ class DS:
         print("Test set saved to : ", file_name)
         return self.test_data_loader
 
-    # ----------------------- 测试数据生成 -----------------------
+    
     def gen_test_data(self):
-        """
-        生成测试数据点
-        基于测试时间范围和滚动间隔生成测试点
-        """
+
         self.test_points = []
         self.refresh_dataset(self.trainX)
         print("Begin to generate test_points!")
 
         start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
 
-        # 计算测试数据的起始和结束索引
         begin_num = (self.trainX[self.trainX["datetime"] == self.test_start_time].index.values[0]- start_num)
         end_num = (self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0] - start_num)
 
         iterval = self.roll
 
-        # 按滚动间隔生成测试点
-        for i in range(int((end_num - begin_num - self.predict_days) / iterval)):
+        for i in range(int((end_num - begin_num - self.predict_days) / iterval)):  # do inference every 24 hours
             point = self.data_time[begin_num + i * iterval]
             if not np.isnan(
                 np.array(
@@ -838,8 +835,8 @@ class DS:
                 )
             ).any():
                 self.test_points.append([point])
-        
         self.test_dataloader()
+   
 
         
 
