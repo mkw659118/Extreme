@@ -24,7 +24,62 @@ def ErrorMetrics(realVec, estiVec, config):
         return compute_classification_metrics(realVec, estiVec, config)
     else:
         return compute_regression_metrics(realVec, estiVec, config)
+        # return compute_regression_metrics_rolling(realVec, estiVec, config, config.pred_len)
 
+def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
+    """ 计算回归任务的误差指标，支持滚动窗口评估 """
+    # 转换为numpy数组
+    realVec = np.array(realVec)
+    estiVec = np.array(estiVec)
+    
+    # 先进行滚动窗口处理（使用完整数据）
+    ll = int(len(estiVec) / config.pred_len)
+    esti_all = []
+    real_all = []
+    for i in range(ll):
+        # 按滚动窗口截取数据
+        esti_window = estiVec[i * config.pred_len : (i * config.pred_len + rm)]
+        real_window = realVec[i * config.pred_len : (i * config.pred_len + rm)]
+        esti_all.extend(esti_window)
+        real_all.extend(real_window)
+    
+    # 转换为numpy数组
+    esti_all = np.array(esti_all)
+    real_all = np.array(real_all)
+    
+    
+    esti_all = esti_all[:rm]
+    real_all = real_all[:rm]
+   
+    
+    # 计算误差指标
+    absError = np.abs(esti_all - real_all)
+
+    MAE = np.mean(np.abs(real_all - esti_all))
+    MSE = np.mean((real_all - esti_all) **2)
+    RMSE = np.sqrt(MSE)
+    MAPE = np.mean(np.abs((real_all - esti_all) / real_all))
+    
+    NMAE = np.sum(absError) / np.sum(np.abs(real_all))
+    NRMSE = np.sqrt(np.sum((real_all - esti_all)** 2)) / np.sqrt(np.sum(real_all **2))
+
+    # 计算不同阈值下的准确率
+    thresholds = [0.01, 0.05, 0.10]
+    Acc = [np.mean((absError < (real_all * t)).astype(float)) for t in thresholds]
+    
+    all_metrics = {
+        'MAE': MAE,
+        'MSE': MSE,
+        'RMSE': RMSE,
+        'MAPE': MAPE,
+        'NMAE': NMAE,
+        'NRMSE': NRMSE,
+        'Acc_1%': Acc[0],
+        'Acc_5%': Acc[1],
+        'Acc_10%': Acc[2],
+    }
+    
+    return all_metrics
 
 
 def compute_regression_metrics(realVec, estiVec, config):

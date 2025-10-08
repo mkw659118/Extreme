@@ -19,7 +19,6 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from sklearn.mixture import GaussianMixture  # 高斯混合模型，用于概率分布建模
-import matplotlib.pyplot as plt
 import numpy as np
 from data_provider.data_getitem import TimeSeriesDataset
 
@@ -41,6 +40,7 @@ class DS:
         self.sensor_data = []  # 传感器原始数据
         self.diff_data = []    # 差分后数据
         self.data = []         # 数值数据
+        
         self.data_time = []    # 时间戳数据
         self.sensor_data_norm = []    # 归一化后数据
         self.sensor_data_norm1 = []   # 扩展特征后的归一化数据
@@ -68,6 +68,7 @@ class DS:
         self.os_h = config.os_s                       # 过采样上限
         self.os_l = config.os_s                       # 过采样下限
         self.gmm_l = self.predict_days             # GMM模型长度
+        print("DEBUG: set self.gmm_l =", self.gmm_l)
 
         self.is_prob_feature = 1                   # 是否使用概率特征标志
         self.val_data_loader = []                  # 验证集数据加载器
@@ -93,6 +94,7 @@ class DS:
         print("norm is: ", norm)
 
         if self.config.mode == "train":
+            self.train_temp_gmm()  # 新增：临时训练GMM
             self.val_dataloader()     # 生成验证集数据加载器
             self.train_dataloader()   # 生成训练集数据加载器
             self.refresh_dataset(trainX)  # 刷新数据集
@@ -240,7 +242,7 @@ class DS:
                 clean_data.append(gmm_input[ii])
         sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
         
-        self.gmm0 = GaussianMixture(n_components=3, )
+        self.gmm0 = GaussianMixture(n_components=3)
         series = []
         random.seed(self.config.val_seed)
         for ggg in range(200000):
@@ -296,7 +298,56 @@ class DS:
         cos_d = [[x] for x in cos_d]
         sin_d = sin_date(self.month, self.day, self.hour)
         sin_d = [[x] for x in sin_d]
+    
+    def train_temp_gmm(self):
+        """临时训练GMM，供验证集生成时使用，增强版：解决样本不足问题"""
+        # 1. 提取原始数据并清洗NaN值
+        temp_data = np.array(self.sensor_data_norm1)
+        # 过滤掉包含NaN的行（确保每一行都是有效数据）
+        clean_temp_data = temp_data[~np.isnan(temp_data).any(axis=1)]
+        window_size = self.gmm_l  # 窗口大小=预测长度（如8）
+        min_required_samples = 2  # GMM训练至少需要2个样本
 
+        # 2. 检查清洗后的数据量是否足够
+        if len(clean_temp_data) < window_size:
+            # 情况1：连一个完整窗口的长度都不够
+            raise ValueError(
+                f"清洗后的数据量不足！需要至少{window_size}个有效时间步，"
+                f"但仅找到{len(clean_temp_data)}个。请检查数据质量或减小pred_len。"
+            )
+
+        # 3. 用滑动窗口生成样本（核心修复）
+        # 计算最大可能的样本数（滑动窗口步数）
+        max_possible_samples = len(clean_temp_data) - window_size + 1
+        # 实际取的样本数：取最大可能样本数和1000的较小值（避免样本过多导致计算慢）
+        n_samples = min(max_possible_samples, 1000)
+
+        if n_samples < min_required_samples:
+            # 情况2：样本数不足2个，尝试复制样本应急（仅作为临时方案）
+            print(f"警告：有效样本数不足（{n_samples}个），将复制样本以满足GMM训练要求")
+            # 先按现有样本生成数据
+            temp_gmm_input = []
+            for i in range(n_samples):
+                window = clean_temp_data[i:i+window_size, 1:2].flatten()
+                temp_gmm_input.append(window)
+            # 复制样本直到满足2个
+            while len(temp_gmm_input) < min_required_samples:
+                temp_gmm_input.append(temp_gmm_input[-1])  # 复制最后一个样本
+            temp_gmm_input = np.array(temp_gmm_input)
+        else:
+            # 情况3：样本数足够，正常生成
+            temp_gmm_input = []
+            for i in range(n_samples):
+                # 取每个窗口的第1列特征（与正式训练逻辑一致），展平为1维数组
+                window = clean_temp_data[i:i+window_size, 1:2].flatten()
+                temp_gmm_input.append(window)
+            temp_gmm_input = np.array(temp_gmm_input)
+
+        # 4. 训练临时GMM并保存
+        self.gmm = GaussianMixture(n_components=3)
+        self.gmm.fit(temp_gmm_input)  # 此时样本数至少为2，满足GMM要求
+        torch.save(self.gmm, self.expr_dir + "/" + "GMM.pt")
+        print(f"临时GMM训练完成，使用了{len(temp_gmm_input)}个样本（窗口大小{window_size}）")
     
     def val_dataloader(self):
         """
@@ -374,6 +425,7 @@ class DS:
         gmm_prob30 = self.gmm.predict_proba(
             np.squeeze(xx[:, -1 * self.gmm_l:, 1:2])
         )
+        
         # 对概率进行排序
         order1 = np.argmin(self.gmm.weights_)
         d0 = gmm_prob30[:, order1].reshape(-1, 1)
@@ -424,7 +476,6 @@ class DS:
 
 
 
-    # ----------------------- 训练集数据加载器生成 -----------------------
     def train_dataloader(self):
         """
         生成训练集数据加载器
@@ -433,46 +484,54 @@ class DS:
         选择作为训练点，标记为5
         """
         print("Begin to generate train_dataloader!")
-        DATA = []
-        Label = []
+        DATA = []  # 存储训练数据
+        Label = []  # 存储训练标签
 
         # 随机选择训练数据
-        random.seed(self.config.train_seed)
-        ii = 0
-        jj = 0
+        random.seed(self.config.train_seed)  # 设置随机种子保证结果可复现
+        ii = 0  # 普通样本计数器
+        jj = 0  # 过采样样本计数器
+        
+        # 循环直到收集到足够的训练样本
         while ii < self.config.train_volume:
-            # 随机选择起始索引
+            # 随机选择起始索引，确保有足够的上下文和预测空间
             i = random.randint(self.predict_days * 4, len(self.sensor_data_norm) - 31 * self.predict_days * 4 - 1)
+            # 提取预测时间段的数据
             pre1 = np.array(
                 self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
             a1 = 0
             a2 = -13
+            
             # 判断数据是否为极端值，确定过采样参数
             if np.max(pre1) > self.thre2:
-                a3 = self.os_h
-                max_index = np.argmax(pre1)
+                a3 = self.os_h  # 过采样上限
+                max_index = np.argmax(pre1)  # 最大值索引
             elif np.min(pre1) < self.thre1:
-                a3 = self.os_l
-                max_index = np.argmin(pre1)
-            a5 = self.iterval
-            # 过采样逻辑：对极端值进行过采样
+                a3 = self.os_l  # 过采样下限
+                max_index = np.argmin(pre1)  # 最小值索引
+            a5 = self.iterval  # 过采样间隔
+            
+            # 过采样逻辑：对极端值进行过采样以平衡数据集
             if (
-                (jj < self.config.train_volume * (self.oversampling / 100))
-                and (np.max(pre1) > self.thre2 or np.min(pre1) < self.thre1)
-                and (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())
+                (jj < self.config.train_volume * (self.oversampling / 100))  # 过采样数量限制
+                and (np.max(pre1) > self.thre2 or np.min(pre1) < self.thre1)  # 极端值判断
+                and (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())  # 数据有效性检查
                 and (
                     self.tag[i + self.train_days] <= a1
                     or a2 < self.tag[i + self.train_days] < 0
                 )
             ):
                 if a3 > 0:
+                    # 调整索引以定位到极端值附近
                     i = i + max_index - 1
                     i = i - a3 * a5
                 # 按照过采样参数生成多个样本
                 for kk in range(a3):  
-                    i = i + a5
+                    i = i + a5  # 按间隔移动索引
+                    # 检查索引有效性
                     if (i > len(self.data) - 31 * self.predict_days * 4 - 1 or i < self.predict_days * 4):
                         continue
+                    # 确保数据有效且未被标记为验证集或邻近区域
                     if (
                         not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()
                         and self.tag[i + self.train_days] != 2
@@ -487,13 +546,14 @@ class DS:
                         b = i + self.train_days
                         e = i + self.train_days + self.predict_days
 
-                        # 生成时间相关特征作为标签的一部分
+                        # 生成时间相关特征作为标签的一部分（周期性特征）
                         label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
                         label2 = [[ff] for ff in label2]
 
                         label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
                         label3 = [[ff] for ff in label3]
 
+                        # 添加历史数据作为标签的一部分
                         label4 = np.array(self.data[(i+self.train_days-1):(i + self.train_days + self.predict_days - 1)]).reshape(-1, 1)
                         label5 = np.array(self.data[(i + self.train_days): (i + self.train_days + self.predict_days)]).reshape(-1, 1)
 
@@ -503,14 +563,14 @@ class DS:
                         label = np.concatenate((label, label4), 1)
                         label = np.concatenate((label, label5), 1)
 
-                        self.tag[i + self.train_days] = 4
-                        jj = jj + 1
+                        self.tag[i + self.train_days] = 4  # 标记为已使用的训练点
+                        jj = jj + 1  # 过采样计数器加1
                         DATA.append(data0)
                         Label.append(label)
 
             # 非过采样数据处理
             if (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()) and (self.tag[i + self.train_days] <= a1 or a2 < self.tag[i + self.train_days] < 0):
-                # 准备训练数据和标签
+                # 准备训练数据和标签（与过采样情况类似）
                 data0 = np.array(self.sensor_data_norm1[i: (i + self.train_days)]).reshape(self.train_days, -1)
                 label00 = np.array(self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
                 label0 = [[ff] for ff in label00]
@@ -518,17 +578,18 @@ class DS:
                 b = i + self.train_days
                 e = i + self.train_days + self.predict_days
 
-                # 生成时间相关特征作为标签的一部分
+                # 生成时间相关特征
                 label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
                 label2 = [[ff] for ff in label2]
 
                 label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
                 label3 = [[ff] for ff in label3]
                 
+                # 添加历史数据特征
                 label4 = np.array(self.data[(i + self.train_days - 1):(i + self.train_days + self.predict_days - 1)]).reshape(-1, 1)
                 label5 = np.array(self.data[(i + self.train_days): (i + self.train_days + self.predict_days)]).reshape(-1, 1)
 
-                # 合并标签的各个部分
+                # 合并标签
                 label = np.concatenate((label0, label2), 1)
                 label = np.concatenate((label, label3), 1)
                 label = np.concatenate((label, label4), 1)
@@ -537,23 +598,26 @@ class DS:
                 DATA.append(data0)
                 Label.append(label)
 
-                self.tag[i + self.train_days] = 4
-                ii = ii + 1
+                self.tag[i + self.train_days] = 4  # 标记为已使用的训练点
+                ii = ii + 1  # 普通样本计数器加1
 
         self.DATA = DATA
         self.Label = Label
 
-        # 训练样本级高斯混合模型，生成新的特征
-        self.gmm = GaussianMixture(n_components=3,)
+        # 训练样本级高斯混合模型，生成新的概率特征
+        self.gmm = GaussianMixture(n_components=3)
         xx = np.array(self.DATA, np.float32)
+        # 使用训练数据的最后self.gmm_l个时间步的特征训练GMM
         self.gmm.fit(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
-        torch.save(self.gmm, self.expr_dir + "/" + "GMM.pt")
+        torch.save(self.gmm, self.expr_dir + "/" + "GMM.pt")  # 保存GMM模型
         self.gmm_means = np.squeeze(self.gmm.means_)
         print("time series gmm.weights are: ", self.gmm.weights_)
+        
+        # 使用GMM预测训练数据的概率分布
         gmm_prob30 = self.gmm.predict_proba(
             np.squeeze(np.array(self.DATA)[:, -1 * self.gmm_l:, 1:2])
         )
-        # 对概率进行排序
+        # 对概率进行排序（按权重大小）
         order1 = np.argmin(self.gmm.weights_)
         d0 = gmm_prob30[:, order1].reshape(-1, 1)
         order2 = np.argmax(self.gmm.weights_)
@@ -565,6 +629,7 @@ class DS:
         d2 = gmm_prob30[:, order3].reshape(-1, 1)
         gmm_prob3 = np.concatenate((d0, d1), 1)
         gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
+        
         # 扩展概率维度以匹配训练数据的时间维度
         prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.train_days, axis=1)
         prob0 = prob0.reshape(len(prob0), -1, 1)
@@ -586,10 +651,10 @@ class DS:
         self.train_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=True,
+            shuffle=True,  # 训练集需要打乱顺序
             num_workers=2,
             pin_memory=True,
-            collate_fn=dataset1.custom_collate_fn,  # 使用自定义的 collate_fn
+            collate_fn=dataset1.custom_collate_fn,  # 使用自定义的collate函数处理数据
         )
 
     # ----------------------- 数据集刷新 -----------------------
@@ -756,6 +821,9 @@ class DS:
         # 生成概率特征（与训练/验证集一致的处理方式）
         xx = np.array(self.DATA_test, np.float32)
         gmm_prob30 = self.gmm.predict_proba(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
+        
+
+
         
         # 对概率进行排序
         order1 = np.argmin(self.gmm.weights_)

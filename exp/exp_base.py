@@ -156,23 +156,9 @@ class BasicModel(torch.nn.Module):
                 reals.append(label)
                 preds.append(pred)
 
-        # # 拼接所有的预测值和真实值
-        # reals = torch.cat(reals, dim=0)
-        # preds = torch.cat(preds, dim=0)
-
-        # # 反归一化处理
-        # reals = r_log_std_normalization_1(reals[:, :, 0:1].cpu(), dataModule.mean, dataModule.std)  # 反归一化真实标签
-        # preds = r_log_std_normalization_1(preds[:, :, 0:1].cpu(), dataModule.mean, dataModule.std)  # 反归一化预测值
-
-        # # 学习率调度（只在验证集上进行调度）
-        # if use_valid and hasattr(self, "scheduler") and self.scheduler is not None:
-        #     self.scheduler.step(val_loss)  # 根据验证集损失调整学习率
-
-        # # 返回误差指标
-        # return ErrorMetrics(reals[:, :, 0], preds[:, :, 0], self.config)
-        # 拼接
-        reals = torch.cat(reals, dim=0)   # (N, pred_len, 5)
-        preds = torch.cat(preds, dim=0)   # (N, pred_len, 1) 或 (N, pred_len, C)
+        
+        reals = torch.cat(reals, dim=0)   
+        preds = torch.cat(preds, dim=0)   
 
         # === 反归一化到原尺度 ===
         # 1) 从 DataModule 拿到训练阶段的 mean/std

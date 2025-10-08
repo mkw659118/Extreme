@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import torch
 import collections
-from data_provider.data_loader import DataModule
 from data_provider.DS import DS
 from exp.exp_train import RunOnce
 from exp.exp_model import Model
