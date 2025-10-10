@@ -22,9 +22,6 @@ def diff_order_1(data):
     b = a[:-1]
     a = a[1:] - b
     c = np.array([0] + a.tolist())
-    #     d = np.nanmin(c)
-    #     c = c - d
-
     return c
 
 

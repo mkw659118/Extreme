@@ -11,8 +11,8 @@ class OtherConfig:
     input_size: int = 1
     multi_dataset: bool = False
     seq_len: int = 360
-    # pred_len: int = 72
-    pred_len: int = 8
+    pred_len: int = 72
+    # pred_len: int = 8
 
 
 

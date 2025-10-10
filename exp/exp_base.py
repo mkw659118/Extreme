@@ -54,7 +54,6 @@ class BasicModel(torch.nn.Module):
         # 识别设备类型（用于AMP）
         device_str = str(self.config.device)
         device_type = 'cuda' if 'cuda' in device_str else 'cpu'
-        print(f"[Train] Using device: {device_type}")
         
         # 初始化混合精度缩放器
         scaler = self.scaler
@@ -87,7 +86,8 @@ class BasicModel(torch.nn.Module):
                     scaler.update()
                 else:
                     # 普通训练流程
-                    
+                    print("x:", x.shape)
+                    print("x_mark:", x_mark.shape)
                     pred = self.forward(x, x_mark, sample_ids=sample_ids)
                     loss = compute_loss(self, x, pred, label, self.config)
                     loss.backward()

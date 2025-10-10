@@ -54,8 +54,6 @@ def RunExperiments(log, config):
         trainX = prepare_data()
         datamodule = DS(config, trainX)
         print("[debug] datamodule 获取成功")
-        # raise SystemExit
-       
         model = Model(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)

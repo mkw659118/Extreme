@@ -1,17 +1,46 @@
 #Author  :   mkw
 #Time    :   2025/09/17 10:50:52
-#Desc    :   PatchExtremeMemoryTransformer with Sample-level Memory (no cross-attn)
+#Desc    :   PatchExtremeMemoryTransformer with Sample-level Memory
 
 import torch
 import torch.nn as nn
-import os
 import torch.nn.functional as F
 from einops import rearrange
 from layers.embedding import DataEmbedding
-# from layers.memory import BucketedExtremeMemory   # 保留以便回退
-from layers.memory import SampleMemory              # <<< 新：样本级记忆库
-import matplotlib.pyplot as plt
+from layers.memory import SampleMemory              # 样本级记忆库
 
+
+class DFT(nn.Module):
+    def __init__(self, top_k):
+        super(DFT, self).__init__()
+        self.top_k = top_k
+
+    def forward(self, x, x_mark=None):
+        # x: [B, L, D]
+        xf = torch.fft.rfft(x, dim=1)
+        freq = torch.abs(xf)
+        freq[:, 0, :] = 0  # 去除直流分量
+        topk_vals, _ = torch.topk(freq, self.top_k, dim=1)
+        threshold = topk_vals[:, -1:, :]  # [B, 1, D]
+        xf = torch.where(freq >= threshold, xf, torch.zeros_like(xf))
+        seasonal = torch.fft.irfft(xf, n=x.shape[1], dim=1)
+        return seasonal  # [B, L, D]
+
+
+class moving_avg(nn.Module):
+    def __init__(self, kernel_size, stride):
+        super(moving_avg, self).__init__()
+        self.kernel_size = kernel_size
+        self.avg = nn.AvgPool1d(kernel_size=kernel_size, stride=stride, padding=0)
+
+    def forward(self, x, x_mark=None):
+        # x: [B, L, D]
+        front = x[:, 0:1, :].repeat(1, (self.kernel_size - 1) // 2, 1)
+        end = x[:, -1:, :].repeat(1, (self.kernel_size - 1) // 2, 1)
+        x = torch.cat([front, x, end], dim=1)
+        x = self.avg(x.permute(0, 2, 1))  # [B, D, L]
+        x = x.permute(0, 2, 1)  # [B, L, D]
+        return x
 
 def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
     # 使传入的 win_size 生效；非法则回退为 seq_len // 2
@@ -30,84 +59,6 @@ def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
     attn_bias = torch.zeros(seq_len, seq_len, dtype=dtype, device=device)
     attn_bias.masked_fill_(upper, float('-inf'))
     return attn_bias
-
-
-
-# ============= 极端 patch 掩码（逐样本兜底） =============
-def patch_extreme_mask(self, x_raw, mean, std):
-    """
-    返回: flag ∈ [B,P] 的 bool 掩码
-    """
-    B, L, _ = x_raw.shape
-    T = self.total_len
-    device = x_raw.device
-
-    # 值域 z-score
-    z = (x_raw - mean) / (std + 1e-5)   # [B,L,1]
-    z_abs = z.abs().amax(dim=-1)        # [B,L]
-
-    # 对齐到 total_len
-    if L < T:
-        pad = torch.zeros(B, T - L, device=device, dtype=z_abs.dtype)
-        z_abs_full = torch.cat([z_abs, pad], dim=1)
-    else:
-        z_abs_full = z_abs[:, :T]
-
-    # 聚合到 patch
-    z_abs_patch = rearrange(z_abs_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
-    z_per_patch = z_abs_patch.amax(dim=-1)           # [B,P]
-    z_flag = (z_per_patch > self.z_thresh)           # [B,P]
-
-    # 差分 z-score（可选）
-    d_flag = torch.zeros_like(z_flag)
-    if self.use_diff:
-        if L >= 2:
-            diff = x_raw[:, 1:, :] - x_raw[:, :-1, :]
-            diff_z = diff / (std + 1e-5)
-            diff_abs = diff_z.abs().amax(dim=-1)     # [B,L-1]
-            diff_abs = torch.cat([torch.zeros(B, 1, device=device, dtype=diff_abs.dtype), diff_abs], dim=1)
-        else:
-            diff_abs = torch.zeros(B, L, device=device, dtype=z_abs.dtype)
-
-        if L < T:
-            pad2 = torch.zeros(B, T - L, device=device, dtype=diff_abs.dtype)
-            diff_full = torch.cat([diff_abs, pad2], dim=1)
-        else:
-            diff_full = diff_abs[:, :T]
-
-        diff_patch = rearrange(diff_full, 'b (np pl) -> b np pl', np=self.num_patches, pl=self.patch_len)
-        d_per_patch = diff_patch.amax(dim=-1)        # [B,P]
-        d_flag = (d_per_patch > self.diff_z_thresh)
-
-    flag = (z_flag | d_flag)                         # [B,P]
-
-    # -------- 逐样本兜底 --------
-    strength = z_per_patch
-    if self.use_diff:
-        strength = torch.maximum(strength, d_per_patch)
-
-    need_q = ~flag.any(dim=1)
-    if need_q.any():
-        q = torch.quantile(strength[need_q], self.ext_percentile, dim=1, keepdim=True)
-        flag_q = strength[need_q] >= q
-        flag[need_q] = flag_q
-
-    need_warmup = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.warmup_mem_steps, device=flag.device))
-    if need_warmup.any():
-        k = max(1, int(self.num_patches * self.warmup_ratio))
-        topk_idx = torch.topk(strength[need_warmup], k=k, dim=1).indices
-        flag_w = torch.zeros_like(strength[need_warmup], dtype=torch.bool)
-        flag_w.scatter_(1, topk_idx, True)
-        flag[need_warmup] = flag_w
-
-    need_force = (~flag.any(dim=1)) & (torch.tensor(self._global_step < self.force_top1_steps, device=flag.device))
-    if need_force.any():
-        top1_idx = torch.topk(strength[need_force], k=1, dim=1).indices
-        flag_f = torch.zeros_like(strength[need_force], dtype=torch.bool)
-        flag_f.scatter_(1, top1_idx, True)
-        flag[need_force] = flag_f
-
-    return flag
 
 
 class TransformerBlock(nn.Module):
@@ -148,19 +99,10 @@ class PatchExtremeMemoryTransformer(nn.Module):
         num_layers_intra_patch: int,
         num_layers_inter_patch: int,
         config,
-
-        # ---- 记忆参数 ----
-        mem_size: int = 4096,       # 样本库容量（替代 per-bucket）
+        mem_size: int = 4096,       
         mem_topk: int = 16,
         mem_tau: float = 0.5,
-        mem_momentum: float = 0.2,
-        # ---- 极端检测 ----
-        z_thresh: float = 2.0,
-        diff_z_thresh: float = 2.0,
-        use_diff: bool = True,
-        warmup_mem_steps: int = 200,
-        warmup_ratio: float = 0.10,
-        force_top1_steps: int = 50,
+        mem_momentum: float = 0.2
     ):
         super().__init__()
         self.config = config
@@ -176,12 +118,18 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.patch_len = patch_len
         self.win_size = win_size
         assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
-        self.num_patches = self.total_len*2 // self.patch_len  # P
+        self.num_patches = self.total_len // self.patch_len  # P
+
+        self.top_k = 8
+        self.kernel_size = 25
 
         # --------- Embedding & 预投影到 total_len ----------
-        self.embedding = DataEmbedding(c_in=4, d_model=d_model, dropout=0.1)
+        self.embedding = DataEmbedding(c_in=8, d_model=d_model, dropout=0.1)
         self.predict_linear = nn.Linear(seq_len, self.total_len)  # [B,d,seq] -> [B,d,total]
         self.topk_to_total_linear = nn.Linear(mem_topk, self.total_len)
+        # --------- 周期趋势分解 ----------
+        self.dft = DFT(top_k=self.top_k)
+        self.trend = moving_avg(kernel_size=self.kernel_size, stride=1)
 
         # =====================================================
         # 分支 A：Intra-branch（patch 内）
@@ -223,16 +171,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
             self.gate_proj = nn.Linear(2 * d_model, d_model)  # 从 1024 到 512
             self.mem_scale = nn.Parameter(torch.tensor(1.0))
             self.gate_bias = nn.Parameter(torch.zeros(1))
-
-        # --------- 极端 patch 判定 & 训练暖身 ----------
-        self.z_thresh = z_thresh
-        self.diff_z_thresh = diff_z_thresh
-        self.use_diff = use_diff
-        self.ext_percentile = 0.9
-        self.warmup_mem_steps = warmup_mem_steps
-        self.warmup_ratio = warmup_ratio
-        self.force_top1_steps = force_top1_steps
-        self._global_step = 0
 
         # 掩码缓存
         self._cached_intra = None
@@ -277,35 +215,33 @@ class PatchExtremeMemoryTransformer(nn.Module):
 
     def forward(self, x, x_mark=None, sample_ids=None):
         
-        B, L, C = x.shape
+        B, _, _ = x.shape
+        print(x.shape)
+
+        x_combined = torch.cat([x, x_mark], dim=-1)  # [B, L, C + C_mark]，C_mark是x_mark的特征数
+
         # ---------- RevIN ----------
         if self.revin:
             mean = x.mean(1, keepdim=True).detach()
             x_centered = x - mean
             std = torch.sqrt(torch.var(x_centered, dim=1, keepdim=True, unbiased=False) + 1e-5)
-            x = x_centered / std
+            x_normalized = x_centered / std
+            # 拼接归一化后的核心特征与原始辅助特征（或对辅助特征单独处理）
+            x_combined = torch.cat([x_normalized, x_mark], dim=-1)
             stats = (mean, std)
-        else:
-            mean = x.mean(1, keepdim=True).detach()
-            std = torch.sqrt(x.var(1, keepdim=True, unbiased=False) + 1e-5)
-            stats = (mean, std)
-        
         
         # ---------- Embedding & 预投影 ----------
-        x_emb = self.embedding(x)                      # [B, L, d]
+        x_emb = self.embedding(x_combined)             # [B, L, d]
         x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, L]
         x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
         x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
 
-        # ---------- 身份映射（Identity Mapping） ----------
-        # 这里，x_emb 已经是原始数据的嵌入，我们直接复制为 ATS（辅助时间序列）
-        ats_emb = x_emb.clone()  # ATS = x_emb（原始时间序列的复制）
-
-        # 合并原始数据和辅助数据（x_emb 和 ats_emb）进行后续处理
-        combined_emb = torch.cat([x_emb, ats_emb], dim=1)  # [B, total_len * 2, d]
+        # seasonal = self.dft(x_emb)
+        trend = self.trend(x_emb)
+        residual = x_emb - trend # 将残差结果作为周期性特征
 
         # ---------- Patch Division ----------
-        patches = rearrange(combined_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
+        patches = rearrange(residual, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
 
         # ---------- Mask（缓存） ----------
         intra_patch_mask = self.get_intra_mask(patches.device, patches.dtype)  # [pl, pl]
@@ -325,7 +261,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # =====================================================
         # 分支 B：Inter-branch
         # =====================================================
-        # Inter：沿 P 维注意力
         inter_patches = rearrange(patches, 'B P pl d -> (B pl) P d')
 
         for block in self.inter_patch_blocks:
@@ -374,7 +309,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         else:
             final_with_memory = final  # 如果没有记忆库，直接用 final
 
-
+        final_with_memory = final_with_memory + trend
         # ---------- 输出 ----------
         y = self.proj_out(final_with_memory)  # [B, total_len, 1]
         y = y[:, -self.pred_len:, :]  # [B, pred_len, 1]
@@ -384,7 +319,4 @@ class PatchExtremeMemoryTransformer(nn.Module):
             mean, std = stats
             y = y * std[:, :1, :] + mean[:, :1, :]
 
-        if self.training:
-            self._global_step += 1
-            
         return y

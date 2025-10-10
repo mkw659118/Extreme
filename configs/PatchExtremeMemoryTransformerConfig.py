@@ -23,7 +23,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     constraint: bool = False
     win_size: int = 10
     patch_len: int = 16
-    use_memory: bool = False
+    use_memory: bool = True
     num_layers_intra_patch: int = 1
     num_layers_inter_patch: int = 1
     outf: str = './output'

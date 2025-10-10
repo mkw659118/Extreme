@@ -2,12 +2,10 @@
 #Time    :   2025/09/30 10:14:24
 #Desc    :   None
 
-
 import random
 import pandas as pd
 from utils.utils2 import (
     diff_order_1,           # 一阶差分函数
-    log_std_normalization,  # 对数标准差归一化
     gen_month_tag,          # 生成月份标签
     gen_time_feature,       # 生成时间特征
     cos_date,               # 生成日期余弦特征
@@ -24,13 +22,7 @@ from data_provider.data_getitem import TimeSeriesDataset
 
 class DS:
     """数据处理类，负责时间序列数据的预处理、特征工程、数据集构建和加载"""
-
     def __init__(self, config, trainX):
-        """
-        初始化数据处理类
-        :param config: 配置参数对象
-        :param trainX: 训练数据集
-        """
         self.config = config
         self.trainX = trainX
         self.mean = 0          # 数据均值
@@ -49,38 +41,30 @@ class DS:
         self.test_points = []  # 测试集时间点
         self.test_start_time = self.config.test_start  # 测试开始时间
         self.test_end_time = self.config.test_end      # 测试结束时间
-        self.gm3 = GaussianMixture(
-            n_components=3,
-        )  # 三成分高斯混合模型，用于异常检测
+        self.gm3 = GaussianMixture(n_components=3)  # 三成分高斯混合模型，用于异常检测
 
-        self.is_over_sampling = 0  # 是否过采样标志
-        self.norm_percen = 0       # 归一化百分比
         self.oversampling = int(config.oversampling)  # 过采样率
         self.iterval = config.os_v     # 过采样间隔
 
-        self.train_days = self.config.seq_len      # 输入序列长度(天数)
-        self.predict_days = self.config.pred_len   # 预测序列长度(天数)
-        self.val_near_days = self.predict_days    # 验证集邻近天数
-        self.lens = self.train_days + self.predict_days + 1  # 总序列长度
+        self.seq_len = self.config.seq_len      # 输入序列长度(天数)
+        self.pred_len = self.config.pred_len   # 预测序列长度(天数)
+        
+        self.lens = self.seq_len + self.pred_len + 1  # 总序列长度
         self.batch_size = config.bs          # 批量大小
         self.thre1 = 0                             # 阈值1
         self.thre2 = 0                             # 阈值2
-        self.os_h = config.os_s                       # 过采样上限
-        self.os_l = config.os_s                       # 过采样下限
-        self.gmm_l = self.predict_days             # GMM模型长度
-        print("DEBUG: set self.gmm_l =", self.gmm_l)
-
-        self.is_prob_feature = 1                   # 是否使用概率特征标志
+        self.os_h = config.os_s                    # 过采样上限
+        self.os_l = config.os_s                    # 过采样下限
+        self.gmm_l = self.pred_len                 # GMM模型长度
+        
         self.val_data_loader = []                  # 验证集数据加载器
         self.train_data_loader = []                # 训练集数据加载器
-        self.test_data_loader = []
+        self.test_data_loader = []                 # 训练集数据加载器
         self.month = []                            # 月份特征
         self.day = []                              # 日期特征
         self.hour = []                             # 小时特征
 
-        self.h_value = []                          # 小时值
-        self.sampled_h_value = []                  # 采样小时值
-        self.expr_dir = os.path.join(self.config.outf, self.config.data_model, "train")  # 实验目录
+        self.expr_dir = os.path.join(self.config.outf, self.config.reservoir_sensor, "train")  # 实验目录
         os.makedirs(self.expr_dir, exist_ok=True)  # exist_ok=True 避免目录已存在时报错
         self.read_dataset()                        # 读取并预处理数据集
         self.roll = 8                              # 滚动间隔
@@ -94,12 +78,14 @@ class DS:
         print("norm is: ", norm)
 
         if self.config.mode == "train":
-            self.train_temp_gmm()  # 新增：临时训练GMM
-            self.val_dataloader()     # 生成验证集数据加载器
-            self.train_dataloader()   # 生成训练集数据加载器
+            self.train_temp_gmm()         # 临时训练GMM
+            self.val_dataloader()         # 生成验证集数据加载器
+            self.train_dataloader()       # 生成训练集数据加载器
             self.refresh_dataset(trainX)  # 刷新数据集
             print("[TEST] 构建测试集...")
-            self.gen_test_data()           # <<< 必须调用，生成 test_points 并在内部构建 test_dataloader
+            self.gen_test_data()          # 构建 test_dataloader
+            print("样本第0列：", self.sensor_data_norm1[0, 0])  # 异常概率
+            print("样本第1列：", self.sensor_data_norm1[0, 1])  # 核心数值特征
 
     # ----------------------- 数据获取方法 -----------------------
     def get_trainX(self):
@@ -176,7 +162,7 @@ class DS:
         print("for sensor ", self.config.reservoir_sensor, "start_num is: ", start_num)
         # 找到训练结束时间点的索引
         train_end = (self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num)
-        print("train set length is : ", train_end)
+        print("train set total length is : ", train_end)
 
         # 加载整个数据集
         self.sensor_data = self.trainX[start_num: train_end + start_num]
@@ -357,7 +343,7 @@ class DS:
         """
         print("Begin to generate val_dataloader!")
 
-        near_len = self.predict_days
+        near_len = self.pred_len
         random.seed(self.config.val_seed)
         
         DATA = []
@@ -366,35 +352,35 @@ class DS:
         
         while ii < self.config.val_size:
             # 随机选择起始索引
-            i = random.randint(self.predict_days, len(self.data) - self.lens - 1)
+            i = random.randint(self.pred_len, len(self.data) - self.lens - 1)
             a1 = 0
             a2 = -13
             # 检查条件：序列无NaN值，且时间标签在指定范围内
             if (
                 (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())
                 and (
-                    self.tag[i + self.train_days] <= a1
-                    or a2 < self.tag[i + self.train_days] < 0
-                    or 2 <= self.tag[i + self.train_days] <= 3
+                    self.tag[i + self.seq_len] <= a1
+                    or a2 < self.tag[i + self.seq_len] < 0
+                    or 2 <= self.tag[i + self.seq_len] <= 3
                 )
             ):
                 # 标记验证集点和邻近点
-                self.tag[i + self.train_days] = 2  # 标记2表示在验证集中
+                self.tag[i + self.seq_len] = 2  # 标记2表示在验证集中
 
                 for k in range(near_len):
-                    self.tag[i + self.train_days - k] = 3  # 标记3表示验证集的邻近点
-                    self.tag[i + self.train_days + k] = 3
+                    self.tag[i + self.seq_len - k] = 3  # 标记3表示验证集的邻近点
+                    self.tag[i + self.seq_len + k] = 3
 
-                point = self.data_time[i + self.train_days]
+                point = self.data_time[i + self.seq_len]
                 self.val_points.append([point])
                 
                 # 准备验证数据和标签（与训练集一致的格式）
-                data0 = np.array(self.sensor_data_norm1[i: (i + self.train_days)]).reshape(self.train_days, -1)
-                label00 = np.array(self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
+                data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
+                label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
                 label0 = [[ff] for ff in label00]
 
-                b = i + self.train_days
-                e = i + self.train_days + self.predict_days
+                b = i + self.seq_len
+                e = i + self.seq_len + self.pred_len
 
                 # 生成时间相关特征作为标签的一部分
                 label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
@@ -403,8 +389,8 @@ class DS:
                 label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
                 label3 = [[ff] for ff in label3]
                 
-                label4 = np.array(self.data[(i + self.train_days - 1):(i + self.train_days + self.predict_days - 1)]).reshape(-1, 1)
-                label5 = np.array(self.data[(i + self.train_days): (i + self.train_days + self.predict_days)]).reshape(-1, 1)
+                label4 = np.array(self.data[(i + self.seq_len - 1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
+                label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
 
                 # 合并标签的各个部分
                 label = np.concatenate((label0, label2), 1)
@@ -439,11 +425,11 @@ class DS:
         gmm_prob3 = np.concatenate((d0, d1), 1)
         gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
         # 扩展概率维度以匹配训练数据的时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob2 = prob2.reshape(len(prob2), -1, 1)
         prob = np.concatenate((prob0, prob1), 2)
         prob = np.concatenate((prob, prob2), 2)
@@ -454,11 +440,11 @@ class DS:
         print("Validation Label, ", np.array(Label).shape)
 
         # 创建数据集和数据加载器
-        dataset1 = TimeSeriesDataset(DATA, self.Label_val, 'val', self.config)
+        dataset1 = TimeSeriesDataset(DATA, self.Label_val, self.config)
         self.val_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=False,  # 验证集通常不需要打乱
+            shuffle=False,  
             num_workers=2,
             pin_memory=True,
             collate_fn=dataset1.custom_collate_fn,
@@ -495,10 +481,10 @@ class DS:
         # 循环直到收集到足够的训练样本
         while ii < self.config.train_volume:
             # 随机选择起始索引，确保有足够的上下文和预测空间
-            i = random.randint(self.predict_days * 4, len(self.sensor_data_norm) - 31 * self.predict_days * 4 - 1)
+            i = random.randint(self.pred_len * 4, len(self.sensor_data_norm) - 31 * self.pred_len * 4 - 1)
             # 提取预测时间段的数据
             pre1 = np.array(
-                self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
+                self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
             a1 = 0
             a2 = -13
             
@@ -517,8 +503,8 @@ class DS:
                 and (np.max(pre1) > self.thre2 or np.min(pre1) < self.thre1)  # 极端值判断
                 and (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())  # 数据有效性检查
                 and (
-                    self.tag[i + self.train_days] <= a1
-                    or a2 < self.tag[i + self.train_days] < 0
+                    self.tag[i + self.seq_len] <= a1
+                    or a2 < self.tag[i + self.seq_len] < 0
                 )
             ):
                 if a3 > 0:
@@ -529,22 +515,22 @@ class DS:
                 for kk in range(a3):  
                     i = i + a5  # 按间隔移动索引
                     # 检查索引有效性
-                    if (i > len(self.data) - 31 * self.predict_days * 4 - 1 or i < self.predict_days * 4):
+                    if (i > len(self.data) - 31 * self.pred_len * 4 - 1 or i < self.pred_len * 4):
                         continue
                     # 确保数据有效且未被标记为验证集或邻近区域
                     if (
                         not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()
-                        and self.tag[i + self.train_days] != 2
-                        and self.tag[i + self.train_days] != 3
-                        and self.tag[i + self.train_days] != 4
+                        and self.tag[i + self.seq_len] != 2
+                        and self.tag[i + self.seq_len] != 3
+                        and self.tag[i + self.seq_len] != 4
                     ):
                         # 准备训练数据和标签
-                        data0 = np.array(self.sensor_data_norm1[i: (i + self.train_days)]).reshape(self.train_days, -1)
-                        label00 = np.array(self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
+                        data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
+                        label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
                         label0 = [[ff] for ff in label00]
 
-                        b = i + self.train_days
-                        e = i + self.train_days + self.predict_days
+                        b = i + self.seq_len
+                        e = i + self.seq_len + self.pred_len
 
                         # 生成时间相关特征作为标签的一部分（周期性特征）
                         label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
@@ -554,8 +540,8 @@ class DS:
                         label3 = [[ff] for ff in label3]
 
                         # 添加历史数据作为标签的一部分
-                        label4 = np.array(self.data[(i+self.train_days-1):(i + self.train_days + self.predict_days - 1)]).reshape(-1, 1)
-                        label5 = np.array(self.data[(i + self.train_days): (i + self.train_days + self.predict_days)]).reshape(-1, 1)
+                        label4 = np.array(self.data[(i+self.seq_len-1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
+                        label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
 
                         # 合并标签的各个部分
                         label = np.concatenate((label0, label2), 1)
@@ -563,20 +549,20 @@ class DS:
                         label = np.concatenate((label, label4), 1)
                         label = np.concatenate((label, label5), 1)
 
-                        self.tag[i + self.train_days] = 4  # 标记为已使用的训练点
+                        self.tag[i + self.seq_len] = 4  # 标记为已使用的训练点
                         jj = jj + 1  # 过采样计数器加1
                         DATA.append(data0)
                         Label.append(label)
 
             # 非过采样数据处理
-            if (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()) and (self.tag[i + self.train_days] <= a1 or a2 < self.tag[i + self.train_days] < 0):
+            if (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()) and (self.tag[i + self.seq_len] <= a1 or a2 < self.tag[i + self.seq_len] < 0):
                 # 准备训练数据和标签（与过采样情况类似）
-                data0 = np.array(self.sensor_data_norm1[i: (i + self.train_days)]).reshape(self.train_days, -1)
-                label00 = np.array(self.sensor_data_norm[(i + self.train_days): (i + self.train_days + self.predict_days)])
+                data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
+                label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
                 label0 = [[ff] for ff in label00]
 
-                b = i + self.train_days
-                e = i + self.train_days + self.predict_days
+                b = i + self.seq_len
+                e = i + self.seq_len + self.pred_len
 
                 # 生成时间相关特征
                 label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
@@ -586,8 +572,8 @@ class DS:
                 label3 = [[ff] for ff in label3]
                 
                 # 添加历史数据特征
-                label4 = np.array(self.data[(i + self.train_days - 1):(i + self.train_days + self.predict_days - 1)]).reshape(-1, 1)
-                label5 = np.array(self.data[(i + self.train_days): (i + self.train_days + self.predict_days)]).reshape(-1, 1)
+                label4 = np.array(self.data[(i + self.seq_len - 1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
+                label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
 
                 # 合并标签
                 label = np.concatenate((label0, label2), 1)
@@ -598,7 +584,7 @@ class DS:
                 DATA.append(data0)
                 Label.append(label)
 
-                self.tag[i + self.train_days] = 4  # 标记为已使用的训练点
+                self.tag[i + self.seq_len] = 4  # 标记为已使用的训练点
                 ii = ii + 1  # 普通样本计数器加1
 
         self.DATA = DATA
@@ -631,11 +617,11 @@ class DS:
         gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
         
         # 扩展概率维度以匹配训练数据的时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob2 = prob2.reshape(len(prob2), -1, 1)
         prob = np.concatenate((prob0, prob1), 2)
         prob = np.concatenate((prob, prob2), 2)
@@ -644,14 +630,16 @@ class DS:
         DATA = np.concatenate((DATA, prob), 2)
         print("Train DATA shape, ", np.array(DATA).shape)
         print("Train Label, ", np.array(Label).shape)
+        print("训练集数据的选取长度是： ", len(DATA))
+        print("训练集标签的选取长度是： ", len(self.Label))
     
 
         # 创建数据集和数据加载器
-        dataset1 = TimeSeriesDataset(DATA, self.Label, 'train', self.config )
+        dataset1 = TimeSeriesDataset(DATA, self.Label, self.config )
         self.train_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=True,  # 训练集需要打乱顺序
+            shuffle=True,  
             num_workers=2,
             pin_memory=True,
             collate_fn=dataset1.custom_collate_fn,  # 使用自定义的collate函数处理数据
@@ -663,6 +651,7 @@ class DS:
         刷新数据集，使用已有的归一化参数(均值和标准差)
         :param trainX: 新的训练数据集
         """
+        print("刷新数据集********************")
         self.trainX = trainX
         # 找到起始时间点的索引
         start_num = self.trainX[
@@ -671,7 +660,7 @@ class DS:
         print("for sensor ", self.config.reservoir_sensor, "start_num is: ", start_num)
         # 找到训练结束时间点的索引
         train_end = (self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num)
-        print("train set length is : ", train_end)
+        print("train set total length is : ", train_end)
 
         # 找到测试结束时间点的索引并加载数据集
         k = self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0]
@@ -764,6 +753,35 @@ class DS:
         sin_d = sin_date(self.month, self.day, self.hour)
         sin_d = [[x] for x in sin_d]
 
+    def gen_test_data(self):
+
+        self.test_points = []
+        self.refresh_dataset(self.trainX)
+        print("Begin to generate test_points!")
+
+        start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
+
+        begin_num = (self.trainX[self.trainX["datetime"] == self.test_start_time].index.values[0]- start_num)
+        end_num = (self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0] - start_num)
+
+        iterval = self.roll
+
+        for i in range(int((end_num - begin_num - self.pred_len) / iterval)):  # do inference every 24 hours
+            point = self.data_time[begin_num + i * iterval]
+            if not np.isnan(
+                np.array(
+                    self.data[
+                        begin_num
+                        + i * iterval
+                        - self.seq_len: begin_num
+                        + i * iterval
+                        + self.pred_len
+                    ]
+                )
+            ).any():
+                self.test_points.append([point])
+        self.test_dataloader()
+
     def test_dataloader(self):
         """
         生成测试集数据加载器
@@ -785,16 +803,16 @@ class DS:
             i = np.where(self.data_time == datetime)[0][0]
             
             # 确保数据范围内无NaN值
-            if np.isnan(self.sensor_data_norm1[i-self.train_days: i+self.predict_days]).any():
+            if np.isnan(self.sensor_data_norm1[i-self.seq_len: i+self.pred_len]).any():
                 continue
                 
             # 准备测试数据和标签（格式与训练/验证集一致）
-            data0 = np.array(self.sensor_data_norm1[i-self.train_days: i]).reshape(self.train_days, -1)
-            label00 = np.array(self.sensor_data_norm[i: i+self.predict_days])
+            data0 = np.array(self.sensor_data_norm1[i-self.seq_len: i]).reshape(self.seq_len, -1)
+            label00 = np.array(self.sensor_data_norm[i: i+self.pred_len])
             label0 = [[ff] for ff in label00]
             
             b = i
-            e = i + self.predict_days
+            e = i + self.pred_len
             
             # 生成时间相关特征作为标签的一部分
             label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
@@ -803,8 +821,8 @@ class DS:
             label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
             label3 = [[ff] for ff in label3]
             
-            label4 = np.array(self.data[(i-1):(i+self.predict_days-1)]).reshape(-1, 1)
-            label5 = np.array(self.data[i: i+self.predict_days]).reshape(-1, 1)
+            label4 = np.array(self.data[(i-1):(i+self.pred_len-1)]).reshape(-1, 1)
+            label5 = np.array(self.data[i: i+self.pred_len]).reshape(-1, 1)
             
             # 合并标签的各个部分
             label = np.concatenate((label0, label2), 1)
@@ -822,9 +840,6 @@ class DS:
         xx = np.array(self.DATA_test, np.float32)
         gmm_prob30 = self.gmm.predict_proba(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
         
-
-
-        
         # 对概率进行排序
         order1 = np.argmin(self.gmm.weights_)
         d0 = gmm_prob30[:, order1].reshape(-1, 1)
@@ -839,11 +854,11 @@ class DS:
         gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
         
         # 扩展概率维度以匹配时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.train_days, axis=1)
+        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob2 = prob2.reshape(len(prob2), -1, 1)
         prob = np.concatenate((prob0, prob1), 2)
         prob = np.concatenate((prob, prob2), 2)
@@ -855,11 +870,11 @@ class DS:
         
         # 创建测试数据集和数据加载器
         from data_provider.data_getitem import TimeSeriesDataset
-        dataset1 = TimeSeriesDataset(DATA, self.Label_test, 'test', self.config)
+        dataset1 = TimeSeriesDataset(DATA, self.Label_test, self.config)
         self.test_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=False,  # 测试集通常不需要打乱
+            shuffle=False,  
             num_workers=2,
             pin_memory=True,
             collate_fn=dataset1.custom_collate_fn,
@@ -874,38 +889,3 @@ class DS:
         pd_temp.to_csv(file_name, sep="\t")
         print("Test set saved to : ", file_name)
         return self.test_data_loader
-
-    
-    def gen_test_data(self):
-
-        self.test_points = []
-        self.refresh_dataset(self.trainX)
-        print("Begin to generate test_points!")
-
-        start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
-
-        begin_num = (self.trainX[self.trainX["datetime"] == self.test_start_time].index.values[0]- start_num)
-        end_num = (self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0] - start_num)
-
-        iterval = self.roll
-
-        for i in range(int((end_num - begin_num - self.predict_days) / iterval)):  # do inference every 24 hours
-            point = self.data_time[begin_num + i * iterval]
-            if not np.isnan(
-                np.array(
-                    self.data[
-                        begin_num
-                        + i * iterval
-                        - self.train_days: begin_num
-                        + i * iterval
-                        + self.predict_days
-                    ]
-                )
-            ).any():
-                self.test_points.append([point])
-        self.test_dataloader()
-   
-
-        
-
-   

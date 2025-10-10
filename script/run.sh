@@ -25,7 +25,7 @@ do
       --pred_len "$pred" \
       --revin True \
       --d_model 256 \
-      --use_memory False\
+      --use_memory True\
       --epochs 200
   done
 done
