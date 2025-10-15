@@ -66,6 +66,8 @@ class DS:
 
         self.expr_dir = os.path.join(self.config.outf, self.config.reservoir_sensor, "train")  # 实验目录
         os.makedirs(self.expr_dir, exist_ok=True)  # exist_ok=True 避免目录已存在时报错
+        
+        # 这里是数据
         self.read_dataset()                        # 读取并预处理数据集
         self.roll = 8                              # 滚动间隔
 
@@ -76,6 +78,7 @@ class DS:
         np.savetxt(self.expr_dir + "/" + "Norm.txt", norm)
         norm = np.loadtxt(self.expr_dir + "/" + "Norm.txt", dtype=float, delimiter=None)
         print("norm is: ", norm)
+        
 
         if self.config.mode == "train":
             self.train_temp_gmm()         # 临时训练GMM
@@ -84,8 +87,10 @@ class DS:
             self.refresh_dataset(trainX)  # 刷新数据集
             print("[TEST] 构建测试集...")
             self.gen_test_data()          # 构建 test_dataloader
-            print("样本第0列：", self.sensor_data_norm1[0, 0])  # 异常概率
-            print("样本第1列：", self.sensor_data_norm1[0, 1])  # 核心数值特征
+            print("样本第0列：", self.sensor_data_norm1[:10, 0])  # 异常概率
+            print("样本第1列：", self.sensor_data_norm1[:10, 1])  # 核心数值特征
+            print("训练的mean:",self.mean)
+            print("训练的std:",self.std)
 
     # ----------------------- 数据获取方法 -----------------------
     def get_trainX(self):
@@ -160,15 +165,20 @@ class DS:
         # 找到起始时间点的索引
         start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
         print("for sensor ", self.config.reservoir_sensor, "start_num is: ", start_num)
+        
         # 找到训练结束时间点的索引
         train_end = (self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num)
         print("train set total length is : ", train_end)
 
         # 加载整个数据集
         self.sensor_data = self.trainX[start_num: train_end + start_num]
+        
+        # 缺失值?
         self.data = np.array(self.sensor_data["value"].fillna(np.nan))
-        self.diff_data = diff_order_1(self.data)  # 计算一阶差分
         self.data_time = np.array(self.sensor_data["datetime"].fillna(np.nan))
+        
+        # 
+        self.diff_data = diff_order_1(self.data)  # 计算一阶差分
         
         # 对数据进行反向对数标准差归一化，并保存归一化参数
         self.sensor_data_norm, self.mean, self.std, self.mini = r_log_std_normalization(self.data)
@@ -183,9 +193,11 @@ class DS:
                 clean_data.append(self.sensor_data_norm[ii])
         sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
         
+        
         # 训练数据集级别的三成分高斯混合模型，用于异常检测
         self.gm3.fit(sensor_data_prob)
         torch.save(self.gm3, self.expr_dir + "/" + "GM3.pt")
+        
         self.gm_means = np.squeeze(self.gm3.means_)
         self.z0 = np.min(self.gm_means)
         self.z1 = np.median(self.gm_means)
@@ -194,11 +206,14 @@ class DS:
         # 计算异常检测阈值
         self.thre1 = (self.z0 + self.z1) / 2
         self.thre2 = (self.z1 + self.z2) / 2
+        
         print("gm3.means are: ", self.gm_means)
         print("z : ", self.z0, self.z1, self.z2)
+        
         print("gm3.covariances are: ", self.gm3.covariances_)
         print("gm3.weights are: ", self.gm3.weights_)
         weights3 = self.gm3.weights_
+        
         
         # 计算数据点属于分布的概率和异常概率
         data_prob3 = self.gm3.predict_proba(sensor_data_prob)
@@ -406,7 +421,7 @@ class DS:
         self.Label_val = Label
         
         # 加载预训练的样本级高斯混合模型生成概率特征
-        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt")
+        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt", weights_only=False)
         xx = np.array(self.DATA_val, np.float32)
         gmm_prob30 = self.gmm.predict_proba(
             np.squeeze(xx[:, -1 * self.gmm_l:, 1:2])
@@ -792,9 +807,9 @@ class DS:
         Label = []
         
         # 加载预训练的高斯混合模型
-        self.gm3 = torch.load(self.expr_dir + "/" + "GM3.pt")
-        self.gmm0 = torch.load(self.expr_dir + "/" + "GMM0.pt")
-        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt")
+        self.gm3 = torch.load(self.expr_dir + "/" + "GM3.pt", weights_only=False)
+        self.gmm0 = torch.load(self.expr_dir + "/" + "GMM0.pt", weights_only=False)
+        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt", weights_only=False)
         
         # 遍历每个测试点
         for point_idx in range(len(self.test_points)):
@@ -817,7 +832,6 @@ class DS:
             # 生成时间相关特征作为标签的一部分
             label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
             label2 = [[ff] for ff in label2]
-            
             label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
             label3 = [[ff] for ff in label3]
             
@@ -860,11 +874,12 @@ class DS:
         prob1 = prob1.reshape(len(prob1), -1, 1)
         prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
         prob2 = prob2.reshape(len(prob2), -1, 1)
-        prob = np.concatenate((prob0, prob1), 2)
-        prob = np.concatenate((prob, prob2), 2)
+        prob = np.concatenate((prob0, prob1), axis=2)
+        prob = np.concatenate((prob, prob2), axis=2)
         
         # 将概率特征添加到测试数据中
         DATA = np.concatenate((DATA, prob), 2)
+        
         print("Test DATA shape, ", np.array(DATA).shape)
         print("Test Label, ", np.array(Label).shape)
         

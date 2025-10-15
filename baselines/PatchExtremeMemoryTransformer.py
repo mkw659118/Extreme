@@ -150,9 +150,6 @@ class PatchExtremeMemoryTransformer(nn.Module):
             for _ in range(self.num_layers_inter_patch)
         ])
 
-        # --------- 融合（门控加和） ----------
-        self.cross_gate_proj = nn.Linear(2 * d_model, 1)
-
         # --------- 输出头 ----------
         self.post_norm = nn.LayerNorm(d_model)
         self.proj_out = nn.Linear(d_model, 1)
@@ -172,52 +169,10 @@ class PatchExtremeMemoryTransformer(nn.Module):
             self.mem_scale = nn.Parameter(torch.tensor(1.0))
             self.gate_bias = nn.Parameter(torch.zeros(1))
 
-        # 掩码缓存
-        self._cached_intra = None
-        self._cached_inter = None
-
-    # ============= 掩码缓存器 =============
-    def get_intra_mask(self, device, dtype):
-        # 构造唯一标识：掩码依赖于 device (CPU/GPU) 和 dtype (float32/float16)
-        key = (device, dtype)
-
-        # 从缓存里取出已有的 intra_patch 掩码
-        m = self._cached_intra
-
-        # 如果缓存为空，或者缓存的设备/精度不匹配，就重新生成
-        if m is None or m['key'] != key:
-            # 生成长度为 patch_len 的因果窗口掩码
-            mask = generate_causal_window_mask(self.patch_len, self.win_size, device, dtype)
-            # 把新的掩码和它的 key 缓存下来
-            self._cached_intra = {'key': key, 'mask': mask}
-
-        # 返回缓存里的掩码（如果已有且匹配就直接复用）
-        return self._cached_intra['mask']
-
-
-    def get_inter_mask(self, device, dtype):
-        # 构造唯一标识：掩码依赖于 device 和 dtype
-        key = (device, dtype)
-
-        # 从缓存里取出已有的 inter_patch 掩码
-        m = self._cached_inter
-
-        # 如果缓存为空，或者缓存的设备/精度不匹配，就重新生成
-        if m is None or m['key'] != key:
-            # 生成长度为 num_patches 的因果窗口掩码
-            mask = generate_causal_window_mask(self.num_patches, self.win_size, device, dtype)
-            # 把新的掩码和它的 key 缓存下来
-            self._cached_inter = {'key': key, 'mask': mask}
-
-        # 返回缓存里的掩码
-        return self._cached_inter['mask']
-
-
+    
     def forward(self, x, x_mark=None, sample_ids=None):
         
         B, _, _ = x.shape
-        print(x.shape)
-
         x_combined = torch.cat([x, x_mark], dim=-1)  # [B, L, C + C_mark]，C_mark是x_mark的特征数
 
         # ---------- RevIN ----------
@@ -236,16 +191,19 @@ class PatchExtremeMemoryTransformer(nn.Module):
         x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
         x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
 
-        # seasonal = self.dft(x_emb)
-        trend = self.trend(x_emb)
-        residual = x_emb - trend # 将残差结果作为周期性特征
-
+        
         # ---------- Patch Division ----------
-        patches = rearrange(residual, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
+        patches = rearrange(x_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
 
-        # ---------- Mask（缓存） ----------
-        intra_patch_mask = self.get_intra_mask(patches.device, patches.dtype)  # [pl, pl]
-        inter_patch_mask = self.get_inter_mask(patches.device, patches.dtype)  # [P, P]
+        # intra: [patch_len, patch_len]
+        intra_patch_mask = generate_causal_window_mask(
+            self.patch_len, self.win_size, patches.device, patches.dtype
+        )
+
+        # inter: [num_patches, num_patches]
+        inter_patch_mask = generate_causal_window_mask(
+            self.num_patches, self.win_size, patches.device, patches.dtype
+        )
 
         # =====================================================
         # 分支 A：Intra-branch
@@ -309,7 +267,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         else:
             final_with_memory = final  # 如果没有记忆库，直接用 final
 
-        final_with_memory = final_with_memory + trend
+        final_with_memory = final_with_memory
         # ---------- 输出 ----------
         y = self.proj_out(final_with_memory)  # [B, total_len, 1]
         y = y[:, -self.pred_len:, :]  # [B, pred_len, 1]

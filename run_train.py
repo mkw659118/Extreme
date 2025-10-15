@@ -42,7 +42,6 @@ def prepare_data():
     )
     trainX.columns = ["datetime", "value"]
     trainX.sort_values("datetime", inplace=True)
-
     return trainX
 
 def RunExperiments(log, config):
@@ -54,6 +53,7 @@ def RunExperiments(log, config):
         trainX = prepare_data()
         datamodule = DS(config, trainX)
         print("[debug] datamodule 获取成功")
+        
         model = Model(config)
         log.plotter.reset_round()
         results = RunOnce(config, runId, model, datamodule, log)

@@ -33,11 +33,9 @@ class TimeSeriesDataset(Dataset):
         )
     
     def custom_collate_fn(self, batch):
-        
         x, x_mark, y, ids = zip(*batch)
         # ids 是 int64，default_collate 会把它们拼成 LongTensor
         ids = [np.int64(i) for i in ids]
-
         return (
             default_collate(x),
             default_collate(x_mark),

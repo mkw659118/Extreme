@@ -36,16 +36,20 @@ def r_log_std_normalization(sensor_data_val):
             data2[i] = data1[i] - data[i]
         else:
             data2[i] = (data1[i] + 0.00001) - (data[i] + 0.00001)
+            
     data = data2
     #     norm
     c = np.array([1] + data)
     #     c = data
+    
     mean = np.nanmean(c)
     print("mean is: ", mean)
     std = np.nanstd(c)
+    
     print("std is ", std)
     c = (c - mean) / std
     mini = 0
+    
     return c, mean, std, mini
 
 

@@ -25,17 +25,37 @@ class BasicModel(torch.nn.Module):
         self.scaler = torch.amp.GradScaler(config.device)  # ✅ 初始化 GradScaler
         self.current_epoch = 0  # 从0开始计数，第1个epoch训练时会更新为1
         self.print_freq = 10
+        self.debug_norm_check = True
     
     def forward(self, *x, **kwargs):
         y = self.model(*x, **kwargs)
         return y
 
+    # def setup_optimizer(self, config):
+    #     self.to(config.device)
+    #     self.loss_function = get_loss_function(config).to(config.device)
+    #     self.optimizer = get_optimizer(self.parameters(), lr=config.lr, decay=config.decay, config=config)
+    #     self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min' if config.classification else 'max', factor=0.5,
+    #                                                                 patience=config.patience // 1.5, threshold=0.0)
+
     def setup_optimizer(self, config):
         self.to(config.device)
         self.loss_function = get_loss_function(config).to(config.device)
         self.optimizer = get_optimizer(self.parameters(), lr=config.lr, decay=config.decay, config=config)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min' if config.classification else 'max', factor=0.5,
-                                                                    patience=config.patience // 1.5, threshold=0.0)
+
+        # 回归任务(非分类)——验证误差越小越好，应使用 'min'
+        is_regression = not getattr(config, 'classification', False)
+        patience_int = max(1, int(getattr(config, 'patience', 10) // 1.5))
+
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode='min' if is_regression else 'max',
+            factor=0.5,
+            patience=patience_int,
+            threshold=1e-6,
+            verbose=True
+        )
+
 
     def train_one_epoch(self, dataModule):
         """
@@ -67,6 +87,7 @@ class BasicModel(torch.nn.Module):
                 x = x.to(self.config.device, non_blocking=True)
                 x_mark = x_mark.to(self.config.device, non_blocking=True)
                 label = label.to(self.config.device, non_blocking=True)
+                
                 sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
                 
                 # 梯度清零
@@ -82,18 +103,20 @@ class BasicModel(torch.nn.Module):
                     
                     # 反向传播（带梯度缩放）
                     scaler.scale(loss).backward()
+                    # 先反缩放，再裁剪
+                    scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     scaler.step(self.optimizer)
                     scaler.update()
                 else:
                     # 普通训练流程
-                    print("x:", x.shape)
-                    print("x_mark:", x_mark.shape)
                     pred = self.forward(x, x_mark, sample_ids=sample_ids)
                     loss = compute_loss(self, x, pred, label, self.config)
                     loss.backward()
+                    
+                    # 梯度裁剪
+                    torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     self.optimizer.step()
-                
-                
                 
                 # 累加损失（使用item()避免计算图残留）
                 total_loss += loss.item() * x.size(0)
@@ -103,7 +126,7 @@ class BasicModel(torch.nn.Module):
         except Exception as e:
             print(f"[Train Error] Epoch {self.current_epoch} failed: {str(e)}")
         
-        
+
         finally:
             # 结束训练，设置模型为评估模式
             self.eval()
@@ -148,7 +171,7 @@ class BasicModel(torch.nn.Module):
 
                 # 计算验证集损失
                 if use_valid:
-                    loss_item = compute_loss(self, inputs, pred, label, self.config)
+                    loss_item = compute_loss(self, x, pred, label, self.config)
                     # 若 compute_loss 返回标量张量，下面两行等价；保留求和语义
                     val_loss += loss_item.item() if torch.is_tensor(loss_item) else float(loss_item)
 
@@ -166,21 +189,16 @@ class BasicModel(torch.nn.Module):
         std  = float(dataModule.std)
 
         # 2) 取出 z-score 的一阶差分序列（第0列是你构造的 label0）
-        real_diff_z = reals[:, :, 0]              # (N, L)
-        pred_diff_z = preds[:, :, 0]              # (N, L) —— 若 preds 有多通道，确保第0通道对应差分z
+        pred_diff_z = preds[:, :, 0]              # (N, L) 
 
         # 3) 取出锚点 y_pre：预测窗口前一刻的原始真实值（来自 label4 的第一个时间步）
-        #    你的 label 结构: [ label0(z差分), cos, sin, label4(上一步原始), label5(未来原始) ]
         y_pre = reals[:, 0, 3]                    # (N,)
 
         # 4) z-score → 差分空间
-        real_diff = real_diff_z * std + mean      # (N, L)
         pred_diff = pred_diff_z * std + mean      # (N, L)
 
         # 5) 累加 + 锚点 = 原尺度
-        #    a3 = y_pre + cumsum(diff)
-        real_raw = y_pre.unsqueeze(1) + torch.cumsum(real_diff, dim=1)   # (N, L)
         pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)   # (N, L)
 
         # 6) 用原尺度做评估
-        return ErrorMetrics(real_raw, pred_raw, self.config)
+        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config)
