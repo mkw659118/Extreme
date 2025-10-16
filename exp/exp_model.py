@@ -12,7 +12,7 @@ from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 from baselines.Transformer2 import Transformer2
-from baselines.PatchExtremeMemoryTransformer import PatchExtremeMemoryTransformer
+from modules.PatchExtremeMemoryTransformer import ThreeExpertPatchTransformer
 from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
@@ -37,7 +37,7 @@ class Model(BasicModel):
             self.model = TimeSeriesModel(self.input_size, config)
 
         elif config.model == 'patch_extreme_memory_transformer': 
-            self.model = PatchExtremeMemoryTransformer(
+            self.model = ThreeExpertPatchTransformer(
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
                 patch_len=config.patch_len,

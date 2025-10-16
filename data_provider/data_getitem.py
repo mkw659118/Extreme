@@ -19,8 +19,8 @@ class TimeSeriesDataset(Dataset):
        
     def __getitem__(self, idx): 
         x = self.x[idx]
-        x_val = x[:, 0:1]
-        x_mark = x[:, 1:]
+        x_val = x[:, 0:2]
+        x_mark = x[:, 2:]
         y = self.y[idx]
         # 样本级记忆库所需的稳定ID
         sample_id = np.int64(self.id_offset + idx)
