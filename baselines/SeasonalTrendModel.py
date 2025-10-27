@@ -43,9 +43,11 @@ class SeasonalTrendModel(nn.Module):
         super(SeasonalTrendModel, self).__init__()
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
-        self.kernel_size = configs.kernel_size
+        # self.kernel_size = configs.kernel_size
+        self.kernel_size = 25
         self.decompsition = series_decomp(self.kernel_size)
-        self.individual = configs.individual
+        # self.individual = configs.individual
+        self.individual = True
         self.channels = configs.input_size
         self.match_mode = configs.match_mode
         self.x_linear = nn.Linear(self.seq_len, self.pred_len)
@@ -69,7 +71,7 @@ class SeasonalTrendModel(nn.Module):
             # self.Linear_Seasonal.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
             # self.Linear_Trend.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
 
-    def forward(self, x, x_mark=None):
+    def forward(self, x, x_mark=None, sample_ids=None):
         # x: [Batch, Input length, Channel]
         seasonal_init, trend_init = self.decompsition(x)
         seasonal_init, trend_init = seasonal_init.permute(0, 2, 1), trend_init.permute(0, 2, 1)

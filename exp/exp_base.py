@@ -56,6 +56,24 @@ class BasicModel(torch.nn.Module):
             verbose=True
         )
 
+    def _restore_to_raw(self, pred, label, mean, std):
+        """
+        pred:  [B, L, C_pred]，第0通道=差分(z-score)
+        label: [B, L, C_lab]， label[:,0,3]=锚点(i-1 的原值), label[:,:,-1]=原值真值
+        mean/std: 训练集“差分”的统计量
+        """
+        # 转成与 pred 同 device / dtype，避免 AMP 下类型不匹配
+        mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
+        std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
+
+        pred_diff_z = pred[:, :, 0]                 # 差分(z-score)
+        pred_diff   = pred_diff_z * std_t + mean_t  # 差分(原尺度)
+        y_pre       = label[:, 0, 3]                # 锚点(i-1 原值), [B]
+        pred_raw    = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)  # [B, L]
+        real_raw    = label[:, :, -1]               # 真值原尺度, [B, L]
+        return pred_raw, real_raw
+
+
 
     def train_one_epoch(self, dataModule):
         """
@@ -111,7 +129,12 @@ class BasicModel(torch.nn.Module):
                 else:
                     # 普通训练流程
                     pred = self.forward(x, x_mark, sample_ids=sample_ids)
-                    loss = compute_loss(self, x, pred, label, self.config)
+                    # loss = compute_loss(self, x, pred, label, self.config)
+                    # === 新增：原尺度还原 + 原尺度 loss ===
+                    pred_raw, real_raw = self._restore_to_raw(
+                        pred, label, dataModule.mean, dataModule.std
+                    )
+                    loss = compute_loss(self, x, pred_raw, real_raw, self.config)      # 原尺度损失
                     loss.backward()
                     
                     # 梯度裁剪
@@ -171,7 +194,10 @@ class BasicModel(torch.nn.Module):
 
                 # 计算验证集损失
                 if use_valid:
-                    loss_item = compute_loss(self, x, pred, label, self.config)
+                    pred_raw, real_raw = self._restore_to_raw(
+                        pred, label, dataModule.mean, dataModule.std
+                    )
+                    loss_item = compute_loss(self, x, pred_raw, real_raw, self.config)      # 原尺度损失
                     # 若 compute_loss 返回标量张量，下面两行等价；保留求和语义
                     val_loss += loss_item.item() if torch.is_tensor(loss_item) else float(loss_item)
 
@@ -181,24 +207,32 @@ class BasicModel(torch.nn.Module):
 
         
         reals = torch.cat(reals, dim=0)   
-        preds = torch.cat(preds, dim=0)   
+        preds = torch.cat(preds, dim=0)
 
-        # === 反归一化到原尺度 ===
-        # 1) 从 DataModule 拿到训练阶段的 mean/std
-        mean = float(dataModule.mean)
-        std  = float(dataModule.std)
+        
+           
 
-        # 2) 取出 z-score 的一阶差分序列（第0列是你构造的 label0）
-        pred_diff_z = preds[:, :, 0]              # (N, L) 
+        # # === 反归一化到原尺度 ===
+        # # 1) 从 DataModule 拿到训练阶段的 mean/std
+        # mean = float(dataModule.mean)
+        # std  = float(dataModule.std)
+        
+        # # 2) 取出 z-score 的一阶差分序列（第0列是你构造的 label0）
+        # pred_diff_z = preds[:, :, 0]              # (N, L) 
 
-        # 3) 取出锚点 y_pre：预测窗口前一刻的原始真实值（来自 label4 的第一个时间步）
-        y_pre = reals[:, 0, 3]                    # (N,)
+        # # 3) 取出锚点 y_pre：预测窗口前一刻的原始真实值（来自 label4 的第一个时间步）
+        # y_pre = reals[:, 0, 3]                    # (N,)
 
-        # 4) z-score → 差分空间
-        pred_diff = pred_diff_z * std + mean      # (N, L)
+        # # 4) z-score → 差分空间
+        # pred_diff = pred_diff_z * std + mean      # (N, L)
 
-        # 5) 累加 + 锚点 = 原尺度
-        pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)   # (N, L)
+        # # 5) 累加 + 锚点 = 原尺度
+        # pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)   # (N, L)
+
+        pred_raw, real_raw = self._restore_to_raw(
+                        preds, reals, dataModule.mean, dataModule.std
+        )
+
 
         # 6) 用原尺度做评估
         return ErrorMetrics(reals[:, :, -1], pred_raw, self.config)

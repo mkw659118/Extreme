@@ -28,6 +28,9 @@ class DS:
         self.mean = 0          # 数据均值
         self.std = 0           # 数据标准差
         self.mini = 0          # 数据最小值
+        self.train_mean = 0          # 数据均值
+        self.train_std = 0           # 数据标准差
+        self.train_mini = 0          # 数据最小值
         self.tag = []          # 时间序列标签
         self.sensor_data = []  # 传感器原始数据
         self.diff_data = []    # 差分后数据
@@ -43,7 +46,8 @@ class DS:
         self.test_end_time = self.config.test_end      # 测试结束时间
         self.gm3 = GaussianMixture(n_components=3)  # 三成分高斯混合模型，用于异常检测
 
-        self.oversampling = int(config.oversampling)  # 过采样率
+        # self.oversampling = int(config.oversampling)  # 过采样率
+        self.oversampling = 0  # 过采样率
         self.iterval = config.os_v     # 过采样间隔
 
         self.seq_len = self.config.seq_len      # 输入序列长度(天数)
@@ -179,7 +183,9 @@ class DS:
         
         # 
         self.diff_data = diff_order_1(self.data)  # 计算一阶差分
-        
+        print("看看使用了全体数据的均值还是训练数据")
+        print(len(self.data))
+        print("结束》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》")
         # 对数据进行反向对数标准差归一化，并保存归一化参数
         self.sensor_data_norm, self.mean, self.std, self.mini = r_log_std_normalization(self.data)
         self.sensor_data_norm1 = [[ff] for ff in self.sensor_data_norm]
@@ -647,7 +653,8 @@ class DS:
         print("Train Label, ", np.array(Label).shape)
         print("训练集数据的选取长度是： ", len(DATA))
         print("训练集标签的选取长度是： ", len(self.Label))
-    
+
+
 
         # 创建数据集和数据加载器
         dataset1 = TimeSeriesDataset(DATA, self.Label, self.config )

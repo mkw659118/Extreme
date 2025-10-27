@@ -12,7 +12,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     bs: int = 256
     d_model: int = 256
     epochs: int = 200
-    patience: int = 40
+    patience: int = 200
     verbose: int = 1
     num_layers: int = 3
     n_heads: int = 4

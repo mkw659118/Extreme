@@ -123,7 +123,8 @@ class PatchExtremeMemoryTransformer(nn.Module):
         self.kernel_size = 25
 
         # --------- Embedding & 预投影到 total_len ----------
-        self.embedding = DataEmbedding(c_in=2, d_model=d_model, dropout=0.1)
+        # self.embedding = DataEmbedding(c_in=2, d_model=d_model, dropout=0.1)
+        self.embedding = DataEmbedding(c_in=8, d_model=d_model, dropout=0.5)
         self.pos_embedding = PositionalEmbedding(self.pred_len)
         self.predict_linear = nn.Linear(seq_len, self.total_len)  # [B,d,seq] -> [B,d,total]
         self.topk_to_total_linear = nn.Linear(mem_topk, self.total_len)
@@ -162,7 +163,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # =====================================================
         self.intra_patch_blocks = nn.ModuleList([
             nn.ModuleList([
-                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.1)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
                 for _ in range(self.num_layers_intra_patch)
             ])
             for _ in range(self.num_patches)
@@ -172,7 +173,7 @@ class PatchExtremeMemoryTransformer(nn.Module):
         # 分支 B：Inter-branch（patch 间）
         # =====================================================
         self.inter_patch_blocks = nn.ModuleList([
-            TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.1)
+            TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
             for _ in range(self.num_layers_inter_patch)
         ])
 
@@ -208,53 +209,53 @@ class PatchExtremeMemoryTransformer(nn.Module):
             x = x / std
             stats = (mean, std)
         
-        # 处理GMM的权重生成
-        weight0 = x_mark[:, :, 5:8] # 序列级权重
-        weight1 = x_mark[:, :, 2:5] # 点级权重
-        ww = torch.add(weight0, weight1 * self.seq_w) # 融合得到3通道权重特征
-        ww = ww[:, -1 * self.pred_len:, :] # 与输出的时间步对齐，方便加权融合
-        ww_emb = self.pos_embedding(ww) # 对GMM权重做embedding
-        ww_emb = ww_emb.repeat(weight0.size(0), 1, 1)
+        # # 处理GMM的权重生成
+        # weight0 = x_mark[:, :, 5:8] # 序列级权重
+        # weight1 = x_mark[:, :, 2:5] # 点级权重
+        # ww = torch.add(weight0, weight1 * self.seq_w) # 融合得到3通道权重特征
+        # ww = ww[:, -1 * self.pred_len:, :] # 与输出的时间步对齐，方便加权融合
+        # ww_emb = self.pos_embedding(ww) # 对GMM权重做embedding
+        # ww_emb = ww_emb.repeat(weight0.size(0), 1, 1)
         
-        weight0 = ww[:, :, 0:1]                # [B, L, 1]
-        weight0 = nn.Tanh(self.L_out0(weight0))       # [B, L, atten_dim/2] 升维
-        weight0 = torch.cat((weight0, ww_emb), dim=-1) # [B, L, atten_dim] 拼接位置编码
+        # weight0 = ww[:, :, 0:1]                # [B, L, 1]
+        # weight0 = nn.Tanh(self.L_out0(weight0))       # [B, L, atten_dim/2] 升维
+        # weight0 = torch.cat((weight0, ww_emb), dim=-1) # [B, L, atten_dim] 拼接位置编码
         
-        # 自注意力（层 1）
-        ww00, _ = self.attn0(ww0, ww0, ww0)
-        # 残差 + “时间维 BN”（非常见但可行）
-        ww0 = self.bn(ww0 + ww00)
-        # 自注意力（层 2）
-        ww00, _ = self.attn3(ww0, ww0, ww0)
-        ww0 = self.bn(ww0 + ww00)
-        # 降维为标量 logit
-        ww0 = self.L_out10(nn.ReLU(ww0))      # [B, L, 1]
+        # # 自注意力（层 1）
+        # ww00, _ = self.attn0(ww0, ww0, ww0)
+        # # 残差 + “时间维 BN”（非常见但可行）
+        # ww0 = self.bn(ww0 + ww00)
+        # # 自注意力（层 2）
+        # ww00, _ = self.attn3(ww0, ww0, ww0)
+        # ww0 = self.bn(ww0 + ww00)
+        # # 降维为标量 logit
+        # ww0 = self.L_out10(nn.ReLU(ww0))      # [B, L, 1]
 
 
-        # 分支 1：同理处理第二个通道
-        ww1 = ww[:, :, 1:2]
-        ww1 = nn.Tanh(self.L_out1(ww1))
-        ww1 = torch.cat((ww1, ww_emb), dim=2)
-        ww11, _ = self.attn1(ww1, ww1, ww1)
-        ww1 = self.bn(ww1 + ww11)
-        ww11, _ = self.attn4(ww1, ww1, ww1)
-        ww1 = self.bn(ww1 + ww11)
-        ww1 = self.L_out11(nn.ReLU(ww1))      # [B, L, 1]
+        # # 分支 1：同理处理第二个通道
+        # ww1 = ww[:, :, 1:2]
+        # ww1 = nn.Tanh(self.L_out1(ww1))
+        # ww1 = torch.cat((ww1, ww_emb), dim=2)
+        # ww11, _ = self.attn1(ww1, ww1, ww1)
+        # ww1 = self.bn(ww1 + ww11)
+        # ww11, _ = self.attn4(ww1, ww1, ww1)
+        # ww1 = self.bn(ww1 + ww11)
+        # ww1 = self.L_out11(nn.ReLU(ww1))      # [B, L, 1]
 
-        # 分支 2：同理处理第三个通道
-        ww2 = ww[:, :, 2:3]
-        ww2 = self.L_out2(ww2)
-        ww2 = torch.cat((ww2, ww_emb), dim=2)
-        ww22, _ = self.attn2(ww2, ww2, ww2)
-        ww2 = self.bn(ww2 + ww22)
-        ww22, _ = self.attn5(ww2, ww2, ww2)
-        ww2 = self.bn(ww2 + ww22)
-        ww2 = self.L_out12(nn.ReLU(ww2))      # [B, L, 1]
+        # # 分支 2：同理处理第三个通道
+        # ww2 = ww[:, :, 2:3]
+        # ww2 = self.L_out2(ww2)
+        # ww2 = torch.cat((ww2, ww_emb), dim=2)
+        # ww22, _ = self.attn2(ww2, ww2, ww2)
+        # ww2 = self.bn(ww2 + ww22)
+        # ww22, _ = self.attn5(ww2, ww2, ww2)
+        # ww2 = self.bn(ww2 + ww22)
+        # ww2 = self.L_out12(nn.ReLU(ww2))      # [B, L, 1]
 
-         # 合并三个分支的标量 logit：[B, L, 3]，随后做 softmax 得到 3 专家的概率权重
-        ww = torch.cat((ww0, ww1), dim=-1)  # [B, L, 2]
-        ww = torch.cat((ww, ww2), dim=-1)   # [B, L, 3]
-        ww = nn.Softmax(ww, dim=-1)                         # softmax 按 dim=2，保证同一时间步三权重和为 1
+        #  # 合并三个分支的标量 logit：[B, L, 3]，随后做 softmax 得到 3 专家的概率权重
+        # ww = torch.cat((ww0, ww1), dim=-1)  # [B, L, 2]
+        # ww = torch.cat((ww, ww2), dim=-1)   # [B, L, 3]
+        # ww = nn.Softmax(ww, dim=-1)                         # softmax 按 dim=2，保证同一时间步三权重和为 1
 
         # ---------- Embedding & 预投影 ----------
         x_emb = self.embedding(x)             # [B, L, d]
@@ -378,7 +379,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         mem_topk: int = 16,
         mem_tau: float = 0.5,
         mem_momentum: float = 0.2,
-        c_in: int = 2,                   # 输入通道数（你的 DataEmbedding 缺省是 2）
+        c_in: int = 8,                   # 输入通道数（你的 DataEmbedding 缺省是 2）
     ):
         super().__init__()
         self.config = config
@@ -400,7 +401,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---------- 序列嵌入与长度映射 ----------
         # 说明：这里依赖你工程里的 DataEmbedding（形状: [B,L,c_in] -> [B,L,d_model]）
         from layers.embedding import DataEmbedding  # 若路径不同请修改
-        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.1)
+        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.5)
 
         # 把 [B, d, seq_len] 投影到 [B, d, total_len]，以便拼上 pred_len 的 token（一次性多步）
         self.predict_linear = nn.Linear(seq_len, self.total_len)
@@ -432,19 +433,24 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.ln1 = nn.LayerNorm(d_model)
         self.ln2 = nn.LayerNorm(d_model)
 
+
+        self.prefiltA = nn.Conv1d(d_model, d_model, kernel_size=51, padding=25, groups=d_model)
+        self.prefiltB = nn.Conv1d(d_model, d_model, kernel_size=11, padding=5,  groups=d_model)
+        self.prefiltC = nn.Conv1d(d_model, d_model, kernel_size=3,  padding=1,  groups=d_model)
+
         # ---------- 三套独立 Transformer 主干（A/B/C） ----------
         def _make_backbone():
             # Intra：每个 patch 一组堆叠的块
             intra = nn.ModuleList([
                 nn.ModuleList([
-                    TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.1)
+                    TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
                     for _ in range(self.num_layers_intra_patch)
                 ])
                 for _ in range(self.num_patches)
             ])
             # Inter：跨 patch 的块
             inter = nn.ModuleList([
-                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.1)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
                 for _ in range(self.num_layers_inter_patch)
             ])
             return intra, inter
@@ -499,18 +505,18 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.headC = nn.Linear(d_model, 1)
 
     # ====== GMM 权重分支：把 x_mark -> ww ∈ [B, pred_len, 3] ======
-    def _build_ww(self, x_mark):
+    def _build_ww(self, x):
         """
         取 x_mark 的 [5:8] 作为序列级、[2:5] 作为点级，线性融合 -> 三通道；经过三路注意力 + MLP 降到标量 logit；
         softmax 得到逐步三专家权重。
         """
-        B = x_mark.size(0)
+        B = x.size(0)
         relu = nn.ReLU()
         tanh = nn.Tanh()
 
         # 融合得到三通道权重特征（与输出步数对齐，仅取最后 pred_len 步）
-        weight_seq = x_mark[:, :, 5:8]  # [B, total_len, 3]
-        weight_pt  = x_mark[:, :, 2:5]  # [B, total_len, 3]
+        weight_seq = x[:, :, 5:8]  # [B, total_len, 3]
+        weight_pt  = x[:, :, 2:5]  # [B, total_len, 3]
         ww = weight_seq + self.seq_w * weight_pt
         ww = ww[:, -self.pred_len:, :]  # [B, L, 3]  L = pred_len
 
@@ -617,17 +623,17 @@ class ThreeExpertPatchTransformer(nn.Module):
         """
         B = x.size(0)
 
-        # ---------- RevIN ----------
-        if self.revin:
-            mean = x.mean(dim=1, keepdim=True).detach()  # [B,1,c]
-            x_norm = x - mean
-            std = torch.sqrt(torch.var(x_norm, dim=1, keepdim=True, unbiased=False) + 1e-5)
-            x = x_norm / std
-            stats = (mean, std)
+        # # ---------- RevIN ----------
+        # if self.revin:
+        #     mean = x.mean(dim=1, keepdim=True).detach()  # [B,1,c]
+        #     x_norm = x - mean
+        #     std = torch.sqrt(torch.var(x_norm, dim=1, keepdim=True, unbiased=False) + 1e-5)
+        #     x = x_norm / std
+        #     stats = (mean, std)
 
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         assert x_mark is not None, "x_mark (包含 GMM 辅助特征) 不能为空"
-        ww = self._build_ww(x_mark)  # [B, L, 3], L=pred_len
+        ww = self._build_ww(x)  # [B, L, 3], L=pred_len
 
         # ---------- 序列嵌入 & 映射到 total_len ----------
         x_emb = self.embedding(x)                      # [B, seq_len, d]
@@ -644,10 +650,16 @@ class ThreeExpertPatchTransformer(nn.Module):
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
 
+        x_ch = rearrange(x_emb, 'b l d -> b d l')
+        xA = rearrange(self.prefiltA(x_ch), 'b d l -> b l d')
+        xB = rearrange(self.prefiltB(x_ch), 'b d l -> b l d')
+        xC = rearrange(self.prefiltC(x_ch), 'b d l -> b l d')
+        
+
         # ---------- 三个专家主干 ----------
-        finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
-        finalB = self._forward_backbone(x_emb, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
-        finalC = self._forward_backbone(x_emb, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+        finalA = self._forward_backbone(xA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
+        finalB = self._forward_backbone(xB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
+        finalC = self._forward_backbone(xC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
 
         # ---------- 记忆库（可选） ----------
         if self.use_memory:
@@ -681,10 +693,10 @@ class ThreeExpertPatchTransformer(nn.Module):
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]  # [B, L, 1] x 3
         y = w0 * yA + w1 * yB + w2 * yC                       # [B, L, 1]
 
-        # ---------- RevIN 逆变换 ----------
-        if self.revin:
-            mean, std = stats              # mean/std: [B,1,c]
-            # 若你只预测目标通道（1个），这里默认用第一个通道的统计量；可按需改为目标通道的统计
-            y = y * std[:, :1, :1] + mean[:, :1, :1]
+        # # ---------- RevIN 逆变换 ----------
+        # if self.revin:
+        #     mean, std = stats              # mean/std: [B,1,c]
+        #     # 若你只预测目标通道（1个），这里默认用第一个通道的统计量；可按需改为目标通道的统计
+        #     y = y * std[:, :1, :1] + mean[:, :1, :1]
 
         return y

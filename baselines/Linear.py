@@ -33,7 +33,7 @@ class Linear(torch.nn.Module):
         # 再降回原特征维度（例如 50 → 21）
         self.down_feature_linear = nn.Linear(self.d_model, self.config.input_size)
 
-    def forward(self, x, x_mark):
+    def forward(self, x, x_mark=None, sample_ids=None):
         # x: [B, L, D]
         if self.revin:
             x = self.revin_layer(x, 'norm')

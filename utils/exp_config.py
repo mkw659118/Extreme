@@ -2,8 +2,12 @@
 # Author : yuxiang Zeng
 import argparse
 import importlib.util
+import os
 import sys
 from dataclasses import fields
+import glob
+import shutil
+
 
 
 def get_config(Config='MainConfig'):
@@ -16,6 +20,11 @@ def get_config(Config='MainConfig'):
     args.config_path = f'configs/{args.exp_name}.py'
     args = load_config(args.config_path, args.exp_name)
     args = update_config_from_args(args, unknown_args)
+    
+    
+    # 自动清理无效日志和空的 __pycache__ 文件夹
+    clear_useless_logs()
+    remove_pycache()
     return args
 
 
@@ -46,3 +55,28 @@ def update_config_from_args(config, args):
                 value = field_type(value)
             setattr(config, key, value)
     return config
+
+
+
+
+# 清理无效日志文件
+def clear_useless_logs():
+    for dirpath, _, _ in os.walk('./results/'):
+        if 'log' in dirpath:
+            for log_file in glob.glob(os.path.join(dirpath, '*.md')):
+                try:
+                    with open(log_file, 'r', encoding='utf-8') as f:
+                        if 'Round=1' not in f.read():
+                            os.remove(log_file)
+                except Exception as e:
+                    print(f"Error processing file {log_file}: {e}")
+
+# 删除空pycache文件夹
+def remove_pycache(root_dir="."):
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        if "__pycache__" in dirnames:
+            pycache_path = os.path.join(dirpath, "__pycache__")
+            shutil.rmtree(pycache_path)
+    print("✅ All __pycache__ folders removed")
+    return True
+

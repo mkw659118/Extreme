@@ -18,20 +18,34 @@ class TimeSeriesDataset(Dataset):
         return len(self.x)
        
     def __getitem__(self, idx): 
-        x = self.x[idx]
-        x_val = x[:, 0:2]
-        x_mark = x[:, 2:]
-        y = self.y[idx]
-        # 样本级记忆库所需的稳定ID
-        sample_id = np.int64(self.id_offset + idx)
+        if self.config.model == 'patch_extreme_memory_transformer':
+            x = self.x[idx]
+            x_mark = x[:, 2:]
+            y = self.y[idx]
+            # 样本级记忆库所需的稳定ID
+            sample_id = np.int64(self.id_offset + idx)
 
-        return (
-            x_val.astype(np.float32),
-            x_mark.astype(np.float32),
-            y.astype(np.float32),
-            sample_id,
-        )
-    
+            return (
+                x.astype(np.float32),
+                x_mark.astype(np.float32),
+                y.astype(np.float32),
+                sample_id,
+            )
+        else:
+            x = self.x[idx]
+            x_val = x[:, 0:2]
+            x_mark = x[:, 2:]
+            y = self.y[idx]
+            # 样本级记忆库所需的稳定ID
+            sample_id = np.int64(self.id_offset + idx)
+
+            return (
+                x_val.astype(np.float32),
+                x_mark.astype(np.float32),
+                y.astype(np.float32),
+                sample_id,
+            )
+        
     def custom_collate_fn(self, batch):
         x, x_mark, y, ids = zip(*batch)
         # ids 是 int64，default_collate 会把它们拼成 LongTensor

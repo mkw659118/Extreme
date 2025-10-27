@@ -13,6 +13,7 @@ from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 from baselines.Transformer2 import Transformer2
 from modules.PatchExtremeMemoryTransformer import ThreeExpertPatchTransformer
+from modules.PatchExtremeMemoryTransformer import PatchExtremeMemoryTransformer
 from baselines.TransformerLibrary import TransformerLibrary
 from baselines.TimeLLM.TimeLLM import timeLLM
 from baselines.TimesNet.TimesNet import TimesNet
@@ -33,10 +34,7 @@ class Model(BasicModel):
         self.input_size = config.input_size
         self.hidden_size = config.rank
 
-        if config.model == 'ours':
-            self.model = TimeSeriesModel(self.input_size, config)
-
-        elif config.model == 'patch_extreme_memory_transformer': 
+        if config.model == 'patch_extreme_memory_transformer': 
             self.model = ThreeExpertPatchTransformer(
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
@@ -50,6 +48,7 @@ class Model(BasicModel):
                 num_layers_inter_patch=config.num_layers_inter_patch,
                 config=config
             )
+        
 
         # 2025年9月8日21:34:04 测试水文数据集效果
         elif config.model == 'mlp_test':
