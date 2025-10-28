@@ -98,12 +98,7 @@ def run(config):
 
 
 if __name__ == '__main__':
-    # Experiment Settings, logger, plotter
-    from utils.exp_config import get_config
-    # config = get_config('TransformerConfig')
-    # config = get_config('SeasonalTrendModelConfig')
-    # config = get_config('MLPTestConfig')
-    config = get_config('PatchExtremeMemoryTransformerConfig')
-    #config = get_config('MCANNConfig')
     
+    from utils.exp_config import get_config
+    config = get_config('PatchExtremeMemoryTransformerConfig')
     run(config)

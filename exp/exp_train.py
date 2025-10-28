@@ -65,6 +65,10 @@ def RunOnce(config, runId, model: Model, datamodule, log):
             # 验证集上评估当前模型误差
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')
 
+            # if isinstance(model.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            #     model.scheduler.step(valid_error)
+            # print(f"Current LR: {model.optimizer.param_groups[0]['lr']:.6g}")
+
             # === 调度器按监控指标步进 ===
             metric_name = config.monitor_metric  # 例如 'RMSE'、'MAE'、'MSE'、'Acc_10'
             # ErrorMetrics 通常是字典；若是对象也尝试 getattr

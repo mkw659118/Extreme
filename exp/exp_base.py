@@ -2,19 +2,12 @@
 # Author : Yuxiang Zeng
 # 注意，这里的代码已经几乎完善，非必要不要改动（2025年3月27日23:33:32）
 import torch
-import os
 import time
 import contextlib
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from datetime import datetime
-
-
 from exp.exp_loss import compute_loss
 from exp.exp_metrics import ErrorMetrics
 from utils.model_trainer import get_loss_function, get_optimizer
-from utils.utils2 import r_log_std_normalization_1
+
 
 class BasicModel(torch.nn.Module):
     def __init__(self, config):
@@ -24,19 +17,10 @@ class BasicModel(torch.nn.Module):
         self.use_memory = config.use_memory
         self.scaler = torch.amp.GradScaler(config.device)  # ✅ 初始化 GradScaler
         self.current_epoch = 0  # 从0开始计数，第1个epoch训练时会更新为1
-        self.print_freq = 10
-        self.debug_norm_check = True
-    
+        
     def forward(self, *x, **kwargs):
         y = self.model(*x, **kwargs)
         return y
-
-    # def setup_optimizer(self, config):
-    #     self.to(config.device)
-    #     self.loss_function = get_loss_function(config).to(config.device)
-    #     self.optimizer = get_optimizer(self.parameters(), lr=config.lr, decay=config.decay, config=config)
-    #     self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min' if config.classification else 'max', factor=0.5,
-    #                                                                 patience=config.patience // 1.5, threshold=0.0)
 
     def setup_optimizer(self, config):
         self.to(config.device)
@@ -52,7 +36,7 @@ class BasicModel(torch.nn.Module):
             mode='min' if is_regression else 'max',
             factor=0.5,
             patience=patience_int,
-            threshold=1e-6,
+            threshold=1e-3,
             verbose=True
         )
 
@@ -74,13 +58,8 @@ class BasicModel(torch.nn.Module):
         return pred_raw, real_raw
 
 
-
     def train_one_epoch(self, dataModule):
-        """
-        执行一个训练 epoch，包含混合精度训练支持、梯度更新和损失计算
-        :param dataModule: 数据模块（DS类实例），包含训练数据加载器
-        :return: 平均损失和训练耗时
-        """
+        
         self.train()  # 设置模型为训练模式
         torch.set_grad_enabled(True)
         t1 = time.time()
@@ -131,9 +110,7 @@ class BasicModel(torch.nn.Module):
                     pred = self.forward(x, x_mark, sample_ids=sample_ids)
                     # loss = compute_loss(self, x, pred, label, self.config)
                     # === 新增：原尺度还原 + 原尺度 loss ===
-                    pred_raw, real_raw = self._restore_to_raw(
-                        pred, label, dataModule.mean, dataModule.std
-                    )
+                    pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
                     loss = compute_loss(self, x, pred_raw, real_raw, self.config)      # 原尺度损失
                     loss.backward()
                     
@@ -145,11 +122,9 @@ class BasicModel(torch.nn.Module):
                 total_loss += loss.item() * x.size(0)
                 sample_count += x.size(0)
                 
-    
         except Exception as e:
             print(f"[Train Error] Epoch {self.current_epoch} failed: {str(e)}")
         
-
         finally:
             # 结束训练，设置模型为评估模式
             self.eval()
@@ -205,34 +180,9 @@ class BasicModel(torch.nn.Module):
                 reals.append(label)
                 preds.append(pred)
 
-        
         reals = torch.cat(reals, dim=0)   
         preds = torch.cat(preds, dim=0)
+    
+        pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
 
-        
-           
-
-        # # === 反归一化到原尺度 ===
-        # # 1) 从 DataModule 拿到训练阶段的 mean/std
-        # mean = float(dataModule.mean)
-        # std  = float(dataModule.std)
-        
-        # # 2) 取出 z-score 的一阶差分序列（第0列是你构造的 label0）
-        # pred_diff_z = preds[:, :, 0]              # (N, L) 
-
-        # # 3) 取出锚点 y_pre：预测窗口前一刻的原始真实值（来自 label4 的第一个时间步）
-        # y_pre = reals[:, 0, 3]                    # (N,)
-
-        # # 4) z-score → 差分空间
-        # pred_diff = pred_diff_z * std + mean      # (N, L)
-
-        # # 5) 累加 + 锚点 = 原尺度
-        # pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)   # (N, L)
-
-        pred_raw, real_raw = self._restore_to_raw(
-                        preds, reals, dataModule.mean, dataModule.std
-        )
-
-
-        # 6) 用原尺度做评估
         return ErrorMetrics(reals[:, :, -1], pred_raw, self.config)
