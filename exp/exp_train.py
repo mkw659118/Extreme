@@ -65,24 +65,8 @@ def RunOnce(config, runId, model: Model, datamodule, log):
             # 验证集上评估当前模型误差
             valid_error = model.evaluate_one_epoch(datamodule, 'valid')
 
-            # if isinstance(model.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            #     model.scheduler.step(valid_error)
-            # print(f"Current LR: {model.optimizer.param_groups[0]['lr']:.6g}")
-
-            # === 调度器按监控指标步进 ===
-            metric_name = config.monitor_metric  # 例如 'RMSE'、'MAE'、'MSE'、'Acc_10'
-            # ErrorMetrics 通常是字典；若是对象也尝试 getattr
-            val_score = valid_error[metric_name] if isinstance(valid_error, dict) else getattr(valid_error, metric_name)
-            val_score = float(val_score)
-
-            # 回归误差(越小越好)：直接 step(val_score)
-            # 若你用的是精度类(越大越好，如 Acc_10)，可以：
-            #   1) 把 setup_optimizer 里的 mode 改成 'max'；或
-            #   2) 这里传 -val_score
-            if metric_name.lower() in ['rmse', 'mse', 'mae', 'mape', 'nmae', 'nrmse']:
-                model.scheduler.step(val_score)
-            else:
-                model.scheduler.step(-val_score)
+            model.scheduler.step(valid_error[config.monitor_metric])
+            print(f"Current LR: {model.optimizer.param_groups[0]['lr']:.6g}")
 
             # 将当前epoch的验证误差传递给early stopping模块进行跟踪
             monitor.track_one_epoch(epoch, model, valid_error, config.monitor_metric)
@@ -104,7 +88,7 @@ def RunOnce(config, runId, model: Model, datamodule, log):
 
         # 使用最优模型在测试集评估
         results = model.evaluate_one_epoch(datamodule, 'test')
-        # results = {f'Valid{config.monitor_metric}': abs(monitor.best_score), **results}
+       
         log.show_test_error(runId, monitor, results, sum_time)
 
         # 保存最优模型参数
@@ -113,4 +97,5 @@ def RunOnce(config, runId, model: Model, datamodule, log):
 
     # 将训练时间加入返回结果中
     results['train_time'] = sum_time
+    
     return results

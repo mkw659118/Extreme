@@ -385,12 +385,14 @@ class DS:
                     or 2 <= self.tag[i + self.seq_len] <= 3
                 )
             ):
-                # 标记验证集点和邻近点
-                self.tag[i + self.seq_len] = 2  # 标记2表示在验证集中
-
-                for k in range(near_len):
-                    self.tag[i + self.seq_len - k] = 3  # 标记3表示验证集的邻近点
-                    self.tag[i + self.seq_len + k] = 3
+                j = i + self.seq_len
+                # 先标邻居，再标中心，避免中心被覆盖
+                for k in range(1, self.seq_len + self.pred_len):  # 覆盖到左右各 seq_len+pred_len-1
+                    if j - k >= 0:
+                        self.tag[j - k] = 3
+                    if j + k < len(self.tag):
+                        self.tag[j + k] = 3
+                self.tag[j] = 2  # 最后再标中心，避免被 3 覆盖
 
                 point = self.data_time[i + self.seq_len]
                 self.val_points.append([point])
@@ -545,6 +547,14 @@ class DS:
                         and self.tag[i + self.seq_len] != 3
                         and self.tag[i + self.seq_len] != 4
                     ):
+                        # NEW: 训练窗口与验证“禁区”是否相交？
+                        Ltr = i
+                        Rtr = i + self.seq_len + self.pred_len   # 等价 i + self.lens - 1
+                        win_tags = np.array(self.tag[Ltr:Rtr])   # 若 self.tag 是 list，转成 np.array
+                        if ((win_tags == 2).any() or (win_tags == 3).any()):
+                            continue  # 命中验证中心(2)或邻域(3)，丢弃这个候选
+
+
                         # 准备训练数据和标签
                         data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
                         label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
@@ -577,6 +587,12 @@ class DS:
 
             # 非过采样数据处理
             if (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()) and (self.tag[i + self.seq_len] <= a1 or a2 < self.tag[i + self.seq_len] < 0):
+                Ltr = i
+                Rtr = i + self.seq_len + self.pred_len   # 等价 i + self.lens - 1
+                win_tags = np.array(self.tag[Ltr:Rtr])
+                if ((win_tags == 2).any() or (win_tags == 3).any()):
+                    continue
+
                 # 准备训练数据和标签（与过采样情况类似）
                 data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
                 label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])

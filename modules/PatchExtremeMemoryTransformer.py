@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from layers.embedding import DataEmbedding
+from layers.embedding import DataEmbedding
 from layers.embedding import PositionalEmbedding
 
 
@@ -109,7 +110,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         mem_topk: int = 16,
         mem_tau: float = 0.5,
         mem_momentum: float = 0.2,
-        c_in: int = 8,                   # 输入通道数（你的 DataEmbedding 缺省是 2）
+        c_in: int = 8,                   # 输入通道数
     ):
         super().__init__()
         self.config = config
@@ -130,7 +131,7 @@ class ThreeExpertPatchTransformer(nn.Module):
 
         # ---------- 序列嵌入与长度映射 ----------
         # 说明：这里依赖你工程里的 DataEmbedding（形状: [B,L,c_in] -> [B,L,d_model]）
-        from layers.embedding import DataEmbedding  # 若路径不同请修改
+        
         self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.5)
 
         # 把 [B, d, seq_len] 投影到 [B, d, total_len]，以便拼上 pred_len 的 token（一次性多步）
@@ -188,6 +189,9 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.intraA, self.interA = _make_backbone()
         self.intraB, self.interB = _make_backbone()
         self.intraC, self.interC = _make_backbone()
+
+       
+
 
         # 主干输出后规范化
         self.post_normA = nn.LayerNorm(d_model)
@@ -346,20 +350,7 @@ class ThreeExpertPatchTransformer(nn.Module):
 
     def forward(self, x, x_mark=None, sample_ids=None):
 
-        
-        """
-        x:       [B, seq_len, c_in]
-        x_mark:  [B, total_len, C_mark]  —— 注意：本模型假定 x_mark 的时间长度是 total_len（或可至少切到最后 pred_len）
-        """
         B = x.size(0)
-
-        # # ---------- RevIN ----------
-        # if self.revin:
-        #     mean = x.mean(dim=1, keepdim=True).detach()  # [B,1,c]
-        #     x_norm = x - mean
-        #     std = torch.sqrt(torch.var(x_norm, dim=1, keepdim=True, unbiased=False) + 1e-5)
-        #     x = x_norm / std
-        #     stats = (mean, std)
 
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         ww = self._build_ww(x)  # [B, L, 3], L=pred_len
@@ -379,16 +370,22 @@ class ThreeExpertPatchTransformer(nn.Module):
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
 
-        x_ch = rearrange(x_emb, 'b l d -> b d l')
-        xA = rearrange(self.prefiltA(x_ch), 'b d l -> b l d')
-        xB = rearrange(self.prefiltB(x_ch), 'b d l -> b l d')
-        xC = rearrange(self.prefiltC(x_ch), 'b d l -> b l d')
+        # x_ch = rearrange(x_emb, 'b l d -> b d l')
+        # xA = rearrange(self.prefiltA(x_ch), 'b d l -> b l d')
+        # xB = rearrange(self.prefiltB(x_ch), 'b d l -> b l d')
+        # xC = rearrange(self.prefiltC(x_ch), 'b d l -> b l d')
         
+        #  # ---------- 三个专家主干 ----------
+        # finalA = self._forward_backbone(xA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
+        # finalB = self._forward_backbone(xB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
+        # finalC = self._forward_backbone(xC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
 
         # ---------- 三个专家主干 ----------
-        finalA = self._forward_backbone(xA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
-        finalB = self._forward_backbone(xB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
-        finalC = self._forward_backbone(xC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+        finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
+        finalB = self._forward_backbone(x_emb, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
+        finalC = self._forward_backbone(x_emb, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+
+       
 
         # ---------- 记忆库（可选） ----------
         if self.use_memory:
@@ -421,11 +418,5 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---------- ww 逐步加权融合 ----------
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]  # [B, L, 1] x 3
         y = w0 * yA + w1 * yB + w2 * yC                       # [B, L, 1]
-
-        # # ---------- RevIN 逆变换 ----------
-        # if self.revin:
-        #     mean, std = stats              # mean/std: [B,1,c]
-        #     # 若你只预测目标通道（1个），这里默认用第一个通道的统计量；可按需改为目标通道的统计
-        #     y = y * std[:, :1, :1] + mean[:, :1, :1]
 
         return y

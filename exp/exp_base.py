@@ -27,19 +27,15 @@ class BasicModel(torch.nn.Module):
         self.loss_function = get_loss_function(config).to(config.device)
         self.optimizer = get_optimizer(self.parameters(), lr=config.lr, decay=config.decay, config=config)
 
-        # 回归任务(非分类)——验证误差越小越好，应使用 'min'
-        is_regression = not getattr(config, 'classification', False)
-        patience_int = max(1, int(getattr(config, 'patience', 10) // 1.5))
-
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
-            mode='min' if is_regression else 'max',
+            mode='min',
             factor=0.5,
-            patience=patience_int,
-            threshold=1e-3,
-            verbose=True
+            patience=config.patience // 5,
+            threshold=1e-3
         )
 
+    # 将差分域还原回原始域
     def _restore_to_raw(self, pred, label, mean, std):
         """
         pred:  [B, L, C_pred]，第0通道=差分(z-score)

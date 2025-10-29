@@ -11,8 +11,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     model: str = 'patch_extreme_memory_transformer'
     bs: int = 256
     d_model: int = 256
-    epochs: int = 200
-    patience: int = 200
+    epochs: int = 50
+    patience: int = 10
     verbose: int = 1
     num_layers: int = 3
     n_heads: int = 4

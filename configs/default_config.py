@@ -39,7 +39,7 @@ class DatasetInfo:
     spliter_ratio: str = '7:1:2'
     
     #     
-    reservoir_sensor: str = 'reservoir_stor_4005_sof24'
+    reservoir_sensor: str = 'reservoir_stor_4001_sof24'
     
     start_point: str = '1983-07-01 23:30:00'
     
