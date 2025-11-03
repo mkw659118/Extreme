@@ -132,10 +132,14 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---------- 序列嵌入与长度映射 ----------
         # 说明：这里依赖你工程里的 DataEmbedding（形状: [B,L,c_in] -> [B,L,d_model]）
         
-        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.5)
+        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.2)
 
         # 把 [B, d, seq_len] 投影到 [B, d, total_len]，以便拼上 pred_len 的 token（一次性多步）
         self.predict_linear = nn.Linear(seq_len, self.total_len)
+
+        # === 新增：预测 tokens（替代 predict_linear 的外推） ===
+        self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
+
 
         # ---------- GMM 权重分支（ww） ----------
         # 三个“标量→升维”的线性层：1 -> d_model//2
@@ -174,14 +178,14 @@ class ThreeExpertPatchTransformer(nn.Module):
             # Intra：每个 patch 一组堆叠的块
             intra = nn.ModuleList([
                 nn.ModuleList([
-                    TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
+                    TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
                     for _ in range(self.num_layers_intra_patch)
                 ])
                 for _ in range(self.num_patches)
             ])
             # Inter：跨 patch 的块
             inter = nn.ModuleList([
-                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.5)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
                 for _ in range(self.num_layers_inter_patch)
             ])
             return intra, inter
@@ -355,11 +359,20 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         ww = self._build_ww(x)  # [B, L, 3], L=pred_len
 
-        # ---------- 序列嵌入 & 映射到 total_len ----------
-        x_emb = self.embedding(x)                      # [B, seq_len, d]
-        x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, seq_len]
-        x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
-        x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
+        # # ---------- 序列嵌入 & 映射到 total_len ----------
+        # x_emb = self.embedding(x)                      # [B, seq_len, d]
+        # x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, seq_len]
+        # x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
+        # x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
+
+
+        # === 新增/替换：用预测 tokens 直接拼成 total_len ===
+        x_emb_hist = self.embedding(x)                                # [B, seq_len, d]
+        B = x_emb_hist.size(0)
+        pred_tok   = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d]
+        x_emb      = torch.cat([x_emb_hist, pred_tok], dim=1)         # [B, total_len, d]
+
+
 
         # ---------- 构造掩码 ----------
         

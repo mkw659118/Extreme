@@ -46,8 +46,8 @@ class DS:
         self.test_end_time = self.config.test_end      # 测试结束时间
         self.gm3 = GaussianMixture(n_components=3)  # 三成分高斯混合模型，用于异常检测
 
-        # self.oversampling = int(config.oversampling)  # 过采样率
-        self.oversampling = 0  # 过采样率
+        self.oversampling = int(config.oversampling)  # 过采样率
+        # self.oversampling = 0  # 过采样率
         self.iterval = config.os_v     # 过采样间隔
 
         self.seq_len = self.config.seq_len      # 输入序列长度(天数)
@@ -58,7 +58,7 @@ class DS:
         self.thre1 = 0                             # 阈值1
         self.thre2 = 0                             # 阈值2
         self.os_h = config.os_s                    # 过采样上限
-        self.os_l = config.os_s                    # 过采样下限
+        self.os_l = config.os_v                    # 过采样下限
         self.gmm_l = self.pred_len                 # GMM模型长度
         
         self.val_data_loader = []                  # 验证集数据加载器

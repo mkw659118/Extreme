@@ -17,13 +17,13 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     num_layers: int = 3
     n_heads: int = 4
     revin: bool = True
-    dropout: float = 0.1
+    dropout: float = 0.2
     amp: bool = True
     match_mode: str = 'abc'
     constraint: bool = False
     win_size: int = 10
     patch_len: int = 16
-    use_memory: bool = False
+    use_memory: bool = True
     num_layers_intra_patch: int = 1
     num_layers_inter_patch: int = 1
     outf: str = './output'
