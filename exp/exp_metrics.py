@@ -8,7 +8,7 @@ from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 
 
-def ErrorMetrics(realVec, estiVec, config):
+def ErrorMetrics(realVec, estiVec, config, mode):
     """ 根据任务类型选择合适的误差计算方式 """
     if isinstance(realVec, np.ndarray):
         realVec = realVec.astype(float)
@@ -19,11 +19,8 @@ def ErrorMetrics(realVec, estiVec, config):
         estiVec = estiVec.astype(float)
     elif isinstance(estiVec, t.Tensor):
         estiVec = estiVec.cpu().detach().numpy().astype(float)
-
-    if config.classification:
-        return compute_classification_metrics(realVec, estiVec, config)
-    else:
-        return compute_regression_metrics(realVec, estiVec, config)
+    
+    return compute_regression_metrics(realVec, estiVec, config, mode)
         # return compute_regression_metrics_rolling(realVec, estiVec, config, config.pred_len)
 
 def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
@@ -34,6 +31,12 @@ def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
     
     # 先进行滚动窗口处理（使用完整数据）
     ll = int(len(estiVec) / config.pred_len)
+
+    print("estiVec length:", len(estiVec))
+    print("config.pred_len:", config.pred_len)
+
+    print("ll的长度")
+    print(ll)
     esti_all = []
     real_all = []
     for i in range(ll):
@@ -46,11 +49,6 @@ def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
     # 转换为numpy数组
     esti_all = np.array(esti_all)
     real_all = np.array(real_all)
-    
-    
-    esti_all = esti_all[:rm]
-    real_all = real_all[:rm]
-   
     
     # 计算误差指标
     absError = np.abs(esti_all - real_all)
@@ -68,21 +66,19 @@ def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
     Acc = [np.mean((absError < (real_all * t)).astype(float)) for t in thresholds]
     
     all_metrics = {
-        'MAE': MAE,
-        'MSE': MSE,
-        'RMSE': RMSE,
-        'MAPE': MAPE,
-        'NMAE': NMAE,
-        'NRMSE': NRMSE,
-        'Acc_1%': Acc[0],
-        'Acc_5%': Acc[1],
-        'Acc_10%': Acc[2],
+        'MAE_8': MAE,
+        'MSE_8': MSE,
+        'RMSE_8': RMSE,
+        'MAPE_8': MAPE,
+        'NMAE_8': NMAE,
+        'NRMSE_8': NRMSE,
+        'Acc_10%_8': Acc[2],
     }
     
     return all_metrics
 
 
-def compute_regression_metrics(realVec, estiVec, config):
+def compute_regression_metrics(realVec, estiVec, config, mode):
     """ 计算回归任务的误差指标 """
     absError = np.abs(estiVec - realVec)
 
@@ -97,7 +93,7 @@ def compute_regression_metrics(realVec, estiVec, config):
     # 计算不同阈值下的准确率
     thresholds = [0.01, 0.05, 0.10]
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
-    all_metrics = {
+    all_metrics_72 = {
         'MAE': MAE,
         'MSE': MSE,
         'RMSE': RMSE,
@@ -106,20 +102,12 @@ def compute_regression_metrics(realVec, estiVec, config):
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],
     }
-    
-    return all_metrics
 
+    # if mode == 'valid':
+    #     return all_metrics_72
+    # else:
+    #     all_metrics_8 = compute_regression_metrics_rolling(realVec, estiVec, config, rm=8)
+    #     all_metrics = {**all_metrics_72, **all_metrics_8}
+    #     return all_metrics
 
-def compute_classification_metrics(realVec, estiVec, config):
-    """ 计算分类任务的指标 """
-    AC = accuracy_score(realVec, estiVec)
-    PR = precision_score(realVec, estiVec, average='macro', zero_division=0)
-    RC = recall_score(realVec, estiVec, average='macro', zero_division=0)
-    F1 = f1_score(realVec, estiVec, average='macro')
-
-    return {
-        'AC': AC,
-        'PR': PR,
-        'RC': RC,
-        'F1': F1,
-    }
+    return all_metrics_72

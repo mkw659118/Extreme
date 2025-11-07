@@ -1,6 +1,4 @@
 #!/bin/bash
-
-# 定义需要跑的 reservoir 数据集
 reservoir_sensors=(
   "reservoir_stor_4001_sof24"
   "reservoir_stor_4005_sof24"
@@ -25,8 +23,8 @@ do
       --pred_len "$pred" \
       --d_model 256 \
       --use_memory False\
-      --epochs 50\
-      --patience 10\
+      --epochs 200\
+      --patience 40\
       --train_volume 40000\
       --rounds 1\
       --oversampling 40\

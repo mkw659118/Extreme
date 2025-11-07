@@ -49,8 +49,10 @@ class DatasetInfo:
     os_s: int = 18
     os_v: int = 4
     split_mode: str = 'ds'
-    val_seed: int = 2007
-    train_seed: int = 1010
+    # val_seed: int = 2007
+    # train_seed: int = 1010
+    val_seed: int = 2025
+    train_seed: int = 2024
     roll: int = 8
 
 

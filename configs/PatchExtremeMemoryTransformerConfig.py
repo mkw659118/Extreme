@@ -11,7 +11,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     model: str = 'patch_extreme_memory_transformer'
     bs: int = 256
     d_model: int = 256
-    epochs: int = 50
+    epochs: int = 1
     patience: int = 10
     verbose: int = 1
     num_layers: int = 3
@@ -29,5 +29,6 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     outf: str = './output'
     data_model: str = 'Almaden'
     name: str = 'Almaden'
+    mem_mode: str = 'tbm'
    
 

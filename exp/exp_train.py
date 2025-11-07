@@ -36,7 +36,7 @@ def RunOnce(config, runId, model: Model, datamodule, log):
             # 加载模型权重（weights_only=True 可忽略 optimizer 等无关信息）
             model.load_state_dict(torch.load(model_path, weights_only=True, map_location='cpu'))
             model.setup_optimizer(config)  # 重新设置优化器
-            results = model.evaluate_one_epoch(datamodule, 'test')  # 在测试集评估性能
+            results = model.test(datamodule, 'test')  # 在测试集评估性能
             log.show_results(results, sum_time)
             config.record = False  # 不再记录当前结果
         except Exception as e:
@@ -87,7 +87,7 @@ def RunOnce(config, runId, model: Model, datamodule, log):
         sum_time = sum(train_time[: monitor.best_epoch])
 
         # 使用最优模型在测试集评估
-        results = model.evaluate_one_epoch(datamodule, 'test')
+        results = model.test(datamodule, 'test')
        
         log.show_test_error(runId, monitor, results, sum_time)
 

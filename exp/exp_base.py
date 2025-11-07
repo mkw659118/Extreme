@@ -181,4 +181,44 @@ class BasicModel(torch.nn.Module):
     
         pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
 
-        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config)
+        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
+    
+
+
+
+    def test(self, dataModule, mode='test'):
+        
+        self.eval()  # 切换为评估模式
+        torch.set_grad_enabled(False)  # 关闭梯度计算（评估阶段不需要计算梯度）
+        dataloader = dataModule.test_data_loader  # 使用测试集进行评估
+
+        preds, reals, val_loss = [], [], 0.0
+
+        # autocast 设备类型
+        device_str = str(self.config.device)
+        device_type = 'cuda' if 'cuda' in device_str else 'cpu'
+
+        ctx = torch.autocast(device_type=device_type, dtype=torch.float16) if self.config.use_amp else contextlib.nullcontext()
+
+        with ctx:
+            for batch in dataloader:
+                x, x_mark, label, sample_ids = batch
+                x = x.to(self.config.device)
+                x_mark = x_mark.to(self.config.device)
+                inputs = (x, x_mark)
+                label = label.to(self.config.device)
+                sample_ids = sample_ids.to(self.config.device).long()  # 样本 ID 作为输入
+
+                # 前向传播（评估阶段不会写入记忆库）
+                pred = self.forward(*inputs, sample_ids=sample_ids)
+                # 存储预测和真实标签
+                reals.append(label)
+                preds.append(pred)
+
+        reals = torch.cat(reals, dim=0)   
+        preds = torch.cat(preds, dim=0)
+    
+        pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
+
+        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
+
