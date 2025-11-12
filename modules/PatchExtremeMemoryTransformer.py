@@ -184,7 +184,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.num_layers_inter_patch = num_layers_inter_patch
         self.patch_len = patch_len
         self.win_size = win_size
-        self.seq_w = 0.3   # 融合点级与序列级 GMM 权重的系数
+        self.seq_weight = config.seq_weight  # 融合点级与序列级 GMM 权重的系数
         assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
         self.num_patches = self.total_len // self.patch_len  # P
 
@@ -198,6 +198,13 @@ class ThreeExpertPatchTransformer(nn.Module):
 
         # === 新增：预测 tokens（替代 predict_linear 的外推） ===
         self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
+
+
+                # __init__ 里加：
+        self.cross_q = nn.LayerNorm(self.d_model)
+        self.cross_kv = nn.LayerNorm(self.d_model)
+        self.tail2hist = nn.MultiheadAttention(self.d_model, self.num_heads, batch_first=True)
+
 
 
         # ---------- GMM 权重分支（ww） ----------
@@ -296,7 +303,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         # 融合得到三通道权重特征（与输出步数对齐，仅取最后 pred_len 步）
         weight_seq = x[:, :, 5:8]  # [B, total_len, 3]
         weight_pt  = x[:, :, 2:5]  # [B, total_len, 3]
-        ww = weight_seq + self.seq_w * weight_pt
+        ww = weight_seq + self.seq_weight * weight_pt
         ww = ww[:, -self.pred_len:, :]  # [B, L, 3]  L = pred_len
 
         # 位置编码（d_model//2 维）
@@ -417,8 +424,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         pred_tok   = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d]
         x_emb      = torch.cat([x_emb_hist, pred_tok], dim=1)         # [B, total_len, d]
 
-
-
+        
         # ---------- 构造掩码 ----------
         
         intra_mask = generate_causal_window_mask(
@@ -428,15 +434,7 @@ class ThreeExpertPatchTransformer(nn.Module):
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
 
-        # x_ch = rearrange(x_emb, 'b l d -> b d l')
-        # xA = rearrange(self.prefiltA(x_ch), 'b d l -> b l d')
-        # xB = rearrange(self.prefiltB(x_ch), 'b d l -> b l d')
-        # xC = rearrange(self.prefiltC(x_ch), 'b d l -> b l d')
         
-        #  # ---------- 三个专家主干 ----------
-        # finalA = self._forward_backbone(xA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
-        # finalB = self._forward_backbone(xB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
-        # finalC = self._forward_backbone(xC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
 
         # ---------- 三个专家主干 ----------
         finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]

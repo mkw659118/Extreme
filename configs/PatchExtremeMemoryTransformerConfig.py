@@ -30,5 +30,6 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     data_model: str = 'Almaden'
     name: str = 'Almaden'
     mem_mode: str = 'tbm'
+    seq_weight: float = 0.4
    
 

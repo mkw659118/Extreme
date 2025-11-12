@@ -4,8 +4,6 @@
 
 import sys
 import os
-
-from data_provider.data_loader import DataModule
 from exp.exp_model import Model
 import run_train
 

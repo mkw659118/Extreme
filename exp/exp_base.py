@@ -181,7 +181,19 @@ class BasicModel(torch.nn.Module):
     
         pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
 
-        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
+        if pred_raw.dim() == 3 and pred_raw.size(-1) == 1:
+            pred_raw = pred_raw.squeeze(-1)
+
+        # —— 方案A（推荐）：在原尺度上做全局展平指标 ——
+        y_true = real_raw                  # [N, P]
+        y_pred = pred_raw                  # [N, P]
+        y_true_vec = y_true.reshape(-1)    # [N*P]
+        y_pred_vec = y_pred.reshape(-1)    # [N*P]
+
+        # 你现有的 ErrorMetrics 如果接收 (y_true, y_pred)，直接传一维向量：
+        return ErrorMetrics(y_true_vec, y_pred_vec, self.config, mode)
+
+        # return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
     
 
 
@@ -220,5 +232,19 @@ class BasicModel(torch.nn.Module):
     
         pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
 
-        return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
+
+            # 统一形状到 [N, P]
+        if pred_raw.dim() == 3 and pred_raw.size(-1) == 1:
+            pred_raw = pred_raw.squeeze(-1)
+        # 如果 real_raw 仍是 [N, P, C]，取原值那一列（通常是最后一列）
+        if real_raw.dim() == 3:
+            real_raw = real_raw[..., -1]
+
+        # —— 方案A：展平为 [N*P] 再评估 ——
+        y_pred_vec = pred_raw.reshape(-1).contiguous()
+        y_true_vec = real_raw.reshape(-1).contiguous()
+
+        return ErrorMetrics(y_true_vec, y_pred_vec, self.config, mode)
+
+        # return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
 

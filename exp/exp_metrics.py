@@ -105,9 +105,11 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
 
     
 
-    
+    # if mode == 'valid':
+    #     return all_metrics_72
+    # else:
     all_metrics_8 = compute_regression_metrics_rolling(realVec, estiVec, config, rm=8)
     all_metrics = {**all_metrics_72, **all_metrics_8}
     return all_metrics
 
-    return all_metrics_72
+    # return all_metrics_72

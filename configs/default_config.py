@@ -36,7 +36,6 @@ class DatasetInfo:
     eval_set: bool = True
     shuffle: bool = False
     scaler_method: str = 'stander'
-    spliter_ratio: str = '7:1:2'
     reservoir_sensor: str = 'reservoir_stor_4001_sof24'
     # start_point: str = '1983-07-01 23:30:00'
     start_point: str = '1991-07-01 23:30:00'
@@ -48,7 +47,6 @@ class DatasetInfo:
     oversampling: int = 40
     os_s: int = 18
     os_v: int = 4
-    split_mode: str = 'ds'
     # val_seed: int = 2007
     # train_seed: int = 1010
     val_seed: int = 2025

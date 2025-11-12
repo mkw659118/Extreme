@@ -8,7 +8,7 @@ reservoir_sensors=(
 )
 
 # 定义预测长度
-pred_lens=(8 72)
+pred_lens=(72)
 
 # 外循环：预测长度
 for pred in "${pred_lens[@]}"
@@ -28,8 +28,8 @@ do
       --train_volume 40000\
       --rounds 1\
       --oversampling 40\
-      --use_memory True
+      --use_memory True\
+      --loss_func 'L1Loss'
   done
 done
-
 

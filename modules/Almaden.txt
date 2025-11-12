@@ -1,14 +1,12 @@
 atten_dim|384
-batchsize|48
+bs|48
 epochs|50
 gpu_id|0
-hidden_dim|512
+d_model|512
 input_dim|1
-input_len|360
 layer|4
 learning_rate|0.001
 lradj|type4
-mode|train
 model|Almaden
 name|Almaden
 ngpu|1
@@ -16,7 +14,6 @@ os_s|18
 os_v|4
 outf|./output
 output_dim|1
-output_len|72
 oversampling|40
 rain_sensor|reservoir_stor_4001_sof24
 save|0
@@ -25,7 +22,7 @@ start_point|1991-07-01 23:30:00
 reservoir_sensor|reservoir_stor_4001_sof24
 test_end|2019-07-01 00:30:00
 test_start|2018-07-01 00:30:00
-train_point|2018-06-30 23:30:00
+train_end|2018-06-30 23:30:00
 train_seed|1010
 train_volume|30000
 val_seed|2007

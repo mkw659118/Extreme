@@ -98,7 +98,6 @@ def run(config):
 
 
 if __name__ == '__main__':
-    
     from utils.exp_config import get_config
     config = get_config('PatchExtremeMemoryTransformerConfig')
     run(config)
