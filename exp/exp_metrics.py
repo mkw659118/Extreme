@@ -32,11 +32,11 @@ def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
     # 先进行滚动窗口处理（使用完整数据）
     ll = int(len(estiVec) / config.pred_len)
 
-    print("estiVec length:", len(estiVec))
-    print("config.pred_len:", config.pred_len)
+    # print("estiVec length:", len(estiVec))
+    # print("config.pred_len:", config.pred_len)
 
-    print("ll的长度")
-    print(ll)
+    # print("ll的长度")
+    # print(ll)
     esti_all = []
     real_all = []
     for i in range(ll):

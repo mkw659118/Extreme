@@ -13,7 +13,9 @@ from layers.embedding import PositionalEmbedding
 
 
 
+# 定义一个超轻瓶颈记忆模块类，继承自 nn.Module
 class TinyBottleneckMemory(nn.Module):
+    # 类的整体说明文档，描述该记忆模块的设计思想和功能
     """
     超轻瓶颈记忆：
     - 仅在 r 维（远小于 d_model）维护 3 个原型；
@@ -22,87 +24,136 @@ class TinyBottleneckMemory(nn.Module):
     - 写：EMA（no_grad），带轻量正交化；
     - 另提供按步置信度门控（基于 ww 熵）。
     """
+    # 初始化函数，指定特征维度 d_model、瓶颈维 r、动量系数 momentum 和初始化标准差 init_std
     def __init__(self, d_model: int, r: int = 8, momentum: float = 0.05, init_std: float = 1e-3):
+        # 调用父类 nn.Module 的初始化方法
         super().__init__()
+        # 保存输入特征维度 d_model
         self.d_model = d_model
+        # 保存瓶颈维度 r
         self.r = r
+        # 保存 EMA 更新的动量系数
         self.momentum = momentum
 
-        # 固定正交投影 P: [d, r]，上/下投影分别为 x@P (降维) 与 z@P^T (升维)
+        # 在不计算梯度的环境中构造固定的正交投影矩阵 P
         with torch.no_grad():
+            # 随机初始化一个形状为 [d_model, r] 的矩阵 A
             A = torch.randn(d_model, r)
-            # 直接对 (d,r) 做 QR 得到正交列
+            # 对 A 做 QR 分解，得到具有正交列的 Q（仅保留 reduced 形式）
             Q, _ = torch.linalg.qr(A, mode='reduced')  # Q: [d, r]
+        # 将正交矩阵 Q 注册为 buffer，命名为 P，不参与训练更新
         self.register_buffer("P", Q)  # 不参与训练
 
-        # 瓶颈原型：3 x r
+        # 初始化瓶颈原型向量，共 3 个，每个为 r 维
         z = torch.randn(3, r) * init_std
+        # 对原型向量在最后一维做 L2 归一化
         z = F.normalize(z, dim=-1)
+        # 将原型向量注册为 buffer，命名为 z_protos
         self.register_buffer("z_protos", z)
+        # 注册一个记录每个原型被“使用/更新”权重总和的计数器向量 seen
         self.register_buffer("seen", torch.zeros(3))
 
+    # 使用装饰器表示该函数在调用时不计算梯度
     @torch.no_grad()
+    # 定义内部正交化函数，对 3 个原型在 r 维空间做轻量 Gram-Schmidt 正交化
     def _orthogonalize_(self):
-        # 轻量正交化 3 个原型（在 r 维）
+        # 从 z_protos 拷贝一份张量，避免在原 tensor 上直接做中间操作
         Z = self.z_protos.detach().clone()  # [3, r]
+        # 遍历每一个原型向量索引 i
         for i in range(Z.size(0)):
+            # 对第 i 个原型，依次减去其在之前所有原型（0..i-1）方向上的投影
             for j in range(i):
+                # 计算第 i 个原型与第 j 个原型的内积系数 coef
                 coef = torch.dot(Z[i], Z[j])
+                # 从第 i 个原型中减去在第 j 个原型方向上的分量，实现正交
                 Z[i] = Z[i] - coef * Z[j]
+            # 对第 i 个原型做归一化，保持为单位向量
             Z[i] = F.normalize(Z[i], dim=-1)
+        # 将正交化后的原型矩阵写回到 z_protos 中
         self.z_protos.copy_(Z)
 
+    # 使用装饰器表示写入记忆操作不参与梯度计算
     @torch.no_grad()
+    # 定义写操作函数，根据 ww 和 q_hist 更新瓶颈原型
     def write(self, ww: torch.Tensor, q_hist: torch.Tensor):
+        # 函数文档：说明 ww 与 q_hist 的形状及整体更新逻辑
         """
         ww:     [B, L_pred, 3]
         q_hist: [B, d]
         把 q_hist 降到 r 维，再按 p=mean_t ww 聚合更新到 z_protos。
         """
+        # 在时间维 L_pred 上做平均，得到每个样本对 3 个原型的平均权重 p
         p = ww.mean(dim=1)                             # [B, 3]
-        # 降维到 r
+        # 使用投影矩阵 P 将历史 query 表示 q_hist 从 d 维降到 r 维
         z_hist = (q_hist @ self.P).contiguous()        # [B, r]
+        # 对降维后的历史表示 z_hist 做归一化，突出方向信息
         z_hist = F.normalize(z_hist, dim=-1)
 
+        # 定义一个很小的常数 eps，用于避免除零
         eps = 1e-6
+        # 遍历每一个原型索引 r_idx ∈ {0,1,2}
         for r_idx in range(3):
+            # 取出当前原型在 p 中对应的一列权重，形状 [B, 1]
             pr = p[:, r_idx:r_idx+1]                  # [B,1]
+            # 计算该原型在当前 batch 中的总权重和
             weight_sum = pr.sum()
+            # 只有当总权重大于 0 时才对该原型进行更新
             if float(weight_sum) > 0.0:
+                # 使用权重 pr 对 z_hist 做加权平均，得到该原型在本批次的目标方向 z_r
                 z_r = (pr * z_hist).sum(dim=0) / (weight_sum + eps)  # [r]
+                # 使用 EMA 方式更新原型：旧原型与新方向按 momentum 插值后再归一化
                 new_proto = F.normalize(
                     (1.0 - self.momentum) * self.z_protos[r_idx] + self.momentum * z_r, dim=-1
                 )
+                # 将更新后的原型向量写回 z_protos 中对应位置
                 self.z_protos[r_idx].copy_(new_proto)
+                # 累计该原型在本批次中被使用的权重和到 seen 计数器
                 self.seen[r_idx] += weight_sum
+        # 在每次写入之后，对全部原型执行一次轻量正交化，减少冗余
         self._orthogonalize_()
 
     @torch.no_grad()
+    # 定义读操作函数，根据 ww 生成按步上下文并升回 d 维
     def read_mixture(self, ww: torch.Tensor) -> torch.Tensor:
+        # 函数文档：说明输出为按时间步的上下文表示，形状 [B, L_pred, d]
         """
         返回按步上下文（升回 d 维）：[B, L_pred, d]
         """
-        # [B, L, 3] @ [3, r] -> [B, L, r]
+        # 首先在 r 维瓶颈空间中混合原型： [B, L, 3] @ [3, r] -> [B, L, r]
         ctx_r = ww @ self.z_protos
-        # 升维： [B, L, r] @ [r, d] -> [B, L, d]
+        # 再通过投影矩阵的转置升维回 d 维： [B, L, r] @ [r, d] -> [B, L, d]
         ctx_d = ctx_r @ self.P.T
+        # 返回升维后的上下文表示
         return ctx_d
 
+    # 使用装饰器表示置信度门控计算不参与梯度
     @torch.no_grad()
+    # 定义基于熵的置信度门控函数，为每个时间步生成一个 gate 系数
     def confidence_gate(self, ww: torch.Tensor, alpha: float = 1.0) -> torch.Tensor:
+        # 函数文档：说明 gate 的计算方式与输出形状
         """
         基于熵的置信度门控：gate = (1 - H/ln3)^alpha，形状 [B, L, 1]
         """
+        # 先对 ww 做 clamp，避免出现 log(0)，再按类别维计算熵：e = -sum(p log p)
         e = -(ww.clamp_min(1e-8) * ww.clamp_min(1e-8).log()).sum(dim=-1)  # [B, L]
+        # 将熵 e 归一化到 [0,1]，除以 ln(3)（3 为类别数）
         e = e / math.log(3.0)
+        # 根据公式 gate = (1 - e)^alpha 计算置信度，并在最后一维上扩展形状为 [B, L, 1]
         gate = (1.0 - e).pow(alpha).unsqueeze(-1)  # [B, L, 1]
+        # 返回置信度门控系数 gate
         return gate
 
+    # 使用装饰器表示重置操作不参与梯度计算
     @torch.no_grad()
+    # 定义重置函数，将原型和 seen 计数器恢复到初始状态
     def reset(self):
+        # 使用正态分布随机重新初始化 z_protos，标准差为 1e-3
         self.z_protos.normal_(std=1e-3)
+        # 对重新初始化后的原型做归一化，保证每个原型为单位向量
         self.z_protos.copy_(F.normalize(self.z_protos, dim=-1))
+        # 将 seen 计数器清零
         self.seen.zero_()
+
 
 
 def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
@@ -146,15 +197,6 @@ class TransformerBlock(nn.Module):
 
 # ========= 主模型：三专家 Patch Transformer + GMM 权重门控 =========
 class ThreeExpertPatchTransformer(nn.Module):
-    """
-    方案B：三套完全独立的 Transformer 主干（专家 A/B/C） + GMM 权重分支 ww（3通道）做逐步加权融合。
-    - 输入：
-        x:       [B, seq_len, 2]             （原始序列的两个通道；按你工程可调整 c_in）
-        x_mark:  [B, total_len, C_mark>=8]   （包含 GMM 的辅助特征，至少能切到 [:, :, 2:5] 和 [:, :, 5:8]）
-        sample_ids: [B] or [B, ...]          （记忆库用到）
-    - 输出：
-        y: [B, pred_len, 1]
-    """
     def __init__(
         self,
         seq_len: int,
@@ -179,6 +221,8 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.d_model = d_model
         self.use_memory = use_memory
         self.mem_mode = config.mem_mode
+        self.momentum = config.momentum
+        self.r = config.r
         self.num_heads = num_heads
         self.num_layers_intra_patch = num_layers_intra_patch
         self.num_layers_inter_patch = num_layers_inter_patch
@@ -187,25 +231,12 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.seq_weight = config.seq_weight  # 融合点级与序列级 GMM 权重的系数
         assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
         self.num_patches = self.total_len // self.patch_len  # P
-
-        # ---------- 序列嵌入与长度映射 ----------
-        # 说明：这里依赖你工程里的 DataEmbedding（形状: [B,L,c_in] -> [B,L,d_model]）
-        
+       
+        # DataEmbedding（形状: [B,L,c_in] -> [B,L,d_model]）
         self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.2)
 
-        # 把 [B, d, seq_len] 投影到 [B, d, total_len]，以便拼上 pred_len 的 token（一次性多步）
-        self.predict_linear = nn.Linear(seq_len, self.total_len)
-
-        # === 新增：预测 tokens（替代 predict_linear 的外推） ===
+        # 预测 tokens（替代 predict_linear 的外推） ===
         self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
-
-
-                # __init__ 里加：
-        self.cross_q = nn.LayerNorm(self.d_model)
-        self.cross_kv = nn.LayerNorm(self.d_model)
-        self.tail2hist = nn.MultiheadAttention(self.d_model, self.num_heads, batch_first=True)
-
-
 
         # ---------- GMM 权重分支（ww） ----------
         # 三个“标量→升维”的线性层：1 -> d_model//2
@@ -233,11 +264,6 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.ln0 = nn.LayerNorm(d_model)
         self.ln1 = nn.LayerNorm(d_model)
         self.ln2 = nn.LayerNorm(d_model)
-
-
-        self.prefiltA = nn.Conv1d(d_model, d_model, kernel_size=51, padding=25, groups=d_model)
-        self.prefiltB = nn.Conv1d(d_model, d_model, kernel_size=11, padding=5,  groups=d_model)
-        self.prefiltC = nn.Conv1d(d_model, d_model, kernel_size=3,  padding=1,  groups=d_model)
 
         # ---------- 三套独立 Transformer 主干（A/B/C） ----------
         def _make_backbone():
@@ -270,30 +296,24 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.tau_raw = nn.Parameter(torch.tensor(0.0))  # τ = softplus(tau_raw)+1e-3
 
         # ---------- 记忆库（超轻瓶颈版） ----------
-        
         if self.use_memory and self.mem_mode == 'tbm':
-            r = min(16, max(4, self.d_model // 16))  # 建议 r 选小：4~16
-            self.regime_mem = TinyBottleneckMemory(d_model=self.d_model, r=r, momentum=0.05)
-
+            self.memory = TinyBottleneckMemory(d_model=self.d_model, r=self.r, momentum=self.momentum)
             # 每个专家一个“幅度标量”（限幅 0.25*tanh）
             self.mem_stepA_raw = nn.Parameter(torch.tensor(0.0))
             self.mem_stepB_raw = nn.Parameter(torch.tensor(0.0))
             self.mem_stepC_raw = nn.Parameter(torch.tensor(0.0))
-
             # 记忆注入的随机失活，进一步防过拟合
             self.mem_dropout = nn.Dropout(p=0.2)
-
-       
 
         # ---------- 三个专家头 ----------
         self.headA = nn.Linear(d_model, 1)
         self.headB = nn.Linear(d_model, 1)
         self.headC = nn.Linear(d_model, 1)
 
-    # ====== GMM 权重分支：把 x_mark -> ww ∈ [B, pred_len, 3] ======
+    # ====== GMM 权重分支：把 x -> ww ∈ [B, pred_len, 3] ======
     def _build_ww(self, x):
         """
-        取 x_mark 的 [5:8] 作为序列级、[2:5] 作为点级，线性融合 -> 三通道；经过三路注意力 + MLP 降到标量 logit；
+        取 x 的 [5:8] 作为序列级、[2:5] 作为点级，线性融合 -> 三通道；经过三路注意力 + MLP 降到标量 logit；
         softmax 得到逐步三专家权重。
         """
         B = x.size(0)
@@ -379,35 +399,10 @@ class ThreeExpertPatchTransformer(nn.Module):
         final = post_norm(final)
         return final  # [B, total_len, d]
 
-    # ====== 记忆库读取/融合/映射回时间轴 ======
-    def _apply_memory(self, final, memory, mem_fuse, gate_proj, mem_scale, gate_bias, sample_ids):
-        """
-        final: [B, total_len, d]（取其聚合向量 q_s 作为 key/query）
-        返回：final_with_memory: [B, total_len, d]
-        """
-        B, L, D = final.shape
-        q_s = final.sum(dim=1)                        # [B, d]
-        m_read, _, _ = memory.read(sample_ids, q_s)   # m_read: [B, topk, d]
 
-        # 对齐 gate 维度
-        q_exp = q_s.unsqueeze(1).expand(-1, m_read.shape[1], -1)  # [B, topk, d]
-        gate = torch.sigmoid(gate_proj(torch.cat([q_exp, m_read], dim=-1)) + gate_bias)  # [B, topk, d]
-        fuse = mem_fuse(torch.cat([q_exp, m_read], dim=-1)) * mem_scale                  # [B, topk, d]
-
-        # 记忆融合（topk 维度）
-        fused = (1.0 + gate) * q_exp + gate * fuse          # [B, topk, d]
-
-        # 把 topk 映射回 total_len： [B, topk, d] -> [B, d, topk] -> Linear(topk->total_len) -> [B, d, total_len] -> [B, total_len, d]
-        fused = rearrange(fused, 'B K d -> B d K')
-        fused = self.topk_to_total_linear(fused)             # 线性作用在最后一维
-        fused = rearrange(fused, 'B d L -> B L d')
-
-        return final + fused
-
-    def forward(self, x, x_mark=None, sample_ids=None):
+    def forward(self, x, x_mark=None, y_true=None, sample_ids=None):
 
         B = x.size(0)
-
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         ww = self._build_ww(x)  # [B, L, 3], L=pred_len
 
@@ -417,35 +412,29 @@ class ThreeExpertPatchTransformer(nn.Module):
         # x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
         # x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
 
-
         # === 新增/替换：用预测 tokens 直接拼成 total_len ===
         x_emb_hist = self.embedding(x)                                # [B, seq_len, d]
         B = x_emb_hist.size(0)
-        pred_tok   = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d]
-        x_emb      = torch.cat([x_emb_hist, pred_tok], dim=1)         # [B, total_len, d]
+        pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d]
+        x_emb = torch.cat([x_emb_hist, pred_token], dim=1)         # [B, total_len, d]
 
-        
         # ---------- 构造掩码 ----------
-        
         intra_mask = generate_causal_window_mask(
             self.patch_len, self.win_size, x_emb.device, x_emb.dtype
         )  # [pl, pl] 
         inter_mask = generate_causal_window_mask(
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
-
         
-
         # ---------- 三个专家主干 ----------
         finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
         finalB = self._forward_backbone(x_emb, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
         finalC = self._forward_backbone(x_emb, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
 
-        
         if self.use_memory and self.mem_mode == 'tbm':
             # 1) 读：按步上下文（不反传）；置信度门控（不反传）
-            ctx_step = self.regime_mem.read_mixture(ww.detach())         # [B, pred_len, d]
-            gate_conf = self.regime_mem.confidence_gate(ww.detach())     # [B, pred_len, 1]
+            ctx_step = self.memory.read_mixture(ww.detach())         # [B, pred_len, d]
+            gate_conf = self.memory.confidence_gate(ww.detach())     # [B, pred_len, 1]
 
             # 2) 共享的“温和”残差（tanh 限幅 + dropout）
             base_inj = torch.tanh(ctx_step)                               # [-1,1]
@@ -478,9 +467,7 @@ class ThreeExpertPatchTransformer(nn.Module):
             # 5) 写回：仅历史均值（不反传）
             if self.training:
                 q_hist = x_emb_hist.mean(dim=1).detach()
-                self.regime_mem.write(ww.detach(), q_hist)
-
-
+                self.memory.write(ww.detach(), q_hist)
 
         # ---------- 三个专家头，切出预测区间 ----------
         yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]

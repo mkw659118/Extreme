@@ -8,7 +8,6 @@ from exp.exp_loss import compute_loss
 from exp.exp_metrics import ErrorMetrics
 from utils.model_trainer import get_loss_function, get_optimizer
 
-
 class BasicModel(torch.nn.Module):
     def __init__(self, config):
         super(BasicModel, self).__init__()
@@ -90,7 +89,7 @@ class BasicModel(torch.nn.Module):
                 if self.config.use_amp:
                     with torch.autocast(device_type=device_type, dtype=torch.float16):
                         # 前向传播
-                        pred = self.forward(x, x_mark, sample_ids=sample_ids)
+                        pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
                         # 计算损失（需确保compute_loss兼容AMP）
                         loss = compute_loss(self, x, pred, label, self.config)
                     
@@ -103,7 +102,7 @@ class BasicModel(torch.nn.Module):
                     scaler.update()
                 else:
                     # 普通训练流程
-                    pred = self.forward(x, x_mark, sample_ids=sample_ids)
+                    pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
                     # loss = compute_loss(self, x, pred, label, self.config)
                     # === 新增：原尺度还原 + 原尺度 loss ===
                     pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
@@ -141,7 +140,7 @@ class BasicModel(torch.nn.Module):
 
         # 选择 dataloader：验证集或测试集
         use_valid = (mode == 'valid') and (len(dataModule.val_data_loader) != 0)
-        dataloader = dataModule.val_data_loader if use_valid else dataModule.test_data_loader  # 使用测试集进行评估
+        dataloader = dataModule.val_data_loader   # 使用测试集进行评估
 
         preds, reals, val_loss = [], [], 0.0
 
@@ -195,8 +194,6 @@ class BasicModel(torch.nn.Module):
 
         # return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, mode)
     
-
-
 
     def test(self, dataModule, mode='test'):
         

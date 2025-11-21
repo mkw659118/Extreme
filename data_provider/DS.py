@@ -52,7 +52,7 @@ class DS:
 
         self.seq_len = self.config.seq_len      # 输入序列长度(天数)
         self.pred_len = self.config.pred_len   # 预测序列长度(天数)
-        
+
         self.lens = self.seq_len + self.pred_len + 1  # 总序列长度
         self.batch_size = config.bs          # 批量大小
         self.thre1 = 0                             # 阈值1

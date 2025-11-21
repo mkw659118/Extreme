@@ -11,16 +11,11 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     model: str = 'patch_extreme_memory_transformer'
     bs: int = 256
     d_model: int = 256
-    epochs: int = 1
-    patience: int = 10
-    verbose: int = 1
-    num_layers: int = 3
+    epochs: int = 200
+    patience: int = 40
     n_heads: int = 4
-    revin: bool = True
+    revin: bool = False
     dropout: float = 0.2
-    amp: bool = True
-    match_mode: str = 'abc'
-    constraint: bool = False
     win_size: int = 10
     patch_len: int = 16
     use_memory: bool = True
@@ -31,5 +26,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     name: str = 'Almaden'
     mem_mode: str = 'tbm'
     seq_weight: float = 0.4
+    momentum: float = 0.05
+    r: int = 1
    
 

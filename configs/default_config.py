@@ -9,9 +9,9 @@ class TrainingConfig:
     decay: float = 0.0001
     loss_func: str = 'L1Loss'  # L1Loss  MSELoss
     optim: str = 'Adam'
-    epochs: int = 10
-    patience: int = 3
-    verbose: int = 10
+    epochs: int = 200
+    patience: int = 40
+    verbose: int = 5
     device: str = 'cuda'
     monitor_metric: str = 'RMSE'
     use_amp: bool = False
@@ -20,7 +20,7 @@ class TrainingConfig:
 
 @dataclass
 class BaseModelConfig:
-    model: str = 'ours'
+    model: str = 'patch_extreme_memory_transformer'
     rank: int = 40
     retrain: bool = True
     num_layers: int = 3
