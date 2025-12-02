@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 import collections
 from data_provider.DS import DS
+from data_provider.DS2 import DS2
 from exp.exp_train import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
@@ -51,7 +52,7 @@ def RunExperiments(log, config):
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
         trainX = prepare_data()
-        datamodule = DS(config, trainX)
+        datamodule = DS2(config, trainX)
         print("[debug] datamodule 获取成功")
         
         model = Model(config)

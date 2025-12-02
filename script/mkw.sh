@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 reservoir_sensors=(
   "reservoir_stor_4001_sof24"
   "reservoir_stor_4005_sof24"
@@ -8,7 +8,7 @@ reservoir_sensors=(
 )
 
 # 定义预测长度
-pred_lens=(72)
+pred_lens=(8 72)
 
 # 外循环：预测长度
 for pred in "${pred_lens[@]}"
@@ -22,9 +22,8 @@ do
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
       --d_model 256 \
-      --use_memory False\
-      --epochs 200\
-      --patience 40\
+      --epochs 300\
+      --patience 60\
       --train_volume 40000\
       --rounds 1\
       --oversampling 40\
@@ -33,143 +32,3 @@ do
   done
 done
 
-
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 200\
-      --patience 30\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done
-
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 200\
-      --patience 20\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done
-
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 200\
-      --patience 10\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done
-
-
-
-
-# 外循环：预测长度
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 100\
-      --patience 20\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done
-
-
-# 外循环：预测长度
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 100\
-      --patience 10\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done
-
-
-# 外循环：预测长度
-for pred in "${pred_lens[@]}"
-do
-  # 内循环：数据集
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
-    python "run_train.py" \
-      --config "PatchExtremeMemoryTransformerConfig" \
-      --reservoir_sensor "$sensor" \
-      --pred_len "$pred" \
-      --d_model 256 \
-      --use_memory False\
-      --epochs 100\
-      --patience 5\
-      --train_volume 40000\
-      --rounds 1\
-      --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
-  done
-done

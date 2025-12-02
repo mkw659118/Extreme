@@ -179,9 +179,9 @@ class TransformerBlock(nn.Module):
     def __init__(self, d_model, num_heads, d_ff=None, dropout=0.1):
         super().__init__()
         d_ff = d_ff or (d_model * 4)
-        self.norm1 = nn.LayerNorm(d_model)
+        self.norm1 = nn.RMSNorm(d_model)
         self.attn = nn.MultiheadAttention(d_model, num_heads, dropout=dropout, batch_first=True)
-        self.norm2 = nn.LayerNorm(d_model)
+        self.norm2 = nn.RMSNorm(d_model)
         self.ff = nn.Sequential(
             nn.Linear(d_model, d_ff), nn.GELU(), nn.Dropout(dropout),
             nn.Linear(d_ff, d_model), nn.Dropout(dropout)
@@ -261,9 +261,9 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.L_out12 = nn.Linear(d_model, 1)
 
         # 更稳的归一化：LayerNorm（替代把时间当通道的 BN）
-        self.ln0 = nn.LayerNorm(d_model)
-        self.ln1 = nn.LayerNorm(d_model)
-        self.ln2 = nn.LayerNorm(d_model)
+        self.ln0 = nn.RMSNorm(d_model)
+        self.ln1 = nn.RMSNorm(d_model)
+        self.ln2 = nn.RMSNorm(d_model)
 
         # ---------- 三套独立 Transformer 主干（A/B/C） ----------
         def _make_backbone():
@@ -288,9 +288,9 @@ class ThreeExpertPatchTransformer(nn.Module):
 
        
         # 主干输出后规范化
-        self.post_normA = nn.LayerNorm(d_model)
-        self.post_normB = nn.LayerNorm(d_model)
-        self.post_normC = nn.LayerNorm(d_model)
+        self.post_normA = nn.RMSNorm(d_model)
+        self.post_normB = nn.RMSNorm(d_model)
+        self.post_normC = nn.RMSNorm(d_model)
 
         # ---------- GMM 温度（可学习，>0） ----------
         self.tau_raw = nn.Parameter(torch.tensor(0.0))  # τ = softplus(tau_raw)+1e-3
@@ -371,52 +371,90 @@ class ThreeExpertPatchTransformer(nn.Module):
 
 
     # ====== 单个专家主干前向（intra + inter + norm）======
+    # def _forward_backbone(self, x_emb, intra_blocks, inter_blocks, intra_mask, inter_mask, post_norm):
+    #     """
+    #     x_emb:      [B, total_len, d]
+    #     返回 final:  [B, total_len, d]
+    #     """
+    #     B = x_emb.size(0)
+    #     # Patch 划分
+    #     patches = rearrange(x_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
+
+    #     # Intra：每个 patch 内的局部注意
+    #     outs_intra = []
+    #     for p in range(self.num_patches):
+    #         out = patches[:, p, :, :]  # [B, pl, d]
+    #         for block in intra_blocks[p]:
+    #             out = block(out, attn_mask=intra_mask)  # 你的 TransformerBlock 要支持 attn_mask
+    #         outs_intra.append(out)
+    #     intra_tokens = torch.cat(outs_intra, dim=1)  # [B, P*pl, d] == [B, total_len, d]
+
+    #     # Inter：跨 patch 的全局关系（把 pl 合并进 batch 维，便于共享 inter_mask）
+    #     inter_patches = rearrange(patches, 'B P pl d -> (B pl) P d')
+    #     for block in inter_blocks:
+    #         inter_patches = block(inter_patches, attn_mask=inter_mask)
+    #     inter_tokens = rearrange(inter_patches, '(B pl) P d -> B (P pl) d', B=B, pl=self.patch_len)  # [B, total_len, d]
+
+    #     final = intra_tokens + inter_tokens
+    #     final = post_norm(final)
+    #     return final  # [B, total_len, d]
     def _forward_backbone(self, x_emb, intra_blocks, inter_blocks, intra_mask, inter_mask, post_norm):
         """
-        x_emb:      [B, total_len, d]
-        返回 final:  [B, total_len, d]
+        x_emb: [B, total_len, d]
+        返回:
+            final: [B, total_len, d]
+        这里实现的是：先对每个 patch 做 Intra，再在 patch 之间做 Inter（串联设计）
         """
         B = x_emb.size(0)
-        # Patch 划分
-        patches = rearrange(x_emb, 'b (p pl) d -> b p pl d', p=self.num_patches, pl=self.patch_len)
 
-        # Intra：每个 patch 内的局部注意
-        outs_intra = []
+        # 1) 划分 patch
+        patches = rearrange(
+            x_emb, 'b (p pl) d -> b p pl d',
+            p=self.num_patches, pl=self.patch_len
+        )  # [B, P, pl, d]
+
+        # 2) Intra: 对每个 patch 走自己的一组块，但不 in-place 写回原 view
+        updated_patches = []
         for p in range(self.num_patches):
             out = patches[:, p, :, :]  # [B, pl, d]
             for block in intra_blocks[p]:
-                out = block(out, attn_mask=intra_mask)  # 你的 TransformerBlock 要支持 attn_mask
-            outs_intra.append(out)
-        intra_tokens = torch.cat(outs_intra, dim=1)  # [B, P*pl, d] == [B, total_len, d]
+                out = block(out, attn_mask=intra_mask)  # [B, pl, d]
+            updated_patches.append(out.unsqueeze(1))    # [B, 1, pl, d]
 
-        # Inter：跨 patch 的全局关系（把 pl 合并进 batch 维，便于共享 inter_mask）
-        inter_patches = rearrange(patches, 'B P pl d -> (B pl) P d')
+        # 拼成新的 patch 张量（已经是 Intra 之后的结果）
+        patches_intra = torch.cat(updated_patches, dim=1)  # [B, P, pl, d]
+
+        # 展平成 token 序列，作为 Intra 分支输出
+        intra_tokens = rearrange(patches_intra, 'b p pl d -> b (p pl) d')  # [B, total_len, d]
+
+        # 3) Inter: 在 patch 维做自注意力（用 Intra 之后的 patches_intra）
+        inter_patches = rearrange(patches_intra, 'B P pl d -> (B pl) P d')  # [B*pl, P, d]
         for block in inter_blocks:
-            inter_patches = block(inter_patches, attn_mask=inter_mask)
-        inter_tokens = rearrange(inter_patches, '(B pl) P d -> B (P pl) d', B=B, pl=self.patch_len)  # [B, total_len, d]
+            inter_patches = block(inter_patches, attn_mask=inter_mask)      # [B*pl, P, d]
+        inter_tokens = rearrange(
+            inter_patches, '(B pl) P d -> B (P pl) d',
+            B=B, pl=self.patch_len
+        )  # [B, total_len, d]
 
-        final = intra_tokens + inter_tokens
+        # 4) Intra + Inter 融合，再做层归一化
+        final = intra_tokens + inter_tokens         # [B, total_len, d]
         final = post_norm(final)
-        return final  # [B, total_len, d]
+        return final
+
 
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None):
 
-        B = x.size(0)
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         ww = self._build_ww(x)  # [B, L, 3], L=pred_len
 
-        # # ---------- 序列嵌入 & 映射到 total_len ----------
-        # x_emb = self.embedding(x)                      # [B, seq_len, d]
-        # x_emb = rearrange(x_emb, 'b l d -> b d l')     # [B, d, seq_len]
-        # x_emb = self.predict_linear(x_emb)             # [B, d, total_len]
-        # x_emb = rearrange(x_emb, 'b d l -> b l d')     # [B, total_len, d]
+       
 
-        # === 新增/替换：用预测 tokens 直接拼成 total_len ===
+        # === 用预测 tokens 拼成 total_len ===
         x_emb_hist = self.embedding(x)                                # [B, seq_len, d]
-        B = x_emb_hist.size(0)
+        B = x_emb_hist.size(0)                                        # 取出Batch维度
         pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d]
-        x_emb = torch.cat([x_emb_hist, pred_token], dim=1)         # [B, total_len, d]
+        x_emb = torch.cat([x_emb_hist, pred_token], dim=1)            # [B, total_len, d]
 
         # ---------- 构造掩码 ----------
         intra_mask = generate_causal_window_mask(
