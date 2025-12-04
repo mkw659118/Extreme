@@ -52,7 +52,7 @@ def RunExperiments(log, config):
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
         trainX = prepare_data()
-        datamodule = DS2(config, trainX)
+        datamodule = DS(config, trainX)
         print("[debug] datamodule 获取成功")
         
         model = Model(config)

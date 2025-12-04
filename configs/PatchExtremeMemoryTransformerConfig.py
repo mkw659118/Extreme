@@ -15,10 +15,10 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     patience: int = 40
     n_heads: int = 4
     revin: bool = False
-    dropout: float = 0.2
-    win_size: int = 10
+    dropout: float = 0
+    win_size: int = 16
     patch_len: int = 16
-    use_memory: bool = True
+    use_memory: bool = False
     num_layers_intra_patch: int = 1
     num_layers_inter_patch: int = 1
     outf: str = './output'
@@ -28,5 +28,6 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     seq_weight: float = 0.4
     momentum: float = 0.05
     r: int = 1
+    lambda_div: float = 1e-2
    
 

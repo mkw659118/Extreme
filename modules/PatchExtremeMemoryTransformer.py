@@ -125,6 +125,16 @@ class TinyBottleneckMemory(nn.Module):
         ctx_d = ctx_r @ self.P.T
         # 返回升维后的上下文表示
         return ctx_d
+    
+
+    @torch.no_grad()
+    def read_per_proto(self) -> torch.Tensor:
+        """
+        返回 3 个原型各自升到 d 维的向量: [3, d]
+        """
+        ctx_d = self.z_protos @ self.P.T   # [3, r] @ [r, d] -> [3, d]
+        return ctx_d
+
 
     # 使用装饰器表示置信度门控计算不参与梯度
     @torch.no_grad()
@@ -229,6 +239,8 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.patch_len = patch_len
         self.win_size = win_size
         self.seq_weight = config.seq_weight  # 融合点级与序列级 GMM 权重的系数
+
+        self.lambda_div = getattr(config, "lambda_div", 0.0)  # 专家多样性正则系数
         assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
         self.num_patches = self.total_len // self.patch_len  # P
        
@@ -368,6 +380,47 @@ class ThreeExpertPatchTransformer(nn.Module):
         tau = F.softplus(self.tau_raw) + 1e-3
         ww = torch.softmax(logits / tau, dim=-1)       # [B, L, 3]
         return ww
+    
+    def _mean_cosine(self, y1, y2, eps: float = 1e-8):
+        """
+        y1, y2: [B, L, 1] 或 [B, L]
+        返回 batch 维度上的平均余弦相似度标量
+        """
+        # 变成 [B, L]
+        if y1.dim() == 3:
+            y1 = y1.squeeze(-1)
+        if y2.dim() == 3:
+            y2 = y2.squeeze(-1)
+
+        # 去掉每个样本自己的均值，防止全是常数项导致 cos=1
+        y1 = y1 - y1.mean(dim=-1, keepdim=True)
+        y2 = y2 - y2.mean(dim=-1, keepdim=True)
+
+        num = (y1 * y2).sum(dim=-1)                         # [B]
+        den = torch.sqrt((y1**2).sum(dim=-1) * (y2**2).sum(dim=-1) + eps)  # [B]
+        cos = num / den                                     # [B]
+        return cos.mean()                                   # 标量
+
+    def expert_diversity_regularizer(self):
+        """
+        返回一个标量 L_div：
+        L_div = (cos(yA,yB) + cos(yA,yC) + cos(yB,yC)) / 3
+        若没有缓存则返回 0.
+        """
+        if not hasattr(self, "_last_expert_out"):
+            # 保证梯度图里有一个干净的 0，可以用一个参数乘 0
+            return self.mem_stepA_raw * 0.0
+
+        yA, yB, yC, ww = self._last_expert_out
+
+        cosAB = self._mean_cosine(yA, yB)
+        cosAC = self._mean_cosine(yA, yC)
+        cosBC = self._mean_cosine(yB, yC)
+
+        L_div = (cosAB + cosAC + cosBC) / 3.0  # 越大表示越像
+
+        return L_div
+
 
 
     # ====== 单个专家主干前向（intra + inter + norm）======
@@ -463,49 +516,67 @@ class ThreeExpertPatchTransformer(nn.Module):
         inter_mask = generate_causal_window_mask(
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
+
+        # 用 ww 做一个样本级的路由系数（平均到时间维）
+        mix = ww.mean(dim=1)           # [B, 3]
+        g0 = mix[:, 0:1].unsqueeze(-1) # [B, 1, 1]
+        g1 = mix[:, 1:2].unsqueeze(-1)
+        g2 = mix[:, 2:3].unsqueeze(-1)
+
+        # 这里用 (1 + g) 而不是直接乘 g，避免某一路完全被压成 0
+        x_embA = x_emb * (1.0 + g0)
+        x_embB = x_emb * (1.0 + g1)
+        x_embC = x_emb * (1.0 + g2)
         
         # ---------- 三个专家主干 ----------
-        finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
-        finalB = self._forward_backbone(x_emb, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
-        finalC = self._forward_backbone(x_emb, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+        finalA = self._forward_backbone(x_embA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
+        finalB = self._forward_backbone(x_embB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
+        finalC = self._forward_backbone(x_embC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
 
         if self.use_memory and self.mem_mode == 'tbm':
-            # 1) 读：按步上下文（不反传）；置信度门控（不反传）
-            ctx_step = self.memory.read_mixture(ww.detach())         # [B, pred_len, d]
+            # 1) 基于熵的置信度门控（不反传）
             gate_conf = self.memory.confidence_gate(ww.detach())     # [B, pred_len, 1]
 
-            # 2) 共享的“温和”残差（tanh 限幅 + dropout）
-            base_inj = torch.tanh(ctx_step)                               # [-1,1]
-            base_inj = self.mem_dropout(base_inj)
+            # 2) 每个原型 ↔ 一个专家：读出 3 个原型的上下文，并展开到 [B, pred_len, d]
+            ctx_protos = self.memory.read_per_proto().detach()       # [3, d]
+            ctxA = ctx_protos[0].view(1, 1, -1).expand(B, self.pred_len, -1)  # [B, pred_len, d]
+            ctxB = ctx_protos[1].view(1, 1, -1).expand(B, self.pred_len, -1)
+            ctxC = ctx_protos[2].view(1, 1, -1).expand(B, self.pred_len, -1)
 
-            # 3) 专家通道权重（逐步）与幅度标量（0.25*tanh）
-            w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]         # [B, pred_len, 1]
-            sA = 0.25 * torch.tanh(self.mem_stepA_raw)                    # 标量
+            # 3) 每个专家自己的“温和”残差（tanh 限幅 + dropout）
+            baseA = self.mem_dropout(torch.tanh(ctxA))
+            baseB = self.mem_dropout(torch.tanh(ctxB))
+            baseC = self.mem_dropout(torch.tanh(ctxC))
+
+            # 4) 专家通道权重（逐步）与幅度标量（0.25*tanh）
+            w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]     # [B, pred_len, 1]
+            sA = 0.25 * torch.tanh(self.mem_stepA_raw)                # 标量
             sB = 0.25 * torch.tanh(self.mem_stepB_raw)
             sC = 0.25 * torch.tanh(self.mem_stepC_raw)
 
-            injA = sA * (base_inj * w0 * gate_conf)                       # [B, pred_len, d]
-            injB = sB * (base_inj * w1 * gate_conf)
-            injC = sC * (base_inj * w2 * gate_conf)
+            injA = sA * (baseA * w0 * gate_conf)                      # [B, pred_len, d]
+            injB = sB * (baseB * w1 * gate_conf)
+            injC = sC * (baseC * w2 * gate_conf)
 
-            # 4) 只替换预测尾段（兼容 pred_len=8/72 等），避免 padding & in-place
+            # 5) 只替换预测尾段
             def inject_tail_nopad(base, inj):
                 B_, L_, D_ = base.shape
                 Linj = inj.size(1)
                 if Linj == 0:
                     return base
                 head = base[:, :L_ - Linj, :]
-                tail = base[:, L_ - Linj:, :] + inj   # 非 in-place
+                tail = base[:, L_ - Linj:, :] + inj
                 return torch.cat([head, tail], dim=1)
 
             finalA = inject_tail_nopad(finalA, injA)
             finalB = inject_tail_nopad(finalB, injB)
             finalC = inject_tail_nopad(finalC, injC)
 
-            # 5) 写回：仅历史均值（不反传）
+            # 6) 写回：仍然用历史均值（不反传）
             if self.training:
                 q_hist = x_emb_hist.mean(dim=1).detach()
                 self.memory.write(ww.detach(), q_hist)
+
 
         # ---------- 三个专家头，切出预测区间 ----------
         yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]
@@ -515,5 +586,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---------- ww 逐步加权融合 ----------
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]  # [B, L, 1] x 3
         y = w0 * yA + w1 * yB + w2 * yC                       # [B, L, 1]
+        # 缓存当前 batch 的专家输出和 ww，供多样性正则使用
+        self._last_expert_out = (yA, yB, yC, ww)
 
         return y
