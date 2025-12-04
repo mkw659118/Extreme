@@ -1987,3 +1987,5 @@ epoch = 300 patience = 60 Use_Memory = False
 |2025-12-04 09:57:43| MAE - 19.7276 MSE - 5789.5934 RMSE - 76.0894 MAPE - 0.0105 NMAE - 0.0115 NRMSE - 0.0388 Acc_10 - 0.9792 train_time - 7050.4403
 |2025-12-04 11:24:29| Dataset : water, Model : patch_extreme_memory_transformer, d_model : 256, reservoir : reservoir_stor_4011_sof24, Seq_Len : 360, Pred_Len : 72, Use_Memory : False
 |2025-12-04 11:24:29| MAE - 8.9068 MSE - 449.6969 RMSE - 21.2061 MAPE - 0.0199 NMAE - 0.0194 NRMSE - 0.0461 Acc_10 - 0.9480 train_time - 1282.4957
+
+
