@@ -11,8 +11,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     model: str = 'patch_extreme_memory_transformer'
     bs: int = 256
     d_model: int = 256
-    epochs: int = 200
-    patience: int = 40
+    epochs: int = 50
+    patience: int = 10
     n_heads: int = 4
     revin: bool = False
     dropout: float = 0
@@ -22,8 +22,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     num_layers_intra_patch: int = 1
     num_layers_inter_patch: int = 1
     outf: str = './output'
-    data_model: str = 'Almaden'
-    name: str = 'Almaden'
+    data_model: str = 'Lexington'
+    name: str = 'Lexington'
     mem_mode: str = 'tbm'
     seq_weight: float = 0.4
     momentum: float = 0.05
