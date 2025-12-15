@@ -34,104 +34,54 @@ class BasicModel(torch.nn.Module):
             threshold=1e-3
         )
 
-    # 将差分域还原回原始域
+    # # 将差分域还原回原始域
+    # def _restore_to_raw(self, pred, label, mean, std):
+    #     """
+    #     pred:  [B, L, C_pred]，第0通道=差分(z-score)
+    #     label: [B, L, C_lab]， label[:,0,3]=锚点(i-1 的原值), label[:,:,-1]=原值真值
+    #     mean/std: 训练集“差分”的统计量
+    #     """
+    #     # 转成与 pred 同 device / dtype，避免 AMP 下类型不匹配
+    #     mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
+    #     std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
+
+    #     pred_diff_z = pred[:, :, 0]                 # 差分(z-score)
+    #     pred_diff   = pred_diff_z * std_t + mean_t  # 差分(原尺度)
+    #     y_pre       = label[:, 0, 3]                # 锚点(i-1 原值), [B]
+    #     pred_raw    = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)  # [B, L]
+    #     real_raw    = label[:, :, -1]               # 真值原尺度, [B, L]
+    #     return pred_raw, real_raw
+    
+    # 将标准化后的值还原回原始值（不再做差分）
     def _restore_to_raw(self, pred, label, mean, std):
         """
-        pred:  [B, L, C_pred]，第0通道=差分(z-score)
-        label: [B, L, C_lab]， label[:,0,3]=锚点(i-1 的原值), label[:,:,-1]=原值真值
-        mean/std: 训练集“差分”的统计量
+        pred:  [B, L, C_pred] 或 [B, L]，第0通道 = 标准化后的预测值(z-score)
+        label: [B, L, C_lab]，第0通道 = 标准化后的真实值(z-score)，最后一列通常是原始真值
+        mean/std: 训练集的标准化参数（全局 mean/std）
         """
-        # 转成与 pred 同 device / dtype，避免 AMP 下类型不匹配
+        # 转成与 pred 同 device / dtype，方便 AMP
         mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
         std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
 
-        pred_diff_z = pred[:, :, 0]                 # 差分(z-score)
-        pred_diff   = pred_diff_z * std_t + mean_t  # 差分(原尺度)
-        y_pre       = label[:, 0, 3]                # 锚点(i-1 原值), [B]
-        pred_raw    = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)  # [B, L]
-        real_raw    = label[:, :, -1]               # 真值原尺度, [B, L]
+        # 取预测的 z-score
+        if pred.dim() == 3 and pred.size(-1) == 1:
+            pred_z = pred.squeeze(-1)          # [B, L]
+        elif pred.dim() == 3:
+            pred_z = pred[..., 0]              # [B, L]
+        else:
+            pred_z = pred                      # [B, L]
+
+        # 取标签里的 z-score（第0列是你构造的 sensor_data_norm）
+        if label.dim() == 3:
+            label_z = label[..., 0]            # [B, L]
+        else:
+            label_z = label                    # [B, L]
+
+        # 反标准化：z * std + mean
+        pred_raw = pred_z * std_t + mean_t     # [B, L]
+        real_raw = label_z * std_t + mean_t    # [B, L]
         return pred_raw, real_raw
 
-
-    # def train_one_epoch(self, dataModule):
-        
-    #     self.train()  # 设置模型为训练模式
-    #     torch.set_grad_enabled(True)
-    #     t1 = time.time()
-        
-    #     # 初始化损失累加器和样本计数
-    #     total_loss = 0.0
-    #     sample_count = 0
-        
-    #     # 识别设备类型（用于AMP）
-    #     device_str = str(self.config.device)
-    #     device_type = 'cuda' if 'cuda' in device_str else 'cpu'
-        
-    #     # 初始化混合精度缩放器
-    #     scaler = self.scaler
-        
-    #     try:
-    #         # 遍历训练数据加载器
-    #         for batch_idx, train_batch in enumerate(dataModule.train_data_loader):
-    #             x, x_mark, label, sample_ids = train_batch
-                
-    #             # 数据转移至目标设备
-    #             x = x.to(self.config.device, non_blocking=True)
-    #             x_mark = x_mark.to(self.config.device, non_blocking=True)
-    #             label = label.to(self.config.device, non_blocking=True)
-                
-    #             sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
-                
-    #             # 梯度清零
-    #             self.optimizer.zero_grad(set_to_none=True)
-                
-    #             # 混合精度训练流程
-    #             if self.config.use_amp:
-    #                 with torch.autocast(device_type=device_type, dtype=torch.float16):
-    #                     # 前向传播
-    #                     pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
-    #                     # 计算损失（需确保compute_loss兼容AMP）
-    #                     loss = compute_loss(self, x, pred, label, self.config)
-                    
-    #                 # 反向传播（带梯度缩放）
-    #                 scaler.scale(loss).backward()
-    #                 # 先反缩放，再裁剪
-    #                 scaler.unscale_(self.optimizer)
-    #                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-    #                 scaler.step(self.optimizer)
-    #                 scaler.update()
-    #             else:
-    #                 # 普通训练流程
-    #                 pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
-    #                 # loss = compute_loss(self, x, pred, label, self.config)
-    #                 # === 新增：原尺度还原 + 原尺度 loss ===
-    #                 pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
-    #                 loss = compute_loss(self, x, pred_raw, real_raw, self.config)      # 原尺度损失
-    #                 loss.backward()
-                    
-    #                 # 梯度裁剪
-    #                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-    #                 self.optimizer.step()
-                
-    #             # 累加损失（使用item()避免计算图残留）
-    #             total_loss += loss.item() * x.size(0)
-    #             sample_count += x.size(0)
-                
-    #     except Exception as e:
-    #         print(f"[Train Error] Epoch {self.current_epoch} failed: {str(e)}")
-        
-    #     finally:
-    #         # 结束训练，设置模型为评估模式
-    #         self.eval()
-    #         torch.set_grad_enabled(False)
-    #         t2 = time.time()
-            
-    #         # 计算平均损失
-    #         avg_loss = total_loss / sample_count if sample_count > 0 else 0
-    #         print(f"[Train] Epoch {self.current_epoch} finished | "
-    #             f"Avg Loss: {avg_loss:.6f} | Time Cost: {t2-t1:.2f}s")
-        
-    #     return avg_loss, t2 - t1
 
     def train_one_epoch(self, dataModule):
         
@@ -165,24 +115,13 @@ class BasicModel(torch.nn.Module):
                 # 梯度清零
                 self.optimizer.zero_grad(set_to_none=True)
                 
-                # === 新增：统一拿到“目标模型”引用（可能是 self.model，也可能就是 self 本身） ===
-                target_model = getattr(self, "model", self)
-                
                 # 混合精度训练流程
                 if self.config.use_amp:
                     with torch.autocast(device_type=device_type, dtype=torch.float16):
                         # 前向传播
                         pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
-                        # 计算主损失（需确保 compute_loss 兼容AMP）
-                        loss_main = compute_loss(self, x, pred, label, self.config)
-
-                        # === 新增：专家多样性正则 ===
-                        lambda_div = getattr(target_model, "lambda_div", 0.0)
-                        if lambda_div > 0.0 and hasattr(target_model, "expert_diversity_regularizer"):
-                            loss_div = target_model.expert_diversity_regularizer()
-                            loss = loss_main + lambda_div * loss_div
-                        else:
-                            loss = loss_main
+                        # 计算损失（需确保compute_loss兼容AMP）
+                        loss = compute_loss(self, x, pred, label, self.config)
                     
                     # 反向传播（带梯度缩放）
                     scaler.scale(loss).backward()
@@ -194,19 +133,10 @@ class BasicModel(torch.nn.Module):
                 else:
                     # 普通训练流程
                     pred = self.forward(x, x_mark, label, sample_ids=sample_ids)
-                    
-                    # === 保持你原来的“原尺度还原 + 原尺度 loss”逻辑 ===
+                    # loss = compute_loss(self, x, pred, label, self.config)
+                    # === 新增：原尺度还原 + 原尺度 loss ===
                     pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
-                    loss_main = compute_loss(self, x, pred_raw, real_raw, self.config)  # 原尺度损失
-
-                    # === 新增：专家多样性正则（非 AMP 分支也加上） ===
-                    lambda_div = getattr(target_model, "lambda_div", 0.0)
-                    if lambda_div > 0.0 and hasattr(target_model, "expert_diversity_regularizer"):
-                        loss_div = target_model.expert_diversity_regularizer()
-                        loss = loss_main + lambda_div * loss_div
-                    else:
-                        loss = loss_main
-
+                    loss = compute_loss(self, x, pred_raw, real_raw, self.config)      # 原尺度损失
                     loss.backward()
                     
                     # 梯度裁剪
@@ -233,6 +163,7 @@ class BasicModel(torch.nn.Module):
         
         return avg_loss, t2 - t1
 
+    
 
     def evaluate_one_epoch(self, dataModule, mode='valid'):
         

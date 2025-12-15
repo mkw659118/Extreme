@@ -36,7 +36,8 @@ class DatasetInfo:
     eval_set: bool = True
     shuffle: bool = False
     scaler_method: str = 'stander'
-    reservoir_sensor: str = 'reservoir_stor_4007_sof24'
+    # reservoir_sensor: str = 'reservoir_stor_4007_sof24'
+    reservoir_sensor: str = 'reservoir_stor_4001_sof24'
     # start_point: str = '1983-07-01 23:30:00'
     start_point: str = '1991-07-01 23:30:00'
     train_end: str = '2018-06-30 23:30:00'
