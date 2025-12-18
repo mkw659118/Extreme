@@ -18,9 +18,12 @@ def get_experiment_name(config):
     # === 构建 exper_detail 字典（基础字段）===
     detail_fields = {
         'Dataset': config.dataset,
+        'batchsize': config.bs,
         'Model': config.model,
         'd_model': config.d_model,
         'reservoir': config.reservoir_sensor,
+        'epochs' : config.epochs,
+        'patience' : config.patience,
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===
@@ -52,7 +55,7 @@ def RunExperiments(log, config):
     for runId in range(config.rounds):
         utils.utils.set_seed(config.seed + runId)
         trainX = prepare_data()
-        datamodule = DS2(config, trainX)
+        datamodule = DS(config, trainX)
         print("[debug] datamodule 获取成功")
         
         model = Model(config)

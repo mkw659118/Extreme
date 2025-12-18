@@ -10,6 +10,7 @@ from einops import rearrange
 from layers.embedding import DataEmbedding
 from layers.embedding import DataEmbedding
 from layers.embedding import PositionalEmbedding
+from modules.IFT_EncDec import ImplicitForecaster
 
 
 
@@ -233,6 +234,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.mem_mode = config.mem_mode
         self.momentum = config.momentum
         self.r = config.r
+        self.c_in = c_in
         self.num_heads = num_heads
         self.num_layers_intra_patch = num_layers_intra_patch
         self.num_layers_inter_patch = num_layers_inter_patch
@@ -323,6 +325,11 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.headA = nn.Linear(d_model, 1)
         self.headB = nn.Linear(d_model, 1)
         self.headC = nn.Linear(d_model, 1)
+        
+        self.enc_linear = nn.Linear(d_model, self.c_in)
+        
+        # Forecaster
+        self.forecaster = ImplicitForecaster(self.config)
 
     # ====== GMM 权重分支：把 x -> ww ∈ [B, pred_len, 3] ======
     def _build_ww(self, x):
@@ -424,11 +431,9 @@ class ThreeExpertPatchTransformer(nn.Module):
 
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None):
-
+        # x: [B, seq_len, d]  d = 8 
         # ---------- GMM 权重分支（得到 ww ∈ [B, pred_len, 3]） ----------
         ww = self._build_ww(x)  # [B, L, 3], L=pred_len
-
-       
 
         # === 用预测 tokens 拼成 total_len ===
         x_emb_hist = self.embedding(x)                                # [B, seq_len, d]
@@ -455,10 +460,18 @@ class ThreeExpertPatchTransformer(nn.Module):
         x_embB = x_emb * (1.0 + g1)
         x_embC = x_emb * (1.0 + g2)
         
-        # ---------- 三个专家主干 ----------
+        # ---------- 三个专家主干 ---------- [B, total_len, d_model] ----------
         finalA = self._forward_backbone(x_embA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
         finalB = self._forward_backbone(x_embB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
         finalC = self._forward_backbone(x_embC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+        
+        finalA = self.enc_linear(finalA)
+        finalB = self.enc_linear(finalB)
+        finalC = self.enc_linear(finalC)
+        
+        finalA = finalA.permute(0,2,1)  # [B, c_in, total_len]
+        finalB = finalB.permute(0,2,1)
+        finalC = finalC.permute(0,2,1)
 
         if self.use_memory and self.mem_mode == 'tbm':
             # 1) 基于熵的置信度门控（不反传）
@@ -505,12 +518,17 @@ class ThreeExpertPatchTransformer(nn.Module):
                 self.memory.write(ww.detach(), q_hist)
 
 
+        # # ---------- 三个专家头，切出预测区间 ----------
+        # yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]
+        # yB = self.headB(finalB)[:, -self.pred_len:, :]  # [B, L, 1]
+        # yC = self.headC(finalC)[:, -self.pred_len:, :]  # [B, L, 1]
         # ---------- 三个专家头，切出预测区间 ----------
-        yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]
-        yB = self.headB(finalB)[:, -self.pred_len:, :]  # [B, L, 1]
-        yC = self.headC(finalC)[:, -self.pred_len:, :]  # [B, L, 1]
+        yA = self.forecaster(finalA, x)[:, :self.pred_len, :]  # [B, L, 1]
+        yB = self.forecaster(finalB, x)[:, :self.pred_len, :]  # [B, L, 1]
+        yC = self.forecaster(finalC, x)[:, :self.pred_len, :]  # [B, L, 1]
 
         # ---------- ww 逐步加权融合 ----------
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]  # [B, L, 1] x 3
         y = w0 * yA + w1 * yB + w2 * yC                       # [B, L, 1]
+        
         return y

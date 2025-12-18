@@ -8,7 +8,7 @@ reservoir_sensors=(
 )
 
 # 定义预测长度
-pred_lens=(8 72)
+pred_lens=(8)
 
 # 外循环：预测长度
 for pred in "${pred_lens[@]}"
@@ -22,12 +22,39 @@ do
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
       --d_model 256 \
-      --epochs 200\
-      --patience 40\
+      --epochs 50\
+      --patience 10\
       --train_volume 40000\
       --rounds 1\
+      --revin False\
       --oversampling 40\
-      --use_memory True\
-      --loss_func 'L1Loss'
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256
+  done
+done
+
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 256 \
+      --epochs 300\
+      --patience 60\
+      --train_volume 40000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256
   done
 done

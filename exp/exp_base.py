@@ -34,53 +34,53 @@ class BasicModel(torch.nn.Module):
             threshold=1e-3
         )
 
-    # # 将差分域还原回原始域
-    # def _restore_to_raw(self, pred, label, mean, std):
-    #     """
-    #     pred:  [B, L, C_pred]，第0通道=差分(z-score)
-    #     label: [B, L, C_lab]， label[:,0,3]=锚点(i-1 的原值), label[:,:,-1]=原值真值
-    #     mean/std: 训练集“差分”的统计量
-    #     """
-    #     # 转成与 pred 同 device / dtype，避免 AMP 下类型不匹配
-    #     mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
-    #     std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
-
-    #     pred_diff_z = pred[:, :, 0]                 # 差分(z-score)
-    #     pred_diff   = pred_diff_z * std_t + mean_t  # 差分(原尺度)
-    #     y_pre       = label[:, 0, 3]                # 锚点(i-1 原值), [B]
-    #     pred_raw    = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)  # [B, L]
-    #     real_raw    = label[:, :, -1]               # 真值原尺度, [B, L]
-    #     return pred_raw, real_raw
-    
-    # 将标准化后的值还原回原始值（不再做差分）
+    # 将差分域还原回原始域
     def _restore_to_raw(self, pred, label, mean, std):
         """
-        pred:  [B, L, C_pred] 或 [B, L]，第0通道 = 标准化后的预测值(z-score)
-        label: [B, L, C_lab]，第0通道 = 标准化后的真实值(z-score)，最后一列通常是原始真值
-        mean/std: 训练集的标准化参数（全局 mean/std）
+        pred:  [B, L, C_pred]，第0通道=差分(z-score)
+        label: [B, L, C_lab]， label[:,0,3]=锚点(i-1 的原值), label[:,:,-1]=原值真值
+        mean/std: 训练集“差分”的统计量
         """
-        # 转成与 pred 同 device / dtype，方便 AMP
+        # 转成与 pred 同 device / dtype，避免 AMP 下类型不匹配
         mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
         std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
 
-        # 取预测的 z-score
-        if pred.dim() == 3 and pred.size(-1) == 1:
-            pred_z = pred.squeeze(-1)          # [B, L]
-        elif pred.dim() == 3:
-            pred_z = pred[..., 0]              # [B, L]
-        else:
-            pred_z = pred                      # [B, L]
-
-        # 取标签里的 z-score（第0列是你构造的 sensor_data_norm）
-        if label.dim() == 3:
-            label_z = label[..., 0]            # [B, L]
-        else:
-            label_z = label                    # [B, L]
-
-        # 反标准化：z * std + mean
-        pred_raw = pred_z * std_t + mean_t     # [B, L]
-        real_raw = label_z * std_t + mean_t    # [B, L]
+        pred_diff_z = pred[:, :, 0]                 # 差分(z-score)
+        pred_diff   = pred_diff_z * std_t + mean_t  # 差分(原尺度)
+        y_pre       = label[:, 0, 3]                # 锚点(i-1 原值), [B]
+        pred_raw    = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)  # [B, L]
+        real_raw    = label[:, :, -1]               # 真值原尺度, [B, L]
         return pred_raw, real_raw
+    
+    # # 将标准化后的值还原回原始值（不再做差分）
+    # def _restore_to_raw(self, pred, label, mean, std):
+    #     """
+    #     pred:  [B, L, C_pred] 或 [B, L]，第0通道 = 标准化后的预测值(z-score)
+    #     label: [B, L, C_lab]，第0通道 = 标准化后的真实值(z-score)，最后一列通常是原始真值
+    #     mean/std: 训练集的标准化参数（全局 mean/std）
+    #     """
+    #     # 转成与 pred 同 device / dtype，方便 AMP
+    #     mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
+    #     std_t  = torch.as_tensor(std,  device=pred.device, dtype=pred.dtype)
+
+    #     # 取预测的 z-score
+    #     if pred.dim() == 3 and pred.size(-1) == 1:
+    #         pred_z = pred.squeeze(-1)          # [B, L]
+    #     elif pred.dim() == 3:
+    #         pred_z = pred[..., 0]              # [B, L]
+    #     else:
+    #         pred_z = pred                      # [B, L]
+
+    #     # 取标签里的 z-score（第0列是你构造的 sensor_data_norm）
+    #     if label.dim() == 3:
+    #         label_z = label[..., 0]            # [B, L]
+    #     else:
+    #         label_z = label                    # [B, L]
+
+    #     # 反标准化：z * std + mean
+    #     pred_raw = pred_z * std_t + mean_t     # [B, L]
+    #     real_raw = label_z * std_t + mean_t    # [B, L]
+    #     return pred_raw, real_raw
 
 
     def train_one_epoch(self, dataModule):
