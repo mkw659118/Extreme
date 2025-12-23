@@ -171,7 +171,7 @@ class AHead(nn.Module):
         super().__init__()
         self.config = config
         # in_features = self.config.d_model + self.config.seq_len // 2 + 1
-        in_features = 368 + self.config.seq_len // 2 + 1
+        in_features = 432 + self.config.seq_len // 2 + 1
         out_features = self.config.spectrum_size // 2 + 1
         self.amplitude_head = nn.Sequential(
             nn.Linear(in_features, self.config.d_ff),
@@ -212,7 +212,7 @@ class PHead(nn.Module):
         super().__init__()
         self.config = config
         # in_features = self.config.d_model + self.config.seq_len // 2 + 1
-        in_features = 368 + self.config.seq_len // 2 + 1
+        in_features = 432+ self.config.seq_len // 2 + 1
         out_features = self.config.spectrum_size // 2 + 1
         self.sin_head = nn.Sequential(
             nn.Linear(in_features, self.config.d_ff),

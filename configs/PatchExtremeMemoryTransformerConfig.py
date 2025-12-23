@@ -27,13 +27,19 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     name: str = 'Almaden'
     # name: str = 'Lexington'
     mem_mode: str = 'tbm'
+    # mem_mode: str = 'rem'
     seq_weight: float = 0.4
     momentum: float = 0.05
     r: int = 1
     lambda_div: float = 1e-2
-    spectrum_size: int = 8
+    spectrum_size: int = 72
+    # spectrum_size: int = 8
     d_ff: int = 1024
     e_layers: int = 1
+    seq_len: int = 360
+    # pred_len: int = 72
+    pred_len: int = 72
+    use_decoding : bool = False
     
    
 

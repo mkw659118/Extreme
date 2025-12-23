@@ -13,10 +13,7 @@ from layers.embedding import PositionalEmbedding
 from modules.IFT_EncDec import ImplicitForecaster
 
 
-
-# 定义一个超轻瓶颈记忆模块类，继承自 nn.Module
 class TinyBottleneckMemory(nn.Module):
-    # 类的整体说明文档，描述该记忆模块的设计思想和功能
     """
     超轻瓶颈记忆：
     - 仅在 r 维（远小于 d_model）维护 3 个原型；
@@ -25,145 +22,161 @@ class TinyBottleneckMemory(nn.Module):
     - 写：EMA（no_grad），带轻量正交化；
     - 另提供按步置信度门控（基于 ww 熵）。
     """
-    # 初始化函数，指定特征维度 d_model、瓶颈维 r、动量系数 momentum 和初始化标准差 init_std
+
     def __init__(self, d_model: int, r: int = 8, momentum: float = 0.05, init_std: float = 1e-3):
-        # 调用父类 nn.Module 的初始化方法
+        """
+        初始化 TinyBottleneckMemory。
+
+        参数：
+        - d_model: 输入/输出特征维度 d
+        - r: 瓶颈维度（r << d）
+        - momentum: 写入时 EMA 的动量系数
+        - init_std: 原型初始化的标准差
+
+        初始化内容：
+        1) 构造固定正交投影矩阵 P ∈ R^{d×r}（buffer，不训练），用于 d→r 与 r→d 投影；
+        2) 初始化 3 个 r 维原型 z_protos（单位范数），作为瓶颈空间的记忆原型；
+        3) 初始化 seen 计数器，记录每个原型累计“被使用/写入”的权重总和。
+        """
         super().__init__()
-        # 保存输入特征维度 d_model
         self.d_model = d_model
-        # 保存瓶颈维度 r
         self.r = r
-        # 保存 EMA 更新的动量系数
         self.momentum = momentum
 
-        # 在不计算梯度的环境中构造固定的正交投影矩阵 P
         with torch.no_grad():
-            # 随机初始化一个形状为 [d_model, r] 的矩阵 A
             A = torch.randn(d_model, r)
-            # 对 A 做 QR 分解，得到具有正交列的 Q（仅保留 reduced 形式）
             Q, _ = torch.linalg.qr(A, mode='reduced')  # Q: [d, r]
-        # 将正交矩阵 Q 注册为 buffer，命名为 P，不参与训练更新
-        self.register_buffer("P", Q)  # 不参与训练
+        self.register_buffer("P", Q)  # 固定正交投影（不参与训练）
 
-        # 初始化瓶颈原型向量，共 3 个，每个为 r 维
         z = torch.randn(3, r) * init_std
-        # 对原型向量在最后一维做 L2 归一化
         z = F.normalize(z, dim=-1)
-        # 将原型向量注册为 buffer，命名为 z_protos
-        self.register_buffer("z_protos", z)
-        # 注册一个记录每个原型被“使用/更新”权重总和的计数器向量 seen
-        self.register_buffer("seen", torch.zeros(3))
+        self.register_buffer("z_protos", z)           # 3 个瓶颈原型（不参与梯度）
+        self.register_buffer("seen", torch.zeros(3))  # 记录原型使用强度（不参与梯度）
 
-    # 使用装饰器表示该函数在调用时不计算梯度
     @torch.no_grad()
-    # 定义内部正交化函数，对 3 个原型在 r 维空间做轻量 Gram-Schmidt 正交化
     def _orthogonalize_(self):
-        # 从 z_protos 拷贝一份张量，避免在原 tensor 上直接做中间操作
+        """
+        对 3 个原型在 r 维空间做轻量 Gram-Schmidt 正交化（就地更新 z_protos）。
+
+        目的：
+        - 降低原型之间的冗余/塌缩，提高原型多样性；
+        - 每次写入后执行一次，成本很低（仅 3 个向量）。
+
+        实现：
+        - 依次对每个原型减去在之前原型方向上的投影；
+        - 再对每个原型做 L2 归一化；
+        - 最终 copy_ 回 z_protos。
+        """
         Z = self.z_protos.detach().clone()  # [3, r]
-        # 遍历每一个原型向量索引 i
         for i in range(Z.size(0)):
-            # 对第 i 个原型，依次减去其在之前所有原型（0..i-1）方向上的投影
             for j in range(i):
-                # 计算第 i 个原型与第 j 个原型的内积系数 coef
                 coef = torch.dot(Z[i], Z[j])
-                # 从第 i 个原型中减去在第 j 个原型方向上的分量，实现正交
                 Z[i] = Z[i] - coef * Z[j]
-            # 对第 i 个原型做归一化，保持为单位向量
             Z[i] = F.normalize(Z[i], dim=-1)
-        # 将正交化后的原型矩阵写回到 z_protos 中
         self.z_protos.copy_(Z)
 
-    # 使用装饰器表示写入记忆操作不参与梯度计算
     @torch.no_grad()
-    # 定义写操作函数，根据 ww 和 q_hist 更新瓶颈原型
     def write(self, ww: torch.Tensor, q_hist: torch.Tensor):
-        # 函数文档：说明 ww 与 q_hist 的形状及整体更新逻辑
         """
-        ww:     [B, L_pred, 3]
-        q_hist: [B, d]
-        把 q_hist 降到 r 维，再按 p=mean_t ww 聚合更新到 z_protos。
+        写入记忆：根据 ww（每步 3 原型权重）与 q_hist（历史摘要向量）更新瓶颈原型 z_protos。
+
+        输入：
+        - ww:     [B, L_pred, 3]，每个时间步对 3 个原型的权重（通常来自门控/混合系数）
+        - q_hist: [B, d]，历史表示（例如 encoder 的 summary/query）
+
+        写入流程：
+        1) 在时间维上对 ww 求均值，得到样本级原型权重 p = mean_t ww ∈ [B,3]；
+        2) 使用固定投影 P 将 q_hist 从 d 维降到 r 维：z_hist = normalize(q_hist @ P) ∈ [B,r]；
+        3) 对每个原型 r_idx：
+           - 按 p[:, r_idx] 对 z_hist 加权聚合得到该原型的“目标方向” z_r；
+           - 用 EMA 更新原型：proto ← normalize((1-m)*proto + m*z_r)；
+           - 累计 seen[r_idx]；
+        4) 写入结束后执行一次轻量正交化 _orthogonalize_()。
         """
-        # 在时间维 L_pred 上做平均，得到每个样本对 3 个原型的平均权重 p
-        p = ww.mean(dim=1)                             # [B, 3]
-        # 使用投影矩阵 P 将历史 query 表示 q_hist 从 d 维降到 r 维
-        z_hist = (q_hist @ self.P).contiguous()        # [B, r]
-        # 对降维后的历史表示 z_hist 做归一化，突出方向信息
+        p = ww.mean(dim=1)                      # [B, 3]
+        z_hist = (q_hist @ self.P).contiguous() # [B, r]
         z_hist = F.normalize(z_hist, dim=-1)
 
-        # 定义一个很小的常数 eps，用于避免除零
         eps = 1e-6
-        # 遍历每一个原型索引 r_idx ∈ {0,1,2}
         for r_idx in range(3):
-            # 取出当前原型在 p 中对应的一列权重，形状 [B, 1]
-            pr = p[:, r_idx:r_idx+1]                  # [B,1]
-            # 计算该原型在当前 batch 中的总权重和
+            pr = p[:, r_idx:r_idx + 1]          # [B, 1]
             weight_sum = pr.sum()
-            # 只有当总权重大于 0 时才对该原型进行更新
             if float(weight_sum) > 0.0:
-                # 使用权重 pr 对 z_hist 做加权平均，得到该原型在本批次的目标方向 z_r
                 z_r = (pr * z_hist).sum(dim=0) / (weight_sum + eps)  # [r]
-                # 使用 EMA 方式更新原型：旧原型与新方向按 momentum 插值后再归一化
                 new_proto = F.normalize(
-                    (1.0 - self.momentum) * self.z_protos[r_idx] + self.momentum * z_r, dim=-1
+                    (1.0 - self.momentum) * self.z_protos[r_idx] + self.momentum * z_r,
+                    dim=-1
                 )
-                # 将更新后的原型向量写回 z_protos 中对应位置
                 self.z_protos[r_idx].copy_(new_proto)
-                # 累计该原型在本批次中被使用的权重和到 seen 计数器
                 self.seen[r_idx] += weight_sum
-        # 在每次写入之后，对全部原型执行一次轻量正交化，减少冗余
+
         self._orthogonalize_()
 
     @torch.no_grad()
-    # 定义读操作函数，根据 ww 生成按步上下文并升回 d 维
     def read_mixture(self, ww: torch.Tensor) -> torch.Tensor:
-        # 函数文档：说明输出为按时间步的上下文表示，形状 [B, L_pred, d]
         """
-        返回按步上下文（升回 d 维）：[B, L_pred, d]
+        读取记忆（按步混合）：根据 ww 生成每个预测步的上下文向量，并升回 d 维。
+
+        输入：
+        - ww: [B, L_pred, 3]，每步对 3 原型的混合权重
+
+        输出：
+        - ctx_d: [B, L_pred, d]，按步上下文（先在 r 维混合，再用 P^T 升维）
+
+        计算：
+        - ctx_r = ww @ z_protos      -> [B, L, r]
+        - ctx_d = ctx_r @ P.T        -> [B, L, d]
         """
-        # 首先在 r 维瓶颈空间中混合原型： [B, L, 3] @ [3, r] -> [B, L, r]
-        ctx_r = ww @ self.z_protos
-        # 再通过投影矩阵的转置升维回 d 维： [B, L, r] @ [r, d] -> [B, L, d]
-        ctx_d = ctx_r @ self.P.T
-        # 返回升维后的上下文表示
+        ctx_r = ww @ self.z_protos   # [B, L, r]
+        ctx_d = ctx_r @ self.P.T     # [B, L, d]
         return ctx_d
-    
 
     @torch.no_grad()
     def read_per_proto(self) -> torch.Tensor:
         """
-        返回 3 个原型各自升到 d 维的向量: [3, d]
+        读取记忆（按原型）：返回 3 个原型各自升到 d 维后的向量。
+
+        输出：
+        - [3, d]，每个原型对应一个 d 维向量（z_protos @ P.T）
         """
-        ctx_d = self.z_protos @ self.P.T   # [3, r] @ [r, d] -> [3, d]
+        ctx_d = self.z_protos @ self.P.T  # [3, d]
         return ctx_d
 
-
-    # 使用装饰器表示置信度门控计算不参与梯度
     @torch.no_grad()
-    # 定义基于熵的置信度门控函数，为每个时间步生成一个 gate 系数
-    def confidence_gate(self, ww: torch.Tensor, alpha: float = 1.0) -> torch.Tensor:
-        # 函数文档：说明 gate 的计算方式与输出形状
+    def confidence_gate(self, ww: torch.Tensor, alpha: float = 2.0) -> torch.Tensor:
         """
-        基于熵的置信度门控：gate = (1 - H/ln3)^alpha，形状 [B, L, 1]
+        基于熵的置信度门控：从 ww 的不确定性（熵）生成每步 gate 系数。
+
+        直觉：
+        - ww 越“尖”（越确定）熵越低，gate 越接近 1；
+        - ww 越“平”（越不确定）熵越高，gate 越接近 0；
+        - alpha 控制门控曲线的陡峭程度。
+
+        输入：
+        - ww: [B, L, 3]
+        - alpha: 指数超参，默认 2.0
+
+        输出：
+        - gate: [B, L, 1]，公式：gate = (1 - H/ln3)^alpha
         """
-        # 先对 ww 做 clamp，避免出现 log(0)，再按类别维计算熵：e = -sum(p log p)
         e = -(ww.clamp_min(1e-8) * ww.clamp_min(1e-8).log()).sum(dim=-1)  # [B, L]
-        # 将熵 e 归一化到 [0,1]，除以 ln(3)（3 为类别数）
         e = e / math.log(3.0)
-        # 根据公式 gate = (1 - e)^alpha 计算置信度，并在最后一维上扩展形状为 [B, L, 1]
         gate = (1.0 - e).pow(alpha).unsqueeze(-1)  # [B, L, 1]
-        # 返回置信度门控系数 gate
         return gate
 
-    # 使用装饰器表示重置操作不参与梯度计算
     @torch.no_grad()
-    # 定义重置函数，将原型和 seen 计数器恢复到初始状态
     def reset(self):
-        # 使用正态分布随机重新初始化 z_protos，标准差为 1e-3
+        """
+        重置记忆：将原型 z_protos 与计数器 seen 恢复到初始状态。
+
+        操作：
+        - z_protos 重新以 N(0, 1e-3) 初始化并做单位归一化；
+        - seen 清零。
+        """
         self.z_protos.normal_(std=1e-3)
-        # 对重新初始化后的原型做归一化，保证每个原型为单位向量
         self.z_protos.copy_(F.normalize(self.z_protos, dim=-1))
-        # 将 seen 计数器清零
         self.seen.zero_()
+
 
 
 
@@ -233,6 +246,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.use_memory = use_memory
         self.mem_mode = config.mem_mode
         self.momentum = config.momentum
+        self.use_decoding = config.use_decoding
         self.r = config.r
         self.c_in = c_in
         self.num_heads = num_heads
@@ -281,28 +295,22 @@ class ThreeExpertPatchTransformer(nn.Module):
 
         # ---------- 三套独立 Transformer 主干（A/B/C） ----------
         def _make_backbone():
-            # Intra：每个 patch 一组堆叠的块
+            # Intra：共享的一套块（不再按 patch 复制参数）
             intra = nn.ModuleList([
-                nn.ModuleList([
-                    TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
-                    for _ in range(self.num_layers_intra_patch)
-                ])
-                for _ in range(self.num_patches)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
+                for _ in range(self.num_layers_intra_patch)
             ])
-            # Inter：跨 patch 的块
+            # Inter：保持不变
             inter = nn.ModuleList([
                 TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
                 for _ in range(self.num_layers_inter_patch)
             ])
             return intra, inter
-        
-
 
         self.intraA, self.interA = _make_backbone()
         self.intraB, self.interB = _make_backbone()
         self.intraC, self.interC = _make_backbone()
 
-       
         # 主干输出后规范化
         self.post_normA = nn.RMSNorm(d_model)
         self.post_normB = nn.RMSNorm(d_model)
@@ -320,6 +328,11 @@ class ThreeExpertPatchTransformer(nn.Module):
             self.mem_stepC_raw = nn.Parameter(torch.tensor(0.0))
             # 记忆注入的随机失活，进一步防过拟合
             self.mem_dropout = nn.Dropout(p=0.2)
+            # expert->proto 映射（可学习）：把 ww(专家权重) 映射到 proto 权重
+            self.expert2proto = nn.Parameter(torch.eye(3))  # [3,3]，初始化为近似恒等映射
+
+            # proto 权重的温度（可选，但很有用）
+            self.proto_tau_raw = nn.Parameter(torch.tensor(0.0))  # tau = softplus + 1e-3
 
         # ---------- 三个专家头 ----------
         self.headA = nn.Linear(d_model, 1)
@@ -388,46 +401,34 @@ class ThreeExpertPatchTransformer(nn.Module):
     def _forward_backbone(self, x_emb, intra_blocks, inter_blocks, intra_mask, inter_mask, post_norm):
         """
         x_emb: [B, total_len, d]
-        返回:
-            final: [B, total_len, d]
-        这里实现的是：先对每个 patch 做 Intra，再在 patch 之间做 Inter（串联设计）
+        intra_blocks: 共享 Intra（ModuleList，长度 = num_layers_intra_patch）
         """
         B = x_emb.size(0)
 
-        # 1) 划分 patch
+        # 1) 切 patch: [B, total_len, d] -> [B, P, pl, d]
         patches = rearrange(
             x_emb, 'b (p pl) d -> b p pl d',
             p=self.num_patches, pl=self.patch_len
         )  # [B, P, pl, d]
 
-        # 2) Intra: 对每个 patch 走自己的一组块，但不 in-place 写回原 view
-        updated_patches = []
-        for p in range(self.num_patches):
-            out = patches[:, p, :, :]  # [B, pl, d]
-            for block in intra_blocks[p]:
-                out = block(out, attn_mask=intra_mask)  # [B, pl, d]
-            updated_patches.append(out.unsqueeze(1))    # [B, 1, pl, d]
+        # 2) Intra（共享参数）：合并 (B,P) -> (B*P)
+        patches_intra = rearrange(patches, 'b p pl d -> (b p) pl d').contiguous()  # [B*P, pl, d]
+        for block in intra_blocks:
+            patches_intra = block(patches_intra, attn_mask=intra_mask)             # [B*P, pl, d]
+        patches_intra = rearrange(patches_intra, '(b p) pl d -> b p pl d', b=B, p=self.num_patches).contiguous()
 
-        # 拼成新的 patch 张量（已经是 Intra 之后的结果）
-        patches_intra = torch.cat(updated_patches, dim=1)  # [B, P, pl, d]
+        # 展平回 token 序列
+        intra_tokens = rearrange(patches_intra, 'b p pl d -> b (p pl) d')          # [B, total_len, d]
 
-        # 展平成 token 序列，作为 Intra 分支输出
-        intra_tokens = rearrange(patches_intra, 'b p pl d -> b (p pl) d')  # [B, total_len, d]
-
-        # 3) Inter: 在 patch 维做自注意力（用 Intra 之后的 patches_intra）
-        inter_patches = rearrange(patches_intra, 'B P pl d -> (B pl) P d')  # [B*pl, P, d]
+        # 3) Inter（保持你原逻辑）：在 patch 维做注意力
+        inter_patches = rearrange(patches_intra, 'b p pl d -> (b pl) p d')         # [B*pl, P, d]
         for block in inter_blocks:
-            inter_patches = block(inter_patches, attn_mask=inter_mask)      # [B*pl, P, d]
-        inter_tokens = rearrange(
-            inter_patches, '(B pl) P d -> B (P pl) d',
-            B=B, pl=self.patch_len
-        )  # [B, total_len, d]
+            inter_patches = block(inter_patches, attn_mask=inter_mask)             # [B*pl, P, d]
+        inter_tokens = rearrange(inter_patches, '(b pl) p d -> b (p pl) d', b=B, pl=self.patch_len)  # [B, total_len, d]
 
-        # 4) Intra + Inter 融合，再做层归一化
-        final = intra_tokens + inter_tokens         # [B, total_len, d]
-        final = post_norm(final)
+        # 4) 融合 + norm
+        final = post_norm(intra_tokens + inter_tokens)
         return final
-
 
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None):
@@ -449,86 +450,90 @@ class ThreeExpertPatchTransformer(nn.Module):
             self.num_patches, self.win_size, x_emb.device, x_emb.dtype
         )  # [P, P]
 
-        # 用 ww 做一个样本级的路由系数（平均到时间维）
-        mix = ww.mean(dim=1)           # [B, 3]
-        g0 = mix[:, 0:1].unsqueeze(-1) # [B, 1, 1]
-        g1 = mix[:, 1:2].unsqueeze(-1)
-        g2 = mix[:, 2:3].unsqueeze(-1)
+        # # 用 ww 做一个样本级的路由系数（平均到时间维）
+        # mix = ww.mean(dim=1)           # [B, 3]
+        # g0 = mix[:, 0:1].unsqueeze(-1) # [B, 1, 1]
+        # g1 = mix[:, 1:2].unsqueeze(-1)
+        # g2 = mix[:, 2:3].unsqueeze(-1)
 
-        # 这里用 (1 + g) 而不是直接乘 g，避免某一路完全被压成 0
-        x_embA = x_emb * (1.0 + g0)
-        x_embB = x_emb * (1.0 + g1)
-        x_embC = x_emb * (1.0 + g2)
+        # # 这里用 (1 + g) 而不是直接乘 g，避免某一路完全被压成 0
+        # x_embA = x_emb * (1.0 + g0)
+        # x_embB = x_emb * (1.0 + g1)
+        # x_embC = x_emb * (1.0 + g2)
         
         # ---------- 三个专家主干 ---------- [B, total_len, d_model] ----------
-        finalA = self._forward_backbone(x_embA, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
-        finalB = self._forward_backbone(x_embB, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
-        finalC = self._forward_backbone(x_embC, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
+        finalA = self._forward_backbone(x_emb, self.intraA, self.interA, intra_mask, inter_mask, self.post_normA)  # [B, total_len, d]
+        finalB = self._forward_backbone(x_emb, self.intraB, self.interB, intra_mask, inter_mask, self.post_normB)
+        finalC = self._forward_backbone(x_emb, self.intraC, self.interC, intra_mask, inter_mask, self.post_normC)
         
-        finalA = self.enc_linear(finalA)
-        finalB = self.enc_linear(finalB)
-        finalC = self.enc_linear(finalC)
-        
-        finalA = finalA.permute(0,2,1)  # [B, c_in, total_len]
-        finalB = finalB.permute(0,2,1)
-        finalC = finalC.permute(0,2,1)
-
         if self.use_memory and self.mem_mode == 'tbm':
-            # 1) 基于熵的置信度门控（不反传）
-            gate_conf = self.memory.confidence_gate(ww.detach())     # [B, pred_len, 1]
+            gate_conf = self.memory.confidence_gate(ww.detach())  # [B, pred_len, 1]
 
-            # 2) 每个原型 ↔ 一个专家：读出 3 个原型的上下文，并展开到 [B, pred_len, d]
-            ctx_protos = self.memory.read_per_proto().detach()       # [3, d]
-            ctxA = ctx_protos[0].view(1, 1, -1).expand(B, self.pred_len, -1)  # [B, pred_len, d]
-            ctxB = ctx_protos[1].view(1, 1, -1).expand(B, self.pred_len, -1)
-            ctxC = ctx_protos[2].view(1, 1, -1).expand(B, self.pred_len, -1)
+            # (1) 学习 expert->proto 映射：ww -> ww_proto
+            # ww: [B,L,3]，expert2proto: [3,3] => logits: [B,L,3]
+            proto_logits = ww.detach() @ self.expert2proto
 
-            # 3) 每个专家自己的“温和”残差（tanh 限幅 + dropout）
-            baseA = self.mem_dropout(torch.tanh(ctxA))
-            baseB = self.mem_dropout(torch.tanh(ctxB))
-            baseC = self.mem_dropout(torch.tanh(ctxC))
+            proto_tau = F.softplus(self.proto_tau_raw) + 1e-3
+            ww_proto = torch.softmax(proto_logits / proto_tau, dim=-1)  # [B,L,3]
 
-            # 4) 专家通道权重（逐步）与幅度标量（0.25*tanh）
-            w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]     # [B, pred_len, 1]
-            sA = 0.25 * torch.tanh(self.mem_stepA_raw)                # 标量
-            sB = 0.25 * torch.tanh(self.mem_stepB_raw)
-            sC = 0.25 * torch.tanh(self.mem_stepC_raw)
+            # (2) 用 proto 权重做 read_mixture，得到按步上下文（更强）
+            ctx = self.memory.read_mixture(ww_proto).detach()  # [B, L, d_model]
+           
 
-            injA = sA * (baseA * w0 * gate_conf)                      # [B, pred_len, d]
-            injB = sB * (baseB * w1 * gate_conf)
-            injC = sC * (baseC * w2 * gate_conf)
+            base = self.mem_dropout(torch.tanh(ctx))  # [B,L,d_model]
 
-            # 5) 只替换预测尾段
-            def inject_tail_nopad(base, inj):
-                B_, L_, D_ = base.shape
-                Linj = inj.size(1)
-                if Linj == 0:
-                    return base
-                head = base[:, :L_ - Linj, :]
-                tail = base[:, L_ - Linj:, :] + inj
+            # (3) 仍然保留“专家逐步权重”注入到各自的尾段
+            w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]
+            sA = 0.6 * torch.tanh(self.mem_stepA_raw)
+            sB = 0.6 * torch.tanh(self.mem_stepB_raw)
+            sC = 0.6 * torch.tanh(self.mem_stepC_raw)
+
+            injA = sA * (base * w0 * gate_conf)  # [B,L,d_model]
+            injB = sB * (base * w1 * gate_conf)
+            injC = sC * (base * w2 * gate_conf)
+
+            def inject_tail(base_tokens, inj_tail):
+                # base_tokens: [B,total_len,d_model], inj_tail: [B,pred_len,d_model]
+                head = base_tokens[:, :-inj_tail.size(1), :]
+                tail = base_tokens[:, -inj_tail.size(1):, :] + inj_tail
                 return torch.cat([head, tail], dim=1)
 
-            finalA = inject_tail_nopad(finalA, injA)
-            finalB = inject_tail_nopad(finalB, injB)
-            finalC = inject_tail_nopad(finalC, injC)
+            finalA = inject_tail(finalA, injA)
+            finalB = inject_tail(finalB, injB)
+            finalC = inject_tail(finalC, injC)
 
-            # 6) 写回：仍然用历史均值（不反传）
+            # (4) 写入：用 proto 权重来更新原型（而不是直接用 ww），并用置信度抑制噪声写入
             if self.training:
-                q_hist = x_emb_hist.mean(dim=1).detach()
-                self.memory.write(ww.detach(), q_hist)
+                # q_hist = x_emb_hist.mean(dim=1).detach()        # [B,d_model]（也可换成 x_emb_hist[:,-1]）
+                q_hist = (0.5 * x_emb_hist[:, -1, :] + 0.5 * x_emb_hist.mean(dim=1)).detach()
 
+                # 置信度权重（样本级）: [B,1,1]
+                conf = gate_conf.mean(dim=1, keepdim=True)      # [B,1,1]
+                ww_write = ww_proto * conf                      # [B,L,3]
+                self.memory.write(ww_write, q_hist)
 
-        # # ---------- 三个专家头，切出预测区间 ----------
-        # yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]
-        # yB = self.headB(finalB)[:, -self.pred_len:, :]  # [B, L, 1]
-        # yC = self.headC(finalC)[:, -self.pred_len:, :]  # [B, L, 1]
-        # ---------- 三个专家头，切出预测区间 ----------
-        yA = self.forecaster(finalA, x)[:, :self.pred_len, :]  # [B, L, 1]
-        yB = self.forecaster(finalB, x)[:, :self.pred_len, :]  # [B, L, 1]
-        yC = self.forecaster(finalC, x)[:, :self.pred_len, :]  # [B, L, 1]
+                
+        if self.use_decoding :
+            finalA = self.enc_linear(finalA)
+            finalB = self.enc_linear(finalB)
+            finalC = self.enc_linear(finalC)
+            
+            finalA = finalA.permute(0,2,1)  # [B, c_in, total_len]
+            finalB = finalB.permute(0,2,1)
+            finalC = finalC.permute(0,2,1)
 
+        if self.use_decoding :
+            # ---------- 三个专家头，切出预测区间 ----------
+            yA = self.forecaster(finalA, x)[:, :self.pred_len, :]  # [B, L, 1]
+            yB = self.forecaster(finalB, x)[:, :self.pred_len, :]  # [B, L, 1]
+            yC = self.forecaster(finalC, x)[:, :self.pred_len, :]  # [B, L, 1]
+        else :
+            # # ---------- 三个专家头，切出预测区间 ----------
+            yA = self.headA(finalA)[:, -self.pred_len:, :]  # [B, L, 1]
+            yB = self.headB(finalB)[:, -self.pred_len:, :]  # [B, L, 1]
+            yC = self.headC(finalC)[:, -self.pred_len:, :]  # [B, L, 1]
+           
         # ---------- ww 逐步加权融合 ----------
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]  # [B, L, 1] x 3
         y = w0 * yA + w1 * yB + w2 * yC                       # [B, L, 1]
-        
         return y

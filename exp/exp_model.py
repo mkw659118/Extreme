@@ -38,6 +38,8 @@ class Model(BasicModel):
                 num_layers_inter_patch=config.num_layers_inter_patch,
                 config=config
             )
+        elif config.model == 'seq2seq_3expert_lstm':
+            self.model = Seq2Seq3ExpertLSTM(config)
         
         # 2025年9月8日21:34:04 测试水文数据集效果
         elif config.model == 'mlp_test':
