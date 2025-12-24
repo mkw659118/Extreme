@@ -19,8 +19,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     win_size: int = 16
     patch_len: int = 16
     use_memory: bool = False
-    num_layers_intra_patch: int = 1
-    num_layers_inter_patch: int = 1
+    num_layers_intra_patch: int = 2
+    num_layers_inter_patch: int = 2
     outf: str = './output'
     data_model: str = 'Almaden'
     # data_model: str = 'Lexington'

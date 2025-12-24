@@ -29,7 +29,7 @@ do
       --oversampling 40\
       --use_memory False\
       --loss_func 'L1Loss'\
-      --bs 256
+      --bs 128
   done
 done
 
