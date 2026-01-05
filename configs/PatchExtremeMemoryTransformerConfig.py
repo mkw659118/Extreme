@@ -26,8 +26,8 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     # data_model: str = 'Lexington'
     name: str = 'Almaden'
     # name: str = 'Lexington'
-    mem_mode: str = 'tbm'
-    # mem_mode: str = 'rem'
+    # mem_mode: str = 'tbm'
+    mem_mode: str = 'retrieval'
     seq_weight: float = 0.4
     momentum: float = 0.05
     r: int = 1
