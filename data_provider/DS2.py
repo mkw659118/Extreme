@@ -1,485 +1,427 @@
-#Author  :   mkw 
-#Time    :   2025/09/30 10:14:24
-#Desc    :   None
+# Author  : mkw (modified by assistant)
+# Time    : 2025/09/30
+# Desc    : DS with chronological split (val = last val_size windows), no leakage in stats/GMMs
 
-import random
-import pandas as pd
-from utils.utils2 import (
-    gen_month_tag,          # 生成月份标签
-    gen_time_feature,       # 生成时间特征
-    cos_date,               # 生成日期余弦特征
-    sin_date,               # 生成日期正弦特征   
-)
 import os
+import random
+import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from sklearn.mixture import GaussianMixture  # 高斯混合模型，用于概率分布建模
-import numpy as np
+from sklearn.mixture import GaussianMixture
+
+from utils.utils2 import (
+    diff_order_1,
+    gen_month_tag,
+    gen_time_feature,
+    cos_date,
+    sin_date,
+    r_log_std_normalization,
+    r_log_std_normalization_1,
+)
+
 from data_provider.data_getitem import TimeSeriesDataset
-from data_provider.data_scaler import get_scaler  # 获取数据归一化器
+
 
 class DS2:
-    """数据处理类，负责时间序列数据的预处理、特征工程、数据集构建和加载"""
+    """数据处理类：支持按时间线段划分（验证集为末尾一段），并避免统计量/GMM泄漏。"""
+
     def __init__(self, config, trainX):
         self.config = config
         self.trainX = trainX
-        self.mean = 0          # 数据均值
-        self.std = 0           # 数据标准差
-        self.mini = 0          # 数据最小值
-        self.train_mean = 0          # 数据均值
-        self.train_std = 0           # 数据标准差
-        self.train_mini = 0          # 数据最小值
-        self.tag = []          # 时间序列标签
-        self.sensor_data = []  # 传感器原始数据
-        self.diff_data = []    # 差分后数据
-        self.data = []         # 数值数据
-        
-        self.data_time = []    # 时间戳数据
-        self.sensor_data_norm = []    # 归一化后数据
-        self.sensor_data_norm1 = []   # 扩展特征后的归一化数据
 
-        self.val_points = []   # 验证集时间点
-        self.test_points = []  # 测试集时间点
-        self.test_start_time = self.config.test_start  # 测试开始时间
-        self.test_end_time = self.config.test_end      # 测试结束时间
-        self.gm3 = GaussianMixture(n_components=3)  # 三成分高斯混合模型，用于异常检测
+        # 统计参数
+        self.mean = 0
+        self.std = 0
+        self.mini = 0
 
-        self.oversampling = int(config.oversampling)  # 过采样率
-        # self.oversampling = 0  # 过采样率
-        self.iterval = config.os_v     # 过采样间隔
+        # 原始/时间字段
+        self.sensor_data = []
+        self.data = []
+        self.data_time = []
 
-        self.seq_len = self.config.seq_len      # 输入序列长度(天数)
-        self.pred_len = self.config.pred_len   # 预测序列长度(天数)
+        # 差分（可选）
+        self.diff_data = []
 
-        self.lens = self.seq_len + self.pred_len + 1  # 总序列长度
-        self.batch_size = config.bs          # 批量大小
-        self.thre1 = 0                             # 阈值1
-        self.thre2 = 0                             # 阈值2
-        self.os_h = config.os_s                    # 过采样上限
-        self.os_l = config.os_v                    # 过采样下限
-        self.gmm_l = self.pred_len                 # GMM模型长度
-        
-        self.val_data_loader = []                  # 验证集数据加载器
-        self.train_data_loader = []                # 训练集数据加载器
-        self.test_data_loader = []                 # 训练集数据加载器
-        self.month = []                            # 月份特征
-        self.day = []                              # 日期特征
-        self.hour = []                             # 小时特征
+        # 归一化与特征
+        self.sensor_data_norm = []     # 归一化后的 value（1D）
+        self.sensor_data_norm1 = []    # 组装后的输入特征（二维）
 
-        self.expr_dir = os.path.join(self.config.outf, self.config.reservoir_sensor, "train")  # 实验目录
-        os.makedirs(self.expr_dir, exist_ok=True)  # exist_ok=True 避免目录已存在时报错
-        
-        # 这里是数据
-        self.read_dataset()                        # 读取并预处理数据集
-        self.roll = 8                              # 滚动间隔
+        # 时间特征
+        self.month_tag = []  # 只存月份标签，不再被覆盖
+        self.month = []
+        self.day = []
+        self.hour = []
 
-        # 保存数据集的均值和标准差
-        norm = []
-        norm.append(self.get_mean())
-        norm.append(self.get_std())
-        np.savetxt(self.expr_dir + "/" + "Norm.txt", norm)
-        norm = np.loadtxt(self.expr_dir + "/" + "Norm.txt", dtype=float, delimiter=None)
-        print("norm is: ", norm)
-        
+        # 划分信息（关键）
+        self.val_starts = None
+        self.val_centers = None
+        self.val_start_i = None  # 验证集最早窗口起点 i（train_cut）
+
+        # 阈值/模型
+        self.gm3 = GaussianMixture(n_components=3)
+        self.gmm0 = GaussianMixture(n_components=3)
+        self.gmm = GaussianMixture(n_components=3)  # 窗口级 GMM（训练/验证/测试时用）
+        self.thre1 = 0
+        self.thre2 = 0
+        self.gmm_l = self.config.pred_len
+
+        # 采样与数据长度
+        self.oversampling = int(getattr(config, "oversampling", 0))
+        self.iterval = int(getattr(config, "os_v", 1))
+        self.os_h = int(getattr(config, "os_s", 0))
+        self.os_l = int(getattr(config, "os_v", 0))  # 原代码如此写；保留
+        self.seq_len = int(self.config.seq_len)
+        self.pred_len = int(self.config.pred_len)
+        self.lens = self.seq_len + self.pred_len + 1
+        self.batch_size = int(self.config.bs)
+
+        # DataLoader
+        self.val_data_loader = []
+        self.train_data_loader = []
+        self.test_data_loader = []
+
+        # 时间范围
+        self.test_start_time = self.config.test_start
+        self.test_end_time = self.config.test_end
+
+        # 目录
+        self.expr_dir = os.path.join(self.config.outf, self.config.reservoir_sensor, "train")
+        os.makedirs(self.expr_dir, exist_ok=True)
+
+        # 读取并预处理（含：确定 val_starts；仅用 train_cut 拟合统计量/gm3/gmm0；生成特征）
+        self.read_dataset()
+
+        # 保存 mean/std
+        norm = [self.get_mean(), self.get_std()]
+        np.savetxt(os.path.join(self.expr_dir, "Norm.txt"), norm)
+
+        # 推理滚动间隔
+        self.roll = 8
 
         if self.config.mode == "train":
-            self.train_temp_gmm()         # 临时训练GMM
-            self.val_dataloader()         # 生成验证集数据加载器
-            self.train_dataloader()       # 生成训练集数据加载器
-            self.refresh_dataset(trainX)  # 刷新数据集
+            # 临时训练窗口级 GMM（只用训练段，供 val 生成窗口级概率特征使用）
+            self.train_temp_gmm()
+
+            # 生成 val/train dataloader（val 固定尾段；train 只用 val 前）
+            self.val_dataloader()
+            self.train_dataloader()
+
+            # 刷新到包含测试期的全序列特征（用训练期的 mean/std + gm3/gmm0）
+            self.refresh_dataset(trainX)
+
             print("[TEST] 构建测试集...")
-            self.gen_test_data()          # 构建 test_dataloader
-            print("样本第0列：", self.sensor_data_norm1[:10, 0])  # 异常概率
-            print("样本第1列：", self.sensor_data_norm1[:10, 1])  # 核心数值特征
-            print("训练的mean:",self.mean)
-            print("训练的std:",self.std)
+            self.gen_test_data()
 
-    # ----------------------- 数据获取方法 -----------------------
-    def get_trainX(self):
-        """获取原始训练数据"""
-        return self.trainX
+            # 打印维度检查
+            arr = np.asarray(self.sensor_data_norm1)
+            print("sensor_data_norm1 shape:", arr.shape)
+            if arr.ndim == 2 and arr.shape[1] >= 2:
+                print("样本第0列（异常概率）:", arr[:10, 0])
+                print("样本第1列（核心数值）:", arr[:10, 1])
+            print("训练 mean:", self.mean, "训练 std:", self.std)
 
-    def get_data(self):
-        """获取数值数据"""
-        return self.data
+    # ----------------------- getter -----------------------
+    def get_mean(self): return self.mean
+    def get_std(self): return self.std
+    def get_val_data_loader(self): return self.val_data_loader
+    def get_train_data_loader(self): return self.train_data_loader
+    def get_sensor_data_norm1(self): return self.sensor_data_norm1
 
-    def get_diff_data(self):
-        """获取差分后数据"""
-        return self.diff_data
+    # ----------------------- helpers -----------------------
+    @staticmethod
+    def _prefix_nan_any(x_2d: np.ndarray) -> np.ndarray:
+        """返回 prefix 累积：invalid_row[t]=该行是否含 NaN。prefix[k]=sum(invalid_row[:k])"""
+        invalid_row = np.isnan(x_2d).any(axis=1).astype(np.int32)
+        prefix = np.zeros(len(invalid_row) + 1, dtype=np.int32)
+        prefix[1:] = np.cumsum(invalid_row)
+        return prefix
 
-    def get_sensor_data(self):
-        """获取传感器原始数据"""
-        return self.sensor_data
+    def _month_ok_val(self, v: int) -> bool:
+        # 保留你原始验证筛选逻辑
+        a1, a2 = 0, -13
+        return (v <= a1) or (a2 < v < 0) or (2 <= v <= 3)
 
-    def get_sensor_data_norm(self):
-        """获取归一化后数据"""
-        return self.sensor_data_norm
+    def _month_ok_train(self, v: int) -> bool:
+        # 保留你原始训练筛选逻辑
+        a1, a2 = 0, -13
+        return (v <= a1) or (a2 < v < 0)
 
-    def get_sensor_data_norm1(self):
-        """获取扩展特征后的归一化数据"""
-        return self.sensor_data_norm1
+    @staticmethod
+    def _reorder_probs_by_weights(prob: np.ndarray, weights: np.ndarray, mode: str) -> np.ndarray:
+        """
+        复刻你原来的 reorder 逻辑：
+        - mode="gmm0": order1=argmax(weights), order2=argmin(weights), 剩余为 order3
+        - mode="gmm":  order1=argmin(weights), order2=argmax(weights), 剩余为 order3
+        """
+        weights = np.asarray(weights).reshape(-1)
+        if mode == "gmm0":
+            order1 = int(np.argmax(weights))
+            order2 = int(np.argmin(weights))
+        else:
+            order1 = int(np.argmin(weights))
+            order2 = int(np.argmax(weights))
 
-    def get_val_data_loader(self):
-        """获取验证集数据加载器"""
-        return self.val_data_loader
+        order3 = [i for i in range(3) if i != order1 and i != order2][0]
+        d0 = prob[:, order1:order1 + 1]
+        d1 = prob[:, order2:order2 + 1]
+        d2 = prob[:, order3:order3 + 1]
+        return np.concatenate([d0, d1, d2], axis=1)
 
-    def get_train_data_loader(self):
-        """获取训练集数据加载器"""
-        return self.train_data_loader
-
-    def get_val_points(self):
-        """获取验证集时间点"""
-        return self.val_points
-
-    def get_test_points(self):
-        """获取测试集时间点"""
-        return self.test_points
-
-    def get_mean(self):
-        """获取数据均值"""
-        return self.mean
-
-    def get_std(self):
-        """获取数据标准差"""
-        return self.std
-
-    def get_month(self):
-        """获取月份特征"""
-        return self.month
-
-    def get_day(self):
-        """获取日期特征"""
-        return self.day
-
-    def get_hour(self):
-        """获取小时特征"""
-        return self.hour
-
-    def get_tag(self):
-        """获取时间序列标签"""
-        return self.tag
-
-    # ----------------------- 数据读取与预处理 -----------------------
+    # ----------------------- core pipeline -----------------------
     def read_dataset(self):
         """
-        从数据文件读取数据集，进行预处理，为时间序列生成标签(0表示无值，1表示有效值)
+        读取训练期数据（start_point ~ train_end），并做：
+        1) 生成 month_tag + time_feature
+        2) 构造候选窗口，按时间取最后 val_size 个作为验证集
+        3) 定义 train_cut = val_start_i；仅用 train_cut 前拟合 mean/std、gm3、gmm0
+        4) 用训练期拟合的统计量与 gm3/gmm0 为整段训练期生成输入特征 sensor_data_norm1（5维）
         """
-        # 找到起始时间点的索引
+        # 1) 切训练期
         start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
-        print("for sensor ", self.config.reservoir_sensor, "start_num is: ", start_num)
-        
-        # 找到训练结束时间点的索引
-        train_end = (self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num)
-        print("train set total length is : ", train_end)
+        train_end_rel = self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num
+        self.sensor_data = self.trainX[start_num: start_num + train_end_rel + 1]
 
-        # 加载整个数据集
-        self.sensor_data = self.trainX[start_num: train_end + start_num]
-        
-        # 缺失值?
         self.data = np.array(self.sensor_data["value"].fillna(np.nan))
         self.data_time = np.array(self.sensor_data["datetime"].fillna(np.nan))
-        
-        
-        print("看看使用了全体数据的均值还是训练数据")
-        print(len(self.data))
-        print("结束》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》")
-        # ====== 用你写好的 StandardScaler 做标准化 ======
-        # 注意：DataScalerStander 期望二维输入，所以 reshape(-1, 1)
-        self.value_scaler = get_scaler(self.data.reshape(-1, 1), self.config, selected_method='stander')
-        sensor_norm_2d = self.value_scaler.transform(self.data.reshape(-1, 1))  # [N, 1]
-        sensor_norm_2d = sensor_norm_2d.astype(np.float32)
+        T = len(self.data)
 
-        # 一维版本，用来当“数值序列”
-        self.sensor_data_norm = sensor_norm_2d.squeeze(-1)          # [N]
-        # 二维版本，每步一行一列，后面会拼 GMM 特征
-        self.sensor_data_norm1 = sensor_norm_2d                     # [N, 1]
+        # 差分（可选）
+        self.diff_data = diff_order_1(self.data)
 
-        # 从 StandardScaler 里拿 mean/std（只有一维，所以取 [0]）
-        self.mean = float(self.value_scaler.scaler.mean_[0])
-        self.std  = float(self.value_scaler.scaler.scale_[0])
-        self.mini = float(self.data[~np.isnan(self.data)].min())
-        # # 使用标准化后的均值和标准差
-        # self.mean = self.sensor_data_norm.mean()  # 使用标准化后的均值
-        # self.std = self.sensor_data_norm.std()    # 使用标准化后的标准差
-
-        gmm_input = self.sensor_data_norm
-
-        # 清理数据，去除NaN值
-        clean_data = []
-        for ii in range(len(self.sensor_data_norm)):
-            if (self.sensor_data_norm[ii] is not None) and (np.isnan(self.sensor_data_norm[ii]) != 1):
-                clean_data.append(self.sensor_data_norm[ii])
-        sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
-        
-        
-        # 训练数据集级别的三成分高斯混合模型，用于异常检测
-        self.gm3.fit(sensor_data_prob)
-        torch.save(self.gm3, self.expr_dir + "/" + "GM3.pt")
-        
-        self.gm_means = np.squeeze(self.gm3.means_)
-        self.z0 = np.min(self.gm_means)
-        self.z1 = np.median(self.gm_means)
-        self.z2 = np.max(self.gm_means)
-
-        # 计算异常检测阈值
-        self.thre1 = (self.z0 + self.z1) / 2
-        self.thre2 = (self.z1 + self.z2) / 2
-        
-        print("gm3.means are: ", self.gm_means)
-        print("z : ", self.z0, self.z1, self.z2)
-        
-        print("gm3.covariances are: ", self.gm3.covariances_)
-        print("gm3.weights are: ", self.gm3.weights_)
-        weights3 = self.gm3.weights_
-        
-        
-        # 计算数据点属于分布的概率和异常概率
-        data_prob3 = self.gm3.predict_proba(sensor_data_prob)
-        prob_in_distribution3 = (data_prob3[:, 0] * weights3[0] + data_prob3[:, 1] * weights3[1] + data_prob3[:, 2] * weights3[2])
-        prob_like_outlier3 = 1 - prob_in_distribution3
-        prob_like_outlier3 = prob_like_outlier3.reshape((len(sensor_data_prob), 1))
-
-        # 恢复异常概率数组，保持与原始数据相同的长度
-        recover_data = []
-        temp = 0
-        jj = 0
-        for ii in range(len(self.sensor_data_norm)):
-            if (self.sensor_data_norm[ii] is not None) and (np.isnan(self.sensor_data_norm[ii]) != 1):
-                recover_data.append(prob_like_outlier3[jj])
-                jj = jj + 1
-            else:
-                recover_data.append(self.sensor_data_norm[ii])
-        prob_like_outlier3 = np.array(recover_data, np.float32).reshape(len(self.sensor_data_norm), 1)
-        
-        # 将异常概率作为新特征添加到归一化数据中
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, prob_like_outlier3), 1)
-
-        # 训练另一个高斯混合模型，使用随机采样数据
-        clean_data = []
-        for ii in range(len(gmm_input)):
-            if (gmm_input[ii] is not None) and (np.isnan(gmm_input[ii]) != 1):
-                clean_data.append(gmm_input[ii])
-        sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
-        
-        self.gmm0 = GaussianMixture(n_components=3)
-        series = []
-        random.seed(self.config.val_seed)
-        for ggg in range(200000):
-            g0 = random.randint(0, len(gmm_input) - self.gmm_l)
-            if not np.isnan(gmm_input[g0]).any():
-                series.append([gmm_input[g0]])
-        self.gmm0.fit(np.array(series).reshape(-1, 1)) 
-        torch.save(self.gmm0, self.expr_dir + "/" + "GMM0.pt")
-        self.gmm0_means = np.squeeze(self.gmm0.means_)
-        print("gmm0.means are: ", self.gmm0_means)
-        print("gmm0.weights are: ", self.gmm0.weights_)
-        weights3 = self.gmm0.weights_
-        
-        # 预测每个数据点在各成分上的后验概率，并按权重排序
-        data_prob30 = self.gmm0.predict_proba(sensor_data_prob) 
-        order1 = np.argmax(weights3)
-        d0 = data_prob30[:, order1].reshape(-1, 1)
-        order2 = np.argmin(weights3)
-        d1 = data_prob30[:, order2].reshape(-1, 1)
-        for oi in range(3):
-            if oi != order1 and oi != order2:
-                order3 = oi
-        print("new order is, ", order1, order2, order3)
-        
-        data_prob3 = np.concatenate((d0, d1), 1)
-        data_prob3 = np.concatenate((data_prob3, data_prob30[:, order3].reshape(-1, 1)), 1)
-
-        # 恢复概率数组，保持与原始数据相同的长度
-        recover_prob = []
-        temp = np.zeros(np.array(data_prob3[0]).shape)
-        jj = 0
-        for ii in range(len(gmm_input)):
-            if (gmm_input[ii] is not None) and (np.isnan(gmm_input[ii]) != 1):
-                recover_prob.append(data_prob3[jj])
-                jj = jj + 1
-            else:
-                recover_prob.append(temp)
-        recover_prob = np.array(recover_prob, np.float32)
-        
-        # 将排序后的后验概率作为新特征添加到归一化数据中
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 0:1]), 1)
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 1:2]), 1)
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 2:3]), 1)
-        print("sensor_data_norm1, ", self.sensor_data_norm1)
-        print("Finish prob indicator generating.")
-
-        # 生成时间相关特征
-        self.tag = gen_month_tag(self.sensor_data)
+        # 2) 时间标签（只做月份标签，不污染）
+        self.month_tag = gen_month_tag(self.sensor_data)
         self.month, self.day, self.hour = gen_time_feature(self.sensor_data)
 
-        # 生成日期的正弦和余弦特征，用于周期性表示
-        cos_d = cos_date(self.month, self.day, self.hour)
-        cos_d = [[x] for x in cos_d]
-        sin_d = sin_date(self.month, self.day, self.hour)
-        sin_d = [[x] for x in sin_d]
-    
+        # 3) 构造候选窗口（仅用 NaN 与月份条件决定验证集，不依赖 GMM 特征）
+        #    这里用“仅 value 一列”做 NaN 判定即可
+        value_col = self.data.reshape(-1, 1)
+        prefix = self._prefix_nan_any(value_col)
+
+        lens = self.lens
+        i_min = self.pred_len
+        i_max = T - lens - 1
+        if i_max <= i_min:
+            raise ValueError(f"数据长度不足：T={T}, lens={lens}")
+
+        starts = np.arange(i_min, i_max + 1, dtype=np.int32)
+        win_bad = prefix[starts + lens] - prefix[starts]
+        starts = starts[win_bad == 0]
+        if len(starts) == 0:
+            raise ValueError("找不到任何窗口无 NaN 的候选样本。")
+
+        centers = starts + self.seq_len
+        month_vals = np.asarray(self.month_tag)[centers].astype(np.int32)
+        ok = np.array([self._month_ok_val(int(v)) for v in month_vals], dtype=bool)
+        starts = starts[ok]
+        centers = centers[ok]
+        if len(starts) == 0:
+            raise ValueError("候选窗口均不满足月份筛选条件，请检查 gen_month_tag 或放宽条件。")
+
+        # 按时间排序取最后 val_size 个
+        order = np.argsort(centers)
+        starts = starts[order]
+        centers = centers[order]
+
+        k = int(self.config.val_size)
+        if k > len(starts):
+            print(f"[VAL][WARN] val_size={k} > 候选数={len(starts)}，将使用全部候选。")
+            k = len(starts)
+
+        self.val_starts = starts[-k:]
+        self.val_centers = centers[-k:]
+        self.val_start_i = int(self.val_starts[0])  # train_cut
+
+        print(f"[SPLIT] 训练期长度 T={T}")
+        print(f"[SPLIT] val_size={k}, val_start_i(train_cut)={self.val_start_i}, "
+              f"val_center_range=[{int(self.val_centers[0])}, {int(self.val_centers[-1])}]")
+
+        # 4) 仅用 train_cut 前拟合归一化参数
+        train_cut = self.val_start_i
+        train_slice = self.data[:train_cut]
+
+        # r_log_std_normalization 内部会处理 NaN（按你原工程实现），这里直接调用得到 mean/std/mini
+        _, self.mean, self.std, self.mini = r_log_std_normalization(train_slice)
+
+        # 用训练参数对整个训练期做同分布归一化
+        self.sensor_data_norm = r_log_std_normalization_1(self.data, self.mean, self.std)
+
+        # 5) 拟合 gm3（仅训练段），并生成 outlier 概率特征（整段）
+        clean_train = self.sensor_data_norm[:train_cut]
+        clean_train = clean_train[~np.isnan(clean_train)]
+        if len(clean_train) < 10:
+            raise ValueError("训练段有效样本太少，无法拟合 gm3。")
+        self.gm3.fit(np.array(clean_train, np.float32).reshape(-1, 1))
+        torch.save(self.gm3, os.path.join(self.expr_dir, "GM3.pt"))
+
+        gm_means = np.squeeze(self.gm3.means_)
+        z0, z1, z2 = float(np.min(gm_means)), float(np.median(gm_means)), float(np.max(gm_means))
+        self.thre1 = (z0 + z1) / 2.0
+        self.thre2 = (z1 + z2) / 2.0
+        print("[GM3] means:", gm_means, "thre1:", self.thre1, "thre2:", self.thre2)
+
+        # 计算 outlier-like prob：对全段非 NaN 预测再恢复长度
+        full_clean = self.sensor_data_norm[~np.isnan(self.sensor_data_norm)].astype(np.float32).reshape(-1, 1)
+        data_prob3 = self.gm3.predict_proba(full_clean)
+        weights3 = self.gm3.weights_.reshape(-1)
+
+        prob_in = data_prob3[:, 0] * weights3[0] + data_prob3[:, 1] * weights3[1] + data_prob3[:, 2] * weights3[2]
+        prob_out = (1.0 - prob_in).reshape(-1, 1).astype(np.float32)
+
+        # 恢复到原长度（NaN 位置保持 NaN）
+        prob_out_full = np.full((T, 1), np.nan, dtype=np.float32)
+        j = 0
+        for i in range(T):
+            if not np.isnan(self.sensor_data_norm[i]):
+                prob_out_full[i, 0] = prob_out[j, 0]
+                j += 1
+
+        # 组装 base 特征：保证列顺序为 [outlier_prob, value]
+        value_full = np.array(self.sensor_data_norm, np.float32).reshape(T, 1)
+        self.sensor_data_norm1 = np.concatenate([prob_out_full, value_full], axis=1)
+
+        # 6) 拟合 gmm0（仅训练段），并生成点级 3 概率（整段）
+        #    这里限制随机采样只从训练段 [0, train_cut) 取
+        gmm0_samples = int(getattr(self.config, "gmm0_samples", 200000))
+        upper = max(1, train_cut - self.gmm_l - 1)
+
+        series = []
+        random.seed(int(getattr(self.config, "val_seed", 0)))
+        tries = 0
+        max_tries = gmm0_samples * 2
+
+        while len(series) < gmm0_samples and tries < max_tries:
+            tries += 1
+            g0 = random.randint(0, upper)
+            v = self.sensor_data_norm[g0]
+            if not np.isnan(v):
+                series.append([v])
+
+        if len(series) < 50:
+            # 训练段太短或 NaN 太多，兜底用全部训练段有效点
+            series = clean_train.astype(np.float32).reshape(-1, 1).tolist()
+
+        self.gmm0.fit(np.array(series, dtype=np.float32).reshape(-1, 1))
+        torch.save(self.gmm0, os.path.join(self.expr_dir, "GMM0.pt"))
+
+        # 计算全段点级概率并恢复
+        full_clean = self.sensor_data_norm[~np.isnan(self.sensor_data_norm)].astype(np.float32).reshape(-1, 1)
+        prob0 = self.gmm0.predict_proba(full_clean)
+        prob0 = self._reorder_probs_by_weights(prob0, self.gmm0.weights_, mode="gmm0")  # [N,3]
+
+        prob0_full = np.zeros((T, 3), dtype=np.float32)
+        j = 0
+        for i in range(T):
+            if not np.isnan(self.sensor_data_norm[i]):
+                prob0_full[i, :] = prob0[j, :]
+                j += 1
+            else:
+                prob0_full[i, :] = 0.0
+
+        # 追加 3 维点级概率 => sensor_data_norm1 变为 5 维
+        self.sensor_data_norm1 = np.concatenate([self.sensor_data_norm1, prob0_full], axis=1)
+
+        print("[FEATURE] train-period sensor_data_norm1 shape:", np.asarray(self.sensor_data_norm1).shape)
+
     def train_temp_gmm(self):
-        """临时训练GMM，供验证集生成时使用，增强版：解决样本不足问题"""
-        # 1. 提取原始数据并清洗NaN值
-        temp_data = np.array(self.sensor_data_norm1)
-        # 过滤掉包含NaN的行（确保每一行都是有效数据）
-        clean_temp_data = temp_data[~np.isnan(temp_data).any(axis=1)]
-        window_size = self.gmm_l  # 窗口大小=预测长度（如8）
-        min_required_samples = 2  # GMM训练至少需要2个样本
+        """
+        临时训练窗口级 GMM（仅用训练段，不泄漏到验证段）
+        用于 val_dataloader 生成窗口级 3 概率特征。
+        """
+        train_cut = int(self.val_start_i)
+        if train_cut <= self.seq_len + self.pred_len + 2:
+            raise ValueError("训练段太短，无法训练临时窗口级 GMM。")
 
-        # 2. 检查清洗后的数据量是否足够
-        if len(clean_temp_data) < window_size:
-            # 情况1：连一个完整窗口的长度都不够
-            raise ValueError(
-                f"清洗后的数据量不足！需要至少{window_size}个有效时间步，"
-                f"但仅找到{len(clean_temp_data)}个。请检查数据质量或减小pred_len。"
-            )
+        x = np.asarray(self.sensor_data_norm1[:train_cut], dtype=np.float32)
+        x = x[~np.isnan(x).any(axis=1)]
 
-        # 3. 用滑动窗口生成样本（核心修复）
-        # 计算最大可能的样本数（滑动窗口步数）
-        max_possible_samples = len(clean_temp_data) - window_size + 1
-        # 实际取的样本数：取最大可能样本数和1000的较小值（避免样本过多导致计算慢）
-        n_samples = min(max_possible_samples, 1000)
+        window_size = self.gmm_l
+        if len(x) < window_size + 2:
+            raise ValueError("训练段有效样本不足，无法训练临时窗口级 GMM。")
 
-        if n_samples < min_required_samples:
-            # 情况2：样本数不足2个，尝试复制样本应急（仅作为临时方案）
-            print(f"警告：有效样本数不足（{n_samples}个），将复制样本以满足GMM训练要求")
-            # 先按现有样本生成数据
-            temp_gmm_input = []
-            for i in range(n_samples):
-                window = clean_temp_data[i:i+window_size, 1:2].flatten()
-                temp_gmm_input.append(window)
-            # 复制样本直到满足2个
-            while len(temp_gmm_input) < min_required_samples:
-                temp_gmm_input.append(temp_gmm_input[-1])  # 复制最后一个样本
-            temp_gmm_input = np.array(temp_gmm_input)
-        else:
-            # 情况3：样本数足够，正常生成
-            temp_gmm_input = []
-            for i in range(n_samples):
-                # 取每个窗口的第1列特征（与正式训练逻辑一致），展平为1维数组
-                window = clean_temp_data[i:i+window_size, 1:2].flatten()
-                temp_gmm_input.append(window)
-            temp_gmm_input = np.array(temp_gmm_input)
+        # 用滑动窗口取最多 1000 个样本（快且稳定）
+        max_possible = len(x) - window_size + 1
+        n_samples = min(max_possible, 1000)
+        samples = []
+        for i in range(n_samples):
+            # 取 value 列（第 1 列）作为窗口输入
+            w = x[i:i + window_size, 1:2].flatten()
+            samples.append(w)
+        samples = np.asarray(samples, dtype=np.float32)
+        if len(samples) < 2:
+            samples = np.repeat(samples, 2, axis=0)
 
-        # 4. 训练临时GMM并保存
         self.gmm = GaussianMixture(n_components=3)
-        self.gmm.fit(temp_gmm_input)  # 此时样本数至少为2，满足GMM要求
-        torch.save(self.gmm, self.expr_dir + "/" + "GMM.pt")
-        print(f"临时GMM训练完成，使用了{len(temp_gmm_input)}个样本（窗口大小{window_size}）")
-    
+        self.gmm.fit(samples)
+        torch.save(self.gmm, os.path.join(self.expr_dir, "GMM.pt"))
+        print(f"[TEMP GMM] fitted with {len(samples)} samples, window={window_size}")
+
     def val_dataloader(self):
         """
-        生成验证集数据加载器
-        随机选择时间序列中的点，若为有效起始时间(序列中无NaN值，且在指定月份范围内)，标记为3
-        邻近点标记为4，并将数据封装为与训练集一致的DataLoader
+        验证集：固定为训练期候选窗口中“最后 val_size 个”窗口（不随机）。
+        并追加窗口级 GMM 3 概率（来自 train_temp_gmm）。
         """
-        print("Begin to generate val_dataloader!")
+        print("Begin to generate val_dataloader (tail split)...")
 
-        near_len = self.pred_len
-        random.seed(self.config.val_seed)
-        
-        DATA = []
-        Label = []
-        ii = 0
-        
-        while ii < self.config.val_size:
-            # 随机选择起始索引
-            i = random.randint(self.pred_len, len(self.data) - self.lens - 1)
-            a1 = 0
-            a2 = -13
-            # 检查条件：序列无NaN值，且时间标签在指定范围内
-            if (
-                (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())
-                and (
-                    self.tag[i + self.seq_len] <= a1
-                    or a2 < self.tag[i + self.seq_len] < 0
-                    or 2 <= self.tag[i + self.seq_len] <= 3
-                )
-            ):
-                j = i + self.seq_len
-                # 先标邻居，再标中心，避免中心被覆盖
-                for k in range(1, self.seq_len + self.pred_len):  # 覆盖到左右各 seq_len+pred_len-1
-                    if j - k >= 0:
-                        self.tag[j - k] = 3
-                    if j + k < len(self.tag):
-                        self.tag[j + k] = 3
-                self.tag[j] = 2  # 最后再标中心，避免被 3 覆盖
+        if self.val_starts is None or self.val_centers is None:
+            raise RuntimeError("val_starts 未初始化，请先运行 read_dataset().")
 
-                point = self.data_time[i + self.seq_len]
-                self.val_points.append([point])
-                
-                # 准备验证数据和标签（与训练集一致的格式）
-                data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
-                label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
-                label0 = [[ff] for ff in label00]
+        DATA, Label = [], []
+        self.val_points = []
 
-                b = i + self.seq_len
-                e = i + self.seq_len + self.pred_len
+        for i in self.val_starts:
+            i = int(i)
+            j = i + self.seq_len
+            point = self.data_time[j]
+            self.val_points.append([point])
 
-                # 生成时间相关特征作为标签的一部分
-                label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                label2 = [[ff] for ff in label2]
+            data0 = np.array(self.sensor_data_norm1[i: i + self.seq_len], dtype=np.float32).reshape(self.seq_len, -1)
 
-                label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                label3 = [[ff] for ff in label3]
-                
-                label4 = np.array(self.data[(i + self.seq_len - 1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
-                label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
+            label00 = np.array(self.sensor_data_norm[i + self.seq_len: i + self.seq_len + self.pred_len], dtype=np.float32)
+            label0 = [[ff] for ff in label00]
 
-                # 合并标签的各个部分
-                label = np.concatenate((label0, label2), 1)
-                label = np.concatenate((label, label3), 1)
-                label = np.concatenate((label, label4), 1)
-                label = np.concatenate((label, label5), 1)
+            b = i + self.seq_len
+            e = i + self.seq_len + self.pred_len
 
-                DATA.append(data0)
-                Label.append(label)
-                ii = ii + 1
+            label2 = [[ff] for ff in cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+            label3 = [[ff] for ff in sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+
+            label4 = np.array(self.data[i + self.seq_len - 1: i + self.seq_len + self.pred_len - 1], dtype=np.float32).reshape(-1, 1)
+            label5 = np.array(self.data[i + self.seq_len: i + self.seq_len + self.pred_len], dtype=np.float32).reshape(-1, 1)
+
+            label = np.concatenate((label0, label2), 1)
+            label = np.concatenate((label, label3), 1)
+            label = np.concatenate((label, label4), 1)
+            label = np.concatenate((label, label5), 1)
+
+            DATA.append(data0)
+            Label.append(label)
 
         self.DATA_val = DATA
         self.Label_val = Label
-        
-        # 加载预训练的样本级高斯混合模型生成概率特征
-        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt", weights_only=False)
-        xx = np.array(self.DATA_val, np.float32)
-        gmm_prob30 = self.gmm.predict_proba(
-            np.squeeze(xx[:, -1 * self.gmm_l:, 1:2])
-        )
-        
-        # 对概率进行排序
-        order1 = np.argmin(self.gmm.weights_)
-        d0 = gmm_prob30[:, order1].reshape(-1, 1)
-        order2 = np.argmax(self.gmm.weights_)
-        d1 = gmm_prob30[:, order2].reshape(-1, 1)
-        for oi in range(3):
-            if oi != order1 and oi != order2:
-                order3 = oi
-        print("val gmm order is, ", order1, order2, order3)
-        d2 = gmm_prob30[:, order3].reshape(-1, 1)
-        gmm_prob3 = np.concatenate((d0, d1), 1)
-        gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
-        # 扩展概率维度以匹配训练数据的时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob2 = prob2.reshape(len(prob2), -1, 1)
-        prob = np.concatenate((prob0, prob1), 2)
-        prob = np.concatenate((prob, prob2), 2)
-        
-        # 将新生成的概率特征添加到验证数据中
-        DATA = np.concatenate((DATA, prob), 2)
-        print("Validation DATA shape, ", np.array(DATA).shape)
-        print("Validation Label, ", np.array(Label).shape)
 
-        # 创建数据集和数据加载器
+        # 追加窗口级 GMM 概率特征（3维，重复到 seq_len）
+        self.gmm = torch.load(os.path.join(self.expr_dir, "GMM.pt"), weights_only=False)
+        xx = np.array(self.DATA_val, np.float32)
+
+        gmm_prob30 = self.gmm.predict_proba(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
+        gmm_prob3 = self._reorder_probs_by_weights(gmm_prob30, self.gmm.weights_, mode="gmm")  # [B,3]
+
+        prob0 = gmm_prob3[:, 0:1].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob1 = gmm_prob3[:, 1:2].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob2 = gmm_prob3[:, 2:3].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob = np.concatenate((prob0, prob1, prob2), axis=2)
+
+        DATA = np.concatenate((DATA, prob), axis=2)
+
+        print("Validation DATA shape:", np.array(DATA).shape)
+        print("Validation Label shape:", np.array(Label).shape)
+
         dataset1 = TimeSeriesDataset(DATA, self.Label_val, self.config)
         self.val_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=False,  
+            shuffle=False,
             num_workers=2,
             pin_memory=True,
             collate_fn=dataset1.custom_collate_fn,
@@ -490,456 +432,300 @@ class DS2:
         val_dir = os.path.join(self.config.outf, self.config.name, "val")
         os.makedirs(val_dir, exist_ok=True)
         file_name = os.path.join(val_dir, "validation_timestamps_24avg.tsv")
-
-        pd_temp = pd.DataFrame(data=self.val_points, columns=["Hold Out Start"])
-        pd_temp.to_csv(file_name, sep="\t")
-        print("val set saved to : ", file_name)
-
-
+        pd.DataFrame(self.val_points, columns=["Hold Out Start"]).to_csv(file_name, sep="\t")
+        print("val set saved to:", file_name)
 
     def train_dataloader(self):
         """
-        生成训练集数据加载器
-        只能在val_dataloader之后运行
-        随机选择时间序列中的点，若为有效起始时间(序列中无NaN值，在指定月份范围内，且标签不是3和4)，
-        选择作为训练点，标记为5
+        训练集：只从 val_start_i 之前采样，且训练窗口需满足：
+          start + seq_len + pred_len <= val_start_i
+        避免与验证段重叠。
         """
-        print("Begin to generate train_dataloader!")
-        DATA = []  # 存储训练数据
-        Label = []  # 存储训练标签
+        print("Begin to generate train_dataloader (pre-val only)...")
 
-        # 随机选择训练数据
-        random.seed(self.config.train_seed)  # 设置随机种子保证结果可复现
-        ii = 0  # 普通样本计数器
-        jj = 0  # 过采样样本计数器
-        
-        # 循环直到收集到足够的训练样本
-        while ii < self.config.train_volume:
-            # 随机选择起始索引，确保有足够的上下文和预测空间
-            i = random.randint(self.pred_len * 4, len(self.sensor_data_norm) - 31 * self.pred_len * 4 - 1)
-            # 提取预测时间段的数据
-            pre1 = np.array(
-                self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
-            a1 = 0
-            a2 = -13
-            
-            # 判断数据是否为极端值，确定过采样参数
-            if np.max(pre1) > self.thre2:
-                a3 = self.os_h  # 过采样上限
-                max_index = np.argmax(pre1)  # 最大值索引
-            elif np.min(pre1) < self.thre1:
-                a3 = self.os_l  # 过采样下限
-                max_index = np.argmin(pre1)  # 最小值索引
-            a5 = self.iterval  # 过采样间隔
-            
-            # 过采样逻辑：对极端值进行过采样以平衡数据集
-            if (
-                (jj < self.config.train_volume * (self.oversampling / 100))  # 过采样数量限制
-                and (np.max(pre1) > self.thre2 or np.min(pre1) < self.thre1)  # 极端值判断
-                and (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any())  # 数据有效性检查
-                and (
-                    self.tag[i + self.seq_len] <= a1
-                    or a2 < self.tag[i + self.seq_len] < 0
-                )
-            ):
-                if a3 > 0:
-                    # 调整索引以定位到极端值附近
-                    i = i + max_index - 1
-                    i = i - a3 * a5
-                # 按照过采样参数生成多个样本
-                for kk in range(a3):  
-                    i = i + a5  # 按间隔移动索引
-                    # 检查索引有效性
-                    if (i > len(self.data) - 31 * self.pred_len * 4 - 1 or i < self.pred_len * 4):
-                        continue
-                    # 确保数据有效且未被标记为验证集或邻近区域
-                    if (
-                        not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()
-                        and self.tag[i + self.seq_len] != 2
-                        and self.tag[i + self.seq_len] != 3
-                        and self.tag[i + self.seq_len] != 4
-                    ):
-                        # NEW: 训练窗口与验证“禁区”是否相交？
-                        Ltr = i
-                        Rtr = i + self.seq_len + self.pred_len   # 等价 i + self.lens - 1
-                        win_tags = np.array(self.tag[Ltr:Rtr])   # 若 self.tag 是 list，转成 np.array
-                        if ((win_tags == 2).any() or (win_tags == 3).any()):
-                            continue  # 命中验证中心(2)或邻域(3)，丢弃这个候选
+        T = len(self.data)
+        lens = self.lens
+        train_cut = int(self.val_start_i)
+        gap_len = self.seq_len + self.pred_len
 
+        # 枚举训练候选窗口：窗口无 NaN + 月份条件 + 严格落在 val_start_i 之前
+        x_all = np.asarray(self.sensor_data_norm1, dtype=np.float32)
+        prefix = self._prefix_nan_any(x_all)
 
-                        # 准备训练数据和标签
-                        data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
-                        label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
-                        label0 = [[ff] for ff in label00]
+        i_min = self.pred_len * 4
+        i_max = min(T - lens - 1, train_cut - gap_len - 1)
+        if i_max <= i_min:
+            raise ValueError("切分后训练候选为空：请减小 val_size 或缩短 seq_len/pred_len。")
 
-                        b = i + self.seq_len
-                        e = i + self.seq_len + self.pred_len
+        starts = np.arange(i_min, i_max + 1, dtype=np.int32)
+        win_bad = prefix[starts + lens] - prefix[starts]
+        starts = starts[win_bad == 0]
 
-                        # 生成时间相关特征作为标签的一部分（周期性特征）
-                        label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                        label2 = [[ff] for ff in label2]
+        centers = starts + self.seq_len
+        month_vals = np.asarray(self.month_tag)[centers].astype(np.int32)
+        ok = np.array([self._month_ok_train(int(v)) for v in month_vals], dtype=bool)
+        starts = starts[ok]
 
-                        label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                        label3 = [[ff] for ff in label3]
+        # 严格不重叠
+        starts = starts[starts + gap_len <= train_cut]
 
-                        # 添加历史数据作为标签的一部分
-                        label4 = np.array(self.data[(i+self.seq_len-1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
-                        label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
+        if len(starts) == 0:
+            raise ValueError("训练候选为空：约束过强或数据缺失过多。")
 
-                        # 合并标签的各个部分
-                        label = np.concatenate((label0, label2), 1)
-                        label = np.concatenate((label, label3), 1)
-                        label = np.concatenate((label, label4), 1)
-                        label = np.concatenate((label, label5), 1)
+        print(f"[TRAIN] candidates={len(starts)}, target train_volume={self.config.train_volume}")
 
-                        self.tag[i + self.seq_len] = 4  # 标记为已使用的训练点
-                        jj = jj + 1  # 过采样计数器加1
-                        DATA.append(data0)
-                        Label.append(label)
+        # 过采样：先找极值窗口集合
+        extreme = []
+        for i in starts:
+            b = int(i + self.seq_len)
+            e = b + self.pred_len
+            pre1 = np.array(self.sensor_data_norm[b:e], dtype=np.float32)
+            if np.max(pre1) > self.thre2 or np.min(pre1) < self.thre1:
+                extreme.append(int(i))
+        extreme = np.asarray(extreme, dtype=np.int32)
+        print(f"[TRAIN] extreme_candidates={len(extreme)}")
 
-            # 非过采样数据处理
-            if (not np.isnan(self.sensor_data_norm1[i: i + self.lens]).any()) and (self.tag[i + self.seq_len] <= a1 or a2 < self.tag[i + self.seq_len] < 0):
-                Ltr = i
-                Rtr = i + self.seq_len + self.pred_len   # 等价 i + self.lens - 1
-                win_tags = np.array(self.tag[Ltr:Rtr])
-                if ((win_tags == 2).any() or (win_tags == 3).any()):
-                    continue
+        train_volume = int(self.config.train_volume)
+        n_over = int(train_volume * (self.oversampling / 100.0))
+        n_over = max(0, min(n_over, train_volume))
+        n_norm = train_volume - n_over
 
-                # 准备训练数据和标签（与过采样情况类似）
-                data0 = np.array(self.sensor_data_norm1[i: (i + self.seq_len)]).reshape(self.seq_len, -1)
-                label00 = np.array(self.sensor_data_norm[(i + self.seq_len): (i + self.seq_len + self.pred_len)])
-                label0 = [[ff] for ff in label00]
+        rng = np.random.default_rng(int(getattr(self.config, "train_seed", 0)))
 
-                b = i + self.seq_len
-                e = i + self.seq_len + self.pred_len
+        selected = []
+        if n_over > 0:
+            if len(extreme) > 0:
+                sel_over = rng.choice(extreme, size=n_over, replace=(len(extreme) < n_over))
+            else:
+                sel_over = rng.choice(starts, size=n_over, replace=(len(starts) < n_over))
+            selected.extend([int(x) for x in sel_over])
 
-                # 生成时间相关特征
-                label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                label2 = [[ff] for ff in label2]
+        if n_norm > 0:
+            sel_norm = rng.choice(starts, size=n_norm, replace=(len(starts) < n_norm))
+            selected.extend([int(x) for x in sel_norm])
 
-                label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-                label3 = [[ff] for ff in label3]
-                
-                # 添加历史数据特征
-                label4 = np.array(self.data[(i + self.seq_len - 1):(i + self.seq_len + self.pred_len - 1)]).reshape(-1, 1)
-                label5 = np.array(self.data[(i + self.seq_len): (i + self.seq_len + self.pred_len)]).reshape(-1, 1)
+        rng.shuffle(selected)
 
-                # 合并标签
-                label = np.concatenate((label0, label2), 1)
-                label = np.concatenate((label, label3), 1)
-                label = np.concatenate((label, label4), 1)
-                label = np.concatenate((label, label5), 1)
+        DATA, Label = [], []
+        for i in selected:
+            i = int(i)
+            data0 = np.array(self.sensor_data_norm1[i: i + self.seq_len], dtype=np.float32).reshape(self.seq_len, -1)
 
-                DATA.append(data0)
-                Label.append(label)
+            label00 = np.array(self.sensor_data_norm[i + self.seq_len: i + self.seq_len + self.pred_len], dtype=np.float32)
+            label0 = [[ff] for ff in label00]
 
-                self.tag[i + self.seq_len] = 4  # 标记为已使用的训练点
-                ii = ii + 1  # 普通样本计数器加1
+            b = i + self.seq_len
+            e = i + self.seq_len + self.pred_len
+
+            label2 = [[ff] for ff in cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+            label3 = [[ff] for ff in sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+
+            label4 = np.array(self.data[i + self.seq_len - 1: i + self.seq_len + self.pred_len - 1], dtype=np.float32).reshape(-1, 1)
+            label5 = np.array(self.data[i + self.seq_len: i + self.seq_len + self.pred_len], dtype=np.float32).reshape(-1, 1)
+
+            label = np.concatenate((label0, label2), 1)
+            label = np.concatenate((label, label3), 1)
+            label = np.concatenate((label, label4), 1)
+            label = np.concatenate((label, label5), 1)
+
+            DATA.append(data0)
+            Label.append(label)
+
+        if len(DATA) == 0:
+            raise ValueError("最终训练 DATA 为空：请检查 NaN/筛选条件/val_size。")
 
         self.DATA = DATA
         self.Label = Label
 
-        # 训练样本级高斯混合模型，生成新的概率特征
+        # 训练窗口级 GMM（用于后续 test/val 的窗口概率特征；这一步只用训练窗口，不泄漏）
         self.gmm = GaussianMixture(n_components=3)
         xx = np.array(self.DATA, np.float32)
-        # 使用训练数据的最后self.gmm_l个时间步的特征训练GMM
         self.gmm.fit(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
-        torch.save(self.gmm, self.expr_dir + "/" + "GMM.pt")  # 保存GMM模型
-        self.gmm_means = np.squeeze(self.gmm.means_)
-        print("time series gmm.weights are: ", self.gmm.weights_)
-        
-        # 使用GMM预测训练数据的概率分布
-        gmm_prob30 = self.gmm.predict_proba(
-            np.squeeze(np.array(self.DATA)[:, -1 * self.gmm_l:, 1:2])
-        )
-        # 对概率进行排序（按权重大小）
-        order1 = np.argmin(self.gmm.weights_)
-        d0 = gmm_prob30[:, order1].reshape(-1, 1)
-        order2 = np.argmax(self.gmm.weights_)
-        d1 = gmm_prob30[:, order2].reshape(-1, 1)
-        for oi in range(3):
-            if oi != order1 and oi != order2:
-                order3 = oi
-        print("new order is, ", order1, order2, order3)
-        d2 = gmm_prob30[:, order3].reshape(-1, 1)
-        gmm_prob3 = np.concatenate((d0, d1), 1)
-        gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
-        
-        # 扩展概率维度以匹配训练数据的时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob2 = prob2.reshape(len(prob2), -1, 1)
-        prob = np.concatenate((prob0, prob1), 2)
-        prob = np.concatenate((prob, prob2), 2)
-        
-        # 将新生成的概率特征添加到训练数据中
-        DATA = np.concatenate((DATA, prob), 2)
-        print("Train DATA shape, ", np.array(DATA).shape)
-        print("Train Label, ", np.array(Label).shape)
-        print("训练集数据的选取长度是： ", len(DATA))
-        print("训练集标签的选取长度是： ", len(self.Label))
+        torch.save(self.gmm, os.path.join(self.expr_dir, "GMM.pt"))
+        print("[GMM] window-level weights:", self.gmm.weights_)
 
+        # 生成训练集窗口级概率，并追加到 DATA => 特征维度变为 8（对齐模型切片）
+        gmm_prob30 = self.gmm.predict_proba(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
+        gmm_prob3 = self._reorder_probs_by_weights(gmm_prob30, self.gmm.weights_, mode="gmm")
 
+        prob0 = gmm_prob3[:, 0:1].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob1 = gmm_prob3[:, 1:2].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob2 = gmm_prob3[:, 2:3].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob = np.concatenate((prob0, prob1, prob2), axis=2)
 
-        # 创建数据集和数据加载器
-        dataset1 = TimeSeriesDataset(DATA, self.Label, self.config )
+        DATA = np.concatenate((DATA, prob), axis=2)
+
+        print("Train DATA shape:", np.array(DATA).shape)
+        print("Train Label shape:", np.array(Label).shape)
+        print("最终训练样本数:", len(DATA))
+
+        dataset1 = TimeSeriesDataset(DATA, self.Label, self.config)
         self.train_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=True,  
+            shuffle=True,
             num_workers=2,
             pin_memory=True,
-            collate_fn=dataset1.custom_collate_fn,  # 使用自定义的collate函数处理数据
+            collate_fn=dataset1.custom_collate_fn,
         )
 
-    # ----------------------- 数据集刷新 -----------------------
+    # ----------------------- refresh/test -----------------------
     def refresh_dataset(self, trainX):
         """
-        刷新数据集，使用已有的归一化参数(均值和标准差)
-        :param trainX: 新的训练数据集
+        刷新到包含测试期的更长序列：
+        - 使用训练期拟合的 mean/std
+        - 使用训练期拟合的 gm3/gmm0（避免泄漏）
         """
         print("刷新数据集********************")
         self.trainX = trainX
-        # 找到起始时间点的索引
-        start_num = self.trainX[
-            self.trainX["datetime"] == self.config.start_point
-        ].index.values[0]
-        print("for sensor ", self.config.reservoir_sensor, "start_num is: ", start_num)
-        # 找到训练结束时间点的索引
-        train_end = (self.trainX[self.trainX["datetime"] == self.config.train_end].index.values[0] - start_num)
-        print("train set total length is : ", train_end)
 
-        # 找到测试结束时间点的索引并加载数据集
+        start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
         k = self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0]
         self.sensor_data = self.trainX[start_num:k]
+
         self.data = np.array(self.sensor_data["value"].fillna(np.nan))
         self.data_time = np.array(self.sensor_data["datetime"].fillna(np.nan))
-        # 使用已有的均值和标准差进行归一化
-        # 使用训练阶段已经 fit 好的 StandardScaler 做标准化
-        sensor_norm_2d = self.value_scaler.transform(self.data.reshape(-1, 1))  # [N,1]
-        sensor_norm_2d = sensor_norm_2d.astype(np.float32)
 
-        self.sensor_data_norm = sensor_norm_2d.squeeze(-1)   # [N]
-        self.sensor_data_norm1 = sensor_norm_2d              # [N,1]
-
-        gmm_input = self.sensor_data_norm
-
-        # 清理数据，去除NaN值
-        clean_data = []
-        for ii in range(len(self.sensor_data_norm)):
-            if (self.sensor_data_norm[ii] is not None) and (np.isnan(self.sensor_data_norm[ii]) != 1):
-                clean_data.append(self.sensor_data_norm[ii])
-        sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
-        # 使用预训练的高斯混合模型预测概率
-        data_prob3 = self.gm3.predict_proba(sensor_data_prob)
-        weights3 = self.gm3.weights_
-        
-        # 计算数据点属于分布的概率和异常概率
-        prob_in_distribution3 = (data_prob3[:, 0] * weights3[0] + data_prob3[:, 1] * weights3[1] + data_prob3[:, 2] * weights3[2])
-        prob_like_outlier3 = 1 - prob_in_distribution3
-        prob_like_outlier3 = prob_like_outlier3.reshape((len(sensor_data_prob), 1))
-
-        # 恢复异常概率数组，保持与原始数据相同的长度
-        recover_data = []
-        temp = np.zeros(np.array(data_prob3[0]).shape)
-        jj = 0
-        for ii in range(len(self.sensor_data_norm)):
-            if (self.sensor_data_norm[ii] is not None) and (
-                np.isnan(self.sensor_data_norm[ii]) != 1
-            ):
-                recover_data.append(prob_like_outlier3[jj])
-                jj = jj + 1
-            else:
-                recover_data.append(self.sensor_data_norm[ii])
-        prob_like_outlier3 = np.array(recover_data, np.float32).reshape(len(self.sensor_data_norm), 1)
-        # 添加异常概率作为新特征
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, prob_like_outlier3), 1)
-
-        # 生成点级概率特征
-        clean_data = []
-        for ii in range(len(gmm_input)):
-            if (gmm_input[ii] is not None) and (np.isnan(gmm_input[ii]) != 1):
-                clean_data.append(gmm_input[ii])
-        sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
-        
-        # 使用预训练的高斯混合模型预测概率并排序
-        self.gmm0_means = np.squeeze(self.gmm0.means_)
-        weights3 = self.gmm0.weights_
-        data_prob30 = self.gmm0.predict_proba(sensor_data_prob)
-        order1 = np.argmax(weights3)
-        d0 = data_prob30[:, order1].reshape(-1, 1)
-        order2 = np.argmin(weights3)
-        d1 = data_prob30[:, order2].reshape(-1, 1)
-        for oi in range(3):
-            if oi != order1 and oi != order2:
-                order3 = oi
-        print("new order is, ", order1, order2, order3)
-        data_prob3 = np.concatenate((d0, d1), 1)
-        data_prob3 = np.concatenate((data_prob3, data_prob30[:, order3].reshape(-1, 1)), 1)
-
-        # 恢复概率数组，保持与原始数据相同的长度
-        recover_prob = []
-        temp = np.zeros(np.array(data_prob3[0]).shape)
-        jj = 0
-        for ii in range(len(gmm_input)):
-            if (gmm_input[ii] is not None) and (np.isnan(gmm_input[ii]) != 1):
-                recover_prob.append(data_prob3[jj])
-                jj = jj + 1
-            else:
-                recover_prob.append(temp)
-        recover_prob = np.array(recover_prob, np.float32).reshape(len(gmm_input), -1)
-        # 添加排序后的概率作为新特征
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 0:1]), 1)
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 1:2]), 1)
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 2:3]), 1)
-        print("Finish prob indicator updating.")
-
-        # 更新时间相关特征
-        self.tag = gen_month_tag(self.sensor_data)
+        # 时间标签
+        self.month_tag = gen_month_tag(self.sensor_data)
         self.month, self.day, self.hour = gen_time_feature(self.sensor_data)
 
-        # 生成日期的正弦和余弦特征
-        cos_d = cos_date(self.month, self.day, self.hour)
-        cos_d = [[x] for x in cos_d]
-        sin_d = sin_date(self.month, self.day, self.hour)
-        sin_d = [[x] for x in sin_d]
+        # 归一化（用训练期参数）
+        self.sensor_data_norm = r_log_std_normalization_1(self.data, self.mean, self.std)
+
+        T = len(self.sensor_data_norm)
+
+        # 加载/使用训练期 gm3、gmm0
+        gm3_path = os.path.join(self.expr_dir, "GM3.pt")
+        gmm0_path = os.path.join(self.expr_dir, "GMM0.pt")
+        self.gm3 = torch.load(gm3_path, weights_only=False) if os.path.exists(gm3_path) else self.gm3
+        self.gmm0 = torch.load(gmm0_path, weights_only=False) if os.path.exists(gmm0_path) else self.gmm0
+
+        # outlier prob
+        full_clean = self.sensor_data_norm[~np.isnan(self.sensor_data_norm)].astype(np.float32).reshape(-1, 1)
+        data_prob3 = self.gm3.predict_proba(full_clean)
+        weights3 = self.gm3.weights_.reshape(-1)
+
+        prob_in = data_prob3[:, 0] * weights3[0] + data_prob3[:, 1] * weights3[1] + data_prob3[:, 2] * weights3[2]
+        prob_out = (1.0 - prob_in).reshape(-1, 1).astype(np.float32)
+
+        prob_out_full = np.full((T, 1), np.nan, dtype=np.float32)
+        j = 0
+        for i in range(T):
+            if not np.isnan(self.sensor_data_norm[i]):
+                prob_out_full[i, 0] = prob_out[j, 0]
+                j += 1
+
+        value_full = np.array(self.sensor_data_norm, np.float32).reshape(T, 1)
+        feat = np.concatenate([prob_out_full, value_full], axis=1)
+
+        # gmm0 prob
+        prob0 = self.gmm0.predict_proba(full_clean)
+        prob0 = self._reorder_probs_by_weights(prob0, self.gmm0.weights_, mode="gmm0")
+
+        prob0_full = np.zeros((T, 3), dtype=np.float32)
+        j = 0
+        for i in range(T):
+            if not np.isnan(self.sensor_data_norm[i]):
+                prob0_full[i, :] = prob0[j, :]
+                j += 1
+            else:
+                prob0_full[i, :] = 0.0
+
+        self.sensor_data_norm1 = np.concatenate([feat, prob0_full], axis=1)
+
+        print("[REFRESH] sensor_data_norm1 shape:", np.asarray(self.sensor_data_norm1).shape)
 
     def gen_test_data(self):
-
         self.test_points = []
         self.refresh_dataset(self.trainX)
         print("Begin to generate test_points!")
 
         start_num = self.trainX[self.trainX["datetime"] == self.config.start_point].index.values[0]
-
-        begin_num = (self.trainX[self.trainX["datetime"] == self.test_start_time].index.values[0]- start_num)
-        end_num = (self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0] - start_num)
+        begin_num = self.trainX[self.trainX["datetime"] == self.test_start_time].index.values[0] - start_num
+        end_num = self.trainX[self.trainX["datetime"] == self.test_end_time].index.values[0] - start_num
 
         iterval = self.roll
+        for i in range(int((end_num - begin_num - self.pred_len) / iterval)):
+            idx = begin_num + i * iterval
+            if idx - self.seq_len < 0 or idx + self.pred_len >= len(self.data):
+                continue
+            seg = np.array(self.data[idx - self.seq_len: idx + self.pred_len])
+            if not np.isnan(seg).any():
+                self.test_points.append([self.data_time[idx]])
 
-        for i in range(int((end_num - begin_num - self.pred_len) / iterval)):  # do inference every 24 hours
-            point = self.data_time[begin_num + i * iterval]
-            if not np.isnan(
-                np.array(
-                    self.data[
-                        begin_num
-                        + i * iterval
-                        - self.seq_len: begin_num
-                        + i * iterval
-                        + self.pred_len
-                    ]
-                )
-            ).any():
-                self.test_points.append([point])
         self.test_dataloader()
 
     def test_dataloader(self):
-        """
-        生成测试集数据加载器
-        基于已生成的测试点，准备测试数据并封装为DataLoader
-        """
         print("Begin to generate test_dataloader!")
-        DATA = []
-        Label = []
-        
-        # 加载预训练的高斯混合模型
-        self.gm3 = torch.load(self.expr_dir + "/" + "GM3.pt", weights_only=False)
-        self.gmm0 = torch.load(self.expr_dir + "/" + "GMM0.pt", weights_only=False)
-        self.gmm = torch.load(self.expr_dir + "/" + "GMM.pt", weights_only=False)
-        
-        # 遍历每个测试点
-        for point_idx in range(len(self.test_points)):
-            # 找到测试点在数据中的索引
-            datetime = self.test_points[point_idx][0]
+        DATA, Label = [], []
+
+        # 载入训练得到的窗口级 GMM（不要用临时的）
+        gmm_path = os.path.join(self.expr_dir, "GMM.pt")
+        self.gmm = torch.load(gmm_path, weights_only=False)
+
+        for p in self.test_points:
+            datetime = p[0]
             i = np.where(self.data_time == datetime)[0][0]
-            
-            # 确保数据范围内无NaN值
-            if np.isnan(self.sensor_data_norm1[i-self.seq_len: i+self.pred_len]).any():
+
+            if i - self.seq_len < 0 or i + self.pred_len >= len(self.data):
                 continue
-                
-            # 准备测试数据和标签（格式与训练/验证集一致）
-            data0 = np.array(self.sensor_data_norm1[i-self.seq_len: i]).reshape(self.seq_len, -1)
-            label00 = np.array(self.sensor_data_norm[i: i+self.pred_len])
+            if np.isnan(np.asarray(self.sensor_data_norm1[i - self.seq_len: i + self.pred_len])).any():
+                continue
+
+            data0 = np.array(self.sensor_data_norm1[i - self.seq_len: i], dtype=np.float32).reshape(self.seq_len, -1)
+
+            label00 = np.array(self.sensor_data_norm[i: i + self.pred_len], dtype=np.float32)
             label0 = [[ff] for ff in label00]
-            
+
             b = i
             e = i + self.pred_len
-            
-            # 生成时间相关特征作为标签的一部分
-            label2 = cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-            label2 = [[ff] for ff in label2]
-            label3 = sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])
-            label3 = [[ff] for ff in label3]
-            
-            label4 = np.array(self.data[(i-1):(i+self.pred_len-1)]).reshape(-1, 1)
-            label5 = np.array(self.data[i: i+self.pred_len]).reshape(-1, 1)
-            
-            # 合并标签的各个部分
+
+            label2 = [[ff] for ff in cos_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+            label3 = [[ff] for ff in sin_date(self.month[b:e], self.day[b:e], self.hour[b:e])]
+
+            label4 = np.array(self.data[i - 1: i + self.pred_len - 1], dtype=np.float32).reshape(-1, 1)
+            label5 = np.array(self.data[i: i + self.pred_len], dtype=np.float32).reshape(-1, 1)
+
             label = np.concatenate((label0, label2), 1)
             label = np.concatenate((label, label3), 1)
             label = np.concatenate((label, label4), 1)
             label = np.concatenate((label, label5), 1)
-            
+
             DATA.append(data0)
             Label.append(label)
-        
+
         self.DATA_test = DATA
         self.Label_test = Label
-        
-        # 生成概率特征（与训练/验证集一致的处理方式）
+
+        # 追加窗口级 GMM 概率（3维）到测试 DATA
         xx = np.array(self.DATA_test, np.float32)
         gmm_prob30 = self.gmm.predict_proba(np.squeeze(xx[:, -1 * self.gmm_l:, 1:2]))
-        
-        # 对概率进行排序
-        order1 = np.argmin(self.gmm.weights_)
-        d0 = gmm_prob30[:, order1].reshape(-1, 1)
-        order2 = np.argmax(self.gmm.weights_)
-        d1 = gmm_prob30[:, order2].reshape(-1, 1)
-        for oi in range(3):
-            if oi != order1 and oi != order2:
-                order3 = oi
-        print("test gmm order is, ", order1, order2, order3)
-        d2 = gmm_prob30[:, order3].reshape(-1, 1)
-        gmm_prob3 = np.concatenate((d0, d1), 1)
-        gmm_prob3 = np.concatenate((gmm_prob3, d2), 1)
-        
-        # 扩展概率维度以匹配时间维度
-        prob0 = gmm_prob3[:, 0].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob0 = prob0.reshape(len(prob0), -1, 1)
-        prob1 = gmm_prob3[:, 1].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob1 = prob1.reshape(len(prob1), -1, 1)
-        prob2 = gmm_prob3[:, 2].reshape(-1, 1).repeat(self.seq_len, axis=1)
-        prob2 = prob2.reshape(len(prob2), -1, 1)
-        prob = np.concatenate((prob0, prob1), axis=2)
-        prob = np.concatenate((prob, prob2), axis=2)
-        
-        # 将概率特征添加到测试数据中
-        DATA = np.concatenate((DATA, prob), 2)
-        
-        print("Test DATA shape, ", np.array(DATA).shape)
-        print("Test Label, ", np.array(Label).shape)
-        
-        # 创建测试数据集和数据加载器
-        from data_provider.data_getitem import TimeSeriesDataset
+        gmm_prob3 = self._reorder_probs_by_weights(gmm_prob30, self.gmm.weights_, mode="gmm")
+
+        prob0 = gmm_prob3[:, 0:1].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob1 = gmm_prob3[:, 1:2].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob2 = gmm_prob3[:, 2:3].repeat(self.seq_len, axis=1).reshape(len(gmm_prob3), -1, 1)
+        prob = np.concatenate((prob0, prob1, prob2), axis=2)
+
+        DATA = np.concatenate((DATA, prob), axis=2)
+
+        print("Test DATA shape:", np.array(DATA).shape)
+        print("Test Label shape:", np.array(Label).shape)
+
         dataset1 = TimeSeriesDataset(DATA, self.Label_test, self.config)
         self.test_data_loader = DataLoader(
             dataset1,
             self.batch_size,
-            shuffle=False,  
+            shuffle=False,
             num_workers=2,
             pin_memory=True,
             collate_fn=dataset1.custom_collate_fn,
         )
-        
-        # 保存测试集时间戳
+
         test_dir = os.path.join(self.config.outf, self.config.name, "test")
         os.makedirs(test_dir, exist_ok=True)
         file_name = os.path.join(test_dir, "test_timestamps_24avg.tsv")
-        
-        pd_temp = pd.DataFrame(data=self.test_points, columns=["Test Start"])
-        pd_temp.to_csv(file_name, sep="\t")
-        print("Test set saved to : ", file_name)
+        pd.DataFrame(self.test_points, columns=["Test Start"]).to_csv(file_name, sep="\t")
+        print("Test set saved to:", file_name)
         return self.test_data_loader

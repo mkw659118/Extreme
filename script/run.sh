@@ -20,8 +20,8 @@ do
       --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --d_model 256 \
-      --epochs 200\
+      --d_model 96 \
+      --epochs 50\
       --patience 30\
       --train_volume 40000\
       --rounds 1\
@@ -45,8 +45,8 @@ do
       --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --d_model 256 \
-      --epochs 200\
+      --d_model 96 \
+      --epochs 50\
       --patience 30\
       --train_volume 40000\
       --rounds 1\

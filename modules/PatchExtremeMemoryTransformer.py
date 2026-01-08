@@ -59,44 +59,6 @@ class RetrievalResidualMemory(nn.Module):
             self.ptr.copy_(torch.tensor((p + 1) % self.capacity, device=self.ptr.device))
             self.size.copy_(torch.tensor(min(int(self.size.item()) + 1, self.capacity), device=self.size.device))
 
-    # @torch.no_grad()
-    # def retrieve(self, query: torch.Tensor, sample_ids: torch.Tensor = None, block_same_id: bool = True):
-    #     """
-    #     query: [B, key_dim] (建议外部先 normalize)
-    #     return:
-    #       residual_hat: [B, pred_len, 1]
-    #       sims_topk:    [B, k]
-    #     """
-    #     B = query.size(0)
-    #     n = int(self.size.item())
-    #     if n == 0:
-    #         return torch.zeros(B, self.pred_len, 1, device=query.device), torch.zeros(B, self.topk, device=query.device)
-
-    #     k = min(self.topk, n)
-
-    #     keys = self.keys[:n].to(query.device)            # [n, key_dim]
-    #     values = self.values[:n].to(query.device)        # [n, pred_len, 1]
-    #     ids = self.ids[:n].to(query.device)              # [n]
-
-    #     # cosine sim (query 已 normalize 的话就是点积)
-    #     sim = query @ keys.t()                           # [B, n]
-
-    #     # 可选：训练时屏蔽“同一窗口/同一样本”避免泄漏
-    #     if block_same_id and (sample_ids is not None):
-    #         # sample_ids: [B] -> [B,1] compare with [1,n]
-    #         mask = (sample_ids.view(B, 1) == ids.view(1, n))
-    #         sim = sim.masked_fill(mask, -1e9)
-
-    #     sims_topk, idx_topk = torch.topk(sim, k=k, dim=-1)  # [B,k], [B,k]
-
-    #     tau = F.softplus(self.tau_raw) + 1e-3
-    #     w = torch.softmax(sims_topk / tau, dim=-1)          # [B,k]
-
-    #     # gather values: [B,k,pred_len,1]
-    #     gathered = values[idx_topk]                         # PyTorch advanced indexing
-    #     residual_hat = (w.view(B, k, 1, 1) * gathered).sum(dim=1)  # [B,pred_len,1]
-
-    #     return residual_hat, sims_topk
     def retrieve(self, query: torch.Tensor, sample_ids: torch.Tensor = None, block_same_id: bool = True):
         """
         query: [B, key_dim]
@@ -189,174 +151,6 @@ class QualityEstimatorLite(nn.Module):
         beta = beta.view(-1, 1, 1).expand(-1, y_base.size(1), 1)               # [B,pred_len,1]
         return loss_hat, beta
 
-
-class TinyBottleneckMemory(nn.Module):
-    """
-    超轻瓶颈记忆：
-    - 仅在 r 维（远小于 d_model）维护 3 个原型；
-    - 上/下投影用固定正交矩阵（buffer，不训练）；
-    - 读：按步混合 -> [B, L_pred, d]；
-    - 写：EMA（no_grad），带轻量正交化；
-    - 另提供按步置信度门控（基于 ww 熵）。
-    """
-
-    def __init__(self, d_model: int, r: int = 8, momentum: float = 0.05, init_std: float = 1e-3):
-        """
-        初始化 TinyBottleneckMemory。
-
-        参数：
-        - d_model: 输入/输出特征维度 d
-        - r: 瓶颈维度（r << d）
-        - momentum: 写入时 EMA 的动量系数
-        - init_std: 原型初始化的标准差
-
-        初始化内容：
-        1) 构造固定正交投影矩阵 P ∈ R^{d×r}（buffer，不训练），用于 d→r 与 r→d 投影；
-        2) 初始化 3 个 r 维原型 z_protos（单位范数），作为瓶颈空间的记忆原型；
-        3) 初始化 seen 计数器，记录每个原型累计“被使用/写入”的权重总和。
-        """
-        super().__init__()
-        self.d_model = d_model
-        self.r = r
-        self.momentum = momentum
-
-        with torch.no_grad():
-            A = torch.randn(d_model, r)
-            Q, _ = torch.linalg.qr(A, mode='reduced')  # Q: [d, r]
-        self.register_buffer("P", Q)  # 固定正交投影（不参与训练）
-
-        z = torch.randn(3, r) * init_std
-        z = F.normalize(z, dim=-1)
-        self.register_buffer("z_protos", z)           # 3 个瓶颈原型（不参与梯度）
-        self.register_buffer("seen", torch.zeros(3))  # 记录原型使用强度（不参与梯度）
-
-    @torch.no_grad()
-    def _orthogonalize_(self):
-        """
-        对 3 个原型在 r 维空间做轻量 Gram-Schmidt 正交化（就地更新 z_protos）。
-
-        目的：
-        - 降低原型之间的冗余/塌缩，提高原型多样性；
-        - 每次写入后执行一次，成本很低（仅 3 个向量）。
-
-        实现：
-        - 依次对每个原型减去在之前原型方向上的投影；
-        - 再对每个原型做 L2 归一化；
-        - 最终 copy_ 回 z_protos。
-        """
-        Z = self.z_protos.detach().clone()  # [3, r]
-        for i in range(Z.size(0)):
-            for j in range(i):
-                coef = torch.dot(Z[i], Z[j])
-                Z[i] = Z[i] - coef * Z[j]
-            Z[i] = F.normalize(Z[i], dim=-1)
-        self.z_protos.copy_(Z)
-
-    @torch.no_grad()
-    def write(self, ww: torch.Tensor, q_hist: torch.Tensor):
-        """
-        写入记忆：根据 ww（每步 3 原型权重）与 q_hist（历史摘要向量）更新瓶颈原型 z_protos。
-
-        输入：
-        - ww:     [B, L_pred, 3]，每个时间步对 3 个原型的权重（通常来自门控/混合系数）
-        - q_hist: [B, d]，历史表示（例如 encoder 的 summary/query）
-
-        写入流程：
-        1) 在时间维上对 ww 求均值，得到样本级原型权重 p = mean_t ww ∈ [B,3]；
-        2) 使用固定投影 P 将 q_hist 从 d 维降到 r 维：z_hist = normalize(q_hist @ P) ∈ [B,r]；
-        3) 对每个原型 r_idx：
-           - 按 p[:, r_idx] 对 z_hist 加权聚合得到该原型的“目标方向” z_r；
-           - 用 EMA 更新原型：proto ← normalize((1-m)*proto + m*z_r)；
-           - 累计 seen[r_idx]；
-        4) 写入结束后执行一次轻量正交化 _orthogonalize_()。
-        """
-        p = ww.mean(dim=1)                      # [B, 3]
-        z_hist = (q_hist @ self.P).contiguous() # [B, r]
-        z_hist = F.normalize(z_hist, dim=-1)
-
-        eps = 1e-6
-        for r_idx in range(3):
-            pr = p[:, r_idx:r_idx + 1]          # [B, 1]
-            weight_sum = pr.sum()
-            if float(weight_sum) > 0.0:
-                z_r = (pr * z_hist).sum(dim=0) / (weight_sum + eps)  # [r]
-                new_proto = F.normalize(
-                    (1.0 - self.momentum) * self.z_protos[r_idx] + self.momentum * z_r,
-                    dim=-1
-                )
-                self.z_protos[r_idx].copy_(new_proto)
-                self.seen[r_idx] += weight_sum
-
-        self._orthogonalize_()
-
-    @torch.no_grad()
-    def read_mixture(self, ww: torch.Tensor) -> torch.Tensor:
-        """
-        读取记忆（按步混合）：根据 ww 生成每个预测步的上下文向量，并升回 d 维。
-
-        输入：
-        - ww: [B, L_pred, 3]，每步对 3 原型的混合权重
-
-        输出：
-        - ctx_d: [B, L_pred, d]，按步上下文（先在 r 维混合，再用 P^T 升维）
-
-        计算：
-        - ctx_r = ww @ z_protos      -> [B, L, r]
-        - ctx_d = ctx_r @ P.T        -> [B, L, d]
-        """
-        ctx_r = ww @ self.z_protos   # [B, L, r]
-        ctx_d = ctx_r @ self.P.T     # [B, L, d]
-        return ctx_d
-
-    @torch.no_grad()
-    def read_per_proto(self) -> torch.Tensor:
-        """
-        读取记忆（按原型）：返回 3 个原型各自升到 d 维后的向量。
-
-        输出：
-        - [3, d]，每个原型对应一个 d 维向量（z_protos @ P.T）
-        """
-        ctx_d = self.z_protos @ self.P.T  # [3, d]
-        return ctx_d
-
-    @torch.no_grad()
-    def confidence_gate(self, ww: torch.Tensor, alpha: float = 2.0) -> torch.Tensor:
-        """
-        基于熵的置信度门控：从 ww 的不确定性（熵）生成每步 gate 系数。
-
-        直觉：
-        - ww 越“尖”（越确定）熵越低，gate 越接近 1；
-        - ww 越“平”（越不确定）熵越高，gate 越接近 0；
-        - alpha 控制门控曲线的陡峭程度。
-
-        输入：
-        - ww: [B, L, 3]
-        - alpha: 指数超参，默认 2.0
-
-        输出：
-        - gate: [B, L, 1]，公式：gate = (1 - H/ln3)^alpha
-        """
-        e = -(ww.clamp_min(1e-8) * ww.clamp_min(1e-8).log()).sum(dim=-1)  # [B, L]
-        e = e / math.log(3.0)
-        gate = (1.0 - e).pow(alpha).unsqueeze(-1)  # [B, L, 1]
-        return gate
-
-    @torch.no_grad()
-    def reset(self):
-        """
-        重置记忆：将原型 z_protos 与计数器 seen 恢复到初始状态。
-
-        操作：
-        - z_protos 重新以 N(0, 1e-3) 初始化并做单位归一化；
-        - seen 清零。
-        """
-        self.z_protos.normal_(std=1e-3)
-        self.z_protos.copy_(F.normalize(self.z_protos, dim=-1))
-        self.seen.zero_()
-
-
-
-
 def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
     # 使传入的 win_size 生效；非法则回退为 seq_len // 2
     if win_size is None or win_size <= 0 or win_size > seq_len:
@@ -377,7 +171,7 @@ def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff=None, dropout=0.1):
+    def __init__(self, d_model, num_heads, d_ff=None, dropout=0.3):
         super().__init__()
         d_ff = d_ff or (d_model * 4)
         self.norm1 = nn.RMSNorm(d_model)
@@ -446,7 +240,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.num_patches = self.total_len // self.patch_len  # P
 
         # ---- Embedding ----
-        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.2)
+        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=0.3)
 
         # ---- Prediction tokens (append to history) ----
         self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
@@ -508,11 +302,11 @@ class ThreeExpertPatchTransformer(nn.Module):
         # ---- Shared backbone blocks ----
         def _make_backbone():
             intra = nn.ModuleList([
-                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.3)
                 for _ in range(self.num_layers_intra_patch)
             ])
             inter = nn.ModuleList([
-                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.2)
+                TransformerBlock(d_model, num_heads, d_ff=None, dropout=0.3)
                 for _ in range(self.num_layers_inter_patch)
             ])
             return intra, inter
@@ -522,18 +316,6 @@ class ThreeExpertPatchTransformer(nn.Module):
 
         # ---- Temperature for ww softmax ----
         self.tau_raw = nn.Parameter(torch.tensor(0.0))  # tau = softplus + 1e-3
-
-        # ---------- TinyBottleneckMemory (optional) ----------
-        if self.use_memory and self.mem_mode == "tbm":
-            self.memory = TinyBottleneckMemory(d_model=self.d_model, r=self.r, momentum=self.momentum)
-            self.mem_stepA_raw = nn.Parameter(torch.tensor(0.0))
-            self.mem_stepB_raw = nn.Parameter(torch.tensor(0.0))
-            self.mem_stepC_raw = nn.Parameter(torch.tensor(0.0))
-            self.mem_dropout = nn.Dropout(p=0.2)
-
-            # expert->proto mapping and temperature
-            self.expert2proto = nn.Parameter(torch.eye(3))
-            self.proto_tau_raw = nn.Parameter(torch.tensor(0.0))
 
         # ---------- Tail refinement (one extra layer on prediction tail) ----------
         self.tail_refine = nn.Sequential(
@@ -673,44 +455,6 @@ class ThreeExpertPatchTransformer(nn.Module):
         finalA = final_shared
         finalB = final_shared
         finalC = final_shared
-
-        # ---- memory injection (optional) ----
-        if self.use_memory and self.mem_mode == "tbm":
-            gate_conf = self.memory.confidence_gate(ww.detach())  # [B, L, 1]
-
-            # expert->proto mapping
-            proto_logits = ww.detach() @ self.expert2proto  # [B,L,3]
-            proto_tau = F.softplus(self.proto_tau_raw) + 1e-3
-            ww_proto = torch.softmax(proto_logits / proto_tau, dim=-1)  # [B,L,3]
-
-            # read mixture context
-            ctx = self.memory.read_mixture(ww_proto).detach()  # [B,L,d_model]
-            base = self.mem_dropout(torch.tanh(ctx))           # [B,L,d_model]
-
-            w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]
-            sA = 0.6 * torch.tanh(self.mem_stepA_raw)
-            sB = 0.6 * torch.tanh(self.mem_stepB_raw)
-            sC = 0.6 * torch.tanh(self.mem_stepC_raw)
-
-            injA = sA * (base * w0 * gate_conf)
-            injB = sB * (base * w1 * gate_conf)
-            injC = sC * (base * w2 * gate_conf)
-
-            def inject_tail(base_tokens, inj_tail):
-                head = base_tokens[:, :-inj_tail.size(1), :]
-                tail = base_tokens[:, -inj_tail.size(1):, :] + inj_tail
-                return torch.cat([head, tail], dim=1)
-
-            finalA = inject_tail(finalA, injA)
-            finalB = inject_tail(finalB, injB)
-            finalC = inject_tail(finalC, injC)
-
-            # write memory during training
-            if self.training:
-                q_hist = (0.5 * x_emb_hist[:, -1, :] + 0.5 * x_emb_hist.mean(dim=1)).detach()
-                conf = gate_conf.mean(dim=1, keepdim=True)  # [B,1,1]
-                ww_write = ww_proto * conf                  # [B,L,3]
-                self.memory.write(ww_write, q_hist)
 
         # ---- tail refine (one extra layer) ----
         def refine_tail_tokens(tokens):
