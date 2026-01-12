@@ -20,8 +20,8 @@ do
       --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --d_model 96 \
-      --epochs 50\
+      --d_model 256 \
+      --epochs 200\
       --patience 30\
       --train_volume 40000\
       --rounds 1\
@@ -45,10 +45,36 @@ do
       --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --d_model 96 \
-      --epochs 50\
+      --d_model 256 \
+      --epochs 200\
       --patience 30\
-      --train_volume 40000\
+      --train_volume 50000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done
+
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 15\
+      --train_volume 50000\
       --rounds 1\
       --revin False\
       --oversampling 40\
@@ -59,3 +85,127 @@ do
   done
 done
 
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 15\
+      --train_volume 40000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 10\
+      --train_volume 20000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory True\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 10\
+      --train_volume 20000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 15\
+      --train_volume 20000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory True\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done
+
+# 外循环：预测长度
+for pred in "${pred_lens[@]}"
+do
+  # 内循环：数据集
+  for sensor in "${reservoir_sensors[@]}"
+  do
+    echo ">> Running with pred_len=${pred}, reservoir_sensor=${sensor}"
+    python "run_train.py" \
+      --config "PatchExtremeMemoryTransformerConfig" \
+      --reservoir_sensor "$sensor" \
+      --pred_len "$pred" \
+      --d_model 128 \
+      --epochs 100\
+      --patience 15\
+      --train_volume 20000\
+      --rounds 1\
+      --revin False\
+      --oversampling 40\
+      --use_memory False\
+      --loss_func 'L1Loss'\
+      --bs 256\
+      --use_decoding False
+  done
+done

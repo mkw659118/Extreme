@@ -12,6 +12,22 @@ from layers.embedding import DataEmbedding
 from layers.embedding import PositionalEmbedding
 from modules.IFT_EncDec import ImplicitForecaster
 
+class AttnPool1D(nn.Module):
+    """
+    让 key pooling 对“形状/局部模式”更敏感，替代 mean pooling。
+    tokens: [B, L, D] -> pooled: [B, D]
+    """
+    def __init__(self, d_model: int):
+        super().__init__()
+        self.score = nn.Linear(d_model, 1)
+
+    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+        # scores: [B, L, 1] -> weights: [B, L, 1]
+        scores = self.score(tokens)
+        weights = torch.softmax(scores, dim=1)
+        pooled = (weights * tokens).sum(dim=1)  # [B, D]
+        return pooled
+
 class RetrievalResidualMemory(nn.Module):
     """
     检索残差记忆库：
@@ -275,13 +291,48 @@ class ThreeExpertPatchTransformer(nn.Module):
         # mem_key_dim=64
         # refine_d=64  (QualityEstimatorLite 用)
 
+        # if self.use_memory and self.mem_mode == "retrieval":
+        #     self.mem_key_dim = getattr(config, "mem_key_dim", 64)
+        #     self.mem_size = getattr(config, "mem_size", 8192)
+        #     self.mem_topk = getattr(config, "mem_topk", 8)
+
+        #     # 用共享骨干的历史 embedding 做 query/key（更稳，不依赖手工 x 切片）
+        #     self.mem_key_proj = nn.Linear(self.d_model, self.mem_key_dim)
+
+        #     self.memory = RetrievalResidualMemory(
+        #         key_dim=self.mem_key_dim,
+        #         pred_len=self.pred_len,
+        #         capacity=self.mem_size,
+        #         topk=self.mem_topk
+        #     )
+
+        #     self.qe = QualityEstimatorLite(
+        #         seq_len=self.seq_len,
+        #         pred_len=self.pred_len,
+        #         c_in=self.c_in,
+        #         k=self.mem_topk,
+        #         d=getattr(config, "refine_d", 64)
+        #     )
         if self.use_memory and self.mem_mode == "retrieval":
             self.mem_key_dim = getattr(config, "mem_key_dim", 64)
             self.mem_size = getattr(config, "mem_size", 8192)
             self.mem_topk = getattr(config, "mem_topk", 8)
 
-            # 用共享骨干的历史 embedding 做 query/key（更稳，不依赖手工 x 切片）
-            self.mem_key_proj = nn.Linear(self.d_model, self.mem_key_dim)
+            # 目标列（差分序列里哪个维度是 target 的 Δy），默认 0
+            self.target_col = int(getattr(config, "target_col", 0))
+
+            # 差分统计量维度：std, mean_abs, max_abs, last_delta 共 4 个
+            self.stats_dim = 4
+
+            # 注意力池化替代 mean pooling（更“形状敏感”）
+            self.key_pool = AttnPool1D(self.d_model)
+
+            # key 输入 = pooled_emb(D) + stats(4) -> key_dim
+            self.mem_key_proj = nn.Sequential(
+                nn.Linear(self.d_model + self.stats_dim, self.mem_key_dim),
+                nn.GELU(),
+                nn.Linear(self.mem_key_dim, self.mem_key_dim),
+            )
 
             self.memory = RetrievalResidualMemory(
                 key_dim=self.mem_key_dim,
@@ -427,6 +478,19 @@ class ThreeExpertPatchTransformer(nn.Module):
 
         # 4) fuse + norm
         return post_norm(intra_tokens + inter_tokens)
+    def _delta_stats_vec(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        x 是差分序列: [B, seq_len, c_in]
+        返回 stats_vec: [B, 4] = [std, mean_abs, max_abs, last_delta]
+        """
+        delta = x[:, :, self.target_col:self.target_col + 1]      # [B, seq, 1]
+        std = delta.std(dim=1, keepdim=True, unbiased=False)      # [B, 1, 1]
+        mean_abs = delta.abs().mean(dim=1, keepdim=True)          # [B, 1, 1]
+        max_abs = delta.abs().amax(dim=1, keepdim=True)           # [B, 1, 1]
+        last = delta[:, -1:, :]                                   # [B, 1, 1]
+        stats = torch.cat([std, mean_abs, max_abs, last], dim=-1)  # [B, 1, 4]
+        return stats.squeeze(1)                                   # [B, 4]
+
 
     def forward(self, x: torch.Tensor, x_mark=None, y_true=None, sample_ids=None):
         """
@@ -484,11 +548,22 @@ class ThreeExpertPatchTransformer(nn.Module):
         w0, w1, w2 = ww[..., 0:1], ww[..., 1:2], ww[..., 2:3]
         
         y_base = w0 * yA + w1 * yB + w2 * yC   # [B,pred_len,1]
+        # y_base = yA + yB + yC   # [B,pred_len,1]
 
         if self.use_memory and self.mem_mode == "retrieval":
-            # query 用 backbone 的历史表示更稳
-            q = self.mem_key_proj(x_emb_hist.mean(dim=1))   # [B,key_dim]
+            # 1) 注意力池化（比 mean pooling 更保留形状信息）
+            pooled = self.key_pool(x_emb_hist)              # [B, d_model]
+
+            # 2) 差分统计量（给 key 补“尺度/波动状态”）
+            stats_vec = self._delta_stats_vec(x)            # [B, 4]
+
+            # 3) 拼接后投影成 key_dim
+            key_in = torch.cat([pooled, stats_vec], dim=-1) # [B, d_model+4]
+            q = self.mem_key_proj(key_in)                   # [B, key_dim]
             q = F.normalize(q, dim=-1)
+            # # query 用 backbone 的历史表示更稳
+            # q = self.mem_key_proj(x_emb_hist.mean(dim=1))   # [B,key_dim]
+            # q = F.normalize(q, dim=-1)
 
             # 取目标列（必须）
             if y_true is not None:
