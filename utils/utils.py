@@ -13,7 +13,7 @@ import numpy as np
 def set_settings(config):
     
     # 合理的自动化可视训练过程，verbose
-    config.verbose = int(config.epochs * 0.10)
+    config.verbose = int(config.epochs * 0.01)
     
     if config.debug:
         config.rounds = 2

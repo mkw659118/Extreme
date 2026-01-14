@@ -35,6 +35,9 @@ class DS:
         self.sensor_data = []  # 传感器原始数据
         self.diff_data = []    # 差分后数据
         self.data = []         # 数值数据
+        self.level_mean = 0.0   # NEW: 原始序列(level)均值
+        self.level_std  = 1.0   # NEW: 原始序列(level)标准差
+
         
         self.data_time = []    # 时间戳数据
         self.sensor_data_norm = []    # 归一化后数据
@@ -181,6 +184,16 @@ class DS:
         self.data = np.array(self.sensor_data["value"].fillna(np.nan))
         self.data_time = np.array(self.sensor_data["datetime"].fillna(np.nan))
         
+        # ================= NEW: 计算原始序列(level)的标准化特征 =================
+        self.level_mean = np.nanmean(self.data)
+        self.level_std  = np.nanstd(self.data)
+        if (self.level_std == 0) or np.isnan(self.level_std):
+            self.level_std = 1.0
+        level_norm = (self.data - self.level_mean) / self.level_std   # 与 self.data 同长度，NaN 会保留
+        level_norm = level_norm.reshape(-1, 1)
+        # =====================================================================
+
+        
         # 
         self.diff_data = diff_order_1(self.data)  # 计算一阶差分
         print("看看使用了全体数据的均值还是训练数据")
@@ -295,6 +308,10 @@ class DS:
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 2:3]), 1)
         print("sensor_data_norm1, ", self.sensor_data_norm1)
         print("Finish prob indicator generating.")
+        
+        # NEW: 将原始序列(level)作为最后一维特征拼接进输入
+        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
+
 
         # 生成时间相关特征
         self.tag = gen_month_tag(self.sensor_data)
@@ -708,6 +725,12 @@ class DS:
         # 使用已有的均值和标准差进行归一化
         self.sensor_data_norm = r_log_std_normalization_1(self.data, self.mean, self.std)
         self.sensor_data_norm1 = [[ff] for ff in self.sensor_data_norm]
+        
+        # ================= NEW: 用训练期的 level_mean/level_std 标准化原始序列(level) =================
+        level_norm = (self.data - self.level_mean) / self.level_std
+        level_norm = level_norm.reshape(-1, 1)
+# =================================================================================================
+
 
         gmm_input = self.sensor_data_norm
 
@@ -780,6 +803,9 @@ class DS:
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 1:2]), 1)
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 2:3]), 1)
         print("Finish prob indicator updating.")
+        
+        # NEW: 追加原始序列(level)特征到最后一列（不改变原有列顺序）
+        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
 
         # 更新时间相关特征
         self.tag = gen_month_tag(self.sensor_data)
