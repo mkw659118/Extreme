@@ -12,6 +12,7 @@ from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 from modules.PatchExtremeMemoryTransformer import ThreeExpertPatchTransformer
+from modules.MoEMemoFormer import ThreeExpertPatchTransformer as MoE
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
 from exp.exp_base import BasicModel
@@ -25,7 +26,7 @@ class Model(BasicModel):
         self.hidden_size = config.rank
 
         if config.model == 'patch_extreme_memory_transformer': 
-            self.model = ThreeExpertPatchTransformer(
+            self.model = MoE(
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
                 patch_len=config.patch_len,

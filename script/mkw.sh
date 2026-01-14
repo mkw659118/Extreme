@@ -29,7 +29,7 @@ do
       --rounds 1\
       --revin False\
       --oversampling 40\
-      --use_memory False\
+      --use_memory True\
       --loss_func 'L1Loss'\
       --bs 256\
       --use_decoding False
