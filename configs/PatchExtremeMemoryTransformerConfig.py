@@ -18,7 +18,7 @@ class PatchExtremeMemoryTransformerConfig(ExperimentConfig, BaseModelConfig, Log
     dropout: float = 0.2
     win_size: int = 16
     patch_len: int = 16
-    use_memory: bool = False
+    use_memory: bool = True
     num_layers_intra_patch: int = 2
     num_layers_inter_patch: int = 2
     outf: str = './output'

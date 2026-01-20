@@ -8,8 +8,7 @@ reservoir_sensors=(
 )
 
 # 定义预测长度
-pred_lens=(8 72)
-
+pred_lens=(8)
 
 # 外循环：预测长度
 for pred in "${pred_lens[@]}"
@@ -22,10 +21,10 @@ do
       --config "PatchExtremeMemoryTransformerConfig" \
       --reservoir_sensor "$sensor" \
       --pred_len "$pred" \
-      --d_model 256 \
+      --d_model 32\
       --epochs 200\
-      --patience 30\
-      --train_volume 30000\
+      --patience 40\
+      --train_volume 40000\
       --rounds 1\
       --revin False\
       --oversampling 40\

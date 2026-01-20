@@ -37,6 +37,9 @@ class DS:
         self.data = []         # 数值数据
         self.level_mean = 0.0   # NEW: 原始序列(level)均值
         self.level_std  = 1.0   # NEW: 原始序列(level)标准差
+        self.d2_mean = 0.0   # NEW: 二阶差分均值（训练期）
+        self.d2_std  = 1.0   # NEW: 二阶差分标准差（训练期）
+
 
         
         self.data_time = []    # 时间戳数据
@@ -184,6 +187,21 @@ class DS:
         self.data = np.array(self.sensor_data["value"].fillna(np.nan))
         self.data_time = np.array(self.sensor_data["datetime"].fillna(np.nan))
         
+        # ================= NEW: 二阶差分(基于原始序列 level) =================
+        # d2[t] = x[t] - 2*x[t-1] + x[t-2] ，前两个位置无定义，这里用 0 补齐（不引入未来信息）
+        d2 = np.zeros_like(self.data, dtype=float)
+        d2[2:] = self.data[2:] - 2.0 * self.data[1:-1] + self.data[:-2]
+
+        # 用训练段统计量标准化（忽略 NaN）
+        self.d2_mean = np.nanmean(d2)
+        self.d2_std  = np.nanstd(d2)
+        if (self.d2_std == 0) or np.isnan(self.d2_std):
+            self.d2_std = 1.0
+        d2_norm = (d2 - self.d2_mean) / self.d2_std
+        d2_norm = d2_norm.reshape(-1, 1)
+        # =====================================================================
+
+        
         # ================= NEW: 计算原始序列(level)的标准化特征 =================
         self.level_mean = np.nanmean(self.data)
         self.level_std  = np.nanstd(self.data)
@@ -311,6 +329,9 @@ class DS:
         
         # NEW: 将原始序列(level)作为最后一维特征拼接进输入
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
+        # NEW: 将二阶差分特征追加到输入末尾（不改变原有列顺序）
+        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, d2_norm), axis=1)
+
 
 
         # 生成时间相关特征
@@ -726,6 +747,14 @@ class DS:
         self.sensor_data_norm = r_log_std_normalization_1(self.data, self.mean, self.std)
         self.sensor_data_norm1 = [[ff] for ff in self.sensor_data_norm]
         
+        # ================= NEW: 二阶差分(基于原始序列 level)，使用训练期统计量标准化 =================
+        d2 = np.zeros_like(self.data, dtype=float)
+        d2[2:] = self.data[2:] - 2.0 * self.data[1:-1] + self.data[:-2]
+        d2_norm = (d2 - self.d2_mean) / self.d2_std
+        d2_norm = d2_norm.reshape(-1, 1)
+        # ==================================================================================================
+
+        
         # ================= NEW: 用训练期的 level_mean/level_std 标准化原始序列(level) =================
         level_norm = (self.data - self.level_mean) / self.level_std
         level_norm = level_norm.reshape(-1, 1)
@@ -806,6 +835,10 @@ class DS:
         
         # NEW: 追加原始序列(level)特征到最后一列（不改变原有列顺序）
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
+        
+        # NEW: 将二阶差分特征追加到输入末尾
+        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, d2_norm), axis=1)
+
 
         # 更新时间相关特征
         self.tag = gen_month_tag(self.sensor_data)
