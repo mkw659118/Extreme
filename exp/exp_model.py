@@ -1,6 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 每次开展新实验都改一下这里
+from baselines import DLinear
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.mlp_test import MLPTest
 from baselines.Linear import Linear
@@ -112,6 +113,11 @@ class Model(BasicModel):
             )
         elif config.model == 'timesnet':
             self.model = TimesNet(enc_in=self.input_size, configs=config)
+            
+            
+            
+        elif config.model == 'DLinear':
+            self.model = DLinear(config)
 
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
