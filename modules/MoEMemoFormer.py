@@ -90,30 +90,53 @@ class TransformerBlock(nn.Module):
         x = x + self.ff(self.norm2(x))
         return x
 
+# class SampleRouterFromX(nn.Module):
+#     def __init__(self, c_in: int, num_experts: int, hidden: int = 128, dropout: float = 0.0):
+#         super().__init__()
+#         self.net = nn.Sequential(
+#             nn.Linear(c_in, hidden),
+#             nn.GELU(),
+#             nn.Dropout(dropout),
+#             nn.Linear(hidden, num_experts),
+#         )
+
+#     def forward(self, x):
+#         """
+#         x: [B, seq_len, c_in]
+#         returns logits: [B, E]
+#         """
+#         feat = x.mean(dim=1)  # [B, c_in]
+#         return self.net(feat)
+
 class SampleRouterFromX(nn.Module):
+   
     def __init__(self, c_in: int, num_experts: int, hidden: int = 128, dropout: float = 0.0):
         super().__init__()
+        self.c_in = c_in
+        in_dim = 3 * c_in  # std + max_abs + last
+
         self.net = nn.Sequential(
-            nn.Linear(c_in, hidden),
+            nn.Linear(in_dim, hidden),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, num_experts),
         )
 
     def forward(self, x):
-        """
-        x: [B, seq_len, c_in]
-        returns logits: [B, E]
-        """
-        feat = x.mean(dim=1)  # [B, c_in]
-        return self.net(feat)
+        # 1) std: [B, C]
+        std = x.std(dim=1, unbiased=False)
 
+        # 2) max_abs: [B, C]
+        max_abs = x.abs().amax(dim=1)
+
+        # 3) last: [B, C]
+        last = x[:, -1, :]
+
+        feat = torch.cat([std, max_abs, last], dim=-1)  # [B, 3C]
+        return self.net(feat)
+    
 
 class ThreeExpertPatchTransformer(nn.Module):
-    """
-    Shared backbone; experts only in prediction heads; router selects top-1 expert per sample.
-
-    """
 
     def __init__(
         self,
@@ -150,12 +173,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         assert 0 <= self.gmm_start < self.gmm_end <= c_in, "Invalid gmm_start/gmm_end"
         self.num_experts = int(self.gmm_end - self.gmm_start)
 
-        # -------- losses weights --------
-        self.w_router_ce = float(getattr(config, "w_router_ce", 1.0))
-        self.w_balance   = float(getattr(config, "w_balance", 0.01))
-        self.w_head_div  = float(getattr(config, "w_head_div", 0.01))
-
-        self.teacher_forcing = bool(getattr(config, "teacher_forcing", True))
+        self.teacher_forcing = True
 
         # -------- Embedding + pred tokens --------
         dropout = float(getattr(config, "dropout", 0.3))
@@ -200,8 +218,6 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.top_k = int(getattr(config, "top_k", 2))          # 你要 top2
         self.router_tau = float(getattr(config, "router_tau", 1.0))  # softmax 温度
         self.tf_blend = float(getattr(config, "tf_blend", 0.0))      # 0=不使用GMM强制混合(避免“硬编码”)
-
-
 
         # -------- GMM label slices--------
         self.gmm_pt_start  = 2
@@ -341,5 +357,3 @@ class ThreeExpertPatchTransformer(nn.Module):
         y = (y_topk * w).sum(dim=-1, keepdim=True)
 
         return y
-
-
