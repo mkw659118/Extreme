@@ -109,23 +109,6 @@ class SampleRouterFromX(nn.Module):
         return self.net(feat)
 
 
-def head_diversity_loss(expert_heads: nn.ModuleList, eps: float = 1e-8):
-    """
-    For Linear head: weight shape [1, d_model]
-    Penalize pairwise cosine similarity (squared).
-    """
-    W = []
-    for h in expert_heads:
-        w = h.proj.weight.view(-1)  # [d_model]
-        w = w / (w.norm(p=2) + eps)
-        W.append(w)
-    W = torch.stack(W, dim=0)  # [E, d_model]
-    C = W @ W.t()              # [E, E]
-    E = C.size(0)
-    off = C - torch.eye(E, device=C.device, dtype=C.dtype)
-    return (off ** 2).mean()
-
-
 class ThreeExpertPatchTransformer(nn.Module):
     """
     Shared backbone; experts only in prediction heads; router selects top-1 expert per sample.
@@ -212,16 +195,19 @@ class ThreeExpertPatchTransformer(nn.Module):
         if label2expert is None:
             label2expert = list(range(self.num_experts))
         self.register_buffer("label2expert", torch.tensor(label2expert, dtype=torch.long))
-
-
-        # -------- GMM label slices (kept compatible with your original) --------
-        self.gmm_pt_start  = int(getattr(config, "gmm_pt_start", 2))
-        self.gmm_pt_end    = int(getattr(config, "gmm_pt_end", 5))
-        self.gmm_seq_start = int(getattr(config, "gmm_seq_start", 7))
-        self.gmm_seq_end   = int(getattr(config, "gmm_seq_end", 10))
-
-        self.aux_loss_dict: Dict[str, torch.Tensor] = {}
         
+                # -------- top-k gating --------
+        self.top_k = int(getattr(config, "top_k", 2))          # 你要 top2
+        self.router_tau = float(getattr(config, "router_tau", 1.0))  # softmax 温度
+        self.tf_blend = float(getattr(config, "tf_blend", 0.0))      # 0=不使用GMM强制混合(避免“硬编码”)
+
+
+
+        # -------- GMM label slices--------
+        self.gmm_pt_start  = 2
+        self.gmm_pt_end    = 5
+        self.gmm_seq_start = 7
+        self.gmm_seq_end   = 10
 
     def _gmm_argmax_label(self, x: torch.Tensor) -> torch.Tensor:
         pt  = x[:, :, self.gmm_pt_start:self.gmm_pt_end]
@@ -230,7 +216,7 @@ class ThreeExpertPatchTransformer(nn.Module):
         if pt.size(-1) != seq.size(-1):
             gmm = x[:, :, self.gmm_start:self.gmm_end]
         else:
-            gmm = seq + 0.8 * pt
+            gmm = seq + 0.4 * pt
 
         gmm_mean = gmm.mean(dim=1)
         label = torch.argmax(gmm_mean, dim=-1)
@@ -256,27 +242,73 @@ class ThreeExpertPatchTransformer(nn.Module):
         return self.post_norm(intra_tokens + inter_tokens)
 
 
+    # def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
+    #     """
+    #     x: [B, seq_len, c_in]
+    #     y_true (optional): [B, pred_len, D] or [B, pred_len, 1]
+    #     """
+    #     B = x.size(0)
+
+    #     # ---------------- routing ----------------
+    #     router_logits = self.router(x)                  # [B, E]
+
+    #     if route_labels is None:
+    #         route_labels = self._gmm_argmax_label(x)  # [B]
+        
+    #     if self.training and self.teacher_forcing:
+    #         expert_idx = route_labels
+    #     else:
+    #         expert_idx = torch.argmax(router_logits, dim=-1)
+
+    #     # ---------------- embedding + pred tokens ----------------
+    #     x_emb_hist = self.embedding(x)                               # [B, seq_len, d_model]
+    #     pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)      # [B, pred_len, d_model]
+    #     x_emb = torch.cat([x_emb_hist, pred_token], dim=1)                # [B, total_len, d_model]
+
+    #     intra_mask = generate_causal_window_mask(self.patch_len, self.win_size, x_emb.device, x_emb.dtype)
+    #     inter_mask = generate_causal_window_mask(self.num_patches, self.num_patches, x_emb.device, x_emb.dtype)
+
+    #     # ---------------- shared backbone ----------------
+    #     final_shared = self.forward_backbone(x_emb, intra_mask, inter_mask)   # [B, total_len, d_model]
+    #     final_shared = final_shared[:, -self.pred_len:, :]                             # [B, pred_len, d_model]
+
+    #     # ---------------- heads ----------------
+    #     y_all = torch.cat([h(final_shared) for h in self.expert_heads], dim=-1)         # [B, pred_len, E]
+    #     idx = expert_idx.view(B, 1, 1).expand(B, self.pred_len, 1)
+    #     y = y_all.gather(dim=-1, index=idx)                                # [B, pred_len, 1]
+
+    #     return y
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
         """
         x: [B, seq_len, c_in]
         y_true (optional): [B, pred_len, D] or [B, pred_len, 1]
+        return: y [B, pred_len, 1]
         """
         B = x.size(0)
 
         # ---------------- routing ----------------
-        router_logits = self.router(x)                  # [B, E]
-        router_prob = torch.softmax(router_logits, -1)  # [B, E]
+        router_logits = self.router(x)  # [B, E]
 
+        # route_labels: 若外部没传，则用GMM argmax，并映射到 expert id（否则 label2expert 永远没用到）
         if route_labels is None:
-            route_labels = self._gmm_argmax_label(x)  # [B]
-        
-        if self.training and self.teacher_forcing:
-            expert_idx = route_labels
+            gmm_label = self._gmm_argmax_label(x)                # [B] in [0..E-1]
+            route_labels = self.label2expert[gmm_label]          # [B] expert id
         else:
-            expert_idx = torch.argmax(router_logits, dim=-1)
+            # 假设外部传入的 route_labels 已经是 expert id
+            route_labels = route_labels.long()
+
+        # router 概率（带温度）
+        tau = max(self.router_tau, 1e-6)
+        router_prob = torch.softmax(router_logits / tau, dim=-1)  # [B, E]
+
+        # 可选：训练时把“GMM路由标签”作为 soft prior 混入概率（不是硬选某个专家）
+        # tf_blend=0 代表完全不混入（最“去硬编码”）
+        if self.training and self.teacher_forcing and self.tf_blend > 0.0:
+            onehot = F.one_hot(route_labels, num_classes=self.num_experts).to(router_prob.dtype)  # [B, E]
+            router_prob = (1.0 - self.tf_blend) * router_prob + self.tf_blend * onehot
 
         # ---------------- embedding + pred tokens ----------------
-        x_emb_hist = self.embedding(x)                               # [B, seq_len, d_model]
+        x_emb_hist = self.embedding(x)                                    # [B, seq_len, d_model]
         pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)      # [B, pred_len, d_model]
         x_emb = torch.cat([x_emb_hist, pred_token], dim=1)                # [B, total_len, d_model]
 
@@ -284,28 +316,30 @@ class ThreeExpertPatchTransformer(nn.Module):
         inter_mask = generate_causal_window_mask(self.num_patches, self.num_patches, x_emb.device, x_emb.dtype)
 
         # ---------------- shared backbone ----------------
-        final_shared = self.forward_backbone(x_emb, intra_mask, inter_mask)   # [B, total_len, d_model]
-        final_shared = final_shared[:, -self.pred_len:, :]                             # [B, pred_len, d_model]
+        final_shared = self.forward_backbone(x_emb, intra_mask, inter_mask)      # [B, total_len, d_model]
+        final_shared = final_shared[:, -self.pred_len:, :]                       # [B, pred_len, d_model]
 
-        # ---------------- heads ----------------
-        y_all = torch.cat([h(final_shared) for h in self.expert_heads], dim=-1)         # [B, pred_len, E]
-        idx = expert_idx.view(B, 1, 1).expand(B, self.pred_len, 1)
-        y = y_all.gather(dim=-1, index=idx)                                # [B, pred_len, 1]
+        # ---------------- heads: compute all experts ----------------
+        # y_all: [B, pred_len, E]
+        y_all = torch.cat([h(final_shared) for h in self.expert_heads], dim=-1)
 
-        # ---------------- aux losses ----------------
-        aux_loss = {}
-        if self.w_router_ce > 0.0 and self.training:
-            aux_loss["router_ce"] = self.w_router_ce * F.cross_entropy(router_logits, route_labels)
+        # ---------------- top-k mix (top2) ----------------
+        k = min(self.top_k, self.num_experts)
+        topk = torch.topk(router_prob, k=k, dim=-1)      # values/indices: [B, k]
+        topk_w = topk.values                              # [B, k]
+        topk_idx = topk.indices                           # [B, k]
 
-        if self.w_balance > 0.0 and self.training:
-            mean_p = router_prob.mean(dim=0)
-            uniform = torch.full_like(mean_p, 1.0 / self.num_experts)
-            aux_loss["balance"] = self.w_balance * ((mean_p - uniform) ** 2).sum()
+        # 归一化 topk 权重（保证两项权重和为1）
+        topk_w = topk_w / (topk_w.sum(dim=-1, keepdim=True) + 1e-8)  # [B, k]
 
-        if self.w_head_div > 0.0 and self.training and self.num_experts > 1:
-            aux_loss["head_div"] = self.w_head_div * head_diversity_loss(self.expert_heads)
+        # 从 y_all 取出 topk 专家对应的输出: [B, pred_len, k]
+        gather_idx = topk_idx.view(B, 1, k).expand(B, self.pred_len, k)
+        y_topk = y_all.gather(dim=-1, index=gather_idx)  # [B, pred_len, k]
 
-        self.aux_loss_dict = aux_loss
-        
+        # 加权求和得到最终输出: [B, pred_len, 1]
+        w = topk_w.view(B, 1, k).expand(B, self.pred_len, k)
+        y = (y_topk * w).sum(dim=-1, keepdim=True)
+
         return y
+
 
