@@ -48,45 +48,6 @@ class ExtremeHead(nn.Module):
         x = self.drop3(self.act(self.fc3(x)))
         return self.proj(x)
 
-def generate_causal_window_mask(seq_len, win_size, device, dtype=torch.float32):
-    if win_size is None or win_size <= 0 or win_size > seq_len:
-        win_size = max(1, seq_len // 2)
-
-    upper = torch.ones(seq_len, seq_len, dtype=torch.bool, device=device).triu(1)
-
-    # left-window clipping
-    if win_size < seq_len:
-        for i in range(seq_len):
-            left = max(0, i - win_size + 1)
-            upper[i, :left] = True
-
-    attn_bias = torch.zeros(seq_len, seq_len, dtype=dtype, device=device)
-    attn_bias.masked_fill_(upper, float("-inf"))
-    return attn_bias
-
-
-class TransformerBlock(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff=256, dropout=0.3):
-        super().__init__()
-        d_ff = d_ff or (d_model * 4)
-        self.norm1 = nn.RMSNorm(d_model)
-        self.attn = nn.MultiheadAttention(d_model, num_heads, dropout=dropout, batch_first=True)
-
-        self.norm2 = nn.RMSNorm(d_model)
-        self.ff = nn.Sequential(
-            nn.Linear(d_model, d_ff),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(d_ff, d_model),
-            nn.Dropout(dropout),
-        )
-
-    def forward(self, x, attn_mask=None):
-        x1 = self.norm1(x)
-        y = self.attn(x1, x1, x1, attn_mask=attn_mask)[0]
-        x = x + y
-        x = x + self.ff(self.norm2(x))
-        return x
 
 def _turning_score_from_diff(diff_1d: torch.Tensor,
                              eps: float = 0.05,
@@ -142,10 +103,7 @@ class TurningPointKeyEncoder(nn.Module):
         )
 
     def forward(self, x_win: torch.Tensor) -> torch.Tensor:
-        """
-        x_win: [B, key_len, in_ch]
-        Return: key [B, key_dim]
-        """
+        
         # statistics on window (robust for normalized diff)
         mean = x_win.mean(dim=1)
         std = x_win.std(dim=1, unbiased=False)
@@ -241,14 +199,14 @@ class ExtremeLSTM(nn.Module):
         self,
         seq_len: int,
         pred_len: int,
-        patch_len: int,              # kept for compatibility (unused)
+        patch_len: int,              
         d_model: int,
-        win_size: int,               # kept for compatibility (unused)
+        win_size: int,               
         revin: bool,
-        num_heads: int,              # kept for compatibility (unused)
+        num_heads: int,              
         use_memory: bool,
-        num_layers_intra_patch: int, # mapped to enc_layers
-        num_layers_inter_patch: int, # mapped to dec_layers
+        num_layers_intra_patch: int, 
+        num_layers_inter_patch: int, 
         config=None,
         c_in: int = 10,
     ):
@@ -335,13 +293,6 @@ class ExtremeLSTM(nn.Module):
             self.tp_key_encoder = TurningPointKeyEncoder(in_ch=1, key_dim=key_dim, hidden=key_hidden, dropout=key_drop)
             self.tp_memory = TurningPointMemoryBank(mem_size=mem_size, key_dim=key_dim, pred_len=self.pred_len, topk=self.tp_topk)
 
-    def _get_gmm_weight(self, x):
-        pt  = x[:, :, self.gmm_pt_start:self.gmm_pt_end]
-        seq = x[:, :, self.gmm_seq_start:self.gmm_seq_end]
-        gmm = seq + 0.4 * pt
-        gmm = gmm.mean(dim=1)
-        return gmm
-
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
         """
         x: [B, seq_len, c_in]
@@ -370,7 +321,7 @@ class ExtremeLSTM(nn.Module):
         expert_preds = torch.cat([head(final_shared) for head in self.expert_heads], dim=-1)
 
         # 2) 路由选择：对每个样本，从 router_prob 中选出概率最大的 top-k 个专家
-        k = min(self.top_k, self.num_experts)
+        k = self.top_k
         topk_result = torch.topk(router_prob, k=k, dim=-1)
 
         topk_probs = topk_result.values     # [B, k]，top-k 专家的路由概率（尚未在 top-k 内归一化）
@@ -389,12 +340,13 @@ class ExtremeLSTM(nn.Module):
         y = (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)         # [B, pred_len, 1]，最终预测
 
         if self.use_memory:
+            # 取目标差分列，截断长度，编码成查询键向量
             x_tgt = x[:, :, self.tp_target_idx:self.tp_target_idx + 1]     # [B, seq_len, 1]
             x_win = x_tgt[:, -self.tp_key_len:, :]                         # [B, key_len, 1]
             q_key = self.tp_key_encoder(x_win)                             # [B, key_dim]
-
+            # 做topK相似度检索返回
             y_mem = self.tp_memory.retrieve(q_key)                         # [B, pred_len, 1]
-
+            # 获取拐点发生概率与数值强度分数
             has_hist_tp, hist_score = _turning_score_from_diff(
                 x_win.squeeze(-1),
                 eps=self.tp_eps,
@@ -403,16 +355,12 @@ class ExtremeLSTM(nn.Module):
                 region_start=max(1, self.tp_key_len - 8),
                 region_end=self.tp_key_len - 1
             )
-
+            # 根据拐点强度计算模型修正系数
             beta = self.tp_beta * torch.sigmoid((hist_score - self.tp_score_thr) / max(self.tp_score_temp, 1e-6))
             y = y + beta.view(B, 1, 1) * y_mem
-
+            # 训练阶段写入记忆
             if self.training and (y_true is not None):
-                if y_true.dim() == 3 and y_true.size(-1) != 1:
-                    y_tgt = y_true[:, :, 0:1]
-                else:
-                    y_tgt = y_true
-
+                y_tgt = y_true[:, :, 0:1]
                 d_all = torch.cat([x_tgt.squeeze(-1), y_tgt.squeeze(-1)], dim=1)  # [B, seq_len + pred_len]
                 region_start = self.seq_len
                 region_end = self.seq_len + min(self.tp_future_region, self.pred_len) - 1
@@ -424,7 +372,7 @@ class ExtremeLSTM(nn.Module):
                     region_start=region_start,
                     region_end=region_end
                 )
-
+                # 只写入强拐点样本
                 write_mask = has_fut_tp & (fut_score > self.tp_score_thr)
                 if write_mask.any():
                     self.tp_memory.add(q_key[write_mask].detach(), y_tgt[write_mask].detach())

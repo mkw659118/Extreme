@@ -9,7 +9,8 @@ from baselines.Linear5 import Linear5
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
-from modules.ExtremeLSTM import ExtremeLSTM
+# from modules.ExtremeLSTM import ExtremeLSTM
+from modules.ExtremeLSTM1_28 import ExtremeLSTM
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
