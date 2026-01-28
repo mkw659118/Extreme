@@ -1,6 +1,3 @@
-# coding : utf-8
-# Author : Yuxiang Zeng
-
 import os
 import torch
 from tqdm import *

@@ -1,11 +1,9 @@
 #Author  :   mkw
 #Time    :   2025/09/17 10:50:52
-#Desc    :   PatchExtremeMemoryTransformer
+#Desc    :   ExtremeLSTM
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange
-from typing import Optional, Dict, Tuple, List
 from layers.embedding import DataEmbedding
 
 class NormalHead(nn.Module):
@@ -37,12 +35,12 @@ class ExtremeHead(nn.Module):
         hidden = hidden or (2 * d_model)
         self.fc1 = nn.Linear(d_model, hidden)
         self.fc2 = nn.Linear(hidden, hidden)
-        self.fc3 = nn.Linear(hidden, d_model)     # 关键：压回 d_model
+        self.fc3 = nn.Linear(hidden, d_model)     # 压回 d_model
         self.act = nn.GELU()
         self.drop1 = nn.Dropout(dropout)
         self.drop2 = nn.Dropout(dropout)
         self.drop3 = nn.Dropout(dropout)
-        self.proj = nn.Linear(d_model, 1)         # 关键：所有专家统一 proj: d_model -> 1
+        self.proj = nn.Linear(d_model, 1)         # 所有专家统一 proj: d_model -> 1
 
     def forward(self, x):
         x = self.drop1(self.act(self.fc1(x)))
@@ -90,23 +88,13 @@ class TransformerBlock(nn.Module):
         x = x + self.ff(self.norm2(x))
         return x
 
-# =========================================================
-# Turning-Point detection + MemoryBank (for normalized 1st-diff)
-# =========================================================
-
 def _turning_score_from_diff(diff_1d: torch.Tensor,
                              eps: float = 0.05,
                              min_abs: float = 0.6,
                              min_jump: float = 0.6,
                              region_start: int = 0,
                              region_end: int = None):
-    """
-    diff_1d: [B, T]  (normalized 1st-difference)
-    Returns:
-      has_tp: [B] bool
-      score:  [B] float (max turning score in region)
-    Turning defined by sign flip with hysteresis + amplitude/jump thresholds.
-    """
+   
     B, T = diff_1d.shape
     if region_end is None:
         region_end = T - 1
@@ -142,10 +130,7 @@ def _turning_score_from_diff(diff_1d: torch.Tensor,
 
 
 class TurningPointKeyEncoder(nn.Module):
-    """
-    Encode last key_len window of (normalized) 1st-diff target channel (+ optional extra channels)
-    into a compact key vector for retrieval.
-    """
+   
     def __init__(self, in_ch: int, key_dim: int = 64, hidden: int = 128, dropout: float = 0.0):
         super().__init__()
         self.in_ch = in_ch
@@ -244,33 +229,26 @@ class SampleRouterFromX(nn.Module):
         )
 
     def forward(self, x):
-        # 1) std: [B, C]
-        std = x.std(dim=1, unbiased=False)
-
-        # 2) max_abs: [B, C]
-        max_abs = x.abs().amax(dim=1)
-
-        # 3) last: [B, C]
-        last = x[:, -1, :]
-
+        std = x.std(dim=1, unbiased=False)  # 1) std: [B, C]
+        max_abs = x.abs().amax(dim=1)  # 2) max_abs: [B, C]
+        last = x[:, -1, :]  # 3) last: [B, C]
         feat = torch.cat([std, max_abs, last], dim=-1)  # [B, 3C]
         return self.net(feat)
     
 
-class ThreeExpertPatchTransformer(nn.Module):
-
+class ExtremeLSTM(nn.Module):
     def __init__(
         self,
         seq_len: int,
         pred_len: int,
-        patch_len: int,
+        patch_len: int,              # kept for compatibility (unused)
         d_model: int,
-        win_size: int,
+        win_size: int,               # kept for compatibility (unused)
         revin: bool,
-        num_heads: int,
+        num_heads: int,              # kept for compatibility (unused)
         use_memory: bool,
-        num_layers_intra_patch: int,
-        num_layers_inter_patch: int,
+        num_layers_intra_patch: int, # mapped to enc_layers
+        num_layers_inter_patch: int, # mapped to dec_layers
         config=None,
         c_in: int = 10,
     ):
@@ -279,77 +257,72 @@ class ThreeExpertPatchTransformer(nn.Module):
         self.revin = revin
         self.seq_len = seq_len
         self.pred_len = pred_len
-        self.total_len = seq_len + pred_len
         self.d_model = d_model
         self.c_in = c_in
-        self.patch_len = patch_len
-        self.win_size = win_size
-
-        assert self.total_len % self.patch_len == 0, "total_len must be divisible by patch_len"
-        self.num_patches = self.total_len // self.patch_len
 
         # -------- expert definition --------
         self.num_experts = 3
-
-        self.teacher_forcing = True
-
+        
         # -------- Embedding + pred tokens --------
         dropout = 0.3
         self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=dropout)
         self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
 
-        # -------- backbone --------
-        d_ff = 256
-        self.intra = nn.ModuleList([
-            TransformerBlock(d_model, num_heads, d_ff=d_ff, dropout=dropout)
-            for _ in range(num_layers_intra_patch)
-        ])
-        self.inter = nn.ModuleList([
-            TransformerBlock(d_model, num_heads, d_ff=d_ff, dropout=dropout)
-            for _ in range(num_layers_inter_patch)
-        ])
+        enc_layers = int(num_layers_intra_patch)
+        dec_layers = int(num_layers_inter_patch)
+
+        self.encoder = nn.LSTM(
+            input_size=d_model,
+            hidden_size=d_model,
+            num_layers=enc_layers,
+            batch_first=True,
+            dropout=dropout,
+        )
+        self.decoder = nn.LSTM(
+            input_size=d_model,
+            hidden_size=d_model,
+            num_layers=dec_layers,
+            batch_first=True,
+            dropout=dropout,
+        )
+
         self.post_norm = nn.RMSNorm(d_model)
 
         # -------- router --------
-        router_hidden = int(getattr(config, "router_x_hidden", self.d_model))
-        router_dropout = float(getattr(config, "router_x_dropout", 0.3))
-        self.router = SampleRouterFromX(c_in=1, num_experts=self.num_experts, hidden=router_hidden, dropout=router_dropout)
+        router_hidden = self.d_model
+        router_dropout = dropout
+        self.router = SampleRouterFromX(c_in=c_in, num_experts=self.num_experts, hidden=router_hidden, dropout=router_dropout)
 
         # -------- heads --------
         self.expert_heads = nn.ModuleList([
             NormalHead(d_model),
             MidHead(d_model, hidden=d_model, dropout=dropout),
-            ExtremeHead(d_model, hidden=2*d_model, dropout=dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=dropout),
         ])
-        
-        
-        # -------- top-k gating --------
-        self.top_k = int(getattr(config, "top_k", 2))          # top2
-        self.router_tau = float(getattr(config, "router_tau", 1.0))  # softmax 温度
-        self.tf_blend = float(getattr(config, "tf_blend", 0.0))      # 0=不使用GMM强制混合(避免“硬编码”)
 
-        # -------- GMM label slices--------
+        # -------- top-k gating --------
+        self.top_k = 2
+        
+        # -------- GMM label slices --------
         self.gmm_pt_start  = 2
         self.gmm_pt_end    = 5
         self.gmm_seq_start = 7
         self.gmm_seq_end   = 10
-        
+
         # =========================================================
-        # Turning-Point Memory (specialized for normalized 1st-diff in channel 0)
+        # Turning-Point Memory 
         # =========================================================
         self.use_memory = use_memory
-        self.tp_target_idx = int(getattr(config, "tp_target_idx", 0))   # 0维是差分
+        self.tp_target_idx = int(getattr(config, "tp_target_idx", 0))
         self.tp_key_len = int(getattr(config, "tp_key_len", min(32, self.seq_len)))
         self.tp_topk = int(getattr(config, "tp_topk", 8))
-        self.tp_beta = float(getattr(config, "tp_beta", 0.3))           # memory residual 强度（建议 0.1~0.5）
+        self.tp_beta = float(getattr(config, "tp_beta", 0.3))
 
-        # turning detection thresholds (in normalized units)
-        self.tp_eps = float(getattr(config, "tp_eps", 0.05))            # 死区，抑制0附近抖动
-        self.tp_min_abs = float(getattr(config, "tp_min_abs", 0.6))     # |Δ|幅度阈值
-        self.tp_min_jump = float(getattr(config, "tp_min_jump", 0.6))   # |Δ_t-Δ_{t-1}|阈值
-        self.tp_future_region = int(getattr(config, "tp_future_region", self.pred_len))  # 只关心未来pred_len内的拐点
+        self.tp_eps = float(getattr(config, "tp_eps", 0.05))
+        self.tp_min_abs = float(getattr(config, "tp_min_abs", 0.6))
+        self.tp_min_jump = float(getattr(config, "tp_min_jump", 0.6))
+        self.tp_future_region = int(getattr(config, "tp_future_region", self.pred_len))
 
-        # gating: only apply memory when "turning score" is high
         self.tp_score_thr = float(getattr(config, "tp_score_thr", 1.2))
         self.tp_score_temp = float(getattr(config, "tp_score_temp", 0.5))
 
@@ -359,120 +332,88 @@ class ThreeExpertPatchTransformer(nn.Module):
             key_drop = float(getattr(config, "tp_key_dropout", 0.0))
             mem_size = int(getattr(config, "tp_mem_size", 4096))
 
-            # 这里只用 target channel 做拐点形状；如果要多通道，把 in_ch 改成 len(tp_key_channels)
             self.tp_key_encoder = TurningPointKeyEncoder(in_ch=1, key_dim=key_dim, hidden=key_hidden, dropout=key_drop)
             self.tp_memory = TurningPointMemoryBank(mem_size=mem_size, key_dim=key_dim, pred_len=self.pred_len, topk=self.tp_topk)
 
-
-    def _get_gmm_weight(self, x: torch.Tensor):
+    def _get_gmm_weight(self, x):
         pt  = x[:, :, self.gmm_pt_start:self.gmm_pt_end]
         seq = x[:, :, self.gmm_seq_start:self.gmm_seq_end]
         gmm = seq + 0.4 * pt
         gmm = gmm.mean(dim=1)
         return gmm
-    
-
-    def forward_backbone(self, x_emb: torch.Tensor, intra_mask, inter_mask):
-        B = x_emb.size(0)
-
-        patches = rearrange(x_emb, "b (p pl) d -> b p pl d", p=self.num_patches, pl=self.patch_len)
-
-        patches_intra = rearrange(patches, "b p pl d -> (b p) pl d").contiguous()
-        for blk in self.intra:
-            patches_intra = blk(patches_intra, attn_mask=intra_mask)
-        patches_intra = rearrange(patches_intra, "(b p) pl d -> b p pl d", b=B, p=self.num_patches).contiguous()
-
-        intra_tokens = rearrange(patches_intra, "b p pl d -> b (p pl) d")
-
-        inter_patches = rearrange(patches_intra, "b p pl d -> (b pl) p d").contiguous()
-        for blk in self.inter:
-            inter_patches = blk(inter_patches, attn_mask=inter_mask)
-        inter_tokens = rearrange(inter_patches, "(b pl) p d -> b (p pl) d", b=B, pl=self.patch_len)
-
-        return self.post_norm(intra_tokens + inter_tokens)
-    
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
-        
+        """
+        x: [B, seq_len, c_in]
+        return y: [B, pred_len, 1]
+        """
         B = x.size(0)
-        x1 = x[:,:,0:1]
-        
         # ---------------- routing ----------------
-        router_logits = self.router(x1)  # [B, E]
-        
-        router_prob = torch.softmax(router_logits , dim=-1)  # [B, E]
+        router_logits = self.router(x)                       # [B, E]
+        router_prob = torch.softmax(router_logits, dim=-1)    # [B, E]
 
-        # ---------------- embedding + pred tokens ----------------
-        x_emb_hist = self.embedding(x)                                    # [B, seq_len, d_model]
-        pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)      # [B, pred_len, d_model]
-        x_emb = torch.cat([x_emb_hist, pred_token], dim=1)                # [B, total_len, d_model]
+        # ---------------- embedding ----------------
+        x_emb_hist = self.embedding(x)                        # [B, seq_len, d_model]
 
-        intra_mask = generate_causal_window_mask(self.patch_len, self.win_size, x_emb.device, x_emb.dtype)
-        inter_mask = generate_causal_window_mask(self.num_patches, self.num_patches, x_emb.device, x_emb.dtype)
+        # =========================================================
+        # LSTM backbone: encoder history -> decoder pred_tokens
+        # =========================================================
+        _, (h_n, c_n) = self.encoder(x_emb_hist)              # h_n/c_n: [enc_layers, B, d_model]
 
-        # ---------------- shared backbone ----------------
-        final_shared = self.forward_backbone(x_emb, intra_mask, inter_mask)      # [B, total_len, d_model]
-        final_shared = final_shared[:, -self.pred_len:, :]                       # [B, pred_len, d_model]
+        pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d_model]
+        dec_out, _ = self.decoder(pred_token, (h_n, c_n))             # [B, pred_len, d_model]
 
-        # ---------------- heads: compute all experts ----------------
-        # y_all: [B, pred_len, E]
-        y_all = torch.cat([h(final_shared) for h in self.expert_heads], dim=-1)
+        final_shared = self.post_norm(dec_out)                        # [B, pred_len, d_model]
 
-        # ---------------- top-k mix (top2) ----------------
+        # 1) 专家头：计算每个 expert head 的输出并在最后一维拼接
+        # expert_preds: [B, pred_len, E]，E 为专家数
+        expert_preds = torch.cat([head(final_shared) for head in self.expert_heads], dim=-1)
+
+        # 2) 路由选择：对每个样本，从 router_prob 中选出概率最大的 top-k 个专家
         k = min(self.top_k, self.num_experts)
-        topk = torch.topk(router_prob, k=k, dim=-1)      # values/indices: [B, k]
-        topk_w = topk.values                              # [B, k]
-        topk_idx = topk.indices                           # [B, k]
+        topk_result = torch.topk(router_prob, k=k, dim=-1)
 
-        # 归一化 topk 权重（保证两项权重和为1）
-        topk_w = topk_w / (topk_w.sum(dim=-1, keepdim=True) + 1e-8)  # [B, k]
+        topk_probs = topk_result.values     # [B, k]，top-k 专家的路由概率（尚未在 top-k 内归一化）
+        topk_experts = topk_result.indices  # [B, k]，top-k 专家的编号（expert id）
 
-        # 从 y_all 取出 topk 专家对应的输出: [B, pred_len, k]
-        gather_idx = topk_idx.view(B, 1, k).expand(B, self.pred_len, k)
-        y_topk = y_all.gather(dim=-1, index=gather_idx)  # [B, pred_len, k]
+        # 3) 权重归一化：只在 top-k 范围内做归一化，使每个样本的 top-k 权重和为 1
+        mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)  # [B, k]
 
-        # 加权求和得到最终输出: [B, pred_len, 1]
-        w = topk_w.view(B, 1, k).expand(B, self.pred_len, k)
-        y = (y_topk * w).sum(dim=-1, keepdim=True)
-        
-        # =========================================================
-        # Turning-Point Memory: write (train) + retrieve (train/test) + residual fuse
-        # =========================================================
+        # 4) 收集对应专家输出：把每个样本选中的 top-k 专家输出从 expert_preds 中 gather 出来
+        # chosen_expert_preds: [B, pred_len, k]
+        expert_index = topk_experts[:, None, :].expand(B, self.pred_len, k)       # [B, pred_len, k]，把索引扩展到每个预测步
+        chosen_expert_preds = expert_preds.gather(dim=-1, index=expert_index)     # [B, pred_len, k]，取出 top-k 专家的预测
+
+        # 5) 加权融合：用 top-k 权重对对应专家输出加权求和，得到最终预测
+        mix_weights = mix_weights[:, None, :].expand(B, self.pred_len, k)         # [B, pred_len, k]，把权重扩展到每个预测步
+        y = (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)         # [B, pred_len, 1]，最终预测
+
         if self.use_memory:
-            # -------- query key from last tp_key_len history window (target diff channel) --------
-            x_tgt = x[:, :, self.tp_target_idx:self.tp_target_idx + 1]                    # [B, seq_len, 1]
-            x_win = x_tgt[:, -self.tp_key_len:, :]                                        # [B, key_len, 1]
-            q_key = self.tp_key_encoder(x_win)                                            # [B, key_dim]
+            x_tgt = x[:, :, self.tp_target_idx:self.tp_target_idx + 1]     # [B, seq_len, 1]
+            x_win = x_tgt[:, -self.tp_key_len:, :]                         # [B, key_len, 1]
+            q_key = self.tp_key_encoder(x_win)                             # [B, key_dim]
 
-            # -------- retrieve memory prediction (diff trajectory) --------
-            y_mem = self.tp_memory.retrieve(q_key)                                       # [B, pred_len, 1]
+            y_mem = self.tp_memory.retrieve(q_key)                         # [B, pred_len, 1]
 
-            # -------- compute a "turningness" score from recent history (no future needed) --------
-            # use last (tp_key_len) window to estimate turning likelihood
             has_hist_tp, hist_score = _turning_score_from_diff(
                 x_win.squeeze(-1),
                 eps=self.tp_eps,
                 min_abs=self.tp_min_abs,
                 min_jump=self.tp_min_jump,
-                region_start=max(1, self.tp_key_len - 8),   # 只看窗口尾部更贴近“即将拐”
+                region_start=max(1, self.tp_key_len - 8),
                 region_end=self.tp_key_len - 1
             )
 
-            # gating coefficient beta in [0, tp_beta]
             beta = self.tp_beta * torch.sigmoid((hist_score - self.tp_score_thr) / max(self.tp_score_temp, 1e-6))
             y = y + beta.view(B, 1, 1) * y_mem
 
-            # -------- write memory during training when y_true is available --------
-            # y_true expected to be future diff of target variable: [B, pred_len, 1] or [B, pred_len, D]
             if self.training and (y_true is not None):
                 if y_true.dim() == 3 and y_true.size(-1) != 1:
-                    y_tgt = y_true[:, :, 0:1]  # 默认取第0列作为预测目标；如不同请改成你的target列
+                    y_tgt = y_true[:, :, 0:1]
                 else:
                     y_tgt = y_true
 
-                # detect turning point in the FUTURE horizon (more meaningful for building the library)
                 d_all = torch.cat([x_tgt.squeeze(-1), y_tgt.squeeze(-1)], dim=1)  # [B, seq_len + pred_len]
-                # region: focus on boundary -> within next pred_len steps
                 region_start = self.seq_len
                 region_end = self.seq_len + min(self.tp_future_region, self.pred_len) - 1
                 has_fut_tp, fut_score = _turning_score_from_diff(
@@ -484,9 +425,8 @@ class ThreeExpertPatchTransformer(nn.Module):
                     region_end=region_end
                 )
 
-                # only write strong turning cases
                 write_mask = has_fut_tp & (fut_score > self.tp_score_thr)
                 if write_mask.any():
                     self.tp_memory.add(q_key[write_mask].detach(), y_tgt[write_mask].detach())
 
-        return y
+        return y 

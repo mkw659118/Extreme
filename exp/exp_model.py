@@ -1,6 +1,3 @@
-# coding : utf-8
-# Author : Yuxiang Zeng
-# 每次开展新实验都改一下这里
 from baselines import DLinear
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.mlp_test import MLPTest
@@ -12,7 +9,8 @@ from baselines.Linear5 import Linear5
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
-from modules.MoEMemoFormer import ThreeExpertPatchTransformer as MoE
+from modules.ExtremeLSTM import ExtremeLSTM
+from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
 from exp.exp_base import BasicModel
@@ -26,7 +24,7 @@ class Model(BasicModel):
         self.hidden_size = config.rank
 
         if config.model == 'patch_extreme_memory_transformer': 
-            self.model = MoE(
+            self.model = ThreeExpertPatchTransformer(
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
                 patch_len=config.patch_len,
@@ -39,8 +37,20 @@ class Model(BasicModel):
                 num_layers_inter_patch=config.num_layers_inter_patch,
                 config=config
             )
-        elif config.model == 'seq2seq_3expert_lstm':
-            self.model = Seq2Seq3ExpertLSTM(config)
+        elif config.model == 'extreme_lstm':
+            self.model = ExtremeLSTM(
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                patch_len=config.patch_len,
+                d_model=config.d_model,
+                win_size=config.win_size,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                use_memory=config.use_memory,
+                num_layers_intra_patch=config.num_layers_intra_patch,
+                num_layers_inter_patch=config.num_layers_inter_patch,
+                config=config
+            )
         
         # 2025年9月8日21:34:04 测试水文数据集效果
         elif config.model == 'mlp_test':

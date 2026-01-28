@@ -1,5 +1,3 @@
-# coding : utf-8
-# Author : Yuxiang Zeng
 import numpy as np
 import pandas as pd
 import torch
@@ -103,5 +101,6 @@ def run(config):
 
 if __name__ == '__main__':
     from utils.exp_config import get_config
-    config = get_config('PatchExtremeMemoryTransformerConfig')
+    # config = get_config('PatchExtremeMemoryTransformerConfig')
+    config = get_config('ExtremeLSTMConfig')
     run(config)
