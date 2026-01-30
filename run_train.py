@@ -22,6 +22,7 @@ def get_experiment_name(config):
         'reservoir': config.reservoir_sensor,
         'epochs' : config.epochs,
         'patience' : config.patience,
+        'dropout' : config.dropout
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===

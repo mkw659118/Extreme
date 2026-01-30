@@ -2,6 +2,7 @@
 #Time    :   2025/09/17 10:50:52
 #Desc    :   ExtremeLSTM
 import torch
+import math
 import torch.nn as nn
 import torch.nn.functional as F
 from layers.embedding import DataEmbedding
@@ -134,7 +135,7 @@ class TurningPointMemoryBank(nn.Module):
         self.register_buffer("ptr", torch.zeros(1, dtype=torch.long))  # write pointer
 
     @torch.no_grad()
-    def add(self, key: torch.Tensor, value: torch.Tensor):
+    def add(self, key: torch.Tensor, residual: torch.Tensor):
         """
         key:   [B, key_dim] (normalized)
         value: [B, pred_len, 1]
@@ -143,7 +144,7 @@ class TurningPointMemoryBank(nn.Module):
         for i in range(B):
             p = int(self.ptr.item())
             self.keys[p].copy_(key[i])
-            self.values[p].copy_(value[i])
+            self.values[p].copy_(residual[i])
             self.valid[p] = True
             self.ptr[0] = (p + 1) % self.mem_size
 
@@ -168,8 +169,8 @@ class TurningPointMemoryBank(nn.Module):
 
         # gather values: [B, k, pred_len, 1] -> weighted sum -> [B, pred_len, 1]
         v = vals[idx]                    # advanced indexing
-        y_mem = (v * w.view(-1, k, 1, 1)).sum(dim=1)
-        return y_mem
+        r_mem = (v * w.view(-1, k, 1, 1)).sum(dim=1)
+        return r_mem
 
 
 class SampleRouterFromX(nn.Module):
@@ -193,6 +194,22 @@ class SampleRouterFromX(nn.Module):
         feat = torch.cat([std, max_abs, last], dim=-1)  # [B, 3C]
         return self.net(feat)
     
+class CrossAttention(nn.Module):
+    def __init__(self, d_model):
+        super().__init__()
+        self.Wq = nn.Linear(d_model, d_model, bias=False)
+        self.Wk = nn.Linear(d_model, d_model, bias=False)
+        self.Wv = nn.Linear(d_model, d_model, bias=False)
+
+    def forward(self, Q, K, V):
+        q = self.Wq(Q)
+        k = self.Wk(K)
+        v = self.Wv(V)
+
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(q.size(-1))  # [B,P,T]
+        attn = F.softmax(scores, dim=-1)
+        ctx  = torch.matmul(attn, v)  # [B,P,H]
+        return ctx, attn  
 
 class ExtremeLSTM(nn.Module):
     def __init__(
@@ -217,13 +234,14 @@ class ExtremeLSTM(nn.Module):
         self.pred_len = pred_len
         self.d_model = d_model
         self.c_in = c_in
+        self.dropout = self.config.dropout
 
         # -------- expert definition --------
         self.num_experts = 3
         
         # -------- Embedding + pred tokens --------
-        dropout = 0.3
-        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=dropout)
+
+        self.embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
         self.pred_tokens = nn.Parameter(torch.randn(self.pred_len, self.d_model))
 
         enc_layers = int(num_layers_intra_patch)
@@ -234,29 +252,33 @@ class ExtremeLSTM(nn.Module):
             hidden_size=d_model,
             num_layers=enc_layers,
             batch_first=True,
-            dropout=dropout,
+            dropout=self.dropout,
         )
         self.decoder = nn.LSTM(
             input_size=d_model,
             hidden_size=d_model,
             num_layers=dec_layers,
             batch_first=True,
-            dropout=dropout,
+            dropout=self.dropout,
         )
 
         self.post_norm = nn.RMSNorm(d_model)
+        self.xattn = CrossAttention(d_model)
 
         # -------- router --------
         router_hidden = self.d_model
-        router_dropout = dropout
+        router_dropout = self.dropout
         self.router = SampleRouterFromX(c_in=c_in, num_experts=self.num_experts, hidden=router_hidden, dropout=router_dropout)
 
         # -------- heads --------
         self.expert_heads = nn.ModuleList([
             NormalHead(d_model),
-            MidHead(d_model, hidden=d_model, dropout=dropout),
-            ExtremeHead(d_model, hidden=2 * d_model, dropout=dropout),
+            MidHead(d_model, hidden=d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
         ])
+        
+        self.fuse_proj = nn.Linear(2 * d_model, d_model)
+
 
         # -------- top-k gating --------
         self.top_k = 2
@@ -309,12 +331,15 @@ class ExtremeLSTM(nn.Module):
         # =========================================================
         # LSTM backbone: encoder history -> decoder pred_tokens
         # =========================================================
-        _, (h_n, c_n) = self.encoder(x_emb_hist)              # h_n/c_n: [enc_layers, B, d_model]
+        enc_out, (h_n, c_n) = self.encoder(x_emb_hist)              # h_n/c_n: [enc_layers, B, d_model]
 
         pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d_model]
         dec_out, _ = self.decoder(pred_token, (h_n, c_n))             # [B, pred_len, d_model]
+        ctx, _ = self.xattn(dec_out, enc_out, enc_out)
+        fused = torch.cat([dec_out, ctx], dim=-1)
+        fused = self.fuse_proj(fused)          # [B, pred_len, d_model]
 
-        final_shared = self.post_norm(dec_out)                        # [B, pred_len, d_model]
+        final_shared = self.post_norm(fused)                        # [B, pred_len, d_model]
 
         # 1) 专家头：计算每个 expert head 的输出并在最后一维拼接
         # expert_preds: [B, pred_len, E]，E 为专家数
@@ -345,7 +370,7 @@ class ExtremeLSTM(nn.Module):
             x_win = x_tgt[:, -self.tp_key_len:, :]                         # [B, key_len, 1]
             q_key = self.tp_key_encoder(x_win)                             # [B, key_dim]
             # 做topK相似度检索返回
-            y_mem = self.tp_memory.retrieve(q_key)                         # [B, pred_len, 1]
+            r_mem = self.tp_memory.retrieve(q_key)                         # [B, pred_len, 1]
             # 获取拐点发生概率与数值强度分数
             has_hist_tp, hist_score = _turning_score_from_diff(
                 x_win.squeeze(-1),
@@ -357,7 +382,7 @@ class ExtremeLSTM(nn.Module):
             )
             # 根据拐点强度计算模型修正系数
             beta = self.tp_beta * torch.sigmoid((hist_score - self.tp_score_thr) / max(self.tp_score_temp, 1e-6))
-            y = y + beta.view(B, 1, 1) * y_mem
+            y = y + beta.view(B, 1, 1) * r_mem
             # 训练阶段写入记忆
             if self.training and (y_true is not None):
                 y_tgt = y_true[:, :, 0:1]
@@ -375,6 +400,7 @@ class ExtremeLSTM(nn.Module):
                 # 只写入强拐点样本
                 write_mask = has_fut_tp & (fut_score > self.tp_score_thr)
                 if write_mask.any():
-                    self.tp_memory.add(q_key[write_mask].detach(), y_tgt[write_mask].detach())
+                    res = (y_tgt - y.detach())  # [B, pred_len, 1]
+                    self.tp_memory.add(q_key[write_mask].detach(), res[write_mask].detach())
 
         return y 
