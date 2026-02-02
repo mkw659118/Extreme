@@ -33,7 +33,7 @@ do
           --pred_len "$pred" \
           --d_model "$dm" \
           --epochs 200 \
-          --patience 40 \
+          --patience 50 \
           --train_volume 40000 \
           --rounds 1 \
           --revin False \
@@ -46,3 +46,4 @@ do
     done
   done
 done
+
