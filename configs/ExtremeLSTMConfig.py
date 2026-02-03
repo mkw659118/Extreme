@@ -17,7 +17,7 @@ class ExtremeLSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     revin: bool = False
     dropout: float = 0.3
     win_size: int = 16
-    patch_len: int = 16
+    patch_len: int = 18
     use_memory: bool = True
     num_layers_intra_patch: int = 2
     num_layers_inter_patch: int = 2

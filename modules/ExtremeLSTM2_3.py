@@ -320,47 +320,22 @@ class ExtremeLSTM(nn.Module):
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
         """
         x: [B, L, C]
-        return y: [B, pred_len, 1]
         """
-        # =========================================================
-        # 0) 保留一份原始输入，给 router / memory 用
-        # =========================================================
         x_raw = x                              # [B, L, C]
         B, L, C = x_raw.shape
 
-        # =========================================================
-        # 1) routing：仍然基于原始序列做路由（保持你原逻辑）
-        # =========================================================
+        # ---------------- routing（用原始序列） ----------------
         router_logits = self.router(x_raw)     # [B, E]
         router_prob   = torch.softmax(router_logits, dim=-1)  # [B, E]
 
-        # =========================================================
-        # 2) embedding：逐时间步 embedding（保持你原 DataEmbedding）
-        # =========================================================
-        x_emb = self.embedding(x_raw)          # [B, L, d_model]
+        # ---------------- embedding（逐时间点） ----------------
+        x_emb = self.embedding(x_raw)                 # [B, L, d_model]  例如 [B, 96, 64]
 
-        # =========================================================
-        # 3) patchify：在“时间维 L”上切 patch（不重叠 step=patch_len）
-        #    用 unfold 做 patch：得到 [B, Np, patch_len, d_model]
-        # =========================================================
-        patch_len = self.patch_len
-        step = self.patch_len                 # 不重叠；若要重叠可用 self.patch_stride
-
-        # 若 L < patch_len，unfold 会报错；一般保证 seq_len >= patch_len
-        x_patch = x_emb.unfold(dimension=1, size=patch_len, step=step)
-        # x_patch: [B, Np, patch_len, d_model]
-        # Np = floor((L - patch_len)/step) + 1
-
-        # =========================================================
-        # 4) patch -> token：把每个 patch 压成一个 token
-        #    最简单是 mean pooling（你也可以换成 last/max/attention pooling）
-        # =========================================================
-        x_tok = x_patch.mean(dim=2)            # [B, Np, d_model]
-
-        # =========================================================
-        # 5) LSTM backbone：encoder over patch tokens
-        # =========================================================
-        enc_out, (h_n, c_n) = self.encoder(x_tok)
+        x_patch = rearrange(x_emb, 'b (n p) d -> b n p d', p=self.patch_len)
+        x_tok = x_patch.max(dim=2).values
+        
+        # ---------------- LSTM encoder（输入已 patch 化） ----------------
+        enc_out, (h_n, c_n) = self.encoder(x_tok)   # enc_out: [B, Np, d_model]
         # enc_out: [B, Np, d_model]
         # h_n/c_n: [enc_layers, B, d_model]
 
