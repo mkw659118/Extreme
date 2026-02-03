@@ -11,12 +11,13 @@ reservoir_sensors=(
 # pred_len 放在第一层
 pred_lens=(8 72)
 
+
 # use_memory 放在第二层
 use_memories=(True False)
 
 # 数据集放在第三层
 # d_model 放在第四层
-d_models=(8 16 32 64 96 128 256 512)
+d_models=(64)
 
 for pred in "${pred_lens[@]}"
 do

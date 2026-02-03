@@ -1,6 +1,7 @@
 #Author  :   mkw
 #Time    :   2025/09/17 10:50:52
 #Desc    :   ExtremeLSTM
+from einops import rearrange
 import torch
 import math
 import torch.nn as nn
@@ -235,6 +236,7 @@ class ExtremeLSTM(nn.Module):
         self.d_model = d_model
         self.c_in = c_in
         self.dropout = self.config.dropout
+        self.patch_len = patch_len
 
         # -------- expert definition --------
         self.num_experts = 3
@@ -317,95 +319,106 @@ class ExtremeLSTM(nn.Module):
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
         """
-        x: [B, seq_len, c_in]
+        x: [B, L, C]
         return y: [B, pred_len, 1]
         """
-        B = x.size(0)
-        # ---------------- routing ----------------
-        router_logits = self.router(x)                       # [B, E]
-        router_prob = torch.softmax(router_logits, dim=-1)    # [B, E]
-
-        # ---------------- embedding ----------------
-        x_emb_hist = self.embedding(x)                        # [B, seq_len, d_model]
+        # =========================================================
+        # 0) 保留一份原始输入，给 router / memory 用
+        # =========================================================
+        x_raw = x                              # [B, L, C]
+        B, L, C = x_raw.shape
 
         # =========================================================
-        # LSTM backbone: encoder history -> decoder pred_tokens
+        # 1) routing：仍然基于原始序列做路由（保持你原逻辑）
         # =========================================================
-        enc_out, (h_n, c_n) = self.encoder(x_emb_hist)              # h_n/c_n: [enc_layers, B, d_model]
+        router_logits = self.router(x_raw)     # [B, E]
+        router_prob   = torch.softmax(router_logits, dim=-1)  # [B, E]
+
+        # =========================================================
+        # 2) embedding：逐时间步 embedding（保持你原 DataEmbedding）
+        # =========================================================
+        x_emb = self.embedding(x_raw)          # [B, L, d_model]
+
+        # =========================================================
+        # 3) patchify：在“时间维 L”上切 patch（不重叠 step=patch_len）
+        #    用 unfold 做 patch：得到 [B, Np, patch_len, d_model]
+        # =========================================================
+        patch_len = self.patch_len
+        step = self.patch_len                 # 不重叠；若要重叠可用 self.patch_stride
+
+        # 若 L < patch_len，unfold 会报错；一般保证 seq_len >= patch_len
+        x_patch = x_emb.unfold(dimension=1, size=patch_len, step=step)
+        # x_patch: [B, Np, patch_len, d_model]
+        # Np = floor((L - patch_len)/step) + 1
+
+        # =========================================================
+        # 4) patch -> token：把每个 patch 压成一个 token
+        #    最简单是 mean pooling（你也可以换成 last/max/attention pooling）
+        # =========================================================
+        x_tok = x_patch.mean(dim=2)            # [B, Np, d_model]
+
+        # =========================================================
+        # 5) LSTM backbone：encoder over patch tokens
+        # =========================================================
+        enc_out, (h_n, c_n) = self.encoder(x_tok)
+        # enc_out: [B, Np, d_model]
+        # h_n/c_n: [enc_layers, B, d_model]
 
         pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d_model]
         dec_out, _ = self.decoder(pred_token, (h_n, c_n))             # [B, pred_len, d_model]
-        ctx, _ = self.xattn(dec_out, enc_out, enc_out)
-        fused = torch.cat([dec_out, ctx], dim=-1)
-        fused = self.fuse_proj(fused)          # [B, pred_len, d_model]
 
-        final_shared = self.post_norm(fused)                        # [B, pred_len, d_model]
+        # cross-attn: Q=dec_out, K/V=enc_out
+        ctx, _ = self.xattn(dec_out, enc_out, enc_out)                # ctx: [B, pred_len, d_model]
+        fused = torch.cat([dec_out, ctx], dim=-1)                     # [B, pred_len, 2*d_model]
+        fused = self.fuse_proj(fused)                                 # [B, pred_len, d_model]
+        final_shared = self.post_norm(fused)                          # [B, pred_len, d_model]
 
-        # 1) 专家头：计算每个 expert head 的输出并在最后一维拼接
-        # expert_preds: [B, pred_len, E]，E 为专家数
+        # =========================================================
+        # 6) MoE heads + top-k gating（保持你原逻辑）
+        # =========================================================
         expert_preds = torch.cat([head(final_shared) for head in self.expert_heads], dim=-1)
+        # expert_preds: [B, pred_len, E]
 
-        # 2) 路由选择：对每个样本，从 router_prob 中选出概率最大的 top-k 个专家
         k = self.top_k
-        topk_result = torch.topk(router_prob, k=k, dim=-1)
+        topk_result  = torch.topk(router_prob, k=k, dim=-1)
+        topk_probs   = topk_result.values      # [B, k]
+        topk_experts = topk_result.indices     # [B, k]
 
-        topk_probs = topk_result.values     # [B, k]，top-k 专家的路由概率（尚未在 top-k 内归一化）
-        topk_experts = topk_result.indices  # [B, k]，top-k 专家的编号（expert id）
+        mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)   # [B, k]
 
-        # 3) 权重归一化：只在 top-k 范围内做归一化，使每个样本的 top-k 权重和为 1
-        mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)  # [B, k]
+        expert_index = topk_experts[:, None, :].expand(B, self.pred_len, k)        # [B, pred_len, k]
+        chosen_expert_preds = expert_preds.gather(dim=-1, index=expert_index)      # [B, pred_len, k]
 
-        # 4) 收集对应专家输出：把每个样本选中的 top-k 专家输出从 expert_preds 中 gather 出来
-        # chosen_expert_preds: [B, pred_len, k]
-        expert_index = topk_experts[:, None, :].expand(B, self.pred_len, k)       # [B, pred_len, k]，把索引扩展到每个预测步
-        chosen_expert_preds = expert_preds.gather(dim=-1, index=expert_index)     # [B, pred_len, k]，取出 top-k 专家的预测
+        mix_weights = mix_weights[:, None, :].expand(B, self.pred_len, k)          # [B, pred_len, k]
+        y = (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)          # [B, pred_len, 1]
 
-        # 5) 加权融合：用 top-k 权重对对应专家输出加权求和，得到最终预测
-        mix_weights = mix_weights[:, None, :].expand(B, self.pred_len, k)         # [B, pred_len, k]，把权重扩展到每个预测步
-        y = (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)         # [B, pred_len, 1]，最终预测
-
+        # =========================================================
+        # 7) memory：仍用原始序列 x_raw（否则维度会错）
+        # =========================================================
         if self.use_memory:
-            # 取目标差分列，截断长度，编码成查询键向量
-            x_tgt = x[:, :, self.tp_target_idx:self.tp_target_idx + 1]     # [B, seq_len, 1]
-            x_win = x_tgt[:, -self.tp_key_len:, :]                         # [B, key_len, 1]
-            q_key = self.tp_key_encoder(x_win)                             # [B, key_dim]
-            # 做topK相似度检索返回
-            r_mem = self.tp_memory.retrieve(q_key)                         # [B, pred_len, 1]
-            # 获取拐点发生概率与数值强度分数
+            x_tgt = x_raw[:, :, self.tp_target_idx:self.tp_target_idx + 1]  # [B, L, 1]
+            x_win = x_tgt[:, -self.tp_key_len:, :]                          # [B, key_len, 1]
+            q_key = self.tp_key_encoder(x_win)                              # [B, key_dim]
+
+            r_mem = self.tp_memory.retrieve(q_key)                          # [B, pred_len, 1]
+
             has_hist_tp, hist_score = _turning_score_from_diff(
-                x_win.squeeze(-1),
+                x_win.squeeze(-1),  # [B, key_len]
                 eps=self.tp_eps,
                 min_abs=self.tp_min_abs,
                 min_jump=self.tp_min_jump,
                 region_start=max(1, self.tp_key_len - 8),
                 region_end=self.tp_key_len - 1
             )
-            # 根据拐点强度计算模型修正系数
+
             beta = self.tp_beta * torch.sigmoid((hist_score - self.tp_score_thr) / max(self.tp_score_temp, 1e-6))
             y = y + beta.view(B, 1, 1) * r_mem
-            # # 训练阶段写入记忆
-            # if self.training and (y_true is not None):
-            #     y_tgt = y_true[:, :, 0:1]
-            #     d_all = torch.cat([x_tgt.squeeze(-1), y_tgt.squeeze(-1)], dim=1)  # [B, seq_len + pred_len]
-            #     region_start = self.seq_len
-            #     region_end = self.seq_len + min(self.tp_future_region, self.pred_len) - 1
-            #     has_fut_tp, fut_score = _turning_score_from_diff(
-            #         d_all,
-            #         eps=self.tp_eps,
-            #         min_abs=self.tp_min_abs,
-            #         min_jump=self.tp_min_jump,
-            #         region_start=region_start,
-            #         region_end=region_end
-            #     )
-            #     # 只写入强拐点样本
-            #     write_mask = has_fut_tp & (fut_score > self.tp_score_thr)
-            #     if write_mask.any():
-            #         res = (y_tgt - y.detach())  # [B, pred_len, 1]
-            #         self.tp_memory.add(q_key[write_mask].detach(), res[write_mask].detach())
-            # 训练阶段：全存（不做拐点/极端值筛选），由 mem_size 控制只保留最近样本
+
+            # 训练阶段：全存 residual（按你之前的要求）
             if self.training and (y_true is not None):
                 y_tgt = y_true[:, :, 0:1]          # [B, pred_len, 1]
-                res = (y_tgt - y.detach())         # [B, pred_len, 1]  存 residual
+                res = (y_tgt - y.detach())         # [B, pred_len, 1]
                 self.tp_memory.add(q_key.detach(), res.detach())
 
-        return y 
+        return y
+ 

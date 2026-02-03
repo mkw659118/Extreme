@@ -6,6 +6,7 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 from layers.embedding import DataEmbedding
+# 残差记忆库，全存，容量大小1024
 
 class NormalHead(nn.Module):
     def __init__(self, d_model: int):
