@@ -30,6 +30,7 @@ class ExtremeLSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     e_layers: int = 1
     seq_len: int = 360
     pred_len: int = 72
+    mem_size: int = 1024
     
     
    

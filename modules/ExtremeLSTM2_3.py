@@ -319,6 +319,8 @@ class ExtremeLSTM(nn.Module):
 
             self.tp_key_encoder = TurningPointKeyEncoder(in_ch=1, key_dim=key_dim, hidden=key_hidden, dropout=key_drop)
             self.tp_memory = TurningPointMemoryBank(mem_size=mem_size, key_dim=key_dim, pred_len=self.pred_len, topk=self.tp_topk)
+            
+    # patchify + LSTM + MoE + memory
 
     def forward(self, x, x_mark=None, y_true=None, sample_ids=None, route_labels=None):
         """

@@ -11,7 +11,7 @@ from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 # from modules.ExtremeLSTM import ExtremeLSTM
 # from modules.ExtremeLSTM1_28 import ExtremeLSTM
-from modules.ExtremeLSTM2_3 import ExtremeLSTM
+from modules.ExtremeLSTM2_2 import ExtremeLSTM
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN

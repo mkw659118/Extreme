@@ -311,7 +311,7 @@ class ExtremeLSTM(nn.Module):
             key_dim = int(getattr(config, "tp_key_dim", 64))
             key_hidden = int(getattr(config, "tp_key_hidden", 128))
             key_drop = float(getattr(config, "tp_key_dropout", 0.0))
-            mem_size = int(getattr(config, "tp_mem_size", 1024))
+            mem_size = int(getattr(config, "mem_size", 1024))
 
             self.tp_key_encoder = TurningPointKeyEncoder(in_ch=1, key_dim=key_dim, hidden=key_hidden, dropout=key_drop)
             self.tp_memory = TurningPointMemoryBank(mem_size=mem_size, key_dim=key_dim, pred_len=self.pred_len, topk=self.tp_topk)
@@ -385,24 +385,6 @@ class ExtremeLSTM(nn.Module):
             beta = self.tp_beta * torch.sigmoid((hist_score - self.tp_score_thr) / max(self.tp_score_temp, 1e-6))
             y = y + beta.view(B, 1, 1) * r_mem
             # # 训练阶段写入记忆
-            # if self.training and (y_true is not None):
-            #     y_tgt = y_true[:, :, 0:1]
-            #     d_all = torch.cat([x_tgt.squeeze(-1), y_tgt.squeeze(-1)], dim=1)  # [B, seq_len + pred_len]
-            #     region_start = self.seq_len
-            #     region_end = self.seq_len + min(self.tp_future_region, self.pred_len) - 1
-            #     has_fut_tp, fut_score = _turning_score_from_diff(
-            #         d_all,
-            #         eps=self.tp_eps,
-            #         min_abs=self.tp_min_abs,
-            #         min_jump=self.tp_min_jump,
-            #         region_start=region_start,
-            #         region_end=region_end
-            #     )
-            #     # 只写入强拐点样本
-            #     write_mask = has_fut_tp & (fut_score > self.tp_score_thr)
-            #     if write_mask.any():
-            #         res = (y_tgt - y.detach())  # [B, pred_len, 1]
-            #         self.tp_memory.add(q_key[write_mask].detach(), res[write_mask].detach())
             # 训练阶段：全存（不做拐点/极端值筛选），由 mem_size 控制只保留最近样本
             if self.training and (y_true is not None):
                 y_tgt = y_true[:, :, 0:1]          # [B, pred_len, 1]

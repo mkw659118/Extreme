@@ -13,7 +13,7 @@ pred_lens=(8 72)
 
 
 # use_memory 放在第二层
-use_memories=(False True)
+use_memories=(True)
 
 # 数据集放在第三层
 # d_model 放在第四层
