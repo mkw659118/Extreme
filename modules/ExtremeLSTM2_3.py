@@ -280,6 +280,9 @@ class ExtremeLSTM(nn.Module):
         ])
         
         self.fuse_proj = nn.Linear(2 * d_model, d_model)
+        
+        # patch token embedding: patch_len -> d_model
+        self.patch_embed = nn.Linear(self.patch_len, self.d_model)
 
 
         # -------- top-k gating --------
@@ -324,29 +327,41 @@ class ExtremeLSTM(nn.Module):
         x_raw = x                              # [B, L, C]
         B, L, C = x_raw.shape
 
-        # ---------------- routing（用原始序列） ----------------
+        # ---------------- routing（仍用原始序列） ----------------
         router_logits = self.router(x_raw)     # [B, E]
         router_prob   = torch.softmax(router_logits, dim=-1)  # [B, E]
 
-        # ---------------- embedding（逐时间点） ----------------
-        x_emb = self.embedding(x_raw)                 # [B, L, d_model]  例如 [B, 96, 64]
+        # =========================================================
+        # Patchify like your reference code (channel-independent)
+        # =========================================================
+        # 1) [B, L, C] -> [B, C, L]
+        x_bcL = rearrange(x_raw, 'b l c -> b c l')            # [B, C, L]
 
-        x_patch = rearrange(x_emb, 'b (n p) d -> b n p d', p=self.patch_len)
-        x_tok = x_patch.max(dim=2).values
-        
+        # 2) [B, C, L] -> [(B*C), L]
+        x_flat = rearrange(x_bcL, 'b c l -> (b c) l')         # [B*C, L]
+
+        # 3) unfold on time dim -> [(B*C), Np, patch_len]
+        p = self.patch_len
+        s = self.patch_len                 # stride; 默认不重叠 s=p
+        x_patch = x_flat.unfold(dimension=-1, size=p, step=s) # [B*C, Np, p]
+
+        # 4) patch embedding: p -> d_model
+        x_tok_bc = self.patch_embed(x_patch)                  # [B*C, Np, d_model]
+
+        # 5) reshape back and aggregate channels -> [B, Np, d_model]
+        x_tok = rearrange(x_tok_bc, '(b c) n d -> b c n d', b=B, c=C)  # [B, C, Np, d_model]
+        x_tok = x_tok.mean(dim=1)                             # [B, Np, d_model]
+        # 也可以改成 max：x_tok = x_tok.max(dim=1).values
+
         # ---------------- LSTM encoder（输入已 patch 化） ----------------
-        enc_out, (h_n, c_n) = self.encoder(x_tok)   # enc_out: [B, Np, d_model]
-        # enc_out: [B, Np, d_model]
-        # h_n/c_n: [enc_layers, B, d_model]
+        enc_out, (h_n, c_n) = self.encoder(x_tok)             # enc_out: [B, Np, d_model]
+        pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)   # [B, pred_len, d_model]
+        dec_out, _ = self.decoder(pred_token, (h_n, c_n))              # [B, pred_len, d_model]
 
-        pred_token = self.pred_tokens.unsqueeze(0).expand(B, -1, -1)  # [B, pred_len, d_model]
-        dec_out, _ = self.decoder(pred_token, (h_n, c_n))             # [B, pred_len, d_model]
-
-        # cross-attn: Q=dec_out, K/V=enc_out
-        ctx, _ = self.xattn(dec_out, enc_out, enc_out)                # ctx: [B, pred_len, d_model]
-        fused = torch.cat([dec_out, ctx], dim=-1)                     # [B, pred_len, 2*d_model]
-        fused = self.fuse_proj(fused)                                 # [B, pred_len, d_model]
-        final_shared = self.post_norm(fused)                          # [B, pred_len, d_model]
+        ctx, _ = self.xattn(dec_out, enc_out, enc_out)         # [B, pred_len, d_model]
+        fused = torch.cat([dec_out, ctx], dim=-1)              # [B, pred_len, 2*d_model]
+        fused = self.fuse_proj(fused)                          # [B, pred_len, d_model]
+        final_shared = self.post_norm(fused)                   # [B, pred_len, d_model]
 
         # =========================================================
         # 6) MoE heads + top-k gating（保持你原逻辑）

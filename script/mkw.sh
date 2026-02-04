@@ -13,11 +13,11 @@ pred_lens=(8 72)
 
 
 # use_memory 放在第二层
-use_memories=(True False)
+use_memories=(False True)
 
 # 数据集放在第三层
 # d_model 放在第四层
-d_models=(64)
+d_models=(8 16 32 64 128 256 512)
 
 for pred in "${pred_lens[@]}"
 do
