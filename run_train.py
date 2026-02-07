@@ -26,7 +26,7 @@ def get_experiment_name(config):
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===
-    optional_fields = [ 'use_memory', 'seq_len', 'pred_len', 'share_weights']
+    optional_fields = [ 'use_memory', 'seq_len', 'pred_len', 'share_weights', 'mem_size' ]
     for field in optional_fields:
         if hasattr(config, field):
             key = field.replace('_', ' ').title().replace(' ', '_')  # e.g. seq_len -> Seq_Len

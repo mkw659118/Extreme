@@ -1,10 +1,10 @@
 #!/bin/bash
 
 reservoir_sensors=(
-  # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
-  # "reservoir_stor_4007_sof24"
-  # "reservoir_stor_4009_sof24"
+  "reservoir_stor_4001_sof24"
+  "reservoir_stor_4005_sof24"
+  "reservoir_stor_4007_sof24"
+  "reservoir_stor_4009_sof24"
   "reservoir_stor_4011_sof24"
 )
 
@@ -15,7 +15,7 @@ pred_lens=(8 72)
 mem_sizes=(512 1024 2048)
 
 # 3) use_memory 第三层
-use_memories=(True)
+use_memories=(True False)
 
 # 4) sensor 第四层
 # 5) d_model 第五层
