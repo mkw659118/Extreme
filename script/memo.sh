@@ -12,14 +12,14 @@ reservoir_sensors=(
 pred_lens=(8 72)
 
 # 2) mem_size 第二层（你按需改这些候选值）
-mem_sizes=(512 1024 2048)
+mem_sizes=(512 1024 2048 4096)
 
 # 3) use_memory 第三层
-use_memories=(True False)
+use_memories=(True)
 
 # 4) sensor 第四层
 # 5) d_model 第五层
-d_models=(8 16 32 64 128 256 512)
+d_models=(64)
 
 for pred in "${pred_lens[@]}"
 do

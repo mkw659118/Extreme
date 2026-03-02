@@ -12,6 +12,7 @@ from baselines.Transformer import Transformer
 # from modules.ExtremeLSTM import ExtremeLSTM
 # from modules.ExtremeLSTM1_28 import ExtremeLSTM
 from modules.ExtremeLSTM import ExtremeLSTM
+from modules.ExtremeLSTMNoOrder import ExtremeLSTMNoOrder
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
