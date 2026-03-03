@@ -6476,14 +6476,84 @@ patch LSTM model2_3
 |2026-03-01 11:02:47| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
 |2026-03-01 11:02:47| MAE - 1.9093 MSE - 58.1321 RMSE - 7.6244 MAPE - 0.0016 NMAE - 0.0018 NRMSE - 0.0067 Acc_10 - 0.9992 train_time - 315.4309
 
-
-|2026-03-01 11:21:12| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
-|2026-03-01 11:21:12| MAE - 1.8969 MSE - 55.6710 RMSE - 7.4613 MAPE - 0.0016 NMAE - 0.0017 NRMSE - 0.0065 Acc_10 - 0.9992 train_time - 46.4263
-|2026-03-01 11:31:47| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
-|2026-03-01 11:31:47| MAE - 10.0335 MSE - 1718.8200 RMSE - 41.4587 MAPE - 0.0009 NMAE - 0.0009 NRMSE - 0.0038 Acc_10 - 0.9998 train_time - 104.4646
-|2026-03-01 11:42:02| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
-|2026-03-01 11:42:02| MAE - 18.8820 MSE - 83384.2453 RMSE - 288.7633 MAPE - 0.0022 NMAE - 0.0017 NRMSE - 0.0240 Acc_10 - 0.9983 train_time - 82.7152
-|2026-03-01 11:52:37| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
-|2026-03-01 11:52:37| MAE - 2.1304 MSE - 61.8954 RMSE - 7.8674 MAPE - 0.0013 NMAE - 0.0012 NRMSE - 0.0040 Acc_10 - 0.9997 train_time - 107.1887
-|2026-03-01 12:03:12| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
-|2026-03-01 12:03:12| MAE - 1.5083 MSE - 29.8115 RMSE - 5.4600 MAPE - 0.0034 NMAE - 0.0033 NRMSE - 0.0119 Acc_10 - 0.9973 train_time - 60.4978
+测试不同 memory size 的影响
+|2026-03-02 08:40:49| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
+|2026-03-02 08:40:49| MAE - 1.8969 MSE - 55.6710 RMSE - 7.4613 MAPE - 0.0016 NMAE - 0.0017 NRMSE - 0.0065 Acc_10 - 0.9992 train_time - 94.4043
+|2026-03-02 08:54:18| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
+|2026-03-02 08:54:18| MAE - 10.0335 MSE - 1718.8200 RMSE - 41.4587 MAPE - 0.0009 NMAE - 0.0009 NRMSE - 0.0038 Acc_10 - 0.9998 train_time - 137.0629
+|2026-03-02 09:07:27| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
+|2026-03-02 09:07:27| MAE - 18.8820 MSE - 83384.2453 RMSE - 288.7633 MAPE - 0.0022 NMAE - 0.0017 NRMSE - 0.0240 Acc_10 - 0.9983 train_time - 107.9360
+|2026-03-02 09:24:52| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
+|2026-03-02 09:24:52| MAE - 2.1304 MSE - 61.8954 RMSE - 7.8674 MAPE - 0.0013 NMAE - 0.0012 NRMSE - 0.0040 Acc_10 - 0.9997 train_time - 139.9005
+|2026-03-02 09:48:31| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 512
+|2026-03-02 09:48:31| MAE - 1.5083 MSE - 29.8115 RMSE - 5.4600 MAPE - 0.0034 NMAE - 0.0033 NRMSE - 0.0119 Acc_10 - 0.9973 train_time - 153.2907
+|2026-03-02 10:21:57| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
+|2026-03-02 10:21:57| MAE - 1.9093 MSE - 58.1321 RMSE - 7.6244 MAPE - 0.0016 NMAE - 0.0018 NRMSE - 0.0067 Acc_10 - 0.9992 train_time - 775.8496
+|2026-03-02 10:45:07| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
+|2026-03-02 10:45:07| MAE - 9.8640 MSE - 1696.7321 RMSE - 41.1914 MAPE - 0.0009 NMAE - 0.0009 NRMSE - 0.0037 Acc_10 - 0.9998 train_time - 143.2034
+|2026-03-02 11:08:13| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
+|2026-03-02 11:08:13| MAE - 19.0897 MSE - 83281.4399 RMSE - 288.5852 MAPE - 0.0022 NMAE - 0.0018 NRMSE - 0.0240 Acc_10 - 0.9983 train_time - 92.4746
+|2026-03-02 11:51:30| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
+|2026-03-02 11:51:30| MAE - 2.2081 MSE - 73.2475 RMSE - 8.5585 MAPE - 0.0013 NMAE - 0.0013 NRMSE - 0.0044 Acc_10 - 0.9997 train_time - 887.8503
+|2026-03-02 12:19:19| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 1024
+|2026-03-02 12:19:19| MAE - 1.4610 MSE - 27.3568 RMSE - 5.2304 MAPE - 0.0033 NMAE - 0.0032 NRMSE - 0.0114 Acc_10 - 0.9982 train_time - 77.5612
+|2026-03-02 12:48:09| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 2048
+|2026-03-02 12:48:09| MAE - 1.9479 MSE - 58.5191 RMSE - 7.6498 MAPE - 0.0016 NMAE - 0.0018 NRMSE - 0.0067 Acc_10 - 0.9992 train_time - 173.7023
+|2026-03-02 13:06:12| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 2048
+|2026-03-02 13:06:12| MAE - 10.0139 MSE - 1757.5690 RMSE - 41.9234 MAPE - 0.0009 NMAE - 0.0009 NRMSE - 0.0038 Acc_10 - 0.9998 train_time - 31.1531
+|2026-03-02 13:23:59| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 2048
+|2026-03-02 13:23:59| MAE - 19.1925 MSE - 82318.2993 RMSE - 286.9117 MAPE - 0.0022 NMAE - 0.0018 NRMSE - 0.0239 Acc_10 - 0.9983 train_time - 70.2288
+|2026-03-02 13:44:40| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 2048
+|2026-03-02 13:44:40| MAE - 2.2359 MSE - 69.7296 RMSE - 8.3504 MAPE - 0.0013 NMAE - 0.0013 NRMSE - 0.0043 Acc_10 - 0.9997 train_time - 262.0333
+|2026-03-02 14:02:13| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 2048
+|2026-03-02 14:02:13| MAE - 1.4725 MSE - 27.9422 RMSE - 5.2860 MAPE - 0.0033 NMAE - 0.0032 NRMSE - 0.0115 Acc_10 - 0.9978 train_time - 68.9578
+|2026-03-02 14:20:05| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 4096
+|2026-03-02 14:20:05| MAE - 1.9182 MSE - 58.3873 RMSE - 7.6412 MAPE - 0.0016 NMAE - 0.0018 NRMSE - 0.0067 Acc_10 - 0.9991 train_time - 92.4798
+|2026-03-02 14:38:52| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 4096
+|2026-03-02 14:38:52| MAE - 10.0912 MSE - 1776.2968 RMSE - 42.1461 MAPE - 0.0009 NMAE - 0.0010 NRMSE - 0.0038 Acc_10 - 0.9998 train_time - 113.6394
+|2026-03-02 14:57:08| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 4096
+|2026-03-02 14:57:08| MAE - 18.8341 MSE - 82899.3003 RMSE - 287.9224 MAPE - 0.0022 NMAE - 0.0017 NRMSE - 0.0240 Acc_10 - 0.9983 train_time - 116.5081
+|2026-03-02 16:15:38| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 4096
+|2026-03-02 16:15:38| MAE - 2.3822 MSE - 113.2330 RMSE - 10.6411 MAPE - 0.0014 NMAE - 0.0014 NRMSE - 0.0054 Acc_10 - 0.9994 train_time - 4240.4505
+|2026-03-02 16:37:51| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 8, Mem_Size : 4096
+|2026-03-02 16:37:51| MAE - 1.5243 MSE - 29.6273 RMSE - 5.4431 MAPE - 0.0034 NMAE - 0.0033 NRMSE - 0.0118 Acc_10 - 0.9976 train_time - 337.4356
+|2026-03-02 16:56:48| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 512
+|2026-03-02 16:56:48| MAE - 17.7894 MSE - 3451.8323 RMSE - 58.7523 MAPE - 0.0142 NMAE - 0.0164 NRMSE - 0.0515 Acc_10 - 0.9691 train_time - 92.2791
+|2026-03-02 17:19:02| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 512
+|2026-03-02 17:19:02| MAE - 145.4945 MSE - 303625.6135 RMSE - 551.0223 MAPE - 0.0103 NMAE - 0.0138 NRMSE - 0.0499 Acc_10 - 0.9720 train_time - 299.3175
+|2026-03-02 17:58:33| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 512
+|2026-03-02 17:58:33| MAE - 172.3458 MSE - 657228.4717 RMSE - 810.6963 MAPE - 0.0143 NMAE - 0.0159 NRMSE - 0.0675 Acc_10 - 0.9673 train_time - 1320.2530
+|2026-03-02 18:17:33| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 512
+|2026-03-02 18:17:33| MAE - 24.6529 MSE - 7490.3305 RMSE - 86.5467 MAPE - 0.0126 NMAE - 0.0144 NRMSE - 0.0441 Acc_10 - 0.9726 train_time - 94.4243
+|2026-03-02 18:37:47| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 512
+|2026-03-02 18:37:47| MAE - 9.3449 MSE - 496.2471 RMSE - 22.2766 MAPE - 0.0211 NMAE - 0.0204 NRMSE - 0.0485 Acc_10 - 0.9453 train_time - 139.4210
+|2026-03-02 19:00:47| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 1024
+|2026-03-02 19:00:47| MAE - 18.5218 MSE - 3682.0225 RMSE - 60.6797 MAPE - 0.0146 NMAE - 0.0171 NRMSE - 0.0532 Acc_10 - 0.9709 train_time - 347.4950
+|2026-03-02 19:21:52| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 1024
+|2026-03-02 19:21:52| MAE - 143.7434 MSE - 345833.3048 RMSE - 588.0759 MAPE - 0.0102 NMAE - 0.0136 NRMSE - 0.0533 Acc_10 - 0.9727 train_time - 230.2064
+|2026-03-02 19:44:09| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 1024
+|2026-03-02 19:44:09| MAE - 183.8308 MSE - 740706.6102 RMSE - 860.6431 MAPE - 0.0151 NMAE - 0.0170 NRMSE - 0.0717 Acc_10 - 0.9631 train_time - 255.8202
+|2026-03-02 20:08:13| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 1024
+|2026-03-02 20:08:13| MAE - 22.3665 MSE - 6733.5393 RMSE - 82.0581 MAPE - 0.0117 NMAE - 0.0131 NRMSE - 0.0419 Acc_10 - 0.9766 train_time - 391.2784
+|2026-03-02 20:26:29| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 1024
+|2026-03-02 20:26:29| MAE - 9.0043 MSE - 434.6360 RMSE - 20.8479 MAPE - 0.0202 NMAE - 0.0196 NRMSE - 0.0454 Acc_10 - 0.9495 train_time - 69.3494
+|2026-03-02 20:45:39| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 2048
+|2026-03-02 20:45:39| MAE - 18.3491 MSE - 3897.0187 RMSE - 62.4261 MAPE - 0.0144 NMAE - 0.0169 NRMSE - 0.0547 Acc_10 - 0.9699 train_time - 94.0605
+|2026-03-02 21:01:20| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 2048
+|2026-03-02 21:01:20| MAE - 139.4858 MSE - 294867.4167 RMSE - 543.0170 MAPE - 0.0099 NMAE - 0.0132 NRMSE - 0.0492 Acc_10 - 0.9764 train_time - 163.2020
+|2026-03-02 21:17:13| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 2048
+|2026-03-02 21:17:13| MAE - 176.2660 MSE - 695449.2987 RMSE - 833.9360 MAPE - 0.0146 NMAE - 0.0163 NRMSE - 0.0694 Acc_10 - 0.9644 train_time - 205.3977
+|2026-03-02 21:32:46| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 2048
+|2026-03-02 21:32:46| MAE - 23.0655 MSE - 6458.7963 RMSE - 80.3666 MAPE - 0.0121 NMAE - 0.0135 NRMSE - 0.0410 Acc_10 - 0.9789 train_time - 168.3491
+|2026-03-02 21:49:29| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 2048
+|2026-03-02 21:49:29| MAE - 10.9444 MSE - 782.1007 RMSE - 27.9661 MAPE - 0.0246 NMAE - 0.0239 NRMSE - 0.0608 Acc_10 - 0.9350 train_time - 267.1831
+|2026-03-02 22:04:14| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 4096
+|2026-03-02 22:04:14| MAE - 17.1064 MSE - 3293.6308 RMSE - 57.3902 MAPE - 0.0136 NMAE - 0.0158 NRMSE - 0.0503 Acc_10 - 0.9737 train_time - 111.0414
+|2026-03-02 22:18:27| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4005_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 4096
+|2026-03-02 22:18:27| MAE - 139.4719 MSE - 315057.2934 RMSE - 561.2996 MAPE - 0.0100 NMAE - 0.0132 NRMSE - 0.0508 Acc_10 - 0.9732 train_time - 110.8631
+|2026-03-02 22:35:53| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4007_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 4096
+|2026-03-02 22:35:53| MAE - 190.5658 MSE - 734776.5770 RMSE - 857.1911 MAPE - 0.0157 NMAE - 0.0176 NRMSE - 0.0714 Acc_10 - 0.9603 train_time - 300.0974
+|2026-03-02 22:51:46| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4009_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 4096
+|2026-03-02 22:51:46| MAE - 23.7247 MSE - 6703.0447 RMSE - 81.8721 MAPE - 0.0129 NMAE - 0.0139 NRMSE - 0.0418 Acc_10 - 0.9750 train_time - 157.4773
+|2026-03-02 23:05:09| Dataset : water, batchsize : 256, Model : extreme_lstm, d_model : 64, reservoir : reservoir_stor_4011_sof24, epochs : 200, patience : 40, dropout : 0.3, Use_Memory : True, Seq_Len : 360, Pred_Len : 72, Mem_Size : 4096
+|2026-03-02 23:05:09| MAE - 9.1210 MSE - 489.3973 RMSE - 22.1223 MAPE - 0.0206 NMAE - 0.0199 NRMSE - 0.0481 Acc_10 - 0.9461 train_time - 62.8868

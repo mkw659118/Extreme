@@ -296,7 +296,7 @@ class ExtremeLSTM(nn.Module):
         self.use_memory = use_memory
         self.tp_target_idx = int(getattr(config, "tp_target_idx", 0))
         self.tp_key_len = int(getattr(config, "tp_key_len", min(32, self.seq_len)))
-        self.tp_topk = int(getattr(config, "tp_topk", 8))
+        self.tp_topk = int(getattr(config, "tp_topk", 20))
         self.tp_beta = float(getattr(config, "tp_beta", 0.3))
 
         self.tp_eps = float(getattr(config, "tp_eps", 0.05))
