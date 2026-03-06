@@ -12,11 +12,12 @@ from baselines.Transformer import Transformer
 # from modules.ExtremeLSTM import ExtremeLSTM
 # from modules.ExtremeLSTM1_28 import ExtremeLSTM
 from modules.ExtremeLSTM import ExtremeLSTM
+from modules.ExtremeLSTMMemo import ExtremeLSTMMemo
 from modules.ExtremeLSTMNoOrder import ExtremeLSTMNoOrder
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
-from exp.exp_base import BasicModel
+from exp.exp_base_memo import BasicModel
 from baselines.encoder_seq import SeqEncoder
 
 class Model(BasicModel):
@@ -40,6 +41,18 @@ class Model(BasicModel):
                 num_layers_inter_patch=config.num_layers_inter_patch,
                 config=config
             )
+
+        elif config.model == 'extreme_lstm_memo':
+            self.model = ExtremeLSTMMemo(
+                c_in=config.c_in,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                d_model=config.d_model,
+                e_layers=config.e_layers,
+                d_layers=config.d_layers,
+                config=config
+            )
+
         elif config.model == 'extreme_lstm':
             self.model = ExtremeLSTM(
                 seq_len=config.seq_len,

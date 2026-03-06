@@ -272,10 +272,23 @@ class ExtremeLSTM(nn.Module):
         self.router = SampleRouterFromX(c_in=c_in, num_experts=self.num_experts, hidden=router_hidden, dropout=router_dropout)
 
         # -------- heads --------
+        # self.expert_heads = nn.ModuleList([
+        #     NormalHead(d_model),
+        #     MidHead(d_model, hidden=d_model, dropout=self.dropout),
+        #     ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+        # ])
+
         self.expert_heads = nn.ModuleList([
-            NormalHead(d_model),
-            MidHead(d_model, hidden=d_model, dropout=self.dropout),
             ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout),
+            ExtremeHead(d_model, hidden=2 * d_model, dropout=self.dropout)
         ])
         
         self.fuse_proj = nn.Linear(2 * d_model, d_model)
@@ -284,11 +297,7 @@ class ExtremeLSTM(nn.Module):
         # -------- top-k gating --------
         self.top_k = 2
         
-        # -------- GMM label slices --------
-        self.gmm_pt_start  = 2
-        self.gmm_pt_end    = 5
-        self.gmm_seq_start = 7
-        self.gmm_seq_end   = 10
+        
 
         # =========================================================
         # Turning-Point Memory 
@@ -363,8 +372,9 @@ class ExtremeLSTM(nn.Module):
 
         # 5) 加权融合：用 top-k 权重对对应专家输出加权求和，得到最终预测
         mix_weights = mix_weights[:, None, :].expand(B, self.pred_len, k)         # [B, pred_len, k]，把权重扩展到每个预测步
-        base = (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)         # [B, pred_len, 1]，最终预测
-
+       
+        y= (chosen_expert_preds * mix_weights).sum(dim=-1, keepdim=True)         # [B, pred_len, 1]，最终预测
+        base = y
         if self.use_memory:
             # 取目标差分列，截断长度，编码成查询键向量
             x_tgt = x[:, :, self.tp_target_idx:self.tp_target_idx + 1]     # [B, seq_len, 1]

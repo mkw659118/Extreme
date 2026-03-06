@@ -4,7 +4,6 @@ import torch
 import collections
 from data_provider.DS import DS
 from data_provider.DS2 import DS2
-from exp.exp_train import RunOnce
 from exp.exp_model import Model
 import utils.model_efficiency
 import utils.utils
@@ -59,7 +58,7 @@ def RunExperiments(log, config):
         
         model = Model(config)
         log.plotter.reset_round()
-        results = RunOnce(config, runId, model, datamodule, log)
+        results = model.RunOnce(config, runId, model, datamodule, log)
         for key in results:
             metrics[key].append(results[key])
         log.plotter.append_round()
@@ -103,5 +102,5 @@ def run(config):
 if __name__ == '__main__':
     from utils.exp_config import get_config
     # config = get_config('PatchExtremeMemoryTransformerConfig')
-    config = get_config('ExtremeLSTMConfig')
+    config = get_config('ExtremeLSTMMemoConfig')
     run(config)
