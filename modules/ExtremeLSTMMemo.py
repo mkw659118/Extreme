@@ -112,7 +112,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         # -------- expert definition --------
         self.num_experts = 3
-        self.retrieval_num = 10
+        self.retrieval_num = 8
         self.alpha = 0.5
         self.top_k_experts = 2
         self.retrieval_stride = 1
@@ -298,11 +298,9 @@ class ExtremeLSTMMemo(nn.Module):
             print("Retrieval in test mode...........")
             retrieval_results, sims, t = self.retrieval(x, sample_ids) # 检索得到的结果
             print("Retrieval end...........")
-            
-            
+           
             sim_mean = torch.mean(sims, dim=-1).unsqueeze(-1)  # [bs, 1, 1]
-            # 归一化到[0, 0.2]区间（避免权重过大），替代固定0.1
-            dynamic_alpha = 0.2 * (sim_mean - sim_mean.min()) / (sim_mean.max() - sim_mean.min() + 1e-8)
+            dynamic_alpha = 0.05 * (sim_mean - sim_mean.min()) / (sim_mean.max() - sim_mean.min() + 1e-8)
             y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_results
 
         return y 
