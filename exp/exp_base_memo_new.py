@@ -14,6 +14,7 @@ class BasicModel(torch.nn.Module):
         super(BasicModel, self).__init__()
         self.config = config
         self.pred_len = config.pred_len
+        self.label_len = config.label_len
         device_str = str(config.device)
         self.device_type = 'cuda' if 'cuda' in device_str else 'cpu'
         self.scaler = torch.amp.GradScaler(config.device)
@@ -189,7 +190,11 @@ class BasicModel(torch.nn.Module):
                 x = x.to(self.config.device, non_blocking=True)
                 x_mark = x_mark.to(self.config.device, non_blocking=True)
                 label = label.to(self.config.device, non_blocking=True)
-                # sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
+                sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
+
+                # decoder input
+                dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
+                dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
 
                 self.optimizer.zero_grad(set_to_none=True)
 
@@ -209,7 +214,7 @@ class BasicModel(torch.nn.Module):
                     scaler.step(self.optimizer)
                     scaler.update()
                 else:
-                    pred = self.forward(x, x_mark, sample_ids=sample_ids, mode='train')
+                    pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='train')
 
                     pred_raw, real_raw = self._restore_to_raw(
                         pred, label, dataModule.mean, dataModule.std
@@ -254,8 +259,11 @@ class BasicModel(torch.nn.Module):
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
                 sample_ids = sample_ids.to(self.config.device).long()
+                # decoder input
+                dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
+                dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
 
-                pred = self.forward(x, x_mark, sample_ids=sample_ids, mode='valid')
+                pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='valid')
 
                 pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
                 loss_item = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
@@ -289,8 +297,12 @@ class BasicModel(torch.nn.Module):
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
                 sample_ids = sample_ids.to(self.config.device).long()
+                # decoder input
+                dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
+                dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
 
-                pred = self.forward(x, x_mark, sample_ids=sample_ids, mode='test')
+
+                pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='test')
 
                 reals.append(label)
                 preds.append(pred)
@@ -301,3 +313,6 @@ class BasicModel(torch.nn.Module):
         pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
 
         return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, 'test')
+
+    #
+    

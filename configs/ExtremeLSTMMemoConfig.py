@@ -20,6 +20,7 @@ class ExtremeLSTMMemoConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dat
     data_model: str = 'Almaden'
     name: str = 'Almaden'
     seq_len: int = 360
+    label_len: int = 180
     pred_len: int = 8
     c_in: int = 10
     
