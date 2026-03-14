@@ -159,7 +159,7 @@ class BasicModel(torch.nn.Module):
                     batch_y = batch_y.float().to(self.config.device)
                     sample_ids = sample_ids.to(self.config.device)
                     iter_count += 1
-                    self.model.add_key_value(batch_x[:,:, 0:1], batch_y[:, -self.config.pred_len:, 0:1], sample_ids)
+                    self.model.add_key_value(batch_x, batch_y[:, -self.config.pred_len:, :], sample_ids)
 
                     if (i + 1) % 100 == 0:
                         print("\titers: {0}, epoch: {1}".format(i + 1, epoch + 1))
@@ -200,7 +200,7 @@ class BasicModel(torch.nn.Module):
 
                 if self.config.use_amp:
                     with torch.autocast(device_type=self.device_type, dtype=torch.float16):
-                        pred = self.forward(x, x_mark, sample_ids=sample_ids, mode='train')
+                        pred, activity_loss = self.forward(x, x_mark, sample_ids=sample_ids, mode='train')
 
                         pred_raw, real_raw = self._restore_to_raw(
                             pred, label, dataModule.mean, dataModule.std
@@ -214,17 +214,27 @@ class BasicModel(torch.nn.Module):
                     scaler.step(self.optimizer)
                     scaler.update()
                 else:
-                    pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='train')
+                    pred, balance_loss = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='train')
 
                     pred_raw, real_raw = self._restore_to_raw(
                         pred, label, dataModule.mean, dataModule.std
                     )
                     loss = compute_loss(self, x, pred_raw, real_raw, self.config)
-                    loss.backward()
+                    # 总损失：包括主损失和专家活跃度损失
+                    total_loss_value = loss + balance_loss
+                    if (batch_idx + 1) % 100 == 0 or (batch_idx + 1) == len(dataModule.train_data_loader):
+                        print(
+                            f"Batch {batch_idx+1}/{len(dataModule.train_data_loader)} - "
+                            f"Loss: {loss.item():.6f}, "
+                            f"Balance Loss: {balance_loss.item():.6f}, "
+                            f"Total Loss: {total_loss_value.item():.6f}"
+                        )
+
+                    total_loss_value.backward()
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     self.optimizer.step()
 
-                total_loss += loss.item() * x.size(0)
+                total_loss += total_loss_value.item() * x.size(0)
                 sample_count += x.size(0)
         
 
@@ -263,7 +273,7 @@ class BasicModel(torch.nn.Module):
                 dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
                 dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
 
-                pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='valid')
+                pred, _ = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='valid')
 
                 pred_raw, real_raw = self._restore_to_raw(pred, label, dataModule.mean, dataModule.std)
                 loss_item = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
@@ -302,7 +312,7 @@ class BasicModel(torch.nn.Module):
                 dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
 
 
-                pred = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='test')
+                pred, activity_loss = self.forward(x, x_mark, dec_input=dec_input, sample_ids=sample_ids, mode='test')
 
                 reals.append(label)
                 preds.append(pred)
