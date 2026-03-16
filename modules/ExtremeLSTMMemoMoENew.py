@@ -682,9 +682,9 @@ class ExtremeLSTMMemo(nn.Module):
         
 
         # -------- experts / retrieval --------
-        self.num_experts = 10
+        self.num_experts = 1
         self.retrieval_num = 4
-        self.top_k_experts = 2
+        self.top_k_experts = 1
         self.retrieval_stride = 1
 
         # -------- loss weights --------
