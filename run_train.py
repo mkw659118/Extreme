@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import collections
-from data_provider.DS import DS
-from data_provider.DS2 import DS2
+from data_provider.DS3 import DS
 from exp.exp_model import Model
 import utils.model_efficiency
 import utils.utils

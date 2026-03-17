@@ -14,7 +14,7 @@ from utils.utils2 import (
 import os
 import numpy as np
 from torch.utils.data import DataLoader
-from data_provider.data_getitem import TimeSeriesDataset
+from data_provider.data_getitem_head import TimeSeriesDataset
 
 
 class DS:

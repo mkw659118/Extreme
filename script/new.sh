@@ -2,9 +2,9 @@
 
 reservoir_sensors=(
   # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
-  # "reservoir_stor_4007_sof24"
-  # "reservoir_stor_4009_sof24"
+  "reservoir_stor_4005_sof24"
+  "reservoir_stor_4007_sof24"
+  "reservoir_stor_4009_sof24"
   "reservoir_stor_4011_sof24"
 )
 
@@ -12,6 +12,7 @@ reservoir_sensors=(
 pred_lens=(72)
 
 d_models=(8 16 32 64 96 128 256 512)
+# d_models=(256)
 
 for pred in "${pred_lens[@]}"
 do

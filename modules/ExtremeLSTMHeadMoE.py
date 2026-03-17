@@ -365,6 +365,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         dis_topk, indices_topk = torch.topk(dis, dim=1, k=k)                        # [B, k]
         sims = dis_topk
+        print(sims)
         probs_topk = torch.softmax(dis_topk, dim=1).unsqueeze(-1).unsqueeze(-1)     # [B, k, 1, 1]
 
         retrieved_values = values[indices_topk]                                      # [B, k, pred_len, dec_in]

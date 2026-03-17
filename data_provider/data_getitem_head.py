@@ -19,7 +19,7 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         x = self.x[idx]
-        x_mark = x[:, 2:]
+        x_mark = x[:, 1:]
         y = self.y[idx]
         sample_id = np.int64(self.id_offset + idx)
 

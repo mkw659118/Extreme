@@ -9,13 +9,14 @@ from baselines.Linear5 import Linear5
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
-from modules.ExtremeLSTMMemoMoENew import ExtremeLSTMMemo
+# from modules.ExtremeLSTMMemoMoENew import ExtremeLSTMMemo
 # from modules.ExtremeLSTMMemoNew import ExtremeLSTMMemo
+from modules.ExtremeLSTMHeadMoE import ExtremeLSTMMemo
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
 # from exp.exp_base_memo import BasicModel
-from exp.exp_base_memo_new import BasicModel
+from exp.exp_base_head_moe import BasicModel
 from baselines.encoder_seq import SeqEncoder
 
 class Model(BasicModel):
