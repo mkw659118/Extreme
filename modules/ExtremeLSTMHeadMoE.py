@@ -421,22 +421,22 @@ class ExtremeLSTMMemo(nn.Module):
             head_topk_experts
         )                                                      # [B, pred_len, out_dim]
 
-        # ---------------- retrieval (test only) ----------------
-        if mode == "test":
-            retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        # # ---------------- retrieval (test only) ----------------
+        # if mode == "test":
+        #     retrieval_results, sims, _ = self.retrieval(x, sample_ids)
 
-            # retrieval_results shape: [B, pred_len, dec_in]
-            # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
-            retrieval_pred = retrieval_results[:, :, :self.out_dim]
+        #     # retrieval_results shape: [B, pred_len, dec_in]
+        #     # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
+        #     retrieval_pred = retrieval_results[:, :, :self.out_dim]
 
-            sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
-            dynamic_alpha = 0.05 * (
-                (sim_mean - sim_mean.min()) /
-                (sim_mean.max() - sim_mean.min() + 1e-8)
-            )
-            dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
+        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
+        #     dynamic_alpha = 0.05 * (
+        #         (sim_mean - sim_mean.min()) /
+        #         (sim_mean.max() - sim_mean.min() + 1e-8)
+        #     )
+        #     dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
 
-            y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
+        #     y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
 
         # ---------------- balance loss ----------------
         balance_loss, aux_dict = self.compute_balance_loss(

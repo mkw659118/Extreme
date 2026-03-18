@@ -50,6 +50,44 @@ class BasicModel(torch.nn.Module):
             threshold=1e-3
         )
 
+    def compute_weighted_point_loss(
+        self,
+        pred_raw: torch.Tensor,      # [B, pred_len]
+        real_raw: torch.Tensor,      # [B, pred_len]
+        route_labels: torch.Tensor,  # [B]
+        normal_weight: float = 1.0,
+        hard_weight: float = 1.5,
+        loss_type: str = "mae",
+    ) -> torch.Tensor:
+        """
+        对不同样本按 route_label 做加权的主损失
+        route_label:
+            0 -> 普通样本
+            1 -> 大波动样本
+        """
+
+        if loss_type == "mae":
+            # L1Loss / MAE
+            per_point_loss = torch.abs(pred_raw - real_raw)              # [B, pred_len]
+        elif loss_type == "mse":
+            per_point_loss = (pred_raw - real_raw) ** 2                  # [B, pred_len]
+        else:
+            raise ValueError(f"Unsupported loss_type: {loss_type}")
+
+        # 逐样本平均
+        per_sample_loss = per_point_loss.mean(dim=1)                     # [B]
+
+        # 样本权重
+        sample_weights = torch.where(
+            route_labels == 1,
+            torch.full_like(route_labels, hard_weight, dtype=pred_raw.dtype),
+            torch.full_like(route_labels, normal_weight, dtype=pred_raw.dtype),
+        ).to(pred_raw.device)                                            # [B]
+
+        # 标准加权平均（推荐）
+        weighted_loss = (per_sample_loss * sample_weights).sum() / (sample_weights.sum() + 1e-8)
+        return weighted_loss
+
     def RunOnce(self, config, runId, model, datamodule, log):
         try:
             # 某些模型可能有 compile，若无则跳过
@@ -300,7 +338,15 @@ class BasicModel(torch.nn.Module):
                         pred, label, dataModule.mean, dataModule.std
                     )
 
-                    main_loss = compute_loss(self, x, pred_raw, real_raw, self.config)
+                    # main_loss = compute_loss(self, x, pred_raw, real_raw, self.config)
+                    main_loss = self.compute_weighted_point_loss(
+                        pred_raw=pred_raw,
+                        real_raw=real_raw,
+                        route_labels=route_labels,
+                        normal_weight=1.0,
+                        hard_weight=1.5,
+                        loss_type="mae",
+                    )
                     total_loss_value = main_loss + aux_loss
 
                     if (batch_idx + 1) % 100 == 0 or (batch_idx + 1) == len(dataModule.train_data_loader):
