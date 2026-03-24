@@ -118,6 +118,11 @@ class BasicModel(torch.nn.Module):
                     torch.load(model_path, weights_only=True, map_location='cpu')
                 )
                 model.setup_optimizer(config)
+                
+                 # ===== 新增：先构建 retrieval index =====
+                train_data = datamodule.train_data_loader.dataset
+                train_loader = datamodule.train_data_loader
+                model.prepare_retrieval_index(train_data, train_loader)
 
                 results = model.test(datamodule)
                 log.show_results(results, sum_time)

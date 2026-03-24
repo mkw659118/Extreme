@@ -104,7 +104,7 @@ class Logger:
 
     # 展示一次完整实验结果
     def show_results(self, result_error, sum_time):
-        monitor = self.config.monitor_metrics
+        monitor = self.config.monitor_metric
         summary = f"Valid{monitor}={-result_error[monitor]:.4f} ｜ "
         summary += ' '.join([f"{k}={v:.4f}" for k, v in result_error.items()])
         summary += f" time={sum_time:.1f} s"

@@ -52,6 +52,7 @@ class SampleRouterFromX(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(in_dim, hidden),
+            nn.LayerNorm(hidden),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, num_experts),
@@ -92,6 +93,8 @@ class StandardMoEHead(nn.Module):
             MoEExpert(d_model=d_model, hidden=2 * d_model, dropout=dropout)
             for _ in range(num_experts)
         ])
+        
+        self.moe_norm = nn.RMSNorm(d_model)
 
         # 所有专家共享的最终输出投影
         self.final_proj = nn.Linear(d_model, out_dim)
@@ -119,7 +122,7 @@ class StandardMoEHead(nn.Module):
                 # 当前 expert 处理属于自己的样本
                 expert_feat = self.experts[e](x[mask])         # [mask_B, pred_len, d_model]
                 moe_out[mask] += expert_feat * weight[mask]    # 加权融合
-
+        moe_out = self.moe_norm(moe_out)
         final_out = self.final_proj(moe_out)  # [B, pred_len, out_dim]
         return final_out
 
@@ -157,7 +160,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.device = self.config.device
 
         # ---------------- experts / retrieval ----------------
-        self.num_experts = 2
+        self.num_experts = 4
         self.retrieval_num = 4
         self.top_k_experts = 1
         self.retrieval_stride = 1
@@ -168,7 +171,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         # route supervision 的权重
         self.route_loss_weight = getattr(self.config, "route_loss_weight", 0.02)
-        self.use_route_supervision = getattr(self.config, "use_route_supervision", True)
+        self.use_route_supervision = getattr(self.config, "use_route_supervision", False)
 
         # ---------------- embedding ----------------
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
@@ -421,22 +424,30 @@ class ExtremeLSTMMemo(nn.Module):
             head_topk_experts
         )                                                      # [B, pred_len, out_dim]
 
-        # # ---------------- retrieval (test only) ----------------
-        # if mode == "test":
-        #     retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        # ---------------- retrieval (test only) ----------------
+        if mode == "test":
+            retrieval_results, sims, _ = self.retrieval(x, sample_ids)
 
-        #     # retrieval_results shape: [B, pred_len, dec_in]
-        #     # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
-        #     retrieval_pred = retrieval_results[:, :, :self.out_dim]
+            # retrieval_results shape: [B, pred_len, dec_in]
+            # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
+            retrieval_pred = retrieval_results[:, :, :self.out_dim]
 
-        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
-        #     dynamic_alpha = 0.05 * (
-        #         (sim_mean - sim_mean.min()) /
-        #         (sim_mean.max() - sim_mean.min() + 1e-8)
-        #     )
-        #     dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
+            # sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
+            # dynamic_alpha = 0.01* (
+            #     (sim_mean - sim_mean.min()) /
+            #     (sim_mean.max() - sim_mean.min() + 1e-8)
+            # )
+            # dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
+            sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
+            batch_sim_mean = sim_mean.mean().item()             # 标量
 
-        #     y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
+            if batch_sim_mean > 0.95:
+                dynamic_alpha = 0.3
+            else:
+                dynamic_alpha = 0.05
+            
+
+            y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
 
         # ---------------- balance loss ----------------
         balance_loss, aux_dict = self.compute_balance_loss(
@@ -465,3 +476,5 @@ class ExtremeLSTMMemo(nn.Module):
         if return_aux:
             return y, total_aux_loss, aux_dict
         return y, total_aux_loss
+        # return y, torch.tensor(0.0, device=total_aux_loss.device, requires_grad=True)
+    

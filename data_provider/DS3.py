@@ -508,7 +508,7 @@ class DS:
 
         # ===== 计算训练集分位数 =====
         self.compute_train_diff_quantiles()
-        self.build_route_labels()  # 生成路由标签
+        self.build_route_labels_multi()  # 生成路由标签
         print("route_labels shape:", self.route_labels.shape)
         print("route label counts:", np.bincount(self.route_labels))
 
