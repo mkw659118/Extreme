@@ -160,7 +160,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.device = self.config.device
 
         # ---------------- experts / retrieval ----------------
-        self.num_experts = 4
+        self.num_experts = 2
         self.retrieval_num = 4
         self.top_k_experts = 1
         self.retrieval_stride = 1
@@ -170,8 +170,8 @@ class ExtremeLSTMMemo(nn.Module):
         self.load_loss_weight = 0.1
 
         # route supervision 的权重
-        self.route_loss_weight = getattr(self.config, "route_loss_weight", 0.02)
-        self.use_route_supervision = getattr(self.config, "use_route_supervision", False)
+        self.route_loss_weight = getattr(self.config, "route_loss_weight", 0.01)
+        self.use_route_supervision = getattr(self.config, "use_route_supervision", True)
 
         # ---------------- embedding ----------------
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
@@ -465,6 +465,7 @@ class ExtremeLSTMMemo(nn.Module):
             route_loss = torch.tensor(0.0, device=x.device)
 
         total_aux_loss = balance_loss + self.route_loss_weight * route_loss
+        # total_aux_loss = self.route_loss_weight * route_loss
 
         aux_dict["route_loss"] = route_loss.detach()
         aux_dict["total_aux_loss"] = total_aux_loss.detach()
