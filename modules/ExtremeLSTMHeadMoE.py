@@ -160,7 +160,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.device = self.config.device
 
         # ---------------- experts / retrieval ----------------
-        self.num_experts = 2
+        self.num_experts = 4
         self.retrieval_num = 4
         self.top_k_experts = 1
         self.retrieval_stride = 1
@@ -171,7 +171,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         # route supervision 的权重
         self.route_loss_weight = getattr(self.config, "route_loss_weight", 0.01)
-        self.use_route_supervision = getattr(self.config, "use_route_supervision", True)
+        self.use_route_supervision = getattr(self.config, "use_route_supervision", False)
 
         # ---------------- embedding ----------------
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
@@ -222,55 +222,38 @@ class ExtremeLSTMMemo(nn.Module):
     # =========================================================
     # 4.1 router balance loss
     # =========================================================
-    def compute_router_balance_losses(
+    def compute_switch_balance_loss(
         self,
-        router_prob: torch.Tensor,   # [B, E]
-        topk_experts: torch.Tensor,  # [B, K]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        router_logits: torch.Tensor,   # [B, E]
+    ) -> torch.Tensor:
         """
-        返回:
-            importance_loss: soft routing 概率分布均衡损失
-            load_loss      : hard top-k 选择频率均衡损失
+        Switch Transformer 风格的辅助路由均衡损失
+        适用于 top-1 routing
         """
+        router_prob = torch.softmax(router_logits, dim=-1)   # [B, E]
         num_experts = router_prob.size(-1)
 
-        # ---------- importance / activity ----------
-        importance = router_prob.mean(dim=0)  # [E]
-        importance = importance / (importance.sum() + 1e-8)
+        # P_i: soft importance
+        prob_per_expert = router_prob.mean(dim=0)            # [E]
 
-        target = torch.full_like(importance, 1.0 / num_experts)
-        importance_loss = F.mse_loss(importance, target)
+        # f_i: hard load
+        top1_expert = torch.argmax(router_prob, dim=-1)      # [B]
+        one_hot = F.one_hot(top1_expert, num_classes=num_experts).float()
+        frac_per_expert = one_hot.mean(dim=0)                # [E]
 
-        # ---------- load balancing ----------
-        expert_load = F.one_hot(topk_experts, num_classes=num_experts).float()  # [B, K, E]
-        expert_load = expert_load.sum(dim=1)                                     # [B, E]
-        load = expert_load.mean(dim=0)                                           # [E]
-        load = load / (load.sum() + 1e-8)
+        # Switch auxiliary loss
+        aux_loss = num_experts * torch.sum(prob_per_expert * frac_per_expert)
 
-        load_loss = F.mse_loss(load, target)
-
-        return importance_loss, load_loss
+        return aux_loss
 
     def compute_balance_loss(
         self,
-        router_prob: torch.Tensor,
-        topk_experts: torch.Tensor,
+        router_prob: torch.Tensor
     ):
-        importance_loss, load_loss = self.compute_router_balance_losses(
-            router_prob, topk_experts
-        )
-
-        balance_loss = (
-            self.importance_loss_weight * importance_loss +
-            self.load_loss_weight * load_loss
-        )
+        balance_loss = self.compute_switch_balance_loss(router_prob)
 
         aux_dict = {
-            "balance_loss": balance_loss.detach(),
-            "total_importance_loss": importance_loss.detach(),
-            "total_load_loss": load_loss.detach(),
-            "head_importance_loss": importance_loss.detach(),
-            "head_load_loss": load_loss.detach(),
+            "balance_loss": balance_loss.detach()
         }
         return balance_loss, aux_dict
 
@@ -451,8 +434,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         # ---------------- balance loss ----------------
         balance_loss, aux_dict = self.compute_balance_loss(
-            router_prob=head_router_prob,
-            topk_experts=head_topk_experts,
+            router_prob=head_router_prob
         )
 
         # ---------------- route supervision loss ----------------
@@ -464,7 +446,8 @@ class ExtremeLSTMMemo(nn.Module):
         else:
             route_loss = torch.tensor(0.0, device=x.device)
 
-        total_aux_loss = balance_loss + self.route_loss_weight * route_loss
+        # total_aux_loss = 0.1* balance_loss + self.route_loss_weight * route_loss
+        total_aux_loss = 0.1* balance_loss
         # total_aux_loss = self.route_loss_weight * route_loss
 
         aux_dict["route_loss"] = route_loss.detach()

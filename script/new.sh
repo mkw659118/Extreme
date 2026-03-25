@@ -10,8 +10,6 @@ reservoir_sensors=(
 
 # 1) pred_len 第一层
 pred_lens=(8 72)
-
-# d_models=(128)
 d_models=(8 16 32 64 96 128 256 512)
 
 for pred in "${pred_lens[@]}"
