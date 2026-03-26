@@ -94,7 +94,7 @@ class StandardMoEHead(nn.Module):
             for _ in range(num_experts)
         ])
         
-        self.moe_norm = nn.RMSNorm(d_model)
+        # self.moe_norm = nn.RMSNorm(d_model)
 
         # 所有专家共享的最终输出投影
         self.final_proj = nn.Linear(d_model, out_dim)
@@ -122,7 +122,8 @@ class StandardMoEHead(nn.Module):
                 # 当前 expert 处理属于自己的样本
                 expert_feat = self.experts[e](x[mask])         # [mask_B, pred_len, d_model]
                 moe_out[mask] += expert_feat * weight[mask]    # 加权融合
-        moe_out = self.moe_norm(moe_out)
+        # moe_out = self.moe_norm(moe_out)
+        moe_out = x + moe_out
         final_out = self.final_proj(moe_out)  # [B, pred_len, out_dim]
         return final_out
 
@@ -160,9 +161,9 @@ class ExtremeLSTMMemo(nn.Module):
         self.device = self.config.device
 
         # ---------------- experts / retrieval ----------------
-        self.num_experts = 4
+        self.num_experts = 3
         self.retrieval_num = 4
-        self.top_k_experts = 1
+        self.top_k_experts = 2
         self.retrieval_stride = 1
 
         # ---------------- loss weights ----------------
@@ -408,29 +409,29 @@ class ExtremeLSTMMemo(nn.Module):
         )                                                      # [B, pred_len, out_dim]
 
         # ---------------- retrieval (test only) ----------------
-        if mode == "test":
-            retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        # if mode == "test":
+        #     retrieval_results, sims, _ = self.retrieval(x, sample_ids)
 
-            # retrieval_results shape: [B, pred_len, dec_in]
-            # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
-            retrieval_pred = retrieval_results[:, :, :self.out_dim]
+        #     # retrieval_results shape: [B, pred_len, dec_in]
+        #     # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
+        #     retrieval_pred = retrieval_results[:, :, :self.out_dim]
 
-            # sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
-            # dynamic_alpha = 0.01* (
-            #     (sim_mean - sim_mean.min()) /
-            #     (sim_mean.max() - sim_mean.min() + 1e-8)
-            # )
-            # dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
-            sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
-            batch_sim_mean = sim_mean.mean().item()             # 标量
+        #     # sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
+        #     # dynamic_alpha = 0.01* (
+        #     #     (sim_mean - sim_mean.min()) /
+        #     #     (sim_mean.max() - sim_mean.min() + 1e-8)
+        #     # )
+        #     # dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
+        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
+        #     batch_sim_mean = sim_mean.mean().item()             # 标量
 
-            if batch_sim_mean > 0.95:
-                dynamic_alpha = 0.3
-            else:
-                dynamic_alpha = 0.05
+        #     if batch_sim_mean > 0.95:
+        #         dynamic_alpha = 0.3
+        #     else:
+        #         dynamic_alpha = 0.05
             
 
-            y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
+        #     y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
 
         # ---------------- balance loss ----------------
         balance_loss, aux_dict = self.compute_balance_loss(
