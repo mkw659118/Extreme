@@ -165,6 +165,9 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_num = 4
         self.top_k_experts = 2
         self.retrieval_stride = 1
+        
+        self.retrieval_tau = 0.55
+        self.retrieval_alpha_max = 0.02
 
         # ---------------- loss weights ----------------
         self.importance_loss_weight = 0.1
@@ -416,22 +419,38 @@ class ExtremeLSTMMemo(nn.Module):
         #     # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
         #     retrieval_pred = retrieval_results[:, :, :self.out_dim]
 
-        #     # sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
-        #     # dynamic_alpha = 0.01* (
-        #     #     (sim_mean - sim_mean.min()) /
-        #     #     (sim_mean.max() - sim_mean.min() + 1e-8)
-        #     # )
-        #     # dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
-        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
-        #     batch_sim_mean = sim_mean.mean().item()             # 标量
+        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
+        #     dynamic_alpha = 0.0125 * (
+        #         (sim_mean - sim_mean.min()) /
+        #         (sim_mean.max() - sim_mean.min() + 1e-8)
+        #     )
+        #     dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
+        #     # sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
+        #     # batch_sim_mean = sim_mean.mean().item()             # 标量
 
-        #     if batch_sim_mean > 0.95:
-        #         dynamic_alpha = 0.3
-        #     else:
-        #         dynamic_alpha = 0.05
+        #     # if batch_sim_mean > 0.95:
+        #     #     dynamic_alpha = 0.3
+        #     # else:
+        #     #     dynamic_alpha = 0.05
             
 
         #     y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
+        
+        if mode == "test":
+            retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+
+            retrieval_pred = retrieval_results[:, :, :self.out_dim]   # [B, pred_len, out_dim]
+
+            # sample-wise similarity
+            sim_mean = sims.mean(dim=-1)   # [B]
+
+            # simple dynamic alpha: only tau and alpha_max
+            dynamic_alpha = (sim_mean - self.retrieval_tau) / (1.0 - self.retrieval_tau + 1e-8)
+            dynamic_alpha = dynamic_alpha.clamp(0.0, 1.0)
+            dynamic_alpha = self.retrieval_alpha_max * dynamic_alpha
+            dynamic_alpha = dynamic_alpha.view(-1, 1, 1)   # [B,1,1]
+
+            y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
 
         # ---------------- balance loss ----------------
         balance_loss, aux_dict = self.compute_balance_loss(
