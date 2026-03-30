@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -34,7 +35,6 @@ class MoEExpert(nn.Module):
 
 # =========================================================
 # 2. Router：只基于输入样本统计量进行路由
-#    不直接吃 route_label
 # =========================================================
 class SampleRouterFromX(nn.Module):
     """
@@ -45,9 +45,6 @@ class SampleRouterFromX(nn.Module):
     """
     def __init__(self, c_in: int, num_experts: int, hidden: int = 128, dropout: float = 0.0):
         super().__init__()
-        self.c_in = c_in
-
-        # 三类样本统计特征：std + max_abs + last
         in_dim = 3 * c_in
 
         self.net = nn.Sequential(
@@ -70,9 +67,6 @@ class SampleRouterFromX(nn.Module):
 
 # =========================================================
 # 3. 标准 MoE Head
-#    - expert 输出 d_model
-#    - 最后共享线性层映射到 out_dim
-#    - 不直接使用 route_label 修改输出
 # =========================================================
 class StandardMoEHead(nn.Module):
     def __init__(
@@ -93,21 +87,16 @@ class StandardMoEHead(nn.Module):
             MoEExpert(d_model=d_model, hidden=2 * d_model, dropout=dropout)
             for _ in range(num_experts)
         ])
-        
-        # self.moe_norm = nn.RMSNorm(d_model)
 
-        # 所有专家共享的最终输出投影
         self.final_proj = nn.Linear(d_model, out_dim)
 
     def forward(
         self,
         x: torch.Tensor,             # [B, pred_len, d_model]
-        router_probs: torch.Tensor,  # [B, K]，已归一化后的 top-k 混合权重
+        router_probs: torch.Tensor,  # [B, K]
         topk_experts: torch.Tensor,  # [B, K]
     ) -> torch.Tensor:
-        B, pred_len, D = x.shape
-
-        # 聚合后的专家输出特征
+        B, _, _ = x.shape
         moe_out = torch.zeros_like(x)  # [B, pred_len, d_model]
 
         for k in range(self.top_k):
@@ -119,20 +108,119 @@ class StandardMoEHead(nn.Module):
                 if not mask.any():
                     continue
 
-                # 当前 expert 处理属于自己的样本
-                expert_feat = self.experts[e](x[mask])         # [mask_B, pred_len, d_model]
-                moe_out[mask] += expert_feat * weight[mask]    # 加权融合
-        # moe_out = x + moe_out
+                expert_feat = self.experts[e](x[mask])      # [mask_B, pred_len, d_model]
+                moe_out[mask] += expert_feat * weight[mask]
+
         final_out = self.final_proj(moe_out)  # [B, pred_len, out_dim]
         return final_out
 
 
 # =========================================================
-# 4. 主模型：ExtremeLSTMMemo
-#    - LSTM encoder-decoder
-#    - CrossAttention
-#    - MoE head
-#    - Retrieval
+# 4. 检索融合门控
+#    输出 beta: [B, 1, C]
+# =========================================================
+class RetrievalBetaGate(nn.Module):
+    def __init__(
+        self,
+        hidden_dim: int = 32,
+        beta_min: float = 0.0,
+        beta_max: float = 0.2,
+    ):
+        super().__init__()
+        self.beta_min = beta_min
+        self.beta_max = beta_max
+
+        # 每个通道 11 维特征 -> 1 个 beta
+        self.mlp = nn.Sequential(
+            nn.Linear(11, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def _reduce_sims(
+        self,
+        sims: Optional[torch.Tensor],
+        B: int,
+        C: int,
+        device: torch.device,
+        dtype: torch.dtype,
+    ):
+        if sims is None:
+            sim_mean = torch.zeros(B, 1, device=device, dtype=dtype)
+            sim_max = torch.zeros(B, 1, device=device, dtype=dtype)
+            sim_std = torch.zeros(B, 1, device=device, dtype=dtype)
+        else:
+            if sims.dim() == 1:
+                s = sims.unsqueeze(-1)  # [B, 1]
+            else:
+                s = sims.reshape(B, -1)
+
+            sim_mean = s.mean(dim=-1, keepdim=True)
+            sim_max = s.max(dim=-1, keepdim=True).values
+            sim_std = s.std(dim=-1, keepdim=True, unbiased=False)
+
+        return (
+            sim_mean.expand(B, C),
+            sim_max.expand(B, C),
+            sim_std.expand(B, C),
+        )
+
+    def forward(
+        self,
+        x_enc: torch.Tensor,        # [B, L, C]
+        base_pred: torch.Tensor,    # [B, pred_len, out_dim]
+        ret_pred: torch.Tensor,     # [B, pred_len, out_dim]
+        sims: Optional[torch.Tensor],
+    ) -> torch.Tensor:
+        B, _, C_x = x_enc.shape
+        _, _, C_y = base_pred.shape
+
+        device = x_enc.device
+        dtype = x_enc.dtype
+
+        x_mean = x_enc.mean(dim=1)                               # [B, C_x]
+        x_std = x_enc.std(dim=1, unbiased=False)                 # [B, C_x]
+        x_last = x_enc[:, -1, :]                                 # [B, C_x]
+
+        # 预测只保留 out_dim 通道，这里默认 out_dim=1
+        # 若 out_dim < c_in，则广播 encoder 特征到输出维度
+        if C_x != C_y:
+            x_mean = x_mean[:, :C_y]
+            x_std = x_std[:, :C_y]
+            x_last = x_last[:, :C_y]
+
+        p_mean = base_pred.mean(dim=1)                           # [B, C_y]
+        p_std = base_pred.std(dim=1, unbiased=False)             # [B, C_y]
+        r_mean = ret_pred.mean(dim=1)                            # [B, C_y]
+        r_std = ret_pred.std(dim=1, unbiased=False)              # [B, C_y]
+        diff_mean = (base_pred - ret_pred).abs().mean(dim=1)     # [B, C_y]
+
+        sim_mean, sim_max, sim_std = self._reduce_sims(
+            sims=sims,
+            B=B,
+            C=C_y,
+            device=device,
+            dtype=dtype,
+        )
+
+        feat = torch.stack([
+            x_mean, x_std, x_last,
+            p_mean, p_std,
+            r_mean, r_std,
+            diff_mean,
+            sim_mean, sim_max, sim_std,
+        ], dim=-1)  # [B, C_y, 11]
+
+        beta = torch.sigmoid(self.mlp(feat))  # [B, C_y, 1]
+        beta = beta.transpose(1, 2)           # [B, 1, C_y]
+        beta = self.beta_min + (self.beta_max - self.beta_min) * beta
+        return beta
+
+
+# =========================================================
+# 5. 主模型：ExtremeLSTMMemo
 # =========================================================
 class ExtremeLSTMMemo(nn.Module):
     def __init__(
@@ -160,12 +248,22 @@ class ExtremeLSTMMemo(nn.Module):
 
         # ---------------- experts / retrieval ----------------
         self.num_experts = 3
-        self.retrieval_num = 4
+        self.retrieval_num = getattr(self.config, "retrieval_num", 2)
         self.top_k_experts = 1
         self.retrieval_stride = 1
-        
-        self.retrieval_tau = 0.55
-        self.retrieval_alpha_max = 0.02
+
+        self.retrieval_tau = getattr(self.config, "retrieval_tau", 0.55)
+        self.retrieval_alpha_max = getattr(self.config, "retrieval_alpha_max", 0.02)
+        self.retrieval_beta_hidden = getattr(self.config, "retrieval_beta_hidden", 32)
+        self.retrieval_beta_max = getattr(self.config, "retrieval_beta_max", 0.20)
+        self.retrieval_beta_reg = getattr(self.config, "retrieval_beta_reg", 1e-4)
+
+        # gate 是否已经完成第二阶段训练；做成 buffer，方便随 checkpoint 一起保存
+        self.register_buffer(
+            "retrieval_gate_ready",
+            torch.tensor(False, dtype=torch.bool),
+            persistent=True,
+        )
 
         # ---------------- embedding ----------------
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
@@ -210,36 +308,39 @@ class ExtremeLSTMMemo(nn.Module):
 
         self.fuse_proj = nn.Linear(2 * d_model, d_model)
 
-        # 保存最近一次 forward 的辅助信息，方便训练打印
+        # ---------------- retrieval gate ----------------
+        self.beta_gate = RetrievalBetaGate(
+            hidden_dim=self.retrieval_beta_hidden,
+            beta_min=0.0,
+            beta_max=self.retrieval_beta_max,
+        )
+
         self.latest_aux_dict = {}
 
     # =========================================================
-    # 4.1 router balance loss
+    # 5.1 backbone / gate 切换
     # =========================================================
-    # def compute_switch_balance_loss(self, router_logits: torch.Tensor) -> torch.Tensor:
-    #     """
-    #     Switch Transformer 风格的辅助路由均衡损失
-    #     适用于 top-1 routing
-    #     """
-    #     router_prob = torch.softmax(router_logits, dim=-1)   # [B, E]
-    #     num_experts = router_prob.size(-1)
+    def freeze_backbone_for_gate(self):
+        # 冻结除 beta_gate 之外的所有参数
+        for name, p in self.named_parameters():
+            p.requires_grad = False
 
-    #     # P_i: soft importance
-    #     prob_per_expert = router_prob.mean(dim=0)            # [E]
+        for p in self.beta_gate.parameters():
+            p.requires_grad = True
 
-    #     # f_i: hard load
-    #     top1_expert = torch.argmax(router_prob, dim=-1)      # [B]
-    #     one_hot = F.one_hot(top1_expert, num_classes=num_experts).float()
-    #     frac_per_expert = one_hot.mean(dim=0)                # [E]
+    def unfreeze_all(self):
+        for p in self.parameters():
+            p.requires_grad = True
 
-    #     # Switch auxiliary loss
-    #     aux_loss = num_experts * torch.sum(prob_per_expert * frac_per_expert)
+    def mark_gate_ready(self, ready: bool = True):
+        self.retrieval_gate_ready.fill_(bool(ready))
 
-    #     return aux_loss
-    
+    # =========================================================
+    # 5.2 router balance loss
+    # =========================================================
     def compute_sample_level_balance_loss(self, router_logits):
         router_prob = torch.softmax(router_logits, dim=-1)   # [B, E]
-        load = router_prob.mean(dim=0)                       # [E] 软负载，可导
+        load = router_prob.mean(dim=0)                       # [E]
 
         min_load = 0.05
         max_load = 0.80
@@ -254,14 +355,8 @@ class ExtremeLSTMMemo(nn.Module):
         }
         return balance_loss, aux_dict
 
-
-    # def compute_balance_loss(self, router_logits: torch.Tensor):
-    #     balance_loss = self.compute_sample_level_balance_loss(router_logits)
-    #     aux_dict = { "balance_loss": balance_loss.detach() }
-    #     return balance_loss, aux_dict
-
     # =========================================================
-    # 4.3 retrieval memory index
+    # 5.3 retrieval memory index
     # =========================================================
     def construct_index(self, num: int):
         self.keys = torch.zeros(num, self.seq_len, self.c_in, device=self.device)
@@ -278,7 +373,6 @@ class ExtremeLSTMMemo(nn.Module):
             torch.cuda.empty_cache()
 
     def cosine_similarity(self, queries: torch.Tensor, keys: torch.Tensor) -> torch.Tensor:
-        
         if len(queries.shape) == 3:
             B = queries.size(0)
             N = keys.size(0)
@@ -289,16 +383,18 @@ class ExtremeLSTMMemo(nn.Module):
             k_norm = F.normalize(keys, p=2, dim=-1)
             return torch.matmul(q_norm, k_norm.t())
 
-        elif len(queries.shape) == 2:
+        if len(queries.shape) == 2:
             q_norm = F.normalize(queries, p=2, dim=-1)
             k_norm = F.normalize(keys, p=2, dim=-1)
             return torch.matmul(q_norm, k_norm.t())
 
-        else:
-            raise ValueError(f"Unsupported query shape: {queries.shape}")
+        raise ValueError(f"Unsupported query shape: {queries.shape}")
 
     def retrieval(self, x: torch.Tensor, index: Optional[torch.Tensor]):
         bs = x.shape[0]
+        if self.index == 0:
+            raise RuntimeError("Retrieval index has not been constructed yet.")
+
         k = min(self.retrieval_num, self.index)
 
         queries = x
@@ -311,7 +407,7 @@ class ExtremeLSTMMemo(nn.Module):
         if self.training and index is not None:
             self_range = torch.arange(
                 -self.seq_len, self.seq_len + 1, device=x.device
-            ).unsqueeze(0)  # [1, 2*seq_len+1]
+            ).unsqueeze(0)
 
             invalid_index = index.unsqueeze(1) + self_range
             invalid_index = invalid_index // self.retrieval_stride
@@ -321,28 +417,22 @@ class ExtremeLSTMMemo(nn.Module):
             row_idx = torch.arange(bs, device=x.device).unsqueeze(1).repeat(1, invalid_index.size(1))
             dis[row_idx, invalid_index] = -100.0
 
-        dis_topk, indices_topk = torch.topk(dis, dim=1, k=k)                        # [B, k]
+        dis_topk, indices_topk = torch.topk(dis, dim=1, k=k)                    # [B, k]
         sims = dis_topk
-        print(sims)
-        probs_topk = torch.softmax(dis_topk, dim=1).unsqueeze(-1).unsqueeze(-1)     # [B, k, 1, 1]
+        probs_topk = torch.softmax(dis_topk, dim=1).unsqueeze(-1).unsqueeze(-1) # [B, k, 1, 1]
 
-        retrieved_values = values[indices_topk]                                      # [B, k, pred_len, dec_in]
-        output = torch.sum(probs_topk * retrieved_values, dim=1)                     # [B, pred_len, dec_in]
+        retrieved_values = values[indices_topk]                                  # [B, k, pred_len, dec_in]
+        output = torch.sum(probs_topk * retrieved_values, dim=1)                 # [B, pred_len, dec_in]
 
         return output, sims, 0
 
     # =========================================================
-    # 4.4 forward
+    # 5.4 backbone forward
     # =========================================================
-    def forward(
+    def _forward_backbone(
         self,
         x: torch.Tensor,
-        x_mark: Optional[torch.Tensor] = None,
         dec_input: Optional[torch.Tensor] = None,
-        sample_ids: Optional[torch.Tensor] = None,
-        route_labels: Optional[torch.Tensor] = None,
-        mode: str = "train",
-        return_aux: bool = False,
     ):
         # ---------------- router ----------------
         head_router_logits = self.router(x)                    # [B, E]
@@ -352,19 +442,18 @@ class ExtremeLSTMMemo(nn.Module):
             head_router_prob, k=self.top_k_experts, dim=-1
         )                                                      # [B, K], [B, K]
 
-        # top-k 概率重新归一化，得到专家混合权重
         head_mix_weights = head_topk_probs / (
             head_topk_probs.sum(dim=-1, keepdim=True) + 1e-8
         )                                                      # [B, K]
 
         # ---------------- embedding ----------------
         x_emb_hist = self.enc_embedding(x)                     # [B, seq_len, d_model]
-        dec_emb = self.dec_embedding(dec_input)                # [B, label_len+pred_len, d_model] or [B, pred_len, d_model]
+        dec_emb = self.dec_embedding(dec_input)                # [B, dec_len, d_model]
 
         # ---------------- encoder / decoder ----------------
         enc_out, (h_n, c_n) = self.encoder(x_emb_hist)         # [B, seq_len, d_model]
         dec_out, _ = self.decoder(dec_emb, (h_n, c_n))         # [B, dec_len, d_model]
-        dec_out = dec_out[:, -self.pred_len:, :]               # 只取最后 pred_len 步
+        dec_out = dec_out[:, -self.pred_len:, :]
 
         # ---------------- cross attention + fuse ----------------
         ctx, _ = self.xattn(dec_out, enc_out, enc_out)         # [B, pred_len, d_model]
@@ -379,53 +468,99 @@ class ExtremeLSTMMemo(nn.Module):
             head_topk_experts
         )                                                      # [B, pred_len, out_dim]
 
-        # ---------------- retrieval (test only) ----------------
-        # if mode == "test":
-        #     retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        return y, head_router_logits, head_router_prob, head_topk_experts
 
-        #     # retrieval_results shape: [B, pred_len, dec_in]
-        #     # 这里只取第 0 维作为预测目标融合（因为 out_dim=1）
-        #     retrieval_pred = retrieval_results[:, :, :self.out_dim]
+    # =========================================================
+    # 5.5 heuristic retrieval fusion（仅作 gate 未训练时的测试兜底）
+    # =========================================================
+    def _heuristic_fuse(self, y, retrieval_pred, sims):
+        sim_mean = sims.mean(dim=-1)   # [B]
+        dynamic_alpha = (sim_mean - self.retrieval_tau) / (1.0 - self.retrieval_tau + 1e-8)
+        dynamic_alpha = dynamic_alpha.clamp(0.0, 1.0)
+        dynamic_alpha = self.retrieval_alpha_max * dynamic_alpha
+        dynamic_alpha = dynamic_alpha.view(-1, 1, 1)   # [B,1,1]
+        return (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred, dynamic_alpha
 
-        #     sim_mean = torch.mean(sims, dim=-1, keepdim=True)  # [B, 1]
-        #     dynamic_alpha = 0.0125 * (
-        #         (sim_mean - sim_mean.min()) /
-        #         (sim_mean.max() - sim_mean.min() + 1e-8)
-        #     )
-        #     dynamic_alpha = dynamic_alpha.unsqueeze(-1)        # [B, 1, 1]
-        #     # sim_mean = torch.mean(sims, dim=-1, keepdim=True)   # [B, 1]
-        #     # batch_sim_mean = sim_mean.mean().item()             # 标量
+    # =========================================================
+    # 5.6 learned gate fusion
+    # =========================================================
+    def _gate_fuse(self, x, y, sample_ids):
+        retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        retrieval_pred = retrieval_results[:, :, :self.out_dim]   # [B, pred_len, out_dim]
 
-        #     # if batch_sim_mean > 0.95:
-        #     #     dynamic_alpha = 0.3
-        #     # else:
-        #     #     dynamic_alpha = 0.05
-            
+        beta = self.beta_gate(
+            x_enc=x,
+            base_pred=y.detach(),
+            ret_pred=retrieval_pred.detach(),
+            sims=sims,
+        )  # [B, 1, out_dim]
 
-        #     y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
-        
-        if mode == "test":
-            retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+        fused_y = (1.0 - beta) * y + beta * retrieval_pred
+        return fused_y, retrieval_pred, sims, beta
 
-            retrieval_pred = retrieval_results[:, :, :self.out_dim]   # [B, pred_len, out_dim]
+    # =========================================================
+    # 5.7 forward
+    # =========================================================
+    def forward(
+        self,
+        x: torch.Tensor,
+        x_mark: Optional[torch.Tensor] = None,
+        dec_input: Optional[torch.Tensor] = None,
+        sample_ids: Optional[torch.Tensor] = None,
+        route_labels: Optional[torch.Tensor] = None,
+        mode: str = "train",
+        return_aux: bool = False,
+    ):
+        # gate 阶段只训练 beta_gate，不回传 backbone
+        if mode == "gate_train":
+            with torch.no_grad():
+                y, head_router_logits, head_router_prob, head_topk_experts = self._forward_backbone(
+                    x=x,
+                    dec_input=dec_input,
+                )
+        else:
+            y, head_router_logits, head_router_prob, head_topk_experts = self._forward_backbone(
+                x=x,
+                dec_input=dec_input,
+            )
 
-            # sample-wise similarity
-            sim_mean = sims.mean(dim=-1)   # [B]
+        aux_dict = {}
 
-            # simple dynamic alpha: only tau and alpha_max
-            dynamic_alpha = (sim_mean - self.retrieval_tau) / (1.0 - self.retrieval_tau + 1e-8)
-            dynamic_alpha = dynamic_alpha.clamp(0.0, 1.0)
-            dynamic_alpha = self.retrieval_alpha_max * dynamic_alpha
-            dynamic_alpha = dynamic_alpha.view(-1, 1, 1)   # [B,1,1]
+        # ---------------- retrieval fusion ----------------
+        total_aux_loss = y.new_tensor(0.0)
 
-            y = (1 - dynamic_alpha) * y + dynamic_alpha * retrieval_pred
+        if mode in {"gate_train", "gate_valid"}:
+            y, retrieval_pred, sims, beta = self._gate_fuse(x, y, sample_ids)
+            total_aux_loss = self.retrieval_beta_reg * beta.mean()
 
-        # ---------------- balance loss ----------------
-        balance_loss, aux_dict = self.compute_sample_level_balance_loss(router_logits=head_router_logits)
+            aux_dict["beta_mean"] = beta.mean().detach()
+            aux_dict["beta_max"] = beta.max().detach()
+            aux_dict["sim_mean"] = sims.mean().detach()
 
-        
-        total_aux_loss = 0.1 * balance_loss
-        
+        elif mode == "test" and hasattr(self, "index") and self.index > 0:
+            if bool(self.retrieval_gate_ready.item()):
+                y, retrieval_pred, sims, beta = self._gate_fuse(x, y, sample_ids)
+
+                aux_dict["beta_mean"] = beta.mean().detach()
+                aux_dict["beta_max"] = beta.max().detach()
+                aux_dict["sim_mean"] = sims.mean().detach()
+            else:
+                retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+                retrieval_pred = retrieval_results[:, :, :self.out_dim]
+                y, dynamic_alpha = self._heuristic_fuse(y, retrieval_pred, sims)
+
+                aux_dict["beta_mean"] = dynamic_alpha.mean().detach()
+                aux_dict["beta_max"] = dynamic_alpha.max().detach()
+                aux_dict["sim_mean"] = sims.mean().detach()
+
+        # ---------------- backbone auxiliary loss ----------------
+        if mode in {"train", "valid"}:
+            balance_loss, balance_aux_dict = self.compute_sample_level_balance_loss(
+                router_logits=head_router_logits
+            )
+            total_aux_loss = total_aux_loss + 0.1 * balance_loss
+            aux_dict.update(balance_aux_dict)
+
         aux_dict["total_aux_loss"] = total_aux_loss.detach()
         aux_dict["router_prob"] = head_router_prob.detach()
         aux_dict["topk_experts"] = head_topk_experts.detach()
@@ -435,4 +570,3 @@ class ExtremeLSTMMemo(nn.Module):
         if return_aux:
             return y, total_aux_loss, aux_dict
         return y, total_aux_loss
-    
