@@ -12,6 +12,8 @@ from layers.att.cross_attention import CrossAttention
 # =========================================================
 # 1. 基础专家：输入/输出维度都保持 d_model
 # =========================================================
+
+
 class MoEExpert(nn.Module):
     def __init__(self, d_model: int, hidden: Optional[int] = None, dropout: float = 0.3):
         super().__init__()
@@ -26,12 +28,16 @@ class MoEExpert(nn.Module):
         self.drop2 = nn.Dropout(dropout)
         self.drop3 = nn.Dropout(dropout)
 
+        self.norm = nn.RMSNorm(d_model)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x
         x = self.drop1(self.act(self.fc1(x)))
         x = self.drop2(self.act(self.fc2(x)))
         x = self.drop3(self.fc3(x))
+        x = residual + x
+        x = self.norm(x)
         return x
-
 
 # =========================================================
 # 2. Router：只基于输入样本统计量进行路由
@@ -89,6 +95,7 @@ class StandardMoEHead(nn.Module):
         ])
 
         self.final_proj = nn.Linear(d_model, out_dim)
+        self.norm = nn.RMSNorm(d_model)
 
     def forward(
         self,
@@ -110,7 +117,7 @@ class StandardMoEHead(nn.Module):
 
                 expert_feat = self.experts[e](x[mask])      # [mask_B, pred_len, d_model]
                 moe_out[mask] += expert_feat * weight[mask]
-
+        moe_out = self.norm(x+moe_out)
         final_out = self.final_proj(moe_out)  # [B, pred_len, out_dim]
         return final_out
 
@@ -336,14 +343,14 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_gate_ready.fill_(bool(ready))
 
     # =========================================================
-    # 5.2 router balance loss
+    #5.2 router balance loss
     # =========================================================
     def compute_sample_level_balance_loss(self, router_logits):
         router_prob = torch.softmax(router_logits, dim=-1)   # [B, E]
         load = router_prob.mean(dim=0)                       # [E]
 
-        min_load = 0.05
-        max_load = 0.80
+        min_load = 0.2
+        max_load = 0.5
 
         low_penalty = F.relu(min_load - load).pow(2)
         high_penalty = F.relu(load - max_load).pow(2)
@@ -354,6 +361,22 @@ class ExtremeLSTMMemo(nn.Module):
             "expert_load": load.detach(),
         }
         return balance_loss, aux_dict
+    
+    # def compute_sample_level_balance_loss(self, router_logits):
+    #     router_prob = torch.softmax(router_logits, dim=-1)   # [B, E]
+
+    #     # soft load / importance
+    #     load = router_prob.mean(dim=0)                       # [E]
+
+    #     target = torch.full_like(load, 1.0 / self.num_experts)
+
+    #     balance_loss = ((load - target) ** 2).mean()
+
+    #     aux_dict = {
+    #         "balance_loss": balance_loss.detach(),
+    #         "expert_load": load.detach(),
+    #     }
+    #     return balance_loss, aux_dict
 
     # =========================================================
     # 5.3 retrieval memory index
@@ -460,6 +483,7 @@ class ExtremeLSTMMemo(nn.Module):
         fused = torch.cat([dec_out, ctx], dim=-1)              # [B, pred_len, 2*d_model]
         fused = self.fuse_proj(fused)                          # [B, pred_len, d_model]
         final_shared = self.post_norm(fused)                   # [B, pred_len, d_model]
+        
 
         # ---------------- MoE Head ----------------
         y = self.moe_head(

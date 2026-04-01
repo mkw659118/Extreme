@@ -1,7 +1,7 @@
 #!/bin/bash
 
 reservoir_sensors=(
-  "reservoir_stor_4001_sof24"
+  # "reservoir_stor_4001_sof24"
   "reservoir_stor_4005_sof24"
   "reservoir_stor_4007_sof24"
   "reservoir_stor_4009_sof24"
@@ -11,6 +11,7 @@ reservoir_sensors=(
 # 1) pred_len 第一层
 pred_lens=(8 72)
 d_models=(8 16 32 64 96 128 256 512)
+# d_models=(512)
 
 for pred in "${pred_lens[@]}"
 do
