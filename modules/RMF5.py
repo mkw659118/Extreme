@@ -30,6 +30,7 @@ class HomogeneousPointExpert(nn.Module):
         return x
 
 
+
 # =========================================================
 # 2. 多尺度 Student-T 状态先验
 #    目标：同时看 point / patch / sequence 级别的“normal-mid-extreme”形态
