@@ -397,6 +397,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         self.register_buffer('retrieval_gate_ready', torch.tensor(False, dtype=torch.bool), persistent=True)
 
+
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
         self.dec_embedding = DataEmbedding(c_in=dec_in, d_model=d_model, dropout=self.dropout)
 
