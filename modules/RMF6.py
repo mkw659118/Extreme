@@ -425,7 +425,7 @@ class ExtremeLSTMMemo(nn.Module):
             num_experts=self.num_experts,
             hidden=getattr(self.config, 'router_hidden', 32),
             dropout=self.dropout,
-            state_prior_use_all_channels=getattr(self.config, 'state_prior_use_all_channels', False),
+            state_prior_use_all_channels=getattr(self.config, 'state_prior_use_all_channels', True),
             state_prior_temperature=getattr(self.config, 'state_prior_temperature', 1.0),
             state_prior_learnable=getattr(self.config, 'state_prior_learnable', False),
             state_prior_scales=getattr(self.config, 'state_prior_scales', (1, 4, 8, 16)),
