@@ -1,0 +1,143 @@
+from baselines import DLinear
+from baselines.CrossFormer.Crossformer import Crossformer
+from baselines.mlp_test import MLPTest
+from baselines.Linear import Linear
+from baselines.Linear2 import Linear2
+from baselines.Linear3 import Linear3
+from baselines.Linear4 import Linear4
+from baselines.Linear5 import Linear5
+from baselines.SeasonalTrendModel import SeasonalTrendModel
+from baselines.DFTDecomModel import DFTDecomModel
+from baselines.Transformer import Transformer
+from modules.ExtremeLSTM import ExtremeLSTM
+from modules.RMF666preTrain import ExtremeLSTMMemo
+from modules.MoEMemoFormer import ThreeExpertPatchTransformer
+from baselines.TimesNet.TimesNet import TimesNet
+from baselines.MCANN.Group_GMM5 import DAN
+from exp.exp_base_rmf666preTrain import BasicModel
+from baselines.encoder_seq import SeqEncoder
+
+
+class Model(BasicModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.config = config
+        self.input_size = config.input_size
+        self.hidden_size = config.rank
+
+        if config.model == 'patch_extreme_memory_transformer':
+            self.model = ThreeExpertPatchTransformer(
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                patch_len=config.patch_len,
+                d_model=config.d_model,
+                win_size=config.win_size,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                use_memory=config.use_memory,
+                num_layers_intra_patch=config.num_layers_intra_patch,
+                num_layers_inter_patch=config.num_layers_inter_patch,
+                config=config,
+            )
+
+        elif config.model == 'extreme_lstm_memo':
+            self.model = ExtremeLSTMMemo(
+                c_in=config.c_in,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                d_model=config.d_model,
+                e_layers=config.e_layers,
+                d_layers=config.d_layers,
+                config=config,
+            )
+
+        elif config.model == 'extreme_lstm':
+            self.model = ExtremeLSTM(
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                patch_len=config.patch_len,
+                d_model=config.d_model,
+                win_size=config.win_size,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                use_memory=config.use_memory,
+                num_layers_intra_patch=config.num_layers_intra_patch,
+                num_layers_inter_patch=config.num_layers_inter_patch,
+                config=config,
+            )
+
+        elif config.model == 'mlp_test':
+            self.model = MLPTest(self.input_size, config)
+
+        elif config.model == 'mlp':
+            self.model = Linear(self.input_size, config)
+
+        elif config.model == 'mlp2':
+            self.model = Linear2(self.input_size, config)
+
+        elif config.model == 'mlp3':
+            self.model = Linear3(self.input_size, config)
+
+        elif config.model == 'mlp4':
+            self.model = Linear4(self.input_size, config)
+
+        elif config.model == 'mlp5':
+            self.model = Linear5(self.input_size, config)
+
+        elif config.model == 'seasonal_trend_model':
+            self.model = SeasonalTrendModel(config)
+
+        elif config.model == 'dft':
+            self.model = DFTDecomModel(config)
+
+        elif config.model == 'transformer':
+            self.model = Transformer(
+                input_size=config.input_size,
+                d_model=config.d_model,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                num_layers=config.num_layers,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                match_mode=config.match_mode,
+                win_size=config.win_size,
+                patch_len=config.patch_len,
+                device=config.device,
+            )
+
+        elif config.model == 'mcann':
+            self.model = DAN(config=self.config)
+
+        elif config.model in ['rnn', 'lstm', 'gru']:
+            self.model = SeqEncoder(
+                input_size=self.input_size,
+                d_model=self.hidden_size,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                num_layers=config.num_layers,
+                seq_method=config.model,
+                bidirectional=True,
+            )
+
+        elif config.model == 'crossformer':
+            self.model = Crossformer(
+                data_dim=self.input_size,
+                in_len=config.seq_len,
+                out_len=config.pred_len,
+                seg_len=config.seg_len,
+                win_size=4,
+                d_model=self.hidden_size,
+                n_heads=8,
+                e_layers=2,
+                dropout=0.1,
+                device=config.device,
+            )
+
+        elif config.model == 'timesnet':
+            self.model = TimesNet(enc_in=self.input_size, configs=config)
+
+        elif config.model == 'DLinear':
+            self.model = DLinear(config)
+
+        else:
+            raise ValueError(f'Unsupported model type: {config.model}')
