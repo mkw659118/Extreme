@@ -77,12 +77,13 @@ def compute_regression_metrics_rolling(realVec, estiVec, config, rm):
 
 def compute_regression_metrics(realVec, estiVec, config, mode):
     """ 计算回归任务的误差指标 """
+    eps = 1e-8
     absError = np.abs(estiVec - realVec)
 
     MAE = np.mean(np.abs(realVec - estiVec))
     MSE = np.mean((realVec - estiVec) ** 2)
     RMSE = np.sqrt(MSE)
-    MAPE = np.mean(np.abs((realVec - estiVec) / realVec))
+    MAPE = np.mean(np.abs((realVec - estiVec) / (np.abs(realVec) + eps)))
     
     NMAE = np.sum(absError) / np.sum(np.abs(realVec))
     NRMSE = np.sqrt(np.sum((realVec - estiVec) ** 2)) / np.sqrt(np.sum(realVec ** 2))
@@ -90,11 +91,46 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     # 计算不同阈值下的准确率
     thresholds = [0.01, 0.05, 0.10]
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
+
+    # Tail metrics (q90): threshold/mask are both based on |diff|.
+    fallback_q90 = np.quantile(np.abs(np.diff(realVec, axis=-1).reshape(-1)), 0.90) if realVec.shape[-1] > 1 else 0.0
+    tail_q90 = float(getattr(config, 'tail_q90', fallback_q90))
+    if realVec.shape[-1] > 1:
+        real_diff = np.diff(realVec, axis=-1)
+        tail_mask = np.abs(real_diff) >= tail_q90
+        tail_count = int(np.sum(tail_mask))
+        aligned_abs_err = np.abs(estiVec[..., 1:] - realVec[..., 1:])
+        aligned_sq_err = (estiVec[..., 1:] - realVec[..., 1:]) ** 2
+        aligned_real_abs = np.abs(realVec[..., 1:])
+    else:
+        tail_mask = np.zeros_like(realVec, dtype=bool)
+        tail_count = 0
+        aligned_abs_err = np.abs(estiVec - realVec)
+        aligned_sq_err = (estiVec - realVec) ** 2
+        aligned_real_abs = np.abs(realVec)
+
+    if tail_count > 0:
+        tail_abs_err = aligned_abs_err[tail_mask]
+        tail_sq_err = aligned_sq_err[tail_mask]
+        tail_real_abs = aligned_real_abs[tail_mask]
+        Tail_MAE = float(np.mean(tail_abs_err))
+        Tail_RMSE = float(np.sqrt(np.mean(tail_sq_err)))
+        Tail_MAPE = float(np.mean(tail_abs_err / (tail_real_abs + eps)))
+    else:
+        Tail_MAE = np.nan
+        Tail_RMSE = np.nan
+        Tail_MAPE = np.nan
+
     all_metrics_72 = {
         'MAE': MAE,
         'MSE': MSE,
         'RMSE': RMSE,
         'MAPE': MAPE,
+        'Tail_MAE': Tail_MAE,
+        'Tail_RMSE': Tail_RMSE,
+        'Tail_MAPE': Tail_MAPE,
+        'Tail_q90': tail_q90,
+        'Tail_count': tail_count,
         'NMAE': NMAE,
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],

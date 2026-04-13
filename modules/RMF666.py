@@ -5,38 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from layers.embedding import DataEmbedding
-from layers.att.cross_attention import CrossAttention
 
 
-
-
-# =========================================================
-# 1. 同构专家：所有 expert 结构相同，差异只来自参数与路由分配
-# =========================================================
-class HomogeneousPointExpert(nn.Module):
-    def __init__(self, d_model: int, hidden: Optional[int] = None, dropout: float = 0.1):
-        super().__init__()
-        hidden = hidden or d_model
-        self.fc1 = nn.Linear(d_model, hidden)
-        self.fc2 = nn.Linear(hidden, d_model)
-        self.act = nn.GELU()
-        self.drop1 = nn.Dropout(dropout)
-        self.drop2 = nn.Dropout(dropout)
-        self.norm = nn.RMSNorm(d_model)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        residual = x
-        x = self.drop1(self.act(self.fc1(x)))
-        x = self.drop2(self.fc2(x))
-        x = self.norm(residual + x)
-        return x
-
-
-
-# =========================================================
-# 2. 多尺度 Student-T 状态先验
-#    目标：同时看 point / patch / sequence 级别的“normal-mid-extreme”形态
-# =========================================================
 class MultiScaleStudentTStatePrior(nn.Module):
     def __init__(
         self,
@@ -83,8 +53,7 @@ class MultiScaleStudentTStatePrior(nn.Module):
             self.proto_df_raw = None
 
         self.scale_names = [f'patch{m}' for m in self.scales] + ['seq']
-        num_scale_terms = len(self.scale_names)
-        alpha_init = torch.zeros(num_scale_terms, dtype=torch.float32)
+        alpha_init = torch.zeros(len(self.scale_names), dtype=torch.float32)
         if learnable_scale_weights:
             self.alpha_logits = nn.Parameter(alpha_init)
         else:
@@ -92,19 +61,15 @@ class MultiScaleStudentTStatePrior(nn.Module):
 
     def _get_proto_params(self):
         if self.proto_scale_raw is None:
-            mu = self.proto_mu
-            scale = self.proto_scale
-            df = self.proto_df
-        else:
-            mu = self.proto_mu
-            scale = F.softplus(self.proto_scale_raw) + self.min_scale
-            df = F.softplus(self.proto_df_raw) + self.min_df
+            return self.proto_mu, self.proto_scale, self.proto_df
+        mu = self.proto_mu
+        scale = F.softplus(self.proto_scale_raw) + self.min_scale
+        df = F.softplus(self.proto_df_raw) + self.min_df
         return mu, scale, df
 
     def _student_t_log_prob(self, x: torch.Tensor, mu: torch.Tensor, scale: torch.Tensor, df: torch.Tensor):
-        # x: [B, Npatch, Nelem]
-        x = x.unsqueeze(2)                    # [B, Npatch, 1, Nelem]
-        mu = mu.view(1, 1, 3, 1)             # [1, 1, 3, 1]
+        x = x.unsqueeze(2)
+        mu = mu.view(1, 1, 3, 1)
         scale = scale.view(1, 1, 3, 1)
         df = df.view(1, 1, 3, 1)
 
@@ -116,86 +81,55 @@ class MultiScaleStudentTStatePrior(nn.Module):
             - torch.log(scale)
         )
         log_kernel = -((df + 1.0) / 2.0) * torch.log1p((z ** 2) / df)
-        return log_norm + log_kernel  # [B, Npatch, 3, Nelem]
+        return log_norm + log_kernel
 
-    def _window_to_patches(self, x_used: torch.Tensor, patch_len: int) -> torch.Tensor:
-        """
-        x_used: [B, L, C]
-        return: [B, Npatch, patch_len*C]；如果长度不够，则退化成 1 个 patch
-        """
-        B, L, C = x_used.shape
+    @staticmethod
+    def _window_to_patches(x_used: torch.Tensor, patch_len: int) -> torch.Tensor:
+        batch_size, length, channels = x_used.shape
         if patch_len <= 1:
-            return x_used.reshape(B, L, C)
-
-        usable = (L // patch_len) * patch_len
+            return x_used.reshape(batch_size, length, channels)
+        usable = (length // patch_len) * patch_len
         if usable == 0:
-            return x_used.reshape(B, 1, L * C)
-
+            return x_used.reshape(batch_size, 1, length * channels)
         x_trim = x_used[:, :usable, :].contiguous()
-        return x_trim.reshape(B, usable // patch_len, patch_len * C)
+        return x_trim.reshape(batch_size, usable // patch_len, patch_len * channels)
 
     def _aggregate_patch_scores(self, patch_scores: torch.Tensor) -> torch.Tensor:
-        """
-        patch_scores: [B, Npatch, 3]
-        输出每个尺度的融合 score: [B, 3]
-        """
         mean_score = patch_scores.mean(dim=1)
         max_score = patch_scores.max(dim=1).values
         last_score = patch_scores[:, -1, :]
         return self.lambda_mean * mean_score + self.lambda_max * max_score + self.lambda_last * last_score
 
     def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
-        """
-        x: [B, L, C]
-        返回：
-            q_final      [B, 3]
-            fused_scores [B, 3]
-            scale_scores [B, S, 3]
-            q_scales     [B, S, 3]
-            alpha        [S]
-        """
-        if self.use_all_channels:
-            x_used = x
-        else:
-            x_used = x[:, :, :1]  # 默认只用第一个通道的差分-zscore 主目标
-
-        B = x_used.size(0)
+        x_used = x if self.use_all_channels else x[:, :, :1]
+        batch_size = x_used.size(0)
         mu, scale, df = self._get_proto_params()
 
         scale_scores = []
-        # point / patch 多尺度
-        for m in self.scales:
-            patches = self._window_to_patches(x_used, patch_len=m)      # [B, Npatch, Nelem]
-            log_prob = self._student_t_log_prob(patches, mu, scale, df) # [B, Npatch, 3, Nelem]
-            patch_scores = log_prob.mean(dim=-1)                        # [B, Npatch, 3]
+        for patch_len in self.scales:
+            patches = self._window_to_patches(x_used, patch_len=patch_len)
+            log_prob = self._student_t_log_prob(patches, mu, scale, df)
+            patch_scores = log_prob.mean(dim=-1)
             scale_scores.append(self._aggregate_patch_scores(patch_scores))
 
-        # 整段序列级 score：只看全局平均 log-likelihood
-        seq_patch = x_used.reshape(B, 1, -1)
-        seq_log_prob = self._student_t_log_prob(seq_patch, mu, scale, df)  # [B, 1, 3, Nelem]
-        seq_score = seq_log_prob.mean(dim=-1).squeeze(1)                    # [B, 3]
+        seq_patch = x_used.reshape(batch_size, 1, -1)
+        seq_score = self._student_t_log_prob(seq_patch, mu, scale, df).mean(dim=-1).squeeze(1)
         scale_scores.append(seq_score)
 
-        scale_scores = torch.stack(scale_scores, dim=1)  # [B, S, 3]
-        alpha = torch.softmax(self.alpha_logits, dim=0)  # [S]
-
-        fused_scores = torch.sum(scale_scores * alpha.view(1, -1, 1), dim=1)  # [B, 3]
-        q_final = torch.softmax(fused_scores / self.temperature, dim=-1)       # [B, 3]
-        q_scales = torch.softmax(scale_scores / self.temperature, dim=-1)       # [B, S, 3]
+        scale_scores = torch.stack(scale_scores, dim=1)
+        alpha = torch.softmax(self.alpha_logits, dim=0)
+        fused_scores = torch.sum(scale_scores * alpha.view(1, -1, 1), dim=1)
 
         return {
-            'q_final': q_final,
+            'q_final': torch.softmax(fused_scores / self.temperature, dim=-1),
             'fused_scores': fused_scores,
             'scale_scores': scale_scores,
-            'q_scales': q_scales,
+            'q_scales': torch.softmax(scale_scores / self.temperature, dim=-1),
             'alpha': alpha,
         }
 
 
-# =========================================================
-# 3. Router：step 级别路由（每个预测步独立分配专家）
-# =========================================================
-class StepRouterFromX(nn.Module):
+class RouterFromEmbedding(nn.Module):
     def __init__(
         self,
         c_in: int,
@@ -210,6 +144,8 @@ class StepRouterFromX(nn.Module):
         state_prior_scale_weights_learnable: bool = True,
     ):
         super().__init__()
+        self.c_in = c_in
+        self.d_model = d_model
         self.state_prior = MultiScaleStudentTStatePrior(
             use_all_channels=state_prior_use_all_channels,
             scales=state_prior_scales,
@@ -218,85 +154,93 @@ class StepRouterFromX(nn.Module):
             learnable_scale_weights=state_prior_scale_weights_learnable,
         )
 
-        in_dim = 3 * c_in + 3
-        self.global_net = nn.Sequential(
+        in_dim = 3 * d_model + 3
+        self.net = nn.Sequential(
             nn.Linear(in_dim, hidden),
-            nn.LayerNorm(hidden),
-            nn.GELU(),
-            nn.Dropout(dropout),
-        )
-        self.step_proj = nn.Linear(d_model, hidden)
-        self.out_net = nn.Sequential(
             nn.LayerNorm(hidden),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(hidden, num_experts),
         )
 
-    def forward(self, x: torch.Tensor, step_feat: torch.Tensor):
-        std = x.std(dim=1, unbiased=False)   # [B, C]
-        max_abs = x.abs().amax(dim=1)        # [B, C]
-        last = x[:, -1, :]                   # [B, C]
-        prior_out = self.state_prior(x)
-        q_final = prior_out['q_final']       # [B, 3]
-
-        global_feat = torch.cat([std, max_abs, last, q_final], dim=-1)  # [B, 3C+3]
-        global_h = self.global_net(global_feat)                          # [B, H]
-        step_h = self.step_proj(step_feat)                               # [B, Lp, H]
-        fused_h = step_h + global_h.unsqueeze(1)                         # [B, Lp, H]
-        logits = self.out_net(fused_h)                                   # [B, Lp, E]
-        return logits, prior_out
+    def forward(self, x_raw: torch.Tensor, x_emb: torch.Tensor):
+        emb_mean = x_emb.mean(dim=1)
+        emb_std = x_emb.std(dim=1, unbiased=False)
+        emb_last = x_emb[:, -1, :]
+        prior_out = self.state_prior(x_raw)
+        feat = torch.cat([emb_mean, emb_std, emb_last, prior_out['q_final']], dim=-1)
+        return self.net(feat), prior_out
 
 
-# =========================================================
-# 4. 点预测 MoE Head（同构专家版）
-# =========================================================
-class PointMoEHead(nn.Module):
+class LSTMExpert(nn.Module):
+    def __init__(self, d_model: int, expert_layers: int = 1, dropout: float = 0.1):
+        super().__init__()
+        self.lstm = nn.LSTM(
+            input_size=d_model,
+            hidden_size=d_model,
+            num_layers=max(1, expert_layers),
+            batch_first=True,
+            dropout=dropout if expert_layers > 1 else 0.0,
+        )
+        self.norm = nn.RMSNorm(d_model)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x
+        out, _ = self.lstm(x)
+        return self.norm(out + residual)
+
+
+class BackboneMoE(nn.Module):
     def __init__(
         self,
         d_model: int,
-        out_dim: int = 1,
+        pred_len: int,
+        out_dim: int,
         num_experts: int = 3,
         top_k: int = 2,
         dropout: float = 0.1,
-        expert_hidden: Optional[int] = None,
+        expert_layers: int = 1,
     ):
         super().__init__()
         self.num_experts = num_experts
         self.top_k = min(top_k, num_experts)
-
+        self.pred_len = pred_len
+        self.out_dim = out_dim
         self.experts = nn.ModuleList([
-            HomogeneousPointExpert(d_model=d_model, hidden=expert_hidden or d_model, dropout=dropout)
+            LSTMExpert(d_model=d_model, expert_layers=expert_layers, dropout=dropout)
             for _ in range(num_experts)
         ])
-        self.point_heads = nn.ModuleList([nn.Linear(d_model, out_dim) for _ in range(num_experts)])
+        self.fuse_norm = nn.RMSNorm(d_model)
+        self.forecast_head = nn.Sequential(
+            nn.Linear(2 * d_model, d_model),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(d_model, pred_len * out_dim),
+        )
 
     def _build_sparse_topk_weights(self, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> torch.Tensor:
-        B, H, _ = head_mix_weights.shape
-        full_weights = torch.zeros(B, H, self.num_experts, device=head_mix_weights.device, dtype=head_mix_weights.dtype)
-        full_weights.scatter_(dim=2, index=topk_experts, src=head_mix_weights)
+        batch_size, topk = head_mix_weights.shape
+        full_weights = head_mix_weights.new_zeros((batch_size, self.num_experts))
+        full_weights.scatter_(dim=1, index=topk_experts, src=head_mix_weights)
         return full_weights
 
-    def forward(self, x: torch.Tensor, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, x_emb: torch.Tensor, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> Dict[str, torch.Tensor]:
         full_mix_weights = self._build_sparse_topk_weights(head_mix_weights, topk_experts)
-        points = []
-        for e in range(self.num_experts):
-            feat_e = self.experts[e](x)
-            point_e = self.point_heads[e](feat_e)
-            points.append(point_e)
-        point_all = torch.stack(points, dim=1)  # [B, E, H, O]
-        mix_for_broadcast = full_mix_weights.permute(0, 2, 1).unsqueeze(-1)  # [B, E, H, 1]
-        point_pred = torch.sum(mix_for_broadcast * point_all, dim=1)
+        expert_outputs = torch.stack([expert(x_emb) for expert in self.experts], dim=1)
+        mix = full_mix_weights.unsqueeze(-1).unsqueeze(-1)
+        fused_seq = torch.sum(mix * expert_outputs, dim=1)
+        fused_seq = self.fuse_norm(fused_seq)
+
+        summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
+        point_pred = self.forecast_head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
         return {
             'mix_weights': full_mix_weights,
-            'expert_points': point_all,
+            'expert_sequences': expert_outputs,
+            'fused_sequence': fused_seq,
             'point_pred': point_pred,
         }
 
 
-# =========================================================
-# 5. 检索融合门控：保留原思想
-# =========================================================
 class RetrievalBetaGate(nn.Module):
     def __init__(self, hidden_dim: int = 32, beta_min: float = 0.0, beta_max: float = 0.2):
         super().__init__()
@@ -310,38 +254,36 @@ class RetrievalBetaGate(nn.Module):
             nn.Linear(hidden_dim, 1),
         )
 
-    def _reduce_sims(self, sims: Optional[torch.Tensor], B: int, C: int, device: torch.device, dtype: torch.dtype):
+    @staticmethod
+    def _reduce_sims(sims: Optional[torch.Tensor], batch_size: int, channels: int, device: torch.device, dtype: torch.dtype):
         if sims is None:
-            sim_mean = torch.zeros(B, 1, device=device, dtype=dtype)
-            sim_max = torch.zeros(B, 1, device=device, dtype=dtype)
-            sim_std = torch.zeros(B, 1, device=device, dtype=dtype)
+            sim_mean = torch.zeros(batch_size, 1, device=device, dtype=dtype)
+            sim_max = torch.zeros(batch_size, 1, device=device, dtype=dtype)
+            sim_std = torch.zeros(batch_size, 1, device=device, dtype=dtype)
         else:
-            if sims.dim() == 1:
-                s = sims.unsqueeze(-1)
-            else:
-                s = sims.reshape(B, -1)
+            s = sims.unsqueeze(-1) if sims.dim() == 1 else sims.reshape(batch_size, -1)
             sim_mean = s.mean(dim=-1, keepdim=True)
             sim_max = s.max(dim=-1, keepdim=True).values
             sim_std = s.std(dim=-1, keepdim=True, unbiased=False)
-        return sim_mean.expand(B, C), sim_max.expand(B, C), sim_std.expand(B, C)
+        return sim_mean.expand(batch_size, channels), sim_max.expand(batch_size, channels), sim_std.expand(batch_size, channels)
 
     def forward(self, x_enc: torch.Tensor, base_pred: torch.Tensor, ret_pred: torch.Tensor, sims: Optional[torch.Tensor]) -> torch.Tensor:
-        B, _, C_x = x_enc.shape
-        _, _, C_y = base_pred.shape
+        batch_size, _, c_x = x_enc.shape
+        _, _, c_y = base_pred.shape
         x_mean = x_enc.mean(dim=1)
         x_std = x_enc.std(dim=1, unbiased=False)
         x_last = x_enc[:, -1, :]
-        if C_x != C_y:
-            x_mean = x_mean[:, :C_y]
-            x_std = x_std[:, :C_y]
-            x_last = x_last[:, :C_y]
+        if c_x != c_y:
+            x_mean = x_mean[:, :c_y]
+            x_std = x_std[:, :c_y]
+            x_last = x_last[:, :c_y]
 
         p_mean = base_pred.mean(dim=1)
         p_std = base_pred.std(dim=1, unbiased=False)
         r_mean = ret_pred.mean(dim=1)
         r_std = ret_pred.std(dim=1, unbiased=False)
         diff_mean = (base_pred - ret_pred).abs().mean(dim=1)
-        sim_mean, sim_max, sim_std = self._reduce_sims(sims, B, C_y, x_enc.device, x_enc.dtype)
+        sim_mean, sim_max, sim_std = self._reduce_sims(sims, batch_size, c_y, x_enc.device, x_enc.dtype)
 
         feat = torch.stack([
             x_mean, x_std, x_last,
@@ -351,15 +293,10 @@ class RetrievalBetaGate(nn.Module):
             sim_mean, sim_max, sim_std,
         ], dim=-1)
 
-        beta = torch.sigmoid(self.mlp(feat))
-        beta = beta.transpose(1, 2)
-        beta = self.beta_min + (self.beta_max - self.beta_min) * beta
-        return beta
+        beta = torch.sigmoid(self.mlp(feat)).transpose(1, 2)
+        return self.beta_min + (self.beta_max - self.beta_min) * beta
 
 
-# =========================================================
-# 6. 主模型：点预测版 + 多尺度分布状态辅助路由 + 保留检索库
-# =========================================================
 class ExtremeLSTMMemo(nn.Module):
     def __init__(
         self,
@@ -394,33 +331,12 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
         self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.20)
         self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
+        self.state_prior_balance_reg = getattr(self.config, 'state_prior_balance_reg', 1e-3)
 
         self.register_buffer('retrieval_gate_ready', torch.tensor(False, dtype=torch.bool), persistent=True)
 
-
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
-        self.dec_embedding = DataEmbedding(c_in=dec_in, d_model=d_model, dropout=self.dropout)
-
-        self.encoder = nn.LSTM(
-            input_size=d_model,
-            hidden_size=d_model,
-            num_layers=e_layers,
-            batch_first=True,
-            dropout=self.dropout if e_layers > 1 else 0.0,
-        )
-        self.decoder = nn.LSTM(
-            input_size=d_model,
-            hidden_size=d_model,
-            num_layers=d_layers,
-            batch_first=True,
-            dropout=self.dropout if d_layers > 1 else 0.0,
-        )
-
-        self.post_norm = nn.RMSNorm(d_model)
-        self.xattn = CrossAttention(d_model)
-        self.fuse_proj = nn.Linear(2 * d_model, d_model)
-
-        self.router = StepRouterFromX(
+        self.router = RouterFromEmbedding(
             c_in=c_in,
             d_model=d_model,
             num_experts=self.num_experts,
@@ -432,16 +348,15 @@ class ExtremeLSTMMemo(nn.Module):
             state_prior_scales=getattr(self.config, 'state_prior_scales', (1, 4, 8, 16)),
             state_prior_scale_weights_learnable=getattr(self.config, 'state_prior_scale_weights_learnable', True),
         )
-
-        self.moe_head = PointMoEHead(
+        self.backbone = BackboneMoE(
             d_model=d_model,
+            pred_len=pred_len,
             out_dim=out_dim,
             num_experts=self.num_experts,
             top_k=self.top_k_experts,
             dropout=min(self.dropout, 0.1),
-            expert_hidden=getattr(self.config, 'expert_hidden', d_model),
+            expert_layers=max(1, getattr(self.config, 'expert_layers', 1)),
         )
-
         self.beta_gate = RetrievalBetaGate(
             hidden_dim=self.retrieval_beta_hidden,
             beta_min=0.0,
@@ -465,10 +380,7 @@ class ExtremeLSTMMemo(nn.Module):
 
     def compute_sample_level_balance_loss(self, router_logits: torch.Tensor):
         router_prob = torch.softmax(router_logits, dim=-1)
-        if router_prob.dim() == 3:
-            load = router_prob.mean(dim=(0, 1))
-        else:
-            load = router_prob.mean(dim=0)
+        load = router_prob.mean(dim=0)
         min_load = 0.2
         max_load = 0.5
         low_penalty = F.relu(min_load - load).pow(2)
@@ -476,6 +388,20 @@ class ExtremeLSTMMemo(nn.Module):
         balance_loss = (low_penalty + high_penalty).sum()
         aux_dict = {'balance_loss': balance_loss.detach(), 'expert_load': load.detach()}
         return balance_loss, aux_dict
+
+    def compute_state_prior_balance_loss(self, prior_out: Dict[str, torch.Tensor]):
+        alpha = prior_out.get('alpha')
+        if alpha is None:
+            raise KeyError('alpha is missing from prior_out.')
+        target = alpha.new_full((alpha.numel(),), 1.0 / float(alpha.numel()))
+        alpha_loss = torch.sum(alpha * torch.log((alpha + 1e-8) / target))
+        alpha_entropy = -(alpha * torch.log(alpha + 1e-8)).sum()
+        aux_dict = {
+            'state_prior_balance_loss': alpha_loss.detach(),
+            'state_alpha_entropy': alpha_entropy.detach(),
+            'state_alpha': alpha.detach(),
+        }
+        return alpha_loss, aux_dict
 
     def construct_index(self, num: int):
         self.keys = torch.zeros(num, self.seq_len, self.c_in, device=self.device)
@@ -492,10 +418,10 @@ class ExtremeLSTMMemo(nn.Module):
 
     def cosine_similarity(self, queries: torch.Tensor, keys: torch.Tensor) -> torch.Tensor:
         if len(queries.shape) == 3:
-            B = queries.size(0)
-            N = keys.size(0)
-            queries = queries.reshape(B, -1)
-            keys = keys.reshape(N, -1)
+            batch_size = queries.size(0)
+            num_keys = keys.size(0)
+            queries = queries.reshape(batch_size, -1)
+            keys = keys.reshape(num_keys, -1)
             q_norm = F.normalize(queries, p=2, dim=-1)
             k_norm = F.normalize(keys, p=2, dim=-1)
             return torch.matmul(q_norm, k_norm.t())
@@ -506,7 +432,7 @@ class ExtremeLSTMMemo(nn.Module):
         raise ValueError(f'Unsupported query shape: {queries.shape}')
 
     def retrieval(self, x: torch.Tensor, index: Optional[torch.Tensor]):
-        bs = x.shape[0]
+        batch_size = x.shape[0]
         if self.index == 0:
             raise RuntimeError('Retrieval index has not been constructed yet.')
         k = min(self.retrieval_num, self.index)
@@ -520,7 +446,7 @@ class ExtremeLSTMMemo(nn.Module):
             invalid_index = invalid_index // self.retrieval_stride
             invalid_index[invalid_index < 0] = 0
             invalid_index[invalid_index >= self.index] = self.index - 1
-            row_idx = torch.arange(bs, device=x.device).unsqueeze(1).repeat(1, invalid_index.size(1))
+            row_idx = torch.arange(batch_size, device=x.device).unsqueeze(1).repeat(1, invalid_index.size(1))
             dis[row_idx, invalid_index] = -100.0
 
         dis_topk, indices_topk = torch.topk(dis, dim=1, k=k)
@@ -530,25 +456,15 @@ class ExtremeLSTMMemo(nn.Module):
         output = torch.sum(probs_topk * retrieved_values, dim=1)
         return output, sims, 0
 
-    def _forward_backbone(self, x: torch.Tensor, dec_input: Optional[torch.Tensor] = None):
-        x_emb_hist = self.enc_embedding(x)
-        dec_emb = self.dec_embedding(dec_input)
-        enc_out, (h_n, c_n) = self.encoder(x_emb_hist)
-        dec_out, _ = self.decoder(dec_emb, (h_n, c_n))
-        dec_out = dec_out[:, -self.pred_len:, :]
-
-        ctx, _ = self.xattn(dec_out, enc_out, enc_out)
-        fused = torch.cat([dec_out, ctx], dim=-1)
-        fused = self.fuse_proj(fused)
-        final_shared = self.post_norm(fused)
-
-        router_logits, prior_out = self.router(x, final_shared)
+    def _forward_backbone(self, x: torch.Tensor):
+        x_emb = self.enc_embedding(x)
+        router_logits, prior_out = self.router(x, x_emb)
         router_prob = torch.softmax(router_logits, dim=-1)
         topk_probs, topk_experts = torch.topk(router_prob, k=self.top_k_experts, dim=-1)
         head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
 
-        moe_out = self.moe_head(final_shared, head_mix_weights=head_mix_weights, topk_experts=topk_experts)
-        moe_out.update({
+        backbone_out = self.backbone(x_emb, head_mix_weights=head_mix_weights, topk_experts=topk_experts)
+        backbone_out.update({
             'router_logits': router_logits,
             'router_prob': router_prob,
             'topk_experts': topk_experts,
@@ -558,7 +474,7 @@ class ExtremeLSTMMemo(nn.Module):
             'state_scale_scores': prior_out['scale_scores'],
             'state_alpha': prior_out['alpha'],
         })
-        return moe_out
+        return backbone_out
 
     def _heuristic_fuse(self, point_pred: torch.Tensor, retrieval_pred: torch.Tensor, sims: torch.Tensor):
         sim_mean = sims.mean(dim=-1)
@@ -588,9 +504,9 @@ class ExtremeLSTMMemo(nn.Module):
     ):
         if mode == 'gate_train':
             with torch.no_grad():
-                out = self._forward_backbone(x=x, dec_input=dec_input)
+                out = self._forward_backbone(x=x)
         else:
-            out = self._forward_backbone(x=x, dec_input=dec_input)
+            out = self._forward_backbone(x=x)
 
         point_pred = out['point_pred']
         total_aux_loss = point_pred.new_tensor(0.0)
@@ -605,7 +521,6 @@ class ExtremeLSTMMemo(nn.Module):
             aux_dict['sim_mean'] = sims.mean().detach()
             out['retrieval_pred'] = retrieval_pred
             out['beta'] = beta
-
         elif mode == 'test' and hasattr(self, 'index') and self.index > 0:
             if bool(self.retrieval_gate_ready.item()):
                 fused_point, retrieval_pred, sims, beta = self._gate_fuse(x, point_pred, sample_ids)

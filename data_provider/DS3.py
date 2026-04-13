@@ -506,6 +506,21 @@ class DS:
         print("训练集数据的选取长度是： ", len(DATA))
         print("训练集标签的选取长度是： ", len(self.Label))
 
+        # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
+        all_diff_vals = []
+        for label in self.Label:
+            arr = np.asarray(label, dtype=np.float32)
+            # label[:, 1] = previous raw anchor, label[:, 2] = current raw value
+            true_diff_raw = arr[:, 2] - arr[:, 1]
+            all_diff_vals.append(np.abs(true_diff_raw))
+        if len(all_diff_vals) > 0:
+            all_diff_vals = np.concatenate(all_diff_vals, axis=0)
+            self.tail_q90 = float(np.quantile(all_diff_vals, 0.90))
+        else:
+            self.tail_q90 = 0.0
+        setattr(self.config, 'tail_q90', self.tail_q90)
+        print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
+
         # ===== 计算训练集分位数 =====
         self.compute_train_diff_quantiles()
         self.build_route_labels()  # 生成路由标签
