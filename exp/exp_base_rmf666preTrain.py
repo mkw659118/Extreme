@@ -14,6 +14,7 @@ class BasicModel(BasicModelRMF5):
         self.pretrain_scaler = torch.amp.GradScaler(config.device)
 
     def setup_pretrain_optimizer(self, config):
+        self.to(config.device)
         pretrain_lr = getattr(config, 'pretrain_lr', config.lr)
         pretrain_decay = getattr(config, 'pretrain_decay', config.decay)
         self.pretrain_optimizer = torch.optim.AdamW(

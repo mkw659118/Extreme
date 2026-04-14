@@ -20,7 +20,7 @@ do
     for dm in "${d_models[@]}"
     do
       echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train.py" \
+      python "run_trainpreTrain.py" \
         --config "ExtremeLSTMMemoConfig" \
         --reservoir_sensor "$sensor" \
         --pred_len "$pred" \

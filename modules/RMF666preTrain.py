@@ -31,6 +31,7 @@ class StudentTMixturePrior(nn.Module):
         self.scale_raw = nn.Parameter(torch.zeros(num_components, state_dim))
         self.df_raw = nn.Parameter(torch.zeros(num_components, state_dim))
         self.mix_logits = nn.Parameter(torch.zeros(num_components))
+        self.register_buffer('_log_pi', torch.log(torch.tensor(torch.pi, dtype=torch.float32)), persistent=False)
 
     def extract_state_vector(self, x: torch.Tensor) -> torch.Tensor:
         x_used = x if self.use_all_channels else x[:, :, :1]
@@ -56,12 +57,13 @@ class StudentTMixturePrior(nn.Module):
         mu = self.mu.unsqueeze(0)
         scale = F.softplus(self.scale_raw).unsqueeze(0) + self.min_scale
         df = F.softplus(self.df_raw).unsqueeze(0) + self.min_df
+        log_pi = self._log_pi.to(device=df.device, dtype=df.dtype)
 
         z_expand = z.unsqueeze(1)
         log_norm = (
             torch.lgamma((df + 1.0) / 2.0)
             - torch.lgamma(df / 2.0)
-            - 0.5 * (torch.log(df) + torch.log(torch.as_tensor(torch.pi, device=z.device, dtype=z.dtype)))
+            - 0.5 * (torch.log(df) + log_pi)
             - torch.log(scale)
         )
         log_kernel = -((df + 1.0) / 2.0) * torch.log1p(((z_expand - mu) / scale).pow(2) / df)
