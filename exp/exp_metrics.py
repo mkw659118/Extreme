@@ -80,10 +80,27 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     eps = 1e-8
     absError = np.abs(estiVec - realVec)
 
+    def mean_cosine_similarity(y_true, y_pred, eps_val=1e-8):
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        if y_true.ndim == 1:
+            y_true_flat = y_true.reshape(1, -1)
+            y_pred_flat = y_pred.reshape(1, -1)
+        else:
+            y_true_flat = y_true.reshape(y_true.shape[0], -1)
+            y_pred_flat = y_pred.reshape(y_pred.shape[0], -1)
+
+        dot = np.sum(y_true_flat * y_pred_flat, axis=1)
+        norm_true = np.linalg.norm(y_true_flat, axis=1)
+        norm_pred = np.linalg.norm(y_pred_flat, axis=1)
+        cos = dot / (norm_true * norm_pred + eps_val)
+        return float(np.mean(cos))
+
     MAE = np.mean(np.abs(realVec - estiVec))
     MSE = np.mean((realVec - estiVec) ** 2)
     RMSE = np.sqrt(MSE)
     MAPE = np.mean(np.abs((realVec - estiVec) / (np.abs(realVec) + eps)))
+    COS = mean_cosine_similarity(realVec, estiVec, eps)
     
     NMAE = np.sum(absError) / np.sum(np.abs(realVec))
     NRMSE = np.sqrt(np.sum((realVec - estiVec) ** 2)) / np.sqrt(np.sum(realVec ** 2))
@@ -126,6 +143,7 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         'MSE': MSE,
         'RMSE': RMSE,
         'MAPE': MAPE,
+        'COS': COS,
         'Tail_MAE': Tail_MAE,
         'Tail_RMSE': Tail_RMSE,
         'Tail_MAPE': Tail_MAPE,
