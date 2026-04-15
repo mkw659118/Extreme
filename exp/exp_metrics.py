@@ -80,14 +80,29 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     eps = 1e-8
     absError = np.abs(estiVec - realVec)
 
+    # def mean_cosine_similarity(y_true, y_pred, eps_val=1e-8):
+    #     y_true = np.asarray(y_true)
+    #     y_pred = np.asarray(y_pred)
+    #     if y_true.shape != y_pred.shape:
+    #         raise ValueError(f"y_true and y_pred must have same shape, got {y_true.shape} vs {y_pred.shape}")
+
+    #     # Do not flatten: compute cosine along the last (time) dimension,
+    #     # then average across samples (and channels if present).
+    #     dot = np.sum(y_true * y_pred, axis=-1)
+    #     norm_true = np.linalg.norm(y_true, axis=-1)
+    #     norm_pred = np.linalg.norm(y_pred, axis=-1)
+    #     cos = dot / (norm_true * norm_pred + eps_val)
+    #     return float(np.mean(cos))
     def mean_cosine_similarity(y_true, y_pred, eps_val=1e-8):
         y_true = np.asarray(y_true)
         y_pred = np.asarray(y_pred)
         if y_true.shape != y_pred.shape:
             raise ValueError(f"y_true and y_pred must have same shape, got {y_true.shape} vs {y_pred.shape}")
 
-        # Do not flatten: compute cosine along the last (time) dimension,
-        # then average across samples (and channels if present).
+        if y_true.ndim == 3 and y_true.shape[-1] == 1:
+            y_true = y_true[..., 0]
+            y_pred = y_pred[..., 0]
+
         dot = np.sum(y_true * y_pred, axis=-1)
         norm_true = np.linalg.norm(y_true, axis=-1)
         norm_pred = np.linalg.norm(y_pred, axis=-1)
