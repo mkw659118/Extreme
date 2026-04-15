@@ -94,27 +94,11 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         cos = dot / (norm_true * norm_pred + eps_val)
         return float(np.mean(cos))
 
-    def mean_centered_cosine_similarity(y_true, y_pred, eps_val=1e-8):
-        y_true = np.asarray(y_true)
-        y_pred = np.asarray(y_pred)
-        if y_true.shape != y_pred.shape:
-            raise ValueError(f"y_true and y_pred must have same shape, got {y_true.shape} vs {y_pred.shape}")
-
-        y_true_centered = y_true - np.mean(y_true, axis=-1, keepdims=True)
-        y_pred_centered = y_pred - np.mean(y_pred, axis=-1, keepdims=True)
-
-        dot = np.sum(y_true_centered * y_pred_centered, axis=-1)
-        norm_true = np.linalg.norm(y_true_centered, axis=-1)
-        norm_pred = np.linalg.norm(y_pred_centered, axis=-1)
-        cos = dot / (norm_true * norm_pred + eps_val)
-        return float(np.mean(cos))
-
     MAE = np.mean(np.abs(realVec - estiVec))
     MSE = np.mean((realVec - estiVec) ** 2)
     RMSE = np.sqrt(MSE)
     MAPE = np.mean(np.abs((realVec - estiVec) / (np.abs(realVec) + eps)))
     COS = mean_cosine_similarity(realVec, estiVec, eps)
-    COS_CENTERED = mean_centered_cosine_similarity(realVec, estiVec, eps)
     
     NMAE = np.sum(absError) / np.sum(np.abs(realVec))
     NRMSE = np.sqrt(np.sum((realVec - estiVec) ** 2)) / np.sqrt(np.sum(realVec ** 2))
@@ -158,7 +142,6 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         'RMSE': RMSE,
         'MAPE': MAPE,
         'COS': COS,
-        'COS_CENTERED': COS_CENTERED,
         'Tail_MAE': Tail_MAE,
         'Tail_RMSE': Tail_RMSE,
         'Tail_MAPE': Tail_MAPE,

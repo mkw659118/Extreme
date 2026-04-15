@@ -1,10 +1,10 @@
 #!/bin/bash
 
 reservoir_sensors=(
-  # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
-  # "reservoir_stor_4007_sof24"
-  # "reservoir_stor_4009_sof24"
+  "reservoir_stor_4001_sof24"
+  "reservoir_stor_4005_sof24"
+  "reservoir_stor_4007_sof24"
+  "reservoir_stor_4009_sof24"
   "reservoir_stor_4011_sof24"
 )
 
@@ -21,7 +21,7 @@ do
     for dm in "${d_models[@]}"
     do
       echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_trainpreTrain.py" \
+      python "run_trainpreTrainTCN.py" \
         --config "ExtremeLSTMMemoConfig" \
         --reservoir_sensor "$sensor" \
         --pred_len "$pred" \

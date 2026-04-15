@@ -64,7 +64,10 @@ def RunExperiments(log, config):
     log(f'Train_length : {len(datamodule.train_data_loader.dataset)} Valid_length : {len(datamodule.val_data_loader.dataset)} Test_length : {len(datamodule.test_data_loader.dataset)}')
 
     for key in metrics:
-        log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
+        if 'COS' in key:
+            log(f'{key}: {np.mean(metrics[key]):.8f} ± {np.std(metrics[key]):.8f}')
+        else:
+            log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
 
     try:
         flops, params, inference_time = utils.model_efficiency.get_efficiency(datamodule, Model(config), config)
