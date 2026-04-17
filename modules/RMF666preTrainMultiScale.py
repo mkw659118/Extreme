@@ -45,6 +45,20 @@ class StudentTMixturePrior(nn.Module):
         else:
             self.register_buffer('alpha_logits', alpha_init, persistent=True)
 
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        # Break permutation symmetry at initialization to avoid uniform posterior collapse.
+        with torch.no_grad():
+            nn.init.normal_(self.mu, mean=0.0, std=0.05)
+            if self.num_components > 1:
+                comp_offsets = torch.linspace(-0.5, 0.5, steps=self.num_components, device=self.mu.device)
+                self.mu[:, 0] = self.mu[:, 0] + comp_offsets
+
+            nn.init.constant_(self.scale_raw, -1.0)
+            nn.init.constant_(self.df_raw, 1.0)
+            nn.init.normal_(self.mix_logits, mean=0.0, std=0.05)
+
     def extract_state_vector(self, x: torch.Tensor) -> torch.Tensor:
         x_used = x if self.use_all_channels else x[:, :, :1]
         std = x_used.std(dim=1, unbiased=False).mean(dim=-1, keepdim=True)
@@ -346,6 +360,8 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
         self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.20)
         self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
+        self.state_balance_weight = float(getattr(self.config, 'state_balance_weight', 0.02))
+        self.state_dom_cap = float(getattr(self.config, 'state_dom_cap', 0.8))
 
         include_last_value = bool(getattr(self.config, 'pretrain_include_last', True))
         state_dim = 4 if include_last_value else 3
@@ -400,11 +416,26 @@ class ExtremeLSTMMemo(nn.Module):
 
     def pretrain_state_prior_loss(self, x: torch.Tensor):
         prior_out = self.state_prior(x)
-        loss = prior_out['pretrain_nll']
+        eps = 1e-8
+        q = prior_out['q']
+        q_mean = q.mean(dim=0)
+
+        # Minimal anti-collapse regularization for state prior.
+        uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+        balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
+        dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+
+        loss = (
+            prior_out['pretrain_nll']
+            + self.state_balance_weight * (balance_kl + dominant_penalty)
+        )
         aux = {
-            'pretrain_nll': loss.detach(),
-            'q_mean': prior_out['q'].detach().mean(dim=0),
+            'pretrain_nll': prior_out['pretrain_nll'].detach(),
+            'pretrain_total_loss': loss.detach(),
+            'q_mean': q_mean.detach(),
             'mix_prob': prior_out['mix_prob'].detach(),
+            'balance_kl': balance_kl.detach(),
+            'dominant_penalty': dominant_penalty.detach(),
         }
         return loss, aux
 
@@ -581,6 +612,19 @@ class ExtremeLSTMMemo(nn.Module):
             balance_loss, balance_aux_dict = self.compute_sample_level_balance_loss(out['router_logits'])
             total_aux_loss = total_aux_loss + 0.1 * balance_loss
             aux_dict.update(balance_aux_dict)
+
+            # Keep prior states from collapsing during backbone training.
+            eps = 1e-8
+            q = out['state_probs']
+            q_mean = q.mean(dim=0)
+            q_uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+            state_balance_loss = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(q_uniform + eps)))
+            state_dom_loss = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+
+            total_aux_loss = total_aux_loss + self.state_balance_weight * (state_balance_loss + state_dom_loss)
+            aux_dict['state_balance_loss'] = state_balance_loss.detach()
+            aux_dict['state_dom_loss'] = state_dom_loss.detach()
+            aux_dict['state_qmax'] = q_mean.max().detach()
 
         out['point_pred'] = point_pred
         out['total_aux_loss'] = total_aux_loss

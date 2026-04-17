@@ -337,13 +337,6 @@ class DS:
         print("sensor_data_norm1, ", self.sensor_data_norm1)
         print("Finish prob indicator generating.")
         
-        # NEW: 将原始序列(level)作为最后一维特征拼接进输入
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
-        # NEW: 将二阶差分特征追加到输入末尾（不改变原有列顺序）
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, d2_norm), axis=1)
-
-
-
         # 生成时间相关特征
         self.tag = gen_month_tag(self.sensor_data)
         self.month, self.day, self.hour = gen_time_feature(self.sensor_data)
@@ -859,13 +852,6 @@ class DS:
         self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, recover_prob[:, 2:3]), 1)
         print("Finish prob indicator updating.")
         
-        # NEW: 追加原始序列(level)特征到最后一列（不改变原有列顺序）
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, level_norm), axis=1)
-        
-        # NEW: 将二阶差分特征追加到输入末尾
-        self.sensor_data_norm1 = np.concatenate((self.sensor_data_norm1, d2_norm), axis=1)
-
-
         # 更新时间相关特征
         self.tag = gen_month_tag(self.sensor_data)
         self.month, self.day, self.hour = gen_time_feature(self.sensor_data)

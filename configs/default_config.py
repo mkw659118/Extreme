@@ -16,6 +16,11 @@ class TrainingConfig:
     monitor_metric: str = 'RMSE'
     use_amp: bool = False
     mode: str = 'train'
+    state_balance_weight: float = 0.02
+    state_dom_cap: float = 0.8
+    freeze_prior_after_pretrain: bool = False
+    state_prior_temperature_start: float = 1.0
+    state_prior_temperature_end: float = 0.6
 
 
 @dataclass
