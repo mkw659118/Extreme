@@ -27,7 +27,7 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     os_v: int = 4
     outf: str = "./output"
     output_dim: int = 1
-    pred_len: int = 72
+    pred_len: int = 8
     oversampling: int = 40
     rain_sensor: str = "reservoir_stor_4001_sof24"
     save: int = 0
@@ -37,9 +37,9 @@ class MCANNConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, 
     test_end: str = "2019-07-01 00:30:00"
     test_start: str = "2018-07-01 00:30:00"
     train_point: str = "2018-06-30 23:30:00"
-    train_seed: int = 1010
-    train_volume: int = 30000
-    val_seed: int = 2007
+    train_seed: int = 2024
+    train_volume: int = 40000
+    val_seed: int = 2025
     val_size: int = 60
     watershed: int = 0
     patience: int = 40

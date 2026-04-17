@@ -1,4 +1,4 @@
-from data_provider import DS
+from data_provider import DS_ncann
 from utils import *
 import torch
 import torch.nn as nn
@@ -185,7 +185,7 @@ class AHead(nn.Module):
     def _get_spectrum_prior(self):
         
         trainX = prepare_data()
-        datamodule = DS(self.config, trainX)
+        datamodule = DS_ncann(self.config, trainX)
         train_data = datamodule.get_diff_data()
         
         # train_data = TSFactory(self.config)('train')[0].x

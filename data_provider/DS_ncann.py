@@ -231,21 +231,31 @@ class DS:
         sensor_data_prob = np.array(clean_data, np.float32).reshape(-1, 1)
         
         
-        # 训练数据集级别的三成分高斯混合模型，用于异常检测
+        # # 训练数据集级别的三成分高斯混合模型，用于异常检测
         self.gm3.fit(sensor_data_prob)
         torch.save(self.gm3, self.expr_dir + "/" + "GM3.pt")
         
-        self.gm_means = np.squeeze(self.gm3.means_)
-        self.z0 = np.min(self.gm_means)
-        self.z1 = np.median(self.gm_means)
-        self.z2 = np.max(self.gm_means)
+        # self.gm_means = np.squeeze(self.gm3.means_)
+        # self.z0 = np.min(self.gm_means)
+        # self.z1 = np.median(self.gm_means)
+        # self.z2 = np.max(self.gm_means)
 
-        # 计算异常检测阈值
-        self.thre1 = (self.z0 + self.z1) / 2
-        self.thre2 = (self.z1 + self.z2) / 2
+        # # 计算异常检测阈值
+        # self.thre1 = (self.z0 + self.z1) / 2
+        # self.thre2 = (self.z1 + self.z2) / 2
         
-        print("gm3.means are: ", self.gm_means)
-        print("z : ", self.z0, self.z1, self.z2)
+        # print("gm3.means are: ", self.gm_means)
+        # print("z : ", self.z0, self.z1, self.z2)
+        
+        clean_data = np.array(clean_data, dtype=np.float32)
+        if len(clean_data) > 0:
+            self.thre1 = np.percentile(clean_data, 10)
+            self.thre2 = np.percentile(clean_data, 90)
+        else:
+            self.thre1 = 0.0
+            self.thre2 = 0.0
+        print("thre1 is: ", self.thre1)
+        print("thre2 is: ", self.thre2) 
         
         print("gm3.covariances are: ", self.gm3.covariances_)
         print("gm3.weights are: ", self.gm3.weights_)
@@ -512,7 +522,8 @@ class DS:
         )
 
         # 保存验证集时间戳
-        self.config.name = "%s" % (self.config.data_model)
+        # self.config.name = "%s" % (self.config.data_model)
+        self.config.name = "%s" % (self.config.reservoir_sensor)
         val_dir = os.path.join(self.config.outf, self.config.name, "val")
         os.makedirs(val_dir, exist_ok=True)
         file_name = os.path.join(val_dir, "validation_timestamps_24avg.tsv")
@@ -707,6 +718,21 @@ class DS:
         print("Train Label, ", np.array(Label).shape)
         print("训练集数据的选取长度是： ", len(DATA))
         print("训练集标签的选取长度是： ", len(self.Label))
+        
+        # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
+        all_diff_vals = []
+        for label in self.Label:
+            arr = np.asarray(label, dtype=np.float32)
+            # label[:, 1] = previous raw anchor, label[:, 2] = current raw value
+            true_diff_raw = arr[:, 4] - arr[:, 3]
+            all_diff_vals.append(np.abs(true_diff_raw))
+        if len(all_diff_vals) > 0:
+            all_diff_vals = np.concatenate(all_diff_vals, axis=0)
+            self.tail_q90 = float(np.quantile(all_diff_vals, 0.90))
+        else:
+            self.tail_q90 = 0.0
+        setattr(self.config, 'tail_q90', self.tail_q90)
+        print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
 
 
 

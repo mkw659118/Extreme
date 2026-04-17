@@ -64,31 +64,6 @@ class BasicModel(torch.nn.Module):
             threshold=1e-3,
         )
 
-    def compute_weighted_point_loss(
-        self,
-        pred_raw: torch.Tensor,
-        real_raw: torch.Tensor,
-        route_labels: torch.Tensor,
-        normal_weight: float = 1.0,
-        hard_weight: float = 1.5,
-        loss_type: str = 'mae',
-    ) -> torch.Tensor:
-        if loss_type == 'mae':
-            per_point_loss = torch.abs(pred_raw - real_raw)
-        elif loss_type == 'mse':
-            per_point_loss = (pred_raw - real_raw) ** 2
-        else:
-            raise ValueError(f'Unsupported loss_type: {loss_type}')
-
-        per_sample_loss = per_point_loss.mean(dim=1)
-        sample_weights = torch.where(
-            route_labels == 1,
-            torch.full_like(route_labels, hard_weight, dtype=pred_raw.dtype),
-            torch.full_like(route_labels, normal_weight, dtype=pred_raw.dtype),
-        ).to(pred_raw.device)
-        weighted_loss = (per_sample_loss * sample_weights).sum() / (sample_weights.sum() + 1e-8)
-        return weighted_loss
-
     def _restore_to_raw(self, pred, label, mean, std):
         mean_t = torch.as_tensor(mean, device=pred.device, dtype=pred.dtype)
         std_t = torch.as_tensor(std, device=pred.device, dtype=pred.dtype)
@@ -111,7 +86,7 @@ class BasicModel(torch.nn.Module):
             for epoch in range(1):
                 iter_count = 0
                 for i, batch in enumerate(train_loader):
-                    batch_x, x_mark, batch_y, sample_ids, route_labels = batch
+                    batch_x, x_mark, batch_y, sample_ids = batch
                     batch_x = batch_x.float().to(self.config.device)
                     batch_y = batch_y.float().to(self.config.device)
                     sample_ids = sample_ids.to(self.config.device).long()
@@ -146,12 +121,11 @@ class BasicModel(torch.nn.Module):
 
         try:
             for batch_idx, train_batch in enumerate(dataModule.train_data_loader):
-                x, x_mark, label, sample_ids, route_labels = train_batch
+                x, x_mark, label, sample_ids = train_batch
                 x = x.to(self.config.device, non_blocking=True)
                 x_mark = x_mark.to(self.config.device, non_blocking=True)
                 label = label.to(self.config.device, non_blocking=True)
                 sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
-                route_labels = route_labels.to(self.config.device, non_blocking=True).long()
 
                 dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
                 dec_input = torch.cat([label[:, :self.label_len, :], dec_input], dim=1).float().to(self.config.device)
@@ -164,22 +138,10 @@ class BasicModel(torch.nn.Module):
                             x_mark,
                             dec_input=dec_input,
                             sample_ids=sample_ids,
-                            route_labels=route_labels,
                             mode=mode,
                         )
-                        pred_raw, real_raw = self._restore_to_raw(output['point_pred'], label, dataModule.mean, dataModule.std)
-
-                        if stage == 'backbone':
-                            main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
-                        else:
-                            main_loss = self.compute_weighted_point_loss(
-                                pred_raw=pred_raw,
-                                real_raw=real_raw,
-                                route_labels=route_labels,
-                                normal_weight=1.0,
-                                hard_weight=1.5,
-                                loss_type='mae',
-                            )
+                        pred_raw, real_raw = self._restore_to_raw(output['point_pred'], label, dataModule.mean, dataModule.std)                       
+                        main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
                         total_loss_value = main_loss + aux_loss
 
                     scaler.scale(total_loss_value).backward()
@@ -194,23 +156,10 @@ class BasicModel(torch.nn.Module):
                         x_mark,
                         dec_input=dec_input,
                         sample_ids=sample_ids,
-                        route_labels=route_labels,
                         mode=mode,
                     )
                     pred_raw, real_raw = self._restore_to_raw(output['point_pred'], label, dataModule.mean, dataModule.std)
-
-                    if stage == 'backbone':
-                        main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
-                    else:
-                        main_loss = self.compute_weighted_point_loss(
-                            pred_raw=pred_raw,
-                            real_raw=real_raw,
-                            route_labels=route_labels,
-                            normal_weight=1.0,
-                            hard_weight=1.5,
-                            loss_type='mae',
-                        )
-
+                    main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
                     total_loss_value = main_loss + aux_loss
 
                     if (batch_idx + 1) % 100 == 0 or (batch_idx + 1) == len(dataModule.train_data_loader):
@@ -265,7 +214,7 @@ class BasicModel(torch.nn.Module):
         ctx = torch.autocast(device_type=self.device_type, dtype=torch.float16) if self.config.use_amp else contextlib.nullcontext()
         with ctx:
             for batch in dataloader:
-                x, x_mark, label, sample_ids, route_labels = batch
+                x, x_mark, label, sample_ids = batch
                 x = x.to(self.config.device)
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
@@ -279,7 +228,6 @@ class BasicModel(torch.nn.Module):
                     x_mark,
                     dec_input=dec_input,
                     sample_ids=sample_ids,
-                    route_labels=None,
                     mode=mode,
                 )
                 reals.append(label)
@@ -299,7 +247,7 @@ class BasicModel(torch.nn.Module):
         ctx = torch.autocast(device_type=self.device_type, dtype=torch.float16) if self.config.use_amp else contextlib.nullcontext()
         with ctx:
             for batch in dataloader:
-                x, x_mark, label, sample_ids, route_labels = batch
+                x, x_mark, label, sample_ids = batch
                 x = x.to(self.config.device)
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
@@ -313,7 +261,6 @@ class BasicModel(torch.nn.Module):
                     x_mark,
                     dec_input=dec_input,
                     sample_ids=sample_ids,
-                    route_labels=None,
                     mode='test',
                 )
                 reals.append(label)

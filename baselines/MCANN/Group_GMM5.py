@@ -20,7 +20,7 @@ class DAN(nn.Module):
         self.decoder = DecoderLSTM(config)
 
     
-    def forward(self, x, x_mark=None):
+    def forward(self, x, x_mark=None, sample_ids=None, mode='train'):
        
         # 编码
         encoder_h, encoder_c, ww = self.encoder(x)

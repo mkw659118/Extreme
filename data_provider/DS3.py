@@ -143,85 +143,6 @@ class DS:
 
     def get_tag(self):
         return self.tag
-    
-    def compute_train_diff_quantiles(self):
-        """
-        计算训练集真实差分的分位数，帮助 MoE 模型引导专家选择
-        当前新版 label 结构:
-            col 0 -> 核心归一化值
-            col 1 -> 差分锚点列（前一时刻原始值）
-            col 2 -> 原始值列（当前时刻原始值）
-        所以真实差分 = col2 - col1
-        """
-        all_scores = []
-
-        for label in self.Label:
-            label = np.asarray(label, dtype=np.float32)  # [pred_len, 3]
-
-            prev_raw = label[:, 1]
-            curr_raw = label[:, 2]
-
-            true_diff_raw = curr_raw - prev_raw  # [pred_len]
-
-            # 样本级 score：未来窗口最大绝对差分
-            score = np.max(np.abs(true_diff_raw))
-            all_scores.append(score)
-
-        all_scores = np.asarray(all_scores, dtype=np.float32)
-
-        q50 = float(np.quantile(all_scores, 0.50))
-        q80 = float(np.quantile(all_scores, 0.80))
-        q95 = float(np.quantile(all_scores, 0.95))
-
-        print(f"[Route Quantiles] q50={q50:.6f}, q80={q80:.6f}, q95={q95:.6f}")
-
-        self.route_scores = all_scores
-        self.route_q50 = q50
-        self.route_q80 = q80
-        self.route_q95 = q95
-
-        return q50, q80, q95, all_scores
-    
-    def build_route_labels(self):
-        """
-        根据训练集的分位数生成 route_label
-        0 -> 普通样本
-        1 -> 大变化样本
-        """
-        route_labels = []
-        for score in self.route_scores:
-            # 使用 q80 划分普通样本和大变化样本
-            if score <= self.route_q80:
-                route_label = 0  # 普通样本
-            else:
-                route_label = 1  # 大变化样本
-            route_labels.append(route_label)
-
-        self.route_labels = np.asarray(route_labels, dtype=np.int64)
-        return self.route_labels
-    
-    def build_route_labels_multi(self):
-        """
-        四分类 route label:
-            0 -> <= q50
-            1 -> (q50, q80]
-            2 -> (q80, q95]
-            3 -> > q95
-        """
-        route_labels = []
-        for score in self.route_scores:
-            if score <= self.route_q50:
-                route_label = 0
-            elif score <= self.route_q80:
-                route_label = 1
-            elif score <= self.route_q95:
-                route_label = 2
-            else:
-                route_label = 3
-            route_labels.append(route_label)
-
-        self.route_labels = np.asarray(route_labels, dtype=np.int64)
-        return self.route_labels
 
     # ----------------------- 数据读取与预处理 -----------------------
     def read_dataset(self):
@@ -357,7 +278,7 @@ class DS:
         print("Validation DATA shape, ", np.array(DATA).shape)
         print("Validation Label, ", np.array(Label).shape)
 
-        dataset1 = TimeSeriesDataset(DATA, self.Label_val, self.config, route_labels=None)
+        dataset1 = TimeSeriesDataset(DATA, self.Label_val, self.config)
         self.val_data_loader = DataLoader(
             dataset1,
             self.batch_size,
@@ -521,13 +442,8 @@ class DS:
         setattr(self.config, 'tail_q90', self.tail_q90)
         print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
 
-        # ===== 计算训练集分位数 =====
-        self.compute_train_diff_quantiles()
-        self.build_route_labels()  # 生成路由标签
-        print("route_labels shape:", self.route_labels.shape)
-        print("route label counts:", np.bincount(self.route_labels))
 
-        dataset1 = TimeSeriesDataset(DATA, self.Label, self.config, route_labels=self.route_labels)
+        dataset1 = TimeSeriesDataset(DATA, self.Label, self.config)
         self.train_data_loader = DataLoader(
             dataset1,
             self.batch_size,
@@ -645,7 +561,7 @@ class DS:
         print("Test DATA shape, ", np.array(DATA).shape)
         print("Test Label, ", np.array(Label).shape)
 
-        dataset1 = TimeSeriesDataset(DATA, self.Label_test, self.config, route_labels=None)
+        dataset1 = TimeSeriesDataset(DATA, self.Label_test, self.config)
         self.test_data_loader = DataLoader(
             dataset1,
             self.batch_size,

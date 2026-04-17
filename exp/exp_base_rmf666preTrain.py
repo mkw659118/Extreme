@@ -39,7 +39,7 @@ class BasicModel(BasicModelRMF5):
         sample_count = 0
 
         for batch_idx, train_batch in enumerate(dataModule.train_data_loader):
-            x, _, _, _, _ = train_batch
+            x, _, _, _= train_batch
             x = x.to(self.config.device, non_blocking=True)
             self.pretrain_optimizer.zero_grad(set_to_none=True)
 

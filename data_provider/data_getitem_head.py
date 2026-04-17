@@ -7,11 +7,10 @@ from torch.utils.data import Dataset
 import numpy as np
 
 class TimeSeriesDataset(Dataset):
-    def __init__(self, x, y, config, route_labels=None):
+    def __init__(self, x, y, config):
         self.config = config
         self.x = x
         self.y = y
-        self.route_labels = route_labels  # 新增 route_labels
         self.id_offset = int(getattr(config, "id_offset", 0))
 
     def __len__(self):
@@ -23,29 +22,22 @@ class TimeSeriesDataset(Dataset):
         y = self.y[idx]
         sample_id = np.int64(self.id_offset + idx)
 
-        if self.route_labels is None:
-            route_label = np.int64(-1)
-        else:
-            route_label = np.int64(self.route_labels[idx])
 
         return (
             x.astype(np.float32),
             x_mark.astype(np.float32),
             y.astype(np.float32),
-            sample_id,
-            route_label,  # 返回 route_label
+            sample_id
         )
 
     def custom_collate_fn(self, batch):
-        x, x_mark, y, ids, route_labels = zip(*batch)
+        x, x_mark, y, ids = zip(*batch)
         ids = [np.int64(i) for i in ids]
-        route_labels = [np.int64(r) for r in route_labels]
         return (
             default_collate(x),
             default_collate(x_mark),
             default_collate(y),
-            default_collate(ids),
-            default_collate(route_labels),  # 返回 route_labels
+            default_collate(ids)
         )
 
 # class TimeSeriesDataset(Dataset):

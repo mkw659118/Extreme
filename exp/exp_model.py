@@ -16,8 +16,8 @@ from modules.RMF666 import ExtremeLSTMMemo
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
-# from exp.exp_base_memo import BasicModel
-from exp.exp_base_rmf666 import BasicModel
+from exp.exp_base_mcann import BasicModel
+# from exp.exp_base_rmf666 import BasicModel
 from baselines.encoder_seq import SeqEncoder
 
 class Model(BasicModel):

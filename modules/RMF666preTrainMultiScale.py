@@ -336,7 +336,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.dropout = self.config.dropout
         self.device = self.config.device
 
-        self.num_experts = getattr(self.config, 'num_experts', 3)
+        self.num_experts = getattr(self.config, 'num_experts', 4)
         self.top_k_experts = min(getattr(self.config, 'top_k_experts', 2), self.num_experts)
         self.retrieval_num = getattr(self.config, 'retrieval_num', 2)
         self.retrieval_stride = 1
@@ -535,7 +535,6 @@ class ExtremeLSTMMemo(nn.Module):
         x_mark: Optional[torch.Tensor] = None,
         dec_input: Optional[torch.Tensor] = None,
         sample_ids: Optional[torch.Tensor] = None,
-        route_labels: Optional[torch.Tensor] = None,
         mode: str = 'train',
         return_aux: bool = False,
     ):
