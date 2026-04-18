@@ -1,8 +1,8 @@
 #!/bin/bash
 
 reservoir_sensors=(
-  # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
+  "reservoir_stor_4001_sof24"
+  "reservoir_stor_4005_sof24"
   "reservoir_stor_4007_sof24"
   "reservoir_stor_4009_sof24"
   "reservoir_stor_4011_sof24"

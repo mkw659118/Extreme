@@ -16,6 +16,13 @@ class TrainingConfig:
     monitor_metric: str = 'RMSE'
     use_amp: bool = False
     mode: str = 'train'
+    use_prior_guided_tail_residual: bool = True
+    tail_gate_scale: float = 1.0
+    use_tail_aware_loss: bool = True
+    tail_loss_lambda1: float = 1.0
+    tail_loss_lambda2: float = 0.5
+    tail_loss_lambda3: float = 0.1
+    tail_mask_quantile: float = 0.9
     state_balance_weight: float = 0.02
     state_dom_cap: float = 0.8
     freeze_prior_after_pretrain: bool = False

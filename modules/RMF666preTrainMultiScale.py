@@ -360,6 +360,8 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
         self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.20)
         self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
+        self.use_prior_guided_tail_residual = bool(getattr(self.config, 'use_prior_guided_tail_residual', True))
+        self.tail_gate_scale = float(getattr(self.config, 'tail_gate_scale', 1.0))
         self.state_balance_weight = float(getattr(self.config, 'state_balance_weight', 0.02))
         self.state_dom_cap = float(getattr(self.config, 'state_dom_cap', 0.8))
 
@@ -406,6 +408,22 @@ class ExtremeLSTMMemo(nn.Module):
             hidden_dim=self.retrieval_beta_hidden,
             beta_min=0.0,
             beta_max=self.retrieval_beta_max,
+        )
+
+        tail_gate_hidden = max(32, d_model // 2)
+        self.tail_gate_mlp = nn.Sequential(
+            nn.Linear(self.num_experts + state_dim, tail_gate_hidden),
+            nn.LayerNorm(tail_gate_hidden),
+            nn.GELU(),
+            nn.Dropout(min(self.dropout, 0.1)),
+            nn.Linear(tail_gate_hidden, pred_len),
+            nn.Sigmoid(),
+        )
+        self.tail_residual_head = nn.Sequential(
+            nn.Linear(2 * d_model, d_model),
+            nn.GELU(),
+            nn.Dropout(min(self.dropout, 0.1)),
+            nn.Linear(d_model, pred_len * out_dim),
         )
 
         self.register_buffer('retrieval_gate_ready', torch.tensor(False, dtype=torch.bool), persistent=True)
@@ -539,10 +557,29 @@ class ExtremeLSTMMemo(nn.Module):
             'topk_experts': topk_experts,
             'topk_probs': head_mix_weights,
             'state_probs': prior_out['q'],
+            'state_z': prior_out['z'],
             'state_alpha': prior_out['mix_prob'],
             'state_pretrain_nll': prior_out['pretrain_nll'],
         })
         return backbone_out
+
+    def _prior_guided_tail_residual(self, out: Dict[str, torch.Tensor]):
+        base_pred = out['point_pred']
+        fused_seq = out['fused_sequence']
+        summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
+
+        prior_cond = torch.cat([out['state_probs'], out['state_z']], dim=-1)
+        tail_gate = self.tail_gate_mlp(prior_cond).unsqueeze(-1)
+        tail_gate = self.tail_gate_scale * tail_gate
+
+        tail_delta = self.tail_residual_head(summary).view(base_pred.size(0), self.pred_len, self.out_dim)
+        point_pred = base_pred + tail_gate * tail_delta
+
+        out['base_pred'] = base_pred
+        out['tail_gate'] = tail_gate
+        out['tail_delta'] = tail_delta
+        out['point_pred'] = point_pred
+        return out
 
     def _heuristic_fuse(self, point_pred: torch.Tensor, retrieval_pred: torch.Tensor, sims: torch.Tensor):
         sim_mean = sims.mean(dim=-1)
@@ -574,6 +611,9 @@ class ExtremeLSTMMemo(nn.Module):
                 out = self._forward_backbone(x=x)
         else:
             out = self._forward_backbone(x=x)
+
+        if self.use_prior_guided_tail_residual:
+            out = self._prior_guided_tail_residual(out)
 
         point_pred = out['point_pred']
         total_aux_loss = point_pred.new_tensor(0.0)
@@ -632,6 +672,8 @@ class ExtremeLSTMMemo(nn.Module):
         aux_dict['router_prob'] = out['router_prob'].detach()
         aux_dict['topk_experts'] = out['topk_experts'].detach()
         aux_dict['state_probs'] = out['state_probs'].detach()
+        if 'tail_gate' in out:
+            aux_dict['tail_gate_mean'] = out['tail_gate'].mean().detach()
         aux_dict['state_alpha'] = out['state_alpha'].detach()
         self.latest_aux_dict = aux_dict
 
