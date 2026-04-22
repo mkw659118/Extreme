@@ -5,7 +5,6 @@ import pickle
 import contextlib
 
 import torch
-import torch.nn.functional as F
 from tqdm import trange
 
 from exp.exp_loss import compute_loss
@@ -77,50 +76,6 @@ class BasicModel(torch.nn.Module):
         real_raw = future_label[:, :, 2]
         return pred_raw, real_raw
 
-    def _compute_tail_aware_loss(self, pred_raw, real_raw, output):
-        if not bool(getattr(self.config, 'use_tail_aware_loss', True)):
-            return pred_raw.new_tensor(0.0), {}
-
-        if pred_raw.size(1) <= 1:
-            return pred_raw.new_tensor(0.0), {}
-
-        eps = 1e-8
-        lam1 = float(getattr(self.config, 'tail_loss_lambda1', 1.0))
-        lam2 = float(getattr(self.config, 'tail_loss_lambda2', 0.5))
-        lam3 = float(getattr(self.config, 'tail_loss_lambda3', 0.1))
-
-        true_diff = real_raw[:, 1:] - real_raw[:, :-1]
-        pred_diff = pred_raw[:, 1:] - pred_raw[:, :-1]
-        abs_true_diff = true_diff.abs()
-
-        tail_q = float(getattr(self.config, 'tail_q90', 0.0))
-        if tail_q <= 0:
-            q = float(getattr(self.config, 'tail_mask_quantile', 0.9))
-            q = min(max(q, 0.5), 0.99)
-            tail_q = float(torch.quantile(abs_true_diff.detach().reshape(-1), q))
-
-        tail_mask = (abs_true_diff >= tail_q).to(pred_raw.dtype)
-        denom = tail_mask.sum() + eps
-
-        tail_point = ((pred_raw[:, 1:] - real_raw[:, 1:]).abs() * tail_mask).sum() / denom
-        tail_diff = ((pred_diff - true_diff).abs() * tail_mask).sum() / denom
-
-        tail_loss = lam1 * tail_point + lam2 * tail_diff
-        stats = {
-            'tail_point_loss': tail_point.detach(),
-            'tail_diff_loss': tail_diff.detach(),
-            'tail_count': tail_mask.sum().detach(),
-        }
-
-        if 'tail_gate' in output:
-            tail_gate = output['tail_gate'].mean(dim=(1, 2)).clamp(1e-6, 1 - 1e-6)
-            has_tail = (tail_mask.max(dim=1).values > 0).to(pred_raw.dtype)
-            gate_loss = F.binary_cross_entropy(tail_gate, has_tail)
-            tail_loss = tail_loss + lam3 * gate_loss
-            stats['tail_gate_loss'] = gate_loss.detach()
-
-        return tail_loss, stats
-
     def prepare_retrieval_index(self, train_data, train_loader):
         print('*******Constructing the Retrieval Indexes*********')
         time_now = time.time()
@@ -187,8 +142,7 @@ class BasicModel(torch.nn.Module):
                         )
                         pred_raw, real_raw = self._restore_to_raw(output['point_pred'], label, dataModule.mean, dataModule.std)                       
                         main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
-                        tail_loss, _ = self._compute_tail_aware_loss(pred_raw.float(), real_raw.float(), output)
-                        total_loss_value = main_loss + aux_loss + tail_loss
+                        total_loss_value = main_loss + aux_loss
 
                     scaler.scale(total_loss_value).backward()
                     scaler.unscale_(optimizer)
@@ -206,8 +160,7 @@ class BasicModel(torch.nn.Module):
                     )
                     pred_raw, real_raw = self._restore_to_raw(output['point_pred'], label, dataModule.mean, dataModule.std)
                     main_loss = compute_loss(self, x, pred_raw.float(), real_raw.float(), self.config)
-                    tail_loss, tail_stats = self._compute_tail_aware_loss(pred_raw.float(), real_raw.float(), output)
-                    total_loss_value = main_loss + aux_loss + tail_loss
+                    total_loss_value = main_loss + aux_loss
 
                     if (batch_idx + 1) % 100 == 0 or (batch_idx + 1) == len(dataModule.train_data_loader):
                         beta_mean_item = 0.0
@@ -227,7 +180,6 @@ class BasicModel(torch.nn.Module):
                             f"[{stage}] Batch {batch_idx + 1}/{len(dataModule.train_data_loader)} - "
                             f"Main Loss: {main_loss.item():.6f}, "
                             f"Aux Loss: {aux_loss.item():.6f}, "
-                            f"Tail Loss: {tail_loss.item():.6f}, "
                             f"Beta Mean: {beta_mean_item:.6f}{q_mean_str}{alpha_str}, "
                             f"Total Loss: {total_loss_value.item():.6f}"
                         )

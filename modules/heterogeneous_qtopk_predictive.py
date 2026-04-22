@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -36,19 +36,18 @@ class StudentTMixturePrior(nn.Module):
         self.scale_raw = nn.Parameter(torch.zeros(num_components, state_dim))
         self.df_raw = nn.Parameter(torch.zeros(num_components, state_dim))
         self.mix_logits = nn.Parameter(torch.zeros(num_components))
-        self.register_buffer('_log_pi', torch.log(torch.tensor(torch.pi, dtype=torch.float32)), persistent=False)
+        self.register_buffer("_log_pi", torch.log(torch.tensor(torch.pi, dtype=torch.float32)), persistent=False)
 
         num_scale_terms = len(self.scales) + (1 if self.include_seq_level else 0)
         alpha_init = torch.zeros(num_scale_terms, dtype=torch.float32)
         if learnable_scale_weights:
             self.alpha_logits = nn.Parameter(alpha_init)
         else:
-            self.register_buffer('alpha_logits', alpha_init, persistent=True)
+            self.register_buffer("alpha_logits", alpha_init, persistent=True)
 
         self.reset_parameters()
 
     def reset_parameters(self):
-        # Break permutation symmetry at initialization to avoid uniform posterior collapse.
         with torch.no_grad():
             nn.init.normal_(self.mu, mean=0.0, std=0.05)
             if self.num_components > 1:
@@ -80,7 +79,6 @@ class StudentTMixturePrior(nn.Module):
 
     @staticmethod
     def _window_to_patches(x_used: torch.Tensor, patch_len: int) -> torch.Tensor:
-        # x_used: [B, L, C] -> [B, Npatch, C], patch by non-overlap mean pooling
         batch_size, length, channels = x_used.shape
         if patch_len <= 1:
             return x_used
@@ -94,7 +92,6 @@ class StudentTMixturePrior(nn.Module):
         return x_patch
 
     def _component_log_prob(self, z: torch.Tensor) -> torch.Tensor:
-        # z: [B, D], output: [B, K]
         mu = self.mu.unsqueeze(0)
         scale = F.softplus(self.scale_raw).unsqueeze(0) + self.min_scale
         df = F.softplus(self.df_raw).unsqueeze(0) + self.min_df
@@ -109,20 +106,6 @@ class StudentTMixturePrior(nn.Module):
         )
         log_kernel = -((df + 1.0) / 2.0) * torch.log1p(((z_expand - mu) / scale).pow(2) / df)
         return (log_norm + log_kernel).sum(dim=-1)
-
-    def posterior_from_z(self, z: torch.Tensor) -> Dict[str, torch.Tensor]:
-        log_comp = self._component_log_prob(z)
-        log_pi = torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)
-        log_joint = log_comp + log_pi
-        log_mix = torch.logsumexp(log_joint, dim=-1)
-        q = torch.softmax(log_joint / self.temperature, dim=-1)
-        return {
-            'log_component': log_comp,
-            'log_joint': log_joint,
-            'log_mix': log_mix,
-            'q': q,
-            'mix_prob': torch.softmax(self.mix_logits, dim=0),
-        }
 
     def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         x_used = x if self.use_all_channels else x[:, :, :1]
@@ -139,7 +122,10 @@ class StudentTMixturePrior(nn.Module):
             log_comp_scale = self._component_log_prob(z_scale)
             log_comp_scales.append(log_comp_scale)
 
-            q_scale = torch.softmax((log_comp_scale + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature, dim=-1)
+            q_scale = torch.softmax(
+                (log_comp_scale + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature,
+                dim=-1,
+            )
             q_scales.append(q_scale)
 
         if self.include_seq_level:
@@ -150,7 +136,10 @@ class StudentTMixturePrior(nn.Module):
             log_comp_seq = self._component_log_prob(z_seq)
             log_comp_scales.append(log_comp_seq)
 
-            q_seq = torch.softmax((log_comp_seq + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature, dim=-1)
+            q_seq = torch.softmax(
+                (log_comp_seq + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature,
+                dim=-1,
+            )
             q_scales.append(q_seq)
 
         alpha = torch.softmax(self.alpha_logits, dim=0)
@@ -163,109 +152,175 @@ class StudentTMixturePrior(nn.Module):
         q = torch.softmax(log_joint / self.temperature, dim=-1)
 
         out = {
-            'log_component': fused_log_comp,
-            'log_joint': log_joint,
-            'log_mix': log_mix,
-            'q': q,
-            'mix_prob': torch.softmax(self.mix_logits, dim=0),
-            'z': torch.stack(z_scales, dim=1).mean(dim=1),
-            'z_scales': torch.stack(z_scales, dim=1),
-            'q_scales': torch.stack(q_scales, dim=1),
-            'alpha': alpha,
+            "log_component": fused_log_comp,
+            "log_joint": log_joint,
+            "log_mix": log_mix,
+            "q": q,
+            "mix_prob": torch.softmax(self.mix_logits, dim=0),
+            "z": torch.stack(z_scales, dim=1).mean(dim=1),
+            "z_scales": torch.stack(z_scales, dim=1),
+            "q_scales": torch.stack(q_scales, dim=1),
+            "alpha": alpha,
         }
-        out['pretrain_nll'] = -log_mix.mean()
+        out["pretrain_nll"] = -log_mix.mean()
         return out
 
 
-class RouterFromEmbeddingPreTrain(nn.Module):
-    def __init__(
-        self,
-        num_experts: int,
-        hidden: int = 64,
-        dropout: float = 0.0,
-    ):
+class ExpertBase(nn.Module):
+    def __init__(self, d_model: int, pred_len: int, out_dim: int, dropout: float = 0.1):
         super().__init__()
-        in_dim = num_experts
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, hidden),
-            nn.LayerNorm(hidden),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden, num_experts),
-        )
+        self.d_model = d_model
+        self.pred_len = pred_len
+        self.out_dim = out_dim
+        self.dropout = dropout
 
-    def forward(self, q_prior: torch.Tensor) -> torch.Tensor:
-        return self.net(q_prior)
+    def predict(self, x_emb: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError
 
 
-class LSTMExpert(nn.Module):
-    def __init__(self, d_model: int, expert_layers: int = 1, dropout: float = 0.1):
-        super().__init__()
-        self.lstm = nn.LSTM(
+class LSTMExpert(ExpertBase):
+    def __init__(self, d_model: int, pred_len: int, out_dim: int, expert_layers: int = 1, dropout: float = 0.1):
+        super().__init__(d_model=d_model, pred_len=pred_len, out_dim=out_dim, dropout=dropout)
+        self.net = nn.LSTM(
             input_size=d_model,
             hidden_size=d_model,
             num_layers=max(1, expert_layers),
             batch_first=True,
             dropout=dropout if expert_layers > 1 else 0.0,
         )
-        self.norm = nn.RMSNorm(d_model)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        residual = x
-        out, _ = self.lstm(x)
-        return self.norm(out + residual)
-
-
-class BackboneMoE(nn.Module):
-    def __init__(
-        self,
-        d_model: int,
-        pred_len: int,
-        out_dim: int,
-        num_experts: int = 3,
-        top_k: int = 2,
-        dropout: float = 0.1,
-        expert_layers: int = 1,
-    ):
-        super().__init__()
-        self.num_experts = num_experts
-        self.top_k = min(top_k, num_experts)
-        self.pred_len = pred_len
-        self.out_dim = out_dim
-
-        self.experts = nn.ModuleList([
-            LSTMExpert(d_model=d_model, expert_layers=expert_layers, dropout=dropout)
-            for _ in range(num_experts)
-        ])
-        self.fuse_norm = nn.RMSNorm(d_model)
-        self.forecast_head = nn.Sequential(
+        self.head = nn.Sequential(
             nn.Linear(2 * d_model, d_model),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(d_model, pred_len * out_dim),
         )
 
-    def _build_sparse_topk_weights(self, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> torch.Tensor:
-        batch_size, _ = head_mix_weights.shape
-        full_weights = head_mix_weights.new_zeros((batch_size, self.num_experts))
-        full_weights.scatter_(dim=1, index=topk_experts, src=head_mix_weights)
-        return full_weights
+    def predict(self, x_emb: torch.Tensor) -> torch.Tensor:
+        out, _ = self.net(x_emb)
+        summary = torch.cat([out[:, -1, :], out.mean(dim=1)], dim=-1)
+        return self.head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
 
-    def forward(self, x_emb: torch.Tensor, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> Dict[str, torch.Tensor]:
-        full_mix_weights = self._build_sparse_topk_weights(head_mix_weights, topk_experts)
-        expert_outputs = torch.stack([expert(x_emb) for expert in self.experts], dim=1)
-        mix = full_mix_weights.unsqueeze(-1).unsqueeze(-1)
-        fused_seq = torch.sum(mix * expert_outputs, dim=1)
-        fused_seq = self.fuse_norm(fused_seq)
 
-        summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
-        point_pred = self.forecast_head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+class GRUExpert(ExpertBase):
+    def __init__(self, d_model: int, pred_len: int, out_dim: int, expert_layers: int = 1, dropout: float = 0.1):
+        super().__init__(d_model=d_model, pred_len=pred_len, out_dim=out_dim, dropout=dropout)
+        self.net = nn.GRU(
+            input_size=d_model,
+            hidden_size=d_model,
+            num_layers=max(1, expert_layers),
+            batch_first=True,
+            dropout=dropout if expert_layers > 1 else 0.0,
+        )
+        self.head = nn.Sequential(
+            nn.Linear(2 * d_model, d_model),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(d_model, pred_len * out_dim),
+        )
+
+    def predict(self, x_emb: torch.Tensor) -> torch.Tensor:
+        out, _ = self.net(x_emb)
+        summary = torch.cat([out[:, -1, :], out.mean(dim=1)], dim=-1)
+        return self.head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+
+
+class TCNExpert(ExpertBase):
+    def __init__(self, d_model: int, pred_len: int, out_dim: int, kernel_size: int = 3, dropout: float = 0.1):
+        super().__init__(d_model=d_model, pred_len=pred_len, out_dim=out_dim, dropout=dropout)
+        pad = (kernel_size - 1) // 2
+        self.block = nn.Sequential(
+            nn.Conv1d(d_model, d_model, kernel_size=kernel_size, padding=pad),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Conv1d(d_model, d_model, kernel_size=kernel_size, padding=pad),
+            nn.GELU(),
+            nn.Dropout(dropout),
+        )
+        self.head = nn.Sequential(
+            nn.Linear(2 * d_model, d_model),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(d_model, pred_len * out_dim),
+        )
+
+    def predict(self, x_emb: torch.Tensor) -> torch.Tensor:
+        x_c = x_emb.transpose(1, 2)
+        out = self.block(x_c).transpose(1, 2)
+        summary = torch.cat([out[:, -1, :], out.mean(dim=1)], dim=-1)
+        return self.head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+
+
+class MLPExpert(ExpertBase):
+    def __init__(self, d_model: int, pred_len: int, out_dim: int, seq_len: int, expansion: int = 2, dropout: float = 0.1):
+        super().__init__(d_model=d_model, pred_len=pred_len, out_dim=out_dim, dropout=dropout)
+        hidden = max(d_model, int(d_model * expansion))
+        self.seq_len = seq_len
+        self.block = nn.Sequential(
+            nn.Linear(seq_len * d_model, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, pred_len * out_dim),
+        )
+
+    def predict(self, x_emb: torch.Tensor) -> torch.Tensor:
+        flat = x_emb.reshape(x_emb.size(0), -1)
+        return self.block(flat).view(x_emb.size(0), self.pred_len, self.out_dim)
+
+
+class PredictiveHeterogeneousBackbone(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        seq_len: int,
+        pred_len: int,
+        out_dim: int,
+        num_experts: int = 4,
+        top_k: int = 2,
+        dropout: float = 0.1,
+        expert_layers: int = 1,
+        expert_types: Optional[Sequence[str]] = None,
+    ):
+        super().__init__()
+        self.num_experts = num_experts
+        self.top_k = min(top_k, num_experts)
+        self.pred_len = pred_len
+        self.out_dim = out_dim
+        self.seq_len = seq_len
+
+        self.expert_types = ["lstm" for _ in range(num_experts)]
+        self.experts = nn.ModuleList(
+            [LSTMExpert(d_model=d_model, pred_len=pred_len, out_dim=out_dim, expert_layers=expert_layers, dropout=dropout) for _ in range(num_experts)]
+        )
+        self.fuse_norm = nn.RMSNorm(out_dim)
+
+    @staticmethod
+    def _topk_renorm(q: torch.Tensor, top_k: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        topk_values, topk_indices = torch.topk(q, k=top_k, dim=-1)
+        topk_values = topk_values / (topk_values.sum(dim=-1, keepdim=True) + 1e-8)
+        return topk_values, topk_indices
+
+    def forward(self, x_emb: torch.Tensor, q: torch.Tensor) -> Dict[str, torch.Tensor]:
+        expert_preds = torch.stack([expert.predict(x_emb) for expert in self.experts], dim=1)  # [B, E, P, C]
+        topk_weights, topk_indices = self._topk_renorm(q, self.top_k)
+
+        full_weights = q.new_zeros((q.size(0), self.num_experts))
+        full_weights.scatter_(dim=1, index=topk_indices, src=topk_weights)
+
+        fused_pred = torch.sum(full_weights.unsqueeze(-1).unsqueeze(-1) * expert_preds, dim=1)
+        fused_pred = self.fuse_norm(fused_pred)
 
         return {
-            'mix_weights': full_mix_weights,
-            'expert_sequences': expert_outputs,
-            'fused_sequence': fused_seq,
-            'point_pred': point_pred,
+            "expert_preds": expert_preds,
+            "mix_weights": full_weights,
+            "topk_probs": topk_weights,
+            "topk_experts": topk_indices,
+            "topk_weights": topk_weights,
+            "topk_indices": topk_indices,
+            "point_pred": fused_pred,
+            "expert_types": self.expert_types,
         }
 
 
@@ -350,25 +405,17 @@ class ExtremeLSTMMemo(nn.Module):
         self.dropout = self.config.dropout
         self.device = self.config.device
 
-        self.num_experts = getattr(self.config, 'num_experts', 4)
-        self.top_k_experts = min(getattr(self.config, 'top_k_experts', 2), self.num_experts)
-        self.retrieval_num = getattr(self.config, 'retrieval_num', 2)
-        self.retrieval_stride = 1
+        self.num_experts = getattr(self.config, "num_experts", 4)
+        self.top_k_experts = min(getattr(self.config, "top_k_experts", 2), self.num_experts)
+        self.state_balance_weight = float(getattr(self.config, "state_balance_weight", 0.02))
+        self.state_dom_cap = float(getattr(self.config, "state_dom_cap", 0.8))
 
-        self.retrieval_tau = getattr(self.config, 'retrieval_tau', 0.55)
-        self.retrieval_alpha_max = getattr(self.config, 'retrieval_alpha_max', 0.02)
-        self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
-        self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.20)
-        self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
-        self.state_balance_weight = float(getattr(self.config, 'state_balance_weight', 0.02))
-        self.state_dom_cap = float(getattr(self.config, 'state_dom_cap', 0.8))
-
-        include_last_value = bool(getattr(self.config, 'pretrain_include_last', True))
+        include_last_value = bool(getattr(self.config, "pretrain_include_last", True))
         state_dim = 4 if include_last_value else 3
 
-        scales_cfg = getattr(self.config, 'state_prior_scales', (1, 4, 8, 16))
+        scales_cfg = getattr(self.config, "state_prior_scales", (1, 4, 8, 16))
         if isinstance(scales_cfg, str):
-            scales = tuple(int(s.strip()) for s in scales_cfg.split(',') if s.strip())
+            scales = tuple(int(s.strip()) for s in scales_cfg.split(",") if s.strip())
         else:
             scales = tuple(int(s) for s in scales_cfg)
         if len(scales) == 0:
@@ -377,67 +424,47 @@ class ExtremeLSTMMemo(nn.Module):
         self.state_prior = StudentTMixturePrior(
             num_components=self.num_experts,
             state_dim=state_dim,
-            use_all_channels=bool(getattr(self.config, 'state_prior_use_all_channels', True)),
+            use_all_channels=bool(getattr(self.config, "state_prior_use_all_channels", True)),
             include_last_value=include_last_value,
             scales=scales,
-            include_seq_level=bool(getattr(self.config, 'state_prior_include_seq_level', True)),
-            learnable_scale_weights=bool(getattr(self.config, 'state_prior_learnable_scale_weights', True)),
-            min_scale=float(getattr(self.config, 'pretrain_min_scale', 1e-4)),
-            min_df=float(getattr(self.config, 'pretrain_min_df', 2.1)),
-            temperature=float(getattr(self.config, 'state_prior_temperature', 1.0)),
+            include_seq_level=bool(getattr(self.config, "state_prior_include_seq_level", True)),
+            learnable_scale_weights=bool(getattr(self.config, "state_prior_learnable_scale_weights", True)),
+            min_scale=float(getattr(self.config, "pretrain_min_scale", 1e-4)),
+            min_df=float(getattr(self.config, "pretrain_min_df", 2.1)),
+            temperature=float(getattr(self.config, "state_prior_temperature", 1.0)),
         )
 
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
-        self.router = RouterFromEmbeddingPreTrain(
-            num_experts=self.num_experts,
-            hidden=getattr(self.config, 'router_hidden', 64),
-            dropout=self.dropout,
-        )
-        self.backbone = BackboneMoE(
+
+        self.backbone = PredictiveHeterogeneousBackbone(
             d_model=d_model,
+            seq_len=seq_len,
             pred_len=pred_len,
             out_dim=out_dim,
             num_experts=self.num_experts,
             top_k=self.top_k_experts,
             dropout=min(self.dropout, 0.1),
-            expert_layers=max(1, getattr(self.config, 'expert_layers', 1)),
-        )
-        self.beta_gate = RetrievalBetaGate(
-            hidden_dim=self.retrieval_beta_hidden,
-            beta_min=0.0,
-            beta_max=self.retrieval_beta_max,
+            expert_layers=max(1, getattr(self.config, "expert_layers", 1)),
+            expert_types=None,
         )
 
-        self.register_buffer('retrieval_gate_ready', torch.tensor(False, dtype=torch.bool), persistent=True)
+        self.beta_gate = RetrievalBetaGate(
+            hidden_dim=getattr(self.config, "retrieval_beta_hidden", 32),
+            beta_min=0.0,
+            beta_max=float(getattr(self.config, "retrieval_beta_max", 0.20)),
+        )
+
+        self.register_buffer("retrieval_gate_ready", torch.tensor(False, dtype=torch.bool), persistent=True)
+        self.retrieval_num = getattr(self.config, "retrieval_num", 2)
+        self.retrieval_stride = 1
+        self.retrieval_tau = getattr(self.config, "retrieval_tau", 0.55)
+        self.retrieval_alpha_max = getattr(self.config, "retrieval_alpha_max", 0.02)
+        self.retrieval_beta_reg = getattr(self.config, "retrieval_beta_reg", 1e-4)
+
         self.latest_aux_dict = {}
 
     def get_state_prior_parameters(self):
         return self.state_prior.parameters()
-
-    def pretrain_state_prior_loss(self, x: torch.Tensor):
-        prior_out = self.state_prior(x)
-        eps = 1e-8
-        q = prior_out['q']
-        q_mean = q.mean(dim=0)
-
-        # Minimal anti-collapse regularization for state prior.
-        uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
-        balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
-        dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
-
-        loss = (
-            prior_out['pretrain_nll']
-            + self.state_balance_weight * (balance_kl + dominant_penalty)
-        )
-        aux = {
-            'pretrain_nll': prior_out['pretrain_nll'].detach(),
-            'pretrain_total_loss': loss.detach(),
-            'q_mean': q_mean.detach(),
-            'mix_prob': prior_out['mix_prob'].detach(),
-            'balance_kl': balance_kl.detach(),
-            'dominant_penalty': dominant_penalty.detach(),
-        }
-        return loss, aux
 
     def freeze_state_prior(self):
         for p in self.state_prior.parameters():
@@ -447,29 +474,30 @@ class ExtremeLSTMMemo(nn.Module):
         for p in self.state_prior.parameters():
             p.requires_grad = True
 
-    def freeze_backbone_for_gate(self):
-        for _, p in self.named_parameters():
-            p.requires_grad = False
-        for p in self.beta_gate.parameters():
-            p.requires_grad = True
-
     def unfreeze_all(self):
         for p in self.parameters():
             p.requires_grad = True
 
-    def mark_gate_ready(self, ready: bool = True):
-        self.retrieval_gate_ready.fill_(bool(ready))
+    def pretrain_state_prior_loss(self, x: torch.Tensor):
+        prior_out = self.state_prior(x)
+        eps = 1e-8
+        q = prior_out["q"]
+        q_mean = q.mean(dim=0)
 
-    def compute_sample_level_balance_loss(self, router_logits: torch.Tensor):
-        router_prob = torch.softmax(router_logits, dim=-1)
-        load = router_prob.mean(dim=0)
-        min_load = 0.2
-        max_load = 0.5
-        low_penalty = F.relu(min_load - load).pow(2)
-        high_penalty = F.relu(load - max_load).pow(2)
-        balance_loss = (low_penalty + high_penalty).sum()
-        aux_dict = {'balance_loss': balance_loss.detach(), 'expert_load': load.detach()}
-        return balance_loss, aux_dict
+        uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+        balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
+        dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+
+        loss = prior_out["pretrain_nll"] + self.state_balance_weight * (balance_kl + dominant_penalty)
+        aux = {
+            "pretrain_nll": prior_out["pretrain_nll"].detach(),
+            "pretrain_total_loss": loss.detach(),
+            "q_mean": q_mean.detach(),
+            "mix_prob": prior_out["mix_prob"].detach(),
+            "balance_kl": balance_kl.detach(),
+            "dominant_penalty": dominant_penalty.detach(),
+        }
+        return loss, aux
 
     def construct_index(self, num: int):
         self.keys = torch.zeros(num, self.seq_len, self.c_in, device=self.device)
@@ -497,12 +525,12 @@ class ExtremeLSTMMemo(nn.Module):
             q_norm = F.normalize(queries, p=2, dim=-1)
             k_norm = F.normalize(keys, p=2, dim=-1)
             return torch.matmul(q_norm, k_norm.t())
-        raise ValueError(f'Unsupported query shape: {queries.shape}')
+        raise ValueError(f"Unsupported query shape: {queries.shape}")
 
     def retrieval(self, x: torch.Tensor, index: Optional[torch.Tensor]):
         batch_size = x.shape[0]
         if self.index == 0:
-            raise RuntimeError('Retrieval index has not been constructed yet.')
+            raise RuntimeError("Retrieval index has not been constructed yet.")
         k = min(self.retrieval_num, self.index)
         keys = self.keys[:self.index]
         values = self.values[:self.index]
@@ -524,27 +552,6 @@ class ExtremeLSTMMemo(nn.Module):
         output = torch.sum(probs_topk * retrieved_values, dim=1)
         return output, sims, 0
 
-    def _forward_backbone(self, x: torch.Tensor):
-        x_emb = self.enc_embedding(x)
-        prior_out = self.state_prior(x)
-        router_logits = self.router(prior_out['q'])
-        router_prob = torch.softmax(router_logits, dim=-1)
-        topk_probs, topk_experts = torch.topk(router_prob, k=self.top_k_experts, dim=-1)
-        head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
-
-        backbone_out = self.backbone(x_emb, head_mix_weights=head_mix_weights, topk_experts=topk_experts)
-        backbone_out.update({
-            'router_logits': router_logits,
-            'router_prob': router_prob,
-            'topk_experts': topk_experts,
-            'topk_probs': head_mix_weights,
-            'state_probs': prior_out['q'],
-            'state_z': prior_out['z'],
-            'state_alpha': prior_out['mix_prob'],
-            'state_pretrain_nll': prior_out['pretrain_nll'],
-        })
-        return backbone_out
-
     def _heuristic_fuse(self, point_pred: torch.Tensor, retrieval_pred: torch.Tensor, sims: torch.Tensor):
         sim_mean = sims.mean(dim=-1)
         dynamic_alpha = (sim_mean - self.retrieval_tau) / (1.0 - self.retrieval_tau + 1e-8)
@@ -561,79 +568,102 @@ class ExtremeLSTMMemo(nn.Module):
         fused_point = (1.0 - beta) * point_pred + beta * retrieval_pred
         return fused_point, retrieval_pred, sims, beta
 
+    def _compute_q_balance_loss(self, q: torch.Tensor):
+        q_mean = q.mean(dim=0)
+        uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+        eps = 1e-8
+        balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
+        dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+        return balance_kl + dominant_penalty, q_mean
+
+    def _forward_core(self, x: torch.Tensor):
+        x_emb = self.enc_embedding(x)
+        prior_out = self.state_prior(x)
+        q = prior_out["q"]
+        backbone_out = self.backbone(x_emb, q=q)
+        backbone_out.update(
+            {
+                "state_probs": q,
+                "state_z": prior_out["z"],
+                "state_alpha": prior_out["mix_prob"],
+                "state_pretrain_nll": prior_out["pretrain_nll"],
+                "topk_experts": backbone_out["topk_experts"],
+                "topk_probs": backbone_out["topk_probs"],
+            }
+        )
+        return backbone_out, prior_out
+
+    def _compute_q_balance_loss(self, q: torch.Tensor):
+        q_mean = q.mean(dim=0)
+        uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+        eps = 1e-8
+        balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
+        dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+        return balance_kl + dominant_penalty, q_mean
+
     def forward(
         self,
         x: torch.Tensor,
         x_mark: Optional[torch.Tensor] = None,
         dec_input: Optional[torch.Tensor] = None,
         sample_ids: Optional[torch.Tensor] = None,
-        mode: str = 'train',
+        mode: str = "train",
         return_aux: bool = False,
     ):
-        if mode == 'gate_train':
+        if mode == "gate_train":
             with torch.no_grad():
-                out = self._forward_backbone(x=x)
+                out, prior_out = self._forward_core(x=x)
         else:
-            out = self._forward_backbone(x=x)
+            out, prior_out = self._forward_core(x=x)
 
-        point_pred = out['point_pred']
+        point_pred = out["point_pred"]
         total_aux_loss = point_pred.new_tensor(0.0)
         aux_dict = {}
 
-        if mode in {'gate_train', 'gate_valid'}:
+        if mode in {"gate_train", "gate_valid"} and hasattr(self, "index") and self.index > 0:
             fused_point, retrieval_pred, sims, beta = self._gate_fuse(x, point_pred, sample_ids)
             point_pred = fused_point
             total_aux_loss = total_aux_loss + self.retrieval_beta_reg * beta.mean()
-            aux_dict['beta_mean'] = beta.mean().detach()
-            aux_dict['beta_max'] = beta.max().detach()
-            aux_dict['sim_mean'] = sims.mean().detach()
-            out['retrieval_pred'] = retrieval_pred
-            out['beta'] = beta
-        elif mode == 'test' and hasattr(self, 'index') and self.index > 0:
+            aux_dict["beta_mean"] = beta.mean().detach()
+            aux_dict["beta_max"] = beta.max().detach()
+            aux_dict["sim_mean"] = sims.mean().detach()
+            out["retrieval_pred"] = retrieval_pred
+            out["beta"] = beta
+        elif mode == "test" and hasattr(self, "index") and self.index > 0:
             if bool(self.retrieval_gate_ready.item()):
                 fused_point, retrieval_pred, sims, beta = self._gate_fuse(x, point_pred, sample_ids)
                 point_pred = fused_point
-                aux_dict['beta_mean'] = beta.mean().detach()
-                aux_dict['beta_max'] = beta.max().detach()
-                aux_dict['sim_mean'] = sims.mean().detach()
-                out['retrieval_pred'] = retrieval_pred
-                out['beta'] = beta
+                aux_dict["beta_mean"] = beta.mean().detach()
+                aux_dict["beta_max"] = beta.max().detach()
+                aux_dict["sim_mean"] = sims.mean().detach()
+                out["retrieval_pred"] = retrieval_pred
+                out["beta"] = beta
             else:
                 retrieval_results, sims, _ = self.retrieval(x, sample_ids)
                 retrieval_pred = retrieval_results[:, :, :self.out_dim]
                 fused_point, dynamic_alpha = self._heuristic_fuse(point_pred, retrieval_pred, sims)
                 point_pred = fused_point
-                aux_dict['beta_mean'] = dynamic_alpha.mean().detach()
-                aux_dict['beta_max'] = dynamic_alpha.max().detach()
-                aux_dict['sim_mean'] = sims.mean().detach()
-                out['retrieval_pred'] = retrieval_pred
-                out['beta'] = dynamic_alpha
+                aux_dict["beta_mean"] = dynamic_alpha.mean().detach()
+                aux_dict["beta_max"] = dynamic_alpha.max().detach()
+                aux_dict["sim_mean"] = sims.mean().detach()
+                out["retrieval_pred"] = retrieval_pred
+                out["beta"] = dynamic_alpha
 
-        if mode in {'train', 'valid'}:
-            balance_loss, balance_aux_dict = self.compute_sample_level_balance_loss(out['router_logits'])
-            total_aux_loss = total_aux_loss + 0.1 * balance_loss
-            aux_dict.update(balance_aux_dict)
+        if mode in {"train", "valid"}:
+            balance_loss, q_mean = self._compute_q_balance_loss(out["state_probs"])
+            total_aux_loss = total_aux_loss + self.state_balance_weight * balance_loss
+            aux_dict["state_balance_loss"] = balance_loss.detach()
+            aux_dict["state_qmax"] = q_mean.max().detach()
+            aux_dict["state_qmean"] = q_mean.detach()
 
-            # Keep prior states from collapsing during backbone training.
-            eps = 1e-8
-            q = out['state_probs']
-            q_mean = q.mean(dim=0)
-            q_uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
-            state_balance_loss = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(q_uniform + eps)))
-            state_dom_loss = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
-
-            total_aux_loss = total_aux_loss + self.state_balance_weight * (state_balance_loss + state_dom_loss)
-            aux_dict['state_balance_loss'] = state_balance_loss.detach()
-            aux_dict['state_dom_loss'] = state_dom_loss.detach()
-            aux_dict['state_qmax'] = q_mean.max().detach()
-
-        out['point_pred'] = point_pred
-        out['total_aux_loss'] = total_aux_loss
-        aux_dict['total_aux_loss'] = total_aux_loss.detach()
-        aux_dict['router_prob'] = out['router_prob'].detach()
-        aux_dict['topk_experts'] = out['topk_experts'].detach()
-        aux_dict['state_probs'] = out['state_probs'].detach()
-        aux_dict['state_alpha'] = out['state_alpha'].detach()
+        out["point_pred"] = point_pred
+        out["total_aux_loss"] = total_aux_loss
+        aux_dict["total_aux_loss"] = total_aux_loss.detach()
+        aux_dict["state_probs"] = out["state_probs"].detach()
+        aux_dict["state_alpha"] = out["state_alpha"].detach()
+        aux_dict["topk_experts"] = out["topk_experts"].detach()
+        aux_dict["topk_probs"] = out["topk_probs"].detach()
+        aux_dict["expert_types"] = out["expert_types"]
         self.latest_aux_dict = aux_dict
 
         if return_aux:

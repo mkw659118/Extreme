@@ -727,6 +727,33 @@ class DS:
         setattr(self.config, 'tail_q90', self.tail_q90)
         print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
 
+        # ===== 计算训练集点级原始值 q90/q99（用于 level 指标） =====
+        all_raw_vals = []
+        for label in self.Label:
+            arr = np.asarray(label, dtype=np.float32)
+            # label[:, 4] = current raw value
+            all_raw_vals.append(arr[:, 4])
+
+        if len(all_raw_vals) > 0:
+            all_raw_vals = np.concatenate(all_raw_vals, axis=0)
+            all_raw_vals = all_raw_vals[np.isfinite(all_raw_vals)]
+            if len(all_raw_vals) > 0:
+                self.raw_q90 = float(np.quantile(all_raw_vals, 0.90))
+                self.raw_q99 = float(np.quantile(all_raw_vals, 0.99))
+            else:
+                self.raw_q90 = 0.0
+                self.raw_q99 = 0.0
+        else:
+            self.raw_q90 = 0.0
+            self.raw_q99 = 0.0
+
+        setattr(self.config, 'raw_q90', self.raw_q90)
+        setattr(self.config, 'raw_q99', self.raw_q99)
+        print(
+            f"[Raw Threshold] value q90={self.raw_q90:.6f}, "
+            f"q99={self.raw_q99:.6f}"
+        )
+
 
 
         # 创建数据集和数据加载器

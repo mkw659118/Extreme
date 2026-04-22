@@ -151,6 +151,29 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         Tail_RMSE = np.nan
         Tail_MAPE = np.nan
 
+    # Extreme Capture Rate (ECR) on raw values:
+    # point is extreme if y >= q; captured if |y_hat - y| <= epsilon(y),
+    # where epsilon(y)=max(alpha*(q99-q90), rho*|y|).
+    finite_real = realVec[np.isfinite(realVec)]
+    fallback_raw_q90 = float(np.quantile(finite_real, 0.90)) if finite_real.size > 0 else 0.0
+    fallback_raw_q99 = float(np.quantile(finite_real, 0.99)) if finite_real.size > 0 else fallback_raw_q90
+    raw_q90 = float(getattr(config, 'raw_q90', fallback_raw_q90))
+    raw_q99 = float(getattr(config, 'raw_q99', fallback_raw_q99))
+
+    ecr_alpha = float(getattr(config, 'ecr_alpha', 0.2))
+    ecr_rho = float(getattr(config, 'ecr_rho', 0.02))
+    eps_base = max(0.0, ecr_alpha * (raw_q99 - raw_q90))
+    eps_dyn = np.maximum(eps_base, ecr_rho * np.abs(realVec))
+
+    extreme_mask_q90 = realVec >= raw_q90
+    extreme_mask_q99 = realVec >= raw_q99
+    captured_mask = absError <= eps_dyn
+
+    ecr_count_q90 = int(np.sum(extreme_mask_q90))
+    ecr_count_q99 = int(np.sum(extreme_mask_q99))
+    ECR_q90 = float(np.mean(captured_mask[extreme_mask_q90])) if ecr_count_q90 > 0 else np.nan
+    ECR_q99 = float(np.mean(captured_mask[extreme_mask_q99])) if ecr_count_q99 > 0 else np.nan
+
     all_metrics_72 = {
         'MAE': MAE,
         'MSE': MSE,
@@ -162,6 +185,15 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         'Tail_MAPE': Tail_MAPE,
         'Tail_q90': tail_q90,
         'Tail_count': tail_count,
+        'Raw_q90': raw_q90,
+        'Raw_q99': raw_q99,
+        'ECR_eps_base': float(eps_base),
+        'ECR_alpha': ecr_alpha,
+        'ECR_rho': ecr_rho,
+        'ECR_q90': ECR_q90,
+        'ECR_q99': ECR_q99,
+        'ECR_count_q90': ecr_count_q90,
+        'ECR_count_q99': ecr_count_q99,
         'NMAE': NMAE,
         'NRMSE': NRMSE,
         'Acc_10': Acc[2],
