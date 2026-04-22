@@ -74,7 +74,8 @@ class DS:
 
         # 读取数据
         self.read_dataset()
-        self.roll = 8
+        self.roll = self.config.pred_len
+        print("测试集滚动预测步长为: ", self.roll)
 
         # 保存均值和标准差
         norm = [self.get_mean(), self.get_std()]

@@ -103,6 +103,11 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
             y_true = y_true[..., 0]
             y_pred = y_pred[..., 0]
 
+        # Center each sample before computing cosine so that shared level/baseline
+        # does not dominate the similarity score.
+        y_true = y_true - np.mean(y_true, axis=-1, keepdims=True)
+        y_pred = y_pred - np.mean(y_pred, axis=-1, keepdims=True)
+
         dot = np.sum(y_true * y_pred, axis=-1)
         norm_true = np.linalg.norm(y_true, axis=-1)
         norm_pred = np.linalg.norm(y_pred, axis=-1)

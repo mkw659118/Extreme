@@ -10,7 +10,7 @@ from configs.MainConfig import OtherConfig
 class ExtremeLSTMMemoConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
     model: str = 'extreme_lstm_memo'
     bs: int = 256
-    d_model: int = 256
+    d_model: int = 64
     epochs: int = 200
     patience: int = 40
     dropout: float = 0.3
@@ -20,8 +20,8 @@ class ExtremeLSTMMemoConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dat
     data_model: str = 'Almaden'
     name: str = 'Almaden'
     seq_len: int = 360
-    label_len: int = 180
-    pred_len: int = 8
+    label_len: int = 0
+    pred_len: int = 72
     c_in: int = 3
     
     
