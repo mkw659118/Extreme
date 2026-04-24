@@ -3,6 +3,8 @@ import copy
 import os
 import pickle
 import time
+import numpy as np
+import pandas as pd
 
 import torch
 from tqdm import trange
@@ -93,6 +95,33 @@ class BasicModel(torch.nn.Module):
         pred_raw = y_pre.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)
         real_raw = future_label[:, :, 2]
         return pred_raw, real_raw
+    def save_single_model_result(self, true_series, pred_series, save_path):
+        if isinstance(true_series, torch.Tensor):
+            true_series = true_series.detach().cpu().numpy()
+        else:
+            true_series = np.asarray(true_series)
+
+        if isinstance(pred_series, torch.Tensor):
+            pred_series = pred_series.detach().cpu().numpy()
+        else:
+            pred_series = np.asarray(pred_series)
+
+        true_series = true_series.reshape(-1)
+        pred_series = pred_series.reshape(-1)
+
+        assert len(true_series) == len(pred_series), \
+            f"true 和 pred 长度不一致: {len(true_series)} vs {len(pred_series)}"
+
+        df = pd.DataFrame({
+            "index": np.arange(len(true_series)),
+            "true": true_series,
+            "pred": pred_series,
+        })
+
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        df.to_csv(save_path, index=False)
+
+        print(f"[Save] single model result saved to: {save_path}")
 
     def pretrain_one_epoch(self, dataModule):
         self.train()
@@ -376,6 +405,17 @@ class BasicModel(torch.nn.Module):
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
         pred_raw, real_raw = self._restore_to_raw(preds, reals, dataModule.mean, dataModule.std)
+        
+        # 保存测试集真实序列和预测序列用于画图
+        pred_series = pred_raw.reshape(-1)
+        true_series = real_raw.reshape(-1)
+
+        self.save_single_model_result(
+            true_series=true_series,
+            pred_series=pred_series,
+            save_path=f"./draw/{self.config.model}_PL{self.config.pred_len}_DM{self.config.d_model}.csv"
+        )
+        
         return ErrorMetrics(real_raw, pred_raw, self.config, 'test')
 
     def _need_retrain(self, config, runId, log):
