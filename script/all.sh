@@ -21,7 +21,7 @@ do
     for dm in "${d_models[@]}"
     do
       echo ">> Running ExtremeLSTMMemo | pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_trainpreTrainMultiScale.py" \
+      python "run_train_last.py" \
         --config "ExtremeLSTMMemoConfig" \
         --reservoir_sensor "$sensor" \
         --pred_len "$pred" \

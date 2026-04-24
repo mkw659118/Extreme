@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import collections
 from data_provider.DS3 import DS
-from exp.exp_modelpreTrainMultiScale import Model
+from exp.exp_model_last import Model
 import utils.model_efficiency
 import utils.utils
 
