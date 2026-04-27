@@ -2,16 +2,16 @@
 
 reservoir_sensors=(
   # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
+  "reservoir_stor_4005_sof24"
   "reservoir_stor_4007_sof24"
-  # "reservoir_stor_4009_sof24"
-  # "reservoir_stor_4011_sof24"
+  "reservoir_stor_4009_sof24"
+  "reservoir_stor_4011_sof24"
 )
 
 
 # 1) pred_len 第一层
-pred_lens=(72)
-d_models=(64 96 128 256 512)
+pred_lens=(8)
+d_models=(32 64 512)
 # d_models=(128)
 
 for pred in "${pred_lens[@]}"
@@ -21,7 +21,7 @@ do
     for dm in "${d_models[@]}"
     do
       echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train_last.py" \
+      python "run_train_last_no_student_t.py" \
         --config "ExtremeLSTMMemoConfig" \
         --reservoir_sensor "$sensor" \
         --pred_len "$pred" \
@@ -39,9 +39,9 @@ do
 done
 
 reservoir_sensors=(
-  # "reservoir_stor_4001_sof24"
-  # "reservoir_stor_4005_sof24"
-  # "reservoir_stor_4007_sof24"
+  "reservoir_stor_4001_sof24"
+  "reservoir_stor_4005_sof24"
+  "reservoir_stor_4007_sof24"
   "reservoir_stor_4009_sof24"
   "reservoir_stor_4011_sof24"
 )
@@ -49,7 +49,7 @@ reservoir_sensors=(
 
 # 1) pred_len 第一层
 pred_lens=(72)
-d_models=(8 16 32 64 96 128 256 512)
+d_models=(32 64 512)
 # d_models=(128)
 
 for pred in "${pred_lens[@]}"
@@ -59,7 +59,7 @@ do
     for dm in "${d_models[@]}"
     do
       echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train_last.py" \
+      python "run_train_last_no_student_t.py" \
         --config "ExtremeLSTMMemoConfig" \
         --reservoir_sensor "$sensor" \
         --pred_len "$pred" \
@@ -75,3 +75,4 @@ do
     done
   done
 done
+
