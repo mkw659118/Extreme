@@ -10,12 +10,12 @@ from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
 from modules.ExtremeLSTM import ExtremeLSTM
-# from modules.RMF_last import ExtremeLSTMMemo
-from modules.RMF_last_no_retrieval import ExtremeLSTMMemo
+from modules.RMF_last import ExtremeLSTMMemo
+# from modules.RMF_last_no_retrieval import ExtremeLSTMMemo
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
 from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
-from exp.exp_base_last_no_retrieval import BasicModel
+from exp.exp_base_last import BasicModel
 from baselines.encoder_seq import SeqEncoder
 
 

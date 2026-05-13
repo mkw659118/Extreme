@@ -304,7 +304,7 @@ class BasicModel(torch.nn.Module):
         self.save_single_model_result(
             true_series=true_series,
             pred_series=pred_series,
-            save_path=f"./draw/{self.config.model}_PL{self.config.pred_len}_DM{self.config.d_model}.csv"
+            save_path=f"./draw/{self.config.model}_{self.config.reservoir_sensor}_PL{self.config.pred_len}_DM{self.config.d_model}.csv"
         )
 
         return ErrorMetrics(reals[:, :, -1], pred_raw, self.config, 'test')
