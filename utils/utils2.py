@@ -16,6 +16,36 @@ import numpy as np
 import pandas as pd  # unused?
 from matplotlib import pyplot as plt
 
+def std_normalization(data):
+    """
+    对输入序列做 z-score 标准化：
+        x_norm = (x - mean) / std
+
+    返回：
+        data_norm: 标准化后的数据
+        mean: 原始数据均值
+        std: 原始数据标准差
+    """
+    data = np.asarray(data, dtype=float)
+
+    mean = np.nanmean(data)
+    std = np.nanstd(data)
+
+    if std == 0:
+        std = 1.0
+
+    data_norm = (data - mean) / std
+
+    return data_norm, mean, std
+
+def inverse_std_normalization(data_norm, mean, std):
+    """
+    将标准化后的数据还原到原始尺度：
+        x = x_norm * std + mean
+    """
+    data = data_norm * std + mean
+
+    return data
 
 def diff_order_1(data):
     a = data

@@ -80,19 +80,6 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     eps = 1e-8
     absError = np.abs(estiVec - realVec)
 
-    # def mean_cosine_similarity(y_true, y_pred, eps_val=1e-8):
-    #     y_true = np.asarray(y_true)
-    #     y_pred = np.asarray(y_pred)
-    #     if y_true.shape != y_pred.shape:
-    #         raise ValueError(f"y_true and y_pred must have same shape, got {y_true.shape} vs {y_pred.shape}")
-
-    #     # Do not flatten: compute cosine along the last (time) dimension,
-    #     # then average across samples (and channels if present).
-    #     dot = np.sum(y_true * y_pred, axis=-1)
-    #     norm_true = np.linalg.norm(y_true, axis=-1)
-    #     norm_pred = np.linalg.norm(y_pred, axis=-1)
-    #     cos = dot / (norm_true * norm_pred + eps_val)
-    #     return float(np.mean(cos))
     def mean_cosine_similarity(y_true, y_pred, eps_val=1e-8):
         y_true = np.asarray(y_true)
         y_pred = np.asarray(y_pred)
@@ -127,35 +114,6 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     thresholds = [0.01, 0.05, 0.10]
     Acc = [np.mean((absError < (realVec * t)).astype(float)) for t in thresholds]
 
-    # Tail metrics (q90): threshold/mask are both based on |diff|.
-    fallback_q90 = np.quantile(np.abs(np.diff(realVec, axis=-1).reshape(-1)), 0.90) if realVec.shape[-1] > 1 else 0.0
-    tail_q90 = float(getattr(config, 'tail_q90', fallback_q90))
-    if realVec.shape[-1] > 1:
-        real_diff = np.diff(realVec, axis=-1)
-        tail_mask = np.abs(real_diff) >= tail_q90
-        tail_count = int(np.sum(tail_mask))
-        aligned_abs_err = np.abs(estiVec[..., 1:] - realVec[..., 1:])
-        aligned_sq_err = (estiVec[..., 1:] - realVec[..., 1:]) ** 2
-        aligned_real_abs = np.abs(realVec[..., 1:])
-    else:
-        tail_mask = np.zeros_like(realVec, dtype=bool)
-        tail_count = 0
-        aligned_abs_err = np.abs(estiVec - realVec)
-        aligned_sq_err = (estiVec - realVec) ** 2
-        aligned_real_abs = np.abs(realVec)
-
-    if tail_count > 0:
-        tail_abs_err = aligned_abs_err[tail_mask]
-        tail_sq_err = aligned_sq_err[tail_mask]
-        tail_real_abs = aligned_real_abs[tail_mask]
-        Tail_MAE = float(np.mean(tail_abs_err))
-        Tail_RMSE = float(np.sqrt(np.mean(tail_sq_err)))
-        Tail_MAPE = float(np.mean(tail_abs_err / (tail_real_abs + eps)))
-    else:
-        Tail_MAE = np.nan
-        Tail_RMSE = np.nan
-        Tail_MAPE = np.nan
-
     # Extreme Capture Rate (ECR) on raw values:
     # point is extreme if y >= q; captured if |y_hat - y| <= epsilon(y),
     # where epsilon(y)=max(alpha*(q99-q90), rho*|y|).
@@ -178,8 +136,56 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     ecr_count_q99 = int(np.sum(extreme_mask_q99))
     ECR_q90 = float(np.mean(captured_mask[extreme_mask_q90])) if ecr_count_q90 > 0 else np.nan
     ECR_q99 = float(np.mean(captured_mask[extreme_mask_q99])) if ecr_count_q99 > 0 else np.nan
+    
+    
+    # Tail metrics (q90): use diff-based q90 only for selected models.
+    diff_tail_models = [
+        'extreme_lstm_memo',
+        'extreme_lstm',
+        'mcann',
+    ]
+    use_diff_tail = str(getattr(config, 'model', '')) in diff_tail_models
 
-    all_metrics_72 = {
+    if use_diff_tail:
+        fallback_q90 = np.quantile(np.abs(np.diff(realVec, axis=-1).reshape(-1)), 0.90) if realVec.shape[-1] > 1 else 0.0
+        tail_q90 = float(getattr(config, 'tail_q90', fallback_q90))
+        if realVec.shape[-1] > 1:
+            real_diff = np.diff(realVec, axis=-1)
+            tail_mask = np.abs(real_diff) >= tail_q90
+            tail_count = int(np.sum(tail_mask))
+            aligned_abs_err = np.abs(estiVec[..., 1:] - realVec[..., 1:])
+            aligned_sq_err = (estiVec[..., 1:] - realVec[..., 1:]) ** 2
+            aligned_real_abs = np.abs(realVec[..., 1:])
+        else:
+            tail_mask = np.zeros_like(realVec, dtype=bool)
+            tail_count = 0
+            aligned_abs_err = np.abs(estiVec - realVec)
+            aligned_sq_err = (estiVec - realVec) ** 2
+            aligned_real_abs = np.abs(realVec)
+    else:
+        tail_q90 = float(getattr(config, 'raw_q90', fallback_raw_q90))
+        if realVec.ndim == 3 and realVec.shape[-1] == 1:
+            tail_mask = realVec[..., 0] >= tail_q90
+        else:
+            tail_mask = realVec >= tail_q90
+        tail_count = int(np.sum(tail_mask))
+        aligned_abs_err = np.abs(estiVec - realVec)
+        aligned_sq_err = (estiVec - realVec) ** 2
+        aligned_real_abs = np.abs(realVec)
+
+    if tail_count > 0:
+        tail_abs_err = aligned_abs_err[tail_mask]
+        tail_sq_err = aligned_sq_err[tail_mask]
+        tail_real_abs = aligned_real_abs[tail_mask]
+        Tail_MAE = float(np.mean(tail_abs_err))
+        Tail_RMSE = float(np.sqrt(np.mean(tail_sq_err)))
+        Tail_MAPE = float(np.mean(tail_abs_err / (tail_real_abs + eps)))
+    else:
+        Tail_MAE = np.nan
+        Tail_RMSE = np.nan
+        Tail_MAPE = np.nan
+
+    all_metrics = {
         'MAE': MAE,
         'MSE': MSE,
         'RMSE': RMSE,
@@ -204,13 +210,4 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         'Acc_10': Acc[2],
     }
 
-    
-
-    # if mode == 'valid':
-    #     return all_metrics_72
-    # else:
-    # all_metrics_8 = compute_regression_metrics_rolling(realVec, estiVec, config, rm=8)
-    # all_metrics = {**all_metrics_72, **all_metrics_8}
-    return all_metrics_72
-
-    # return all_metrics_72
+    return all_metrics

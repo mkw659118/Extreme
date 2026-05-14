@@ -1,4 +1,8 @@
 from baselines import DLinear
+from baselines import NLinear
+from baselines import iTransformer
+from baselines import Informer
+from baselines import PMDformer
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.mlp_test import MLPTest
 from baselines.Linear import Linear
@@ -14,9 +18,8 @@ from modules.ExtremeLSTM import ExtremeLSTM
 # from modules.ExtremeLSTMMemoNew import ExtremeLSTMMemo
 from modules.RMF666 import ExtremeLSTMMemo
 from modules.MoEMemoFormer import ThreeExpertPatchTransformer
-from baselines.TimesNet.TimesNet import TimesNet
 from baselines.MCANN.Group_GMM5 import DAN
-from exp.exp_base_mcann import BasicModel
+from exp.exp_base import BasicModel
 # from exp.exp_base_rmf666 import BasicModel
 from baselines.encoder_seq import SeqEncoder
 
@@ -143,7 +146,20 @@ class Model(BasicModel):
             
             
         elif config.model == 'DLinear':
-            self.model = DLinear(config)
+            self.model = DLinear.Model(config)
+            
+        elif config.model == 'NLinear':
+            self.model = NLinear.Model(config)
+        
+        elif config.model == 'iTransformer':
+            self.model = iTransformer.Model(config)
+        elif config.model == 'informer':
+            self.model = Informer.Model(config)
+        
+        elif config.model == 'PMDformer':
+            self.model = PMDformer.Model(config)
+            
+            
 
         else:
             raise ValueError(f"Unsupported model type: {config.model}")

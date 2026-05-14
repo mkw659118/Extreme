@@ -10,8 +10,8 @@ from configs.MainConfig import OtherConfig
 
 
 @dataclass
-class DLinearConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'DLinear'
+class NLinearConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'NLinear'
     bs: int = 256
     rank: int = 32
     epochs: int = 200

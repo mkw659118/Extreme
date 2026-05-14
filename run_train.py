@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import collections
-from data_provider.DS3 import DS
+from data_provider.DS_base import DS
 from exp.exp_model import Model
 import utils.model_efficiency
 import utils.utils
@@ -20,7 +20,7 @@ def get_experiment_name(config):
         'reservoir': config.reservoir_sensor,
         'epochs' : config.epochs,
         'patience' : config.patience,
-        'dropout' : config.dropout
+        # 'dropout' : config.dropout
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===

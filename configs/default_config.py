@@ -36,6 +36,7 @@ class BaseModelConfig:
     rank: int = 40
     retrain: bool = True
     num_layers: int = 3
+    
 
 
 @dataclass
@@ -65,6 +66,7 @@ class DatasetInfo:
     val_seed: int = 2025
     train_seed: int = 2024
     roll: int = 8
+    enc_in: int = 1
 
 
 @dataclass
@@ -75,6 +77,8 @@ class ExperimentConfig:
     record: bool = True
     hyper_search: bool = False
     continue_train: bool = False
+    outf: str = './output'
+    data_model: str = 'Almaden'
 
 
 @dataclass

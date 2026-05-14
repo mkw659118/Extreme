@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from layers.revin import RevIN
 from layers.Autoformer_EncDec import series_decomp
 
 
@@ -14,13 +16,17 @@ class Model(nn.Module):
         individual: Bool, whether shared model among different variates.
         """
         super(Model, self).__init__()
-        self.task_name = config.task_name
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
         # Series decomposition block from Autoformer
         self.decompsition = series_decomp(config.moving_avg)
         self.individual = individual
         self.channels = config.enc_in
+        # self.revin = bool(getattr(config, 'revin', True))
+        self.revin = False
+
+        if self.revin:
+            self.revin_layer = RevIN(num_features=self.channels, affine=False, subtract_last=False)
 
         if self.individual:
             self.Linear_Seasonal = nn.ModuleList()
@@ -74,6 +80,11 @@ class Model(nn.Module):
 
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
+        if self.revin:
+            x_enc = self.revin_layer(x_enc, 'norm')
         dec_out = self.forecast(x_enc)
-        return dec_out[:, -self.pred_len:, :]  # [B, L, D]
+        dec_out = dec_out[:, -self.pred_len:, :]
+        if self.revin:
+            dec_out = self.revin_layer(dec_out, 'denorm')
+        return dec_out  # [B, L, D]
        
