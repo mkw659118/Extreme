@@ -158,9 +158,9 @@ class BasicModel(torch.nn.Module):
 
         try:
             for batch_idx, train_batch in enumerate(dataModule.train_data_loader):
-                x, x_mark, label, sample_ids = train_batch
+                x_enc, x_mark, label, sample_ids = train_batch
 
-                x = x.to(self.config.device, non_blocking=True)
+                x_enc = x_enc.to(self.config.device, non_blocking=True)
                 x_mark = x_mark.to(self.config.device, non_blocking=True)
                 label = label.to(self.config.device, non_blocking=True)
                 # sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
@@ -172,26 +172,26 @@ class BasicModel(torch.nn.Module):
 
                 if self.config.use_amp:
                     with torch.autocast(device_type=self.device_type, dtype=torch.float16):
-                        pred = self.forward(x_enc=x, x_mark_enc=None, x_dec=x_dec, x_mark_dec=None, mask=None)
+                        pred = self.forward(x_enc, None, x_dec, None, None)
 
                         # 为了数值稳定，loss 用 float32 更稳（尤其是 cumsum 后的序列）
-                        loss = compute_loss(self, x, pred.float(), label.float(), self.config)
+                        loss = compute_loss(self, x_enc, pred.float(), label.float(), self.config)
                     scaler.scale(loss).backward()
                     scaler.unscale_(self.optimizer)
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     scaler.step(self.optimizer)
                     scaler.update()
                 else:
-                    pred = self.forward(x_enc=x, x_mark_enc=None, x_dec=x_dec, x_mark_dec=None, mask=None)
+                    pred = self.forward(x_enc, None, x_dec, None, None)
 
                     
-                    loss = compute_loss(self, x, pred, label, self.config)
+                    loss = compute_loss(self, x_enc, pred, label, self.config)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     self.optimizer.step()
 
-                total_loss += loss.item() * x.size(0)
-                sample_count += x.size(0)
+                total_loss += loss.item() * x_enc.size(0)
+                sample_count += x_enc.size(0)
         
 
         except Exception as e:
@@ -220,15 +220,15 @@ class BasicModel(torch.nn.Module):
 
         with ctx:
             for batch in dataloader:
-                x, x_mark, label, sample_ids = batch
-                x = x.to(self.config.device)
+                x_enc, x_mark, label, sample_ids = batch
+                x_enc = x_enc.to(self.config.device)        
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
                 sample_ids = sample_ids.to(self.config.device).long()
                 x_dec = torch.zeros_like(label[:, -self.config.pred_len:, :]).float()
                 x_dec = torch.cat([label[:, :self.config.label_len, :], x_dec], dim=1).float().to(self.config.device)
-                pred = self.forward(x_enc=x, x_mark_enc=None, x_dec=x_dec, x_mark_dec=None, mask=None)
-                loss_item = compute_loss(self, x, pred.float(), label.float(), self.config)
+                pred = self.forward(x_enc, None, x_dec, None, None)
+                loss_item = compute_loss(self, x_enc, pred.float(), label.float(), self.config)
                 val_loss += loss_item.item() if torch.is_tensor(loss_item) else float(loss_item)
 
                 reals.append(label)
@@ -251,15 +251,15 @@ class BasicModel(torch.nn.Module):
 
         with ctx:
             for batch in dataloader:
-                x, x_mark, label, sample_ids = batch
-                x = x.to(self.config.device)
+                x_enc, x_mark, label, sample_ids = batch
+                x_enc = x_enc.to(self.config.device)
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
                 sample_ids = sample_ids.to(self.config.device).long()
 
                 x_dec = torch.zeros_like(label[:, -self.config.pred_len:, :]).float()
                 x_dec = torch.cat([label[:, :self.config.label_len, :], x_dec], dim=1).float().to(self.config.device)
-                pred = self.forward(x_enc=x, x_mark_enc=None, x_dec=x_dec, x_mark_dec=None, mask=None)
+                pred = self.forward(x_enc, None, x_dec, None, None)
 
                 reals.append(label)
                 preds.append(pred)

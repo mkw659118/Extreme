@@ -1,7 +1,8 @@
-from baselines import DLinear
+from baselines import DLinear, FeTS
 from baselines import NLinear
 from baselines import iTransformer
-from baselines import Informer
+from baselines import Informer 
+from baselines import FEDformer 
 from baselines import PMDformer
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.mlp_test import MLPTest
@@ -10,6 +11,7 @@ from baselines.Linear2 import Linear2
 from baselines.Linear3 import Linear3
 from baselines.Linear4 import Linear4
 from baselines.Linear5 import Linear5
+from baselines.HMformer import HMformer
 from baselines.SeasonalTrendModel import SeasonalTrendModel
 from baselines.DFTDecomModel import DFTDecomModel
 from baselines.Transformer import Transformer
@@ -155,9 +157,19 @@ class Model(BasicModel):
             self.model = iTransformer.Model(config)
         elif config.model == 'informer':
             self.model = Informer.Model(config)
+            
+        elif config.model == 'FEDformer':
+            self.model = FEDformer.Model(config)
+            
         
         elif config.model == 'PMDformer':
             self.model = PMDformer.Model(config)
+            
+        elif config.model == 'FeTS':
+            self.model = FeTS.Model(config)
+            
+        elif config.model == 'HMformer':
+            self.model = HMformer(config)
             
             
 

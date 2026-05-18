@@ -99,7 +99,18 @@ def run(config):
 
 
 if __name__ == '__main__':
+    
+    import argparse
     from utils.exp_config import get_config
-    # config = get_config('PatchExtremeMemoryTransformerConfig')
-    config = get_config('ExtremeLSTMMemoConfig')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config',
+        type=str,
+        default='ExtremeLSTMMemoConfig'
+    )
+
+    args, _ = parser.parse_known_args()
+
+    config = get_config(args.config)
     run(config)

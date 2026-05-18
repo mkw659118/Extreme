@@ -13,6 +13,7 @@ class OtherConfig:
     seq_len: int = 360
     # pred_len: int = 72
     pred_len: int = 8
+    label_len: int = 48
 
 
 
