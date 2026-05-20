@@ -4,6 +4,7 @@ from baselines import iTransformer
 from baselines import Informer 
 from baselines import FEDformer 
 from baselines import PMDformer
+from baselines import TimesNet
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.mlp_test import MLPTest
 from baselines.Linear import Linear
@@ -116,8 +117,7 @@ class Model(BasicModel):
                 device=config.device
             )
 
-        elif config.model == 'mcann':  # 添加 transformer 支持
-            self.model = DAN(config=self.config)
+        
 
         elif config.model in ['rnn', 'lstm', 'gru']:
             self.model = SeqEncoder(
@@ -142,10 +142,12 @@ class Model(BasicModel):
                 dropout=0.1,
                 device=config.device
             )
+            
+        elif config.model == 'mcann':  # 添加 transformer 支持
+            self.model = DAN(config)
+        
         elif config.model == 'timesnet':
-            self.model = TimesNet(enc_in=self.input_size, configs=config)
-            
-            
+            self.model = TimesNet.Model(config)
             
         elif config.model == 'DLinear':
             self.model = DLinear.Model(config)
@@ -161,7 +163,6 @@ class Model(BasicModel):
         elif config.model == 'FEDformer':
             self.model = FEDformer.Model(config)
             
-        
         elif config.model == 'PMDformer':
             self.model = PMDformer.Model(config)
             
@@ -171,8 +172,6 @@ class Model(BasicModel):
         elif config.model == 'HMformer':
             self.model = HMformer(config)
             
-            
-
         else:
             raise ValueError(f"Unsupported model type: {config.model}")
 
