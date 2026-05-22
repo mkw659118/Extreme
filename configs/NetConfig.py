@@ -1,0 +1,33 @@
+# coding: utf-8
+# Author: mkw
+# Date: 2025-06-10 15:45
+# Description: ExtremeLSTMMemoConfig
+from configs.default_config import *
+from configs.MainConfig import OtherConfig
+
+
+@dataclass
+class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'extreme_lstm_memo'
+    bs: int = 256
+    d_model: int = 64
+    epochs: int = 200
+    patience: int = 40
+    dropout: float = 0.3
+    e_layers: int = 2
+    d_layers: int = 2
+    outf: str = './output'
+    data_model: str = 'Almaden'
+    name: str = 'Almaden'
+    seq_len: int = 96
+    label_len: int = 0
+    pred_len: int = 96
+    c_in: int = 144
+    enc_in: int = 144
+    c_in: int = 144
+    dec_in: int = 144
+    out_dim: int = 144
+    
+    
+   
+

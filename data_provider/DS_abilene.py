@@ -1,5 +1,5 @@
-# Author  : mkw (adapted)
-# Desc    : Abilene dataset loader (standard time-series), 7:1:2 split
+# Author  : mkw
+# Desc    : Abilene dataset loader for multivariate time series, shape [T, C] = [3000, 144]
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class AbileneDataset(Dataset):
-    def __init__(self, x: np.ndarray, y: np.ndarray, config):
+    def __init__(self, x: np.ndarray, y: np.ndarray, config, id_offset: int = 0):
         self.x = x
         self.y = y
-        self.id_offset = int(getattr(config, "id_offset", 0))
+        self.id_offset = int(id_offset)
 
     def __len__(self) -> int:
         return len(self.x)
@@ -23,10 +23,18 @@ class AbileneDataset(Dataset):
     def __getitem__(self, idx: int):
         x = self.x[idx]
         y = self.y[idx]
-        # x_mark is unused by ExtremeLSTMMemo; keep a placeholder for API compatibility.
+
+        # ExtremeLSTMMemo 当前没有真正使用 x_mark，这里保留占位
         x_mark = np.zeros((x.shape[0], 1), dtype=np.float32)
+
         sample_id = np.int64(self.id_offset + idx)
-        return x.astype(np.float32), x_mark, y.astype(np.float32), sample_id
+
+        return (
+            x.astype(np.float32),
+            x_mark,
+            y.astype(np.float32),
+            sample_id,
+        )
 
 
 @dataclass
@@ -37,10 +45,11 @@ class SplitSizes:
 
 
 class DS:
-    """Abilene dataset processing with ratio split 7:1:2."""
+    """Abilene multivariate time-series dataset, ratio split 7:1:2."""
 
     def __init__(self, config, trainX=None):
         del trainX
+
         self.config = config
         self.seq_len = int(self.config.seq_len)
         self.pred_len = int(self.config.pred_len)
@@ -52,8 +61,11 @@ class DS:
             "./datasets/Abilene_12_12_3000_T3000_flat144.csv",
         )
 
+        self.expected_num_vars = int(getattr(self.config, "enc_in", 144))
+
         self.mean = None
         self.std = None
+
         self.train_data_loader = None
         self.val_data_loader = None
         self.test_data_loader = None
@@ -63,41 +75,79 @@ class DS:
     def _load_csv(self) -> np.ndarray:
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Abilene csv not found: {self.data_path}")
+
+        # CSV 没有表头，形状应为 [T, C]，例如 [3000, 144]
         data = np.loadtxt(self.data_path, delimiter=",")
+
         if data.ndim != 2:
             raise ValueError(f"Expected 2D array, got shape {data.shape}")
+
+        if data.shape[1] != self.expected_num_vars:
+            raise ValueError(
+                f"Variable dimension mismatch: data has {data.shape[1]} variables, "
+                f"but config.enc_in={self.expected_num_vars}."
+            )
+
+        if np.isnan(data).any():
+            raise ValueError("NaN found in Abilene csv.")
+
         return data.astype(np.float32)
 
     def _split_ratio(self, n: int) -> Tuple[SplitSizes, Tuple[int, int]]:
         train_size = int(n * 0.7)
         val_size = int(n * 0.1)
         test_size = n - train_size - val_size
-        return SplitSizes(train_size, val_size, test_size), (train_size, train_size + val_size)
+
+        train_end = train_size
+        val_end = train_size + val_size
+
+        return SplitSizes(train_size, val_size, test_size), (train_end, val_end)
 
     @staticmethod
-    def _normalize(train: np.ndarray, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _normalize(train: np.ndarray, data: np.ndarray):
+        # 按变量维度做标准化，mean/std 形状为 [C]
         mean = train.mean(axis=0)
         std = train.std(axis=0)
         std = np.where(std == 0, 1.0, std)
-        return (data - mean) / std, mean, std
 
-    def _make_windows(self, arr: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        data_norm = (data - mean) / std
+
+        return data_norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32)
+
+    def _make_windows(self, arr: np.ndarray):
+        """
+        arr: [T, C]
+
+        return:
+            x: [N, seq_len, C]
+            y: [N, pred_len, C]
+        """
         total = arr.shape[0] - self.seq_len - self.pred_len + 1
+
         if total <= 0:
-            raise ValueError("Sequence too short for given seq_len/pred_len")
+            raise ValueError(
+                f"Sequence too short: T={arr.shape[0]}, "
+                f"seq_len={self.seq_len}, pred_len={self.pred_len}"
+            )
 
-        x = np.lib.stride_tricks.sliding_window_view(arr, (self.seq_len, arr.shape[1]))[:, 0, :, :]
-        y = np.lib.stride_tricks.sliding_window_view(arr[self.seq_len :], (self.pred_len, arr.shape[1]))[:, 0, :, :]
+        x_list = []
+        y_list = []
 
-        if self.stride > 1:
-            x = x[:: self.stride]
-            y = y[:: self.stride]
+        for start in range(0, total, self.stride):
+            x = arr[start : start + self.seq_len]
+            y = arr[start + self.seq_len : start + self.seq_len + self.pred_len]
 
-        total = min(x.shape[0], y.shape[0])
-        return x[:total], y[:total]
+            x_list.append(x)
+            y_list.append(y)
+
+        x = np.stack(x_list, axis=0).astype(np.float32)
+        y = np.stack(y_list, axis=0).astype(np.float32)
+
+        return x, y
 
     def _load_and_build(self):
         data = self._load_csv()
+
         split_sizes, (train_end, val_end) = self._split_ratio(len(data))
 
         train_raw = data[:train_end]
@@ -113,36 +163,45 @@ class DS:
         x_test, y_test = self._make_windows(test_norm)
 
         batch_size = int(self.config.bs)
+        num_workers = int(getattr(self.config, "num_workers", 0))
+
         self.train_data_loader = DataLoader(
-            AbileneDataset(x_train, y_train, self.config),
-            batch_size,
+            AbileneDataset(x_train, y_train, self.config, id_offset=0),
+            batch_size=batch_size,
             shuffle=True,
-            num_workers=2,
+            num_workers=num_workers,
             pin_memory=True,
         )
+
         self.val_data_loader = DataLoader(
-            AbileneDataset(x_val, y_val, self.config),
-            batch_size,
+            AbileneDataset(x_val, y_val, self.config, id_offset=len(x_train)),
+            batch_size=batch_size,
             shuffle=False,
-            num_workers=2,
+            num_workers=num_workers,
             pin_memory=True,
         )
+
         self.test_data_loader = DataLoader(
-            AbileneDataset(x_test, y_test, self.config),
-            batch_size,
+            AbileneDataset(x_test, y_test, self.config, id_offset=len(x_train) + len(x_val)),
+            batch_size=batch_size,
             shuffle=False,
-            num_workers=2,
+            num_workers=num_workers,
             pin_memory=True,
         )
 
         print(
-            f"[Abilene] split: train={split_sizes.train}, val={split_sizes.val}, test={split_sizes.test}"
+            f"[Abilene] raw shape: {data.shape}, "
+            f"T={data.shape[0]}, C={data.shape[1]}"
+        )
+        print(
+            f"[Abilene] split: "
+            f"train={split_sizes.train}, val={split_sizes.val}, test={split_sizes.test}"
         )
         print(
             "[Abilene] windows:",
-            x_train.shape,
-            x_val.shape,
-            x_test.shape,
+            f"x_train={x_train.shape}, y_train={y_train.shape}",
+            f"x_val={x_val.shape}, y_val={y_val.shape}",
+            f"x_test={x_test.shape}, y_test={y_test.shape}",
         )
 
     def get_train_data_loader(self):
