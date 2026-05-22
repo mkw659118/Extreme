@@ -1,5 +1,6 @@
 # Author  : mkw
-# Desc    : Abilene dataset loader for multivariate time series, shape [T, C] = [3000, 144]
+# Desc    : Abilene dataset loader with first-order difference normalization
+# Shape   : raw data [T, C] = [3000, 144]
 
 from __future__ import annotations
 
@@ -12,10 +13,18 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class AbileneDataset(Dataset):
-    def __init__(self, x: np.ndarray, y: np.ndarray, config, id_offset: int = 0):
+    def __init__(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        config,
+        id_offset: int = 0,
+        stride: int = 1,
+    ):
         self.x = x
         self.y = y
         self.id_offset = int(id_offset)
+        self.stride = int(stride)
 
     def __len__(self) -> int:
         return len(self.x)
@@ -24,10 +33,11 @@ class AbileneDataset(Dataset):
         x = self.x[idx]
         y = self.y[idx]
 
-        # ExtremeLSTMMemo 当前没有真正使用 x_mark，这里保留占位
+        # 当前模型没有真正使用 x_mark，保留占位
         x_mark = np.zeros((x.shape[0], 1), dtype=np.float32)
 
-        sample_id = np.int64(self.id_offset + idx)
+        # sample_id 表示这个窗口在原始全序列中的起始位置
+        sample_id = np.int64(self.id_offset + idx * self.stride)
 
         return (
             x.astype(np.float32),
@@ -45,7 +55,7 @@ class SplitSizes:
 
 
 class DS:
-    """Abilene multivariate time-series dataset, ratio split 7:1:2."""
+    """Abilene multivariate time-series dataset with first-order diff normalization."""
 
     def __init__(self, config, trainX=None):
         del trainX
@@ -63,8 +73,13 @@ class DS:
 
         self.expected_num_vars = int(getattr(self.config, "enc_in", 144))
 
+        # 原始数据，评估阶段累加还原会用到
+        self.raw_data = None
+
+        # 差分归一化参数，形状都是 [C]
         self.mean = None
         self.std = None
+        self.mini = 0.0
 
         self.train_data_loader = None
         self.val_data_loader = None
@@ -76,7 +91,6 @@ class DS:
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Abilene csv not found: {self.data_path}")
 
-        # CSV 没有表头，形状应为 [T, C]，例如 [3000, 144]
         data = np.loadtxt(self.data_path, delimiter=",")
 
         if data.ndim != 2:
@@ -104,29 +118,66 @@ class DS:
         return SplitSizes(train_size, val_size, test_size), (train_end, val_end)
 
     @staticmethod
-    def _normalize(train: np.ndarray, data: np.ndarray):
-        # 按变量维度做标准化，mean/std 形状为 [C]
-        mean = train.mean(axis=0)
-        std = train.std(axis=0)
-        std = np.where(std == 0, 1.0, std)
-
-        data_norm = (data - mean) / std
-
-        return data_norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32)
-
-    def _make_windows(self, arr: np.ndarray):
+    def _first_order_diff(data: np.ndarray) -> np.ndarray:
         """
-        arr: [T, C]
+        模拟你原来的 r_log_std_normalization 做法：
+
+        原单变量逻辑：
+            data1 = data[1:]
+            data2[i] = data[i+1] - data[i]
+            c = np.array([1] + data2)
+
+        多变量版本：
+            data: [T, C]
+            diff: [T, C]
+            diff[0, :] = 1
+            diff[t, :] = data[t, :] - data[t-1, :]
+        """
+        diff = np.zeros_like(data, dtype=np.float32)
+        diff[0, :] = 1.0
+        diff[1:, :] = data[1:, :] - data[:-1, :]
+        return diff
+
+    def _fit_diff_normalizer(self, train_raw: np.ndarray):
+        """
+        只用训练集拟合差分归一化参数，避免验证/测试泄漏。
+        """
+        train_diff = self._first_order_diff(train_raw)
+
+        mean = np.nanmean(train_diff, axis=0)
+        std = np.nanstd(train_diff, axis=0)
+
+        std = np.where((std == 0) | np.isnan(std), 1.0, std)
+        mean = np.where(np.isnan(mean), 0.0, mean)
+
+        self.mean = mean.astype(np.float32)
+        self.std = std.astype(np.float32)
+        self.mini = 0.0
+
+    def _transform_diff(self, raw: np.ndarray) -> np.ndarray:
+        """
+        使用训练集 mean/std，把原始序列转成标准化一阶差分序列。
+        """
+        diff = self._first_order_diff(raw)
+        norm = (diff - self.mean) / self.std
+        return norm.astype(np.float32)
+
+    def _make_windows(self, diff_norm: np.ndarray):
+        """
+        diff_norm: [T, C]
 
         return:
             x: [N, seq_len, C]
             y: [N, pred_len, C]
+
+        x 和 y 都是一阶差分归一化后的值。
+        模型预测 y，评估阶段再反归一化并累加还原。
         """
-        total = arr.shape[0] - self.seq_len - self.pred_len + 1
+        total = diff_norm.shape[0] - self.seq_len - self.pred_len + 1
 
         if total <= 0:
             raise ValueError(
-                f"Sequence too short: T={arr.shape[0]}, "
+                f"Sequence too short: T={diff_norm.shape[0]}, "
                 f"seq_len={self.seq_len}, pred_len={self.pred_len}"
             )
 
@@ -134,8 +185,11 @@ class DS:
         y_list = []
 
         for start in range(0, total, self.stride):
-            x = arr[start : start + self.seq_len]
-            y = arr[start + self.seq_len : start + self.seq_len + self.pred_len]
+            x = diff_norm[start : start + self.seq_len]
+            y = diff_norm[
+                start + self.seq_len :
+                start + self.seq_len + self.pred_len
+            ]
 
             x_list.append(x)
             y_list.append(y)
@@ -147,16 +201,25 @@ class DS:
 
     def _load_and_build(self):
         data = self._load_csv()
+        self.raw_data = data
 
         split_sizes, (train_end, val_end) = self._split_ratio(len(data))
 
         train_raw = data[:train_end]
-        val_raw = data[train_end:val_end]
-        test_raw = data[val_end:]
 
-        train_norm, self.mean, self.std = self._normalize(train_raw, train_raw)
-        val_norm, _, _ = self._normalize(train_raw, val_raw)
-        test_norm, _, _ = self._normalize(train_raw, test_raw)
+        # 验证集和测试集保留前 seq_len 个历史点作为输入上下文
+        val_start = max(0, train_end - self.seq_len)
+        test_start = max(0, val_end - self.seq_len)
+
+        val_raw = data[val_start:val_end]
+        test_raw = data[test_start:]
+
+        # 只用训练集拟合差分归一化参数
+        self._fit_diff_normalizer(train_raw)
+
+        train_norm = self._transform_diff(train_raw)
+        val_norm = self._transform_diff(val_raw)
+        test_norm = self._transform_diff(test_raw)
 
         x_train, y_train = self._make_windows(train_norm)
         x_val, y_val = self._make_windows(val_norm)
@@ -166,7 +229,13 @@ class DS:
         num_workers = int(getattr(self.config, "num_workers", 0))
 
         self.train_data_loader = DataLoader(
-            AbileneDataset(x_train, y_train, self.config, id_offset=0),
+            AbileneDataset(
+                x_train,
+                y_train,
+                self.config,
+                id_offset=0,
+                stride=self.stride,
+            ),
             batch_size=batch_size,
             shuffle=True,
             num_workers=num_workers,
@@ -174,7 +243,13 @@ class DS:
         )
 
         self.val_data_loader = DataLoader(
-            AbileneDataset(x_val, y_val, self.config, id_offset=len(x_train)),
+            AbileneDataset(
+                x_val,
+                y_val,
+                self.config,
+                id_offset=val_start,
+                stride=self.stride,
+            ),
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
@@ -182,7 +257,13 @@ class DS:
         )
 
         self.test_data_loader = DataLoader(
-            AbileneDataset(x_test, y_test, self.config, id_offset=len(x_train) + len(x_val)),
+            AbileneDataset(
+                x_test,
+                y_test,
+                self.config,
+                id_offset=test_start,
+                stride=self.stride,
+            ),
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
@@ -194,8 +275,12 @@ class DS:
             f"T={data.shape[0]}, C={data.shape[1]}"
         )
         print(
-            f"[Abilene] split: "
-            f"train={split_sizes.train}, val={split_sizes.val}, test={split_sizes.test}"
+            f"[Abilene] split points: "
+            f"train_end={train_end}, val_end={val_end}"
+        )
+        print(
+            f"[Abilene] raw split lengths with context: "
+            f"train={len(train_raw)}, val={len(val_raw)}, test={len(test_raw)}"
         )
         print(
             "[Abilene] windows:",
@@ -203,6 +288,44 @@ class DS:
             f"x_val={x_val.shape}, y_val={y_val.shape}",
             f"x_test={x_test.shape}, y_test={y_test.shape}",
         )
+        print(
+            f"[Abilene] diff norm mean/std shape: "
+            f"mean={self.mean.shape}, std={self.std.shape}"
+        )
+
+    def inverse_diff_norm(self, diff_norm: np.ndarray) -> np.ndarray:
+        """
+        把标准化差分还原成原始差分。
+
+        diff_norm: [..., C]
+        return:    [..., C]
+        """
+        return diff_norm * self.std + self.mean
+
+    def recover_level_from_diff(
+        self,
+        diff_norm: np.ndarray,
+        sample_ids: np.ndarray,
+    ) -> np.ndarray:
+        """
+        将预测的标准化差分累加还原成原始值。
+
+        diff_norm:  [B, pred_len, C]
+        sample_ids: [B]，每个窗口在原始序列中的起始位置
+
+        对每个样本：
+            anchor = raw_data[start + seq_len - 1]
+            pred_raw = anchor + cumsum(pred_diff_raw)
+        """
+        diff_raw = self.inverse_diff_norm(diff_norm)
+
+        sample_ids = np.asarray(sample_ids).astype(np.int64)
+        anchor_index = sample_ids + self.seq_len - 1
+
+        anchors = self.raw_data[anchor_index]  # [B, C]
+        recovered = anchors[:, None, :] + np.cumsum(diff_raw, axis=1)
+
+        return recovered.astype(np.float32)
 
     def get_train_data_loader(self):
         return self.train_data_loader
@@ -218,3 +341,6 @@ class DS:
 
     def get_std(self):
         return self.std
+
+    def get_raw_data(self):
+        return self.raw_data

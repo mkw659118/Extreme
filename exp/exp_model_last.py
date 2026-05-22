@@ -1,5 +1,6 @@
 from modules.RMF_last import ExtremeLSTMMemo
-from exp.exp_base_last import BasicModel
+# from exp.exp_base_last import BasicModel
+from exp.exp_base_net import BasicModel
 
 class Model(BasicModel):
     def __init__(self, config):
