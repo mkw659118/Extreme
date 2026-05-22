@@ -14673,3 +14673,5 @@ MCANN对比实验结果
 |2026-05-20 01:28:26| MAE - 9.5797 MSE - 447.2506 RMSE - 21.1327 MAPE - 0.0217 COS - 0.0351 ECR_q90 - 0.6090 Tail_MAE - 19.8230 Tail_RMSE - 33.2048 Tail_MAPE - 0.0392 Tail_q90 - 483.3306 Tail_count - 884.0000 Raw_q90 - 483.3306 Raw_q99 - 511.0844 ECR_eps_base - 5.5508 ECR_alpha - 0.2000 ECR_rho - 0.0200 ECR_q99 - 0.0225 ECR_count_q90 - 884.0000 ECR_count_q99 - 89.0000 NMAE - 0.0209 NRMSE - 0.0460 Acc_10 - 0.9406 train_time - 1226.9990
 
 
+|2026-05-21 18:37:07| Dataset : water, batchsize : 256, Model : timesnet, d_model : 512, reservoir : reservoir_stor_4001_sof24, epochs : 200, patience : 10, Seq_Len : 360, Pred_Len : 8
+|2026-05-21 18:37:07| MAE - 3.6639 MSE - 148.8874 RMSE - 12.2019 MAPE - 0.0031 COS - 0.1960 ECR_q90 - 0.9354 Tail_MAE - 8.5510 Tail_RMSE - 27.2046 Tail_MAPE - 0.0055 Tail_q90 - 1456.4869 Tail_count - 882.0000 Raw_q90 - 1456.4869 Raw_q99 - 1615.2551 ECR_eps_base - 31.7536 ECR_alpha - 0.2000 ECR_rho - 0.0200 ECR_q99 - 0.7386 ECR_count_q90 - 882.0000 ECR_count_q99 - 88.0000 NMAE - 0.0034 NRMSE - 0.0107 Acc_10 - 0.9975 train_time - 114481.2752
