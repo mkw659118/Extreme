@@ -66,7 +66,7 @@ class DatasetInfo:
     val_seed: int = 2025
     train_seed: int = 2024
     roll: int = 8
-    enc_in: int = 1
+    enc_in: int = 144
 
 
 @dataclass

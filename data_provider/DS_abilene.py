@@ -81,6 +81,11 @@ class DS:
         self.std = None
         self.mini = 0.0
 
+        # 训练集阈值，用于 Tail / level 指标
+        self.tail_q90 = 0.0
+        self.raw_q90 = 0.0
+        self.raw_q99 = 0.0
+
         self.train_data_loader = None
         self.val_data_loader = None
         self.test_data_loader = None
@@ -224,6 +229,58 @@ class DS:
         x_train, y_train = self._make_windows(train_norm)
         x_val, y_val = self._make_windows(val_norm)
         x_test, y_test = self._make_windows(test_norm)
+
+        # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
+        # 多变量场景下，y_train 的形状是 [N, pred_len, C]。
+        # y_train 是标准化一阶差分，因此先反归一化成原始差分，
+        # 再把所有窗口、所有预测步、所有变量展开后计算分位数。
+        train_diff_raw = self.inverse_diff_norm(y_train)
+        all_diff_vals = np.abs(train_diff_raw).reshape(-1)
+        all_diff_vals = all_diff_vals[np.isfinite(all_diff_vals)]
+
+        if len(all_diff_vals) > 0:
+            self.tail_q90 = float(np.quantile(all_diff_vals, 0.90))
+        else:
+            self.tail_q90 = 0.0
+
+        setattr(self.config, "tail_q90", self.tail_q90)
+        print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
+
+        # ===== 计算训练集点级原始值 q90/q99（用于 level 指标） =====
+        # y_train 对应的原始值区间是：
+        # raw[start + seq_len : start + seq_len + pred_len]
+        # 多变量场景下同样展开所有窗口、所有预测步、所有变量。
+        raw_y_list = []
+        total = train_raw.shape[0] - self.seq_len - self.pred_len + 1
+
+        for start in range(0, total, self.stride):
+            raw_y = train_raw[
+                start + self.seq_len :
+                start + self.seq_len + self.pred_len
+            ]
+            raw_y_list.append(raw_y)
+
+        if len(raw_y_list) > 0:
+            all_raw_vals = np.stack(raw_y_list, axis=0).astype(np.float32).reshape(-1)
+            all_raw_vals = all_raw_vals[np.isfinite(all_raw_vals)]
+
+            if len(all_raw_vals) > 0:
+                self.raw_q90 = float(np.quantile(all_raw_vals, 0.90))
+                self.raw_q99 = float(np.quantile(all_raw_vals, 0.99))
+            else:
+                self.raw_q90 = 0.0
+                self.raw_q99 = 0.0
+        else:
+            self.raw_q90 = 0.0
+            self.raw_q99 = 0.0
+
+        setattr(self.config, "raw_q90", self.raw_q90)
+        setattr(self.config, "raw_q99", self.raw_q99)
+
+        print(
+            f"[Raw Threshold] value q90={self.raw_q90:.6f}, "
+            f"q99={self.raw_q99:.6f}"
+        )
 
         batch_size = int(self.config.bs)
         num_workers = int(getattr(self.config, "num_workers", 0))

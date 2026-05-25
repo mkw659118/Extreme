@@ -20,7 +20,7 @@ def get_experiment_name(config):
         'd_model': config.d_model,
         'epochs': config.epochs,
         'patience': config.patience,
-        'dropout': config.dropout,
+        # 'dropout': config.dropout,
     }
 
     optional_fields = [
@@ -126,5 +126,6 @@ def run(config):
 if __name__ == '__main__':
     from utils.exp_config import get_config
 
-    config = get_config('NetConfig')
+    # config = get_config('ExtremeLSTMMemoConfig')
+    config = get_config('MCANNConfig')
     run(config)

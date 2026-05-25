@@ -22,7 +22,10 @@ class ExtremeLSTMMemoConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dat
     seq_len: int = 360
     label_len: int = 0
     pred_len: int = 72
-    c_in: int = 3
+    c_in: int = 144
+    enc_in: int = 144
+    dec_in: int = 144
+    out_dim: int = 144
     
     
    

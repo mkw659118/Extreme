@@ -826,12 +826,18 @@ class BasicModel(torch.nn.Module):
         return results
 
     def RunOnce(self, config, runId, model, datamodule, log):
-        pretrain_epochs = int(getattr(config, "pretrain_epochs", 10))
+        pretrain_epochs = int(getattr(config, "pretrain_epochs", 5))
         freeze_after_pretrain = bool(
             getattr(config, "freeze_prior_after_pretrain", False)
         )
 
-        if self._need_retrain(config, runId, log) and pretrain_epochs > 0:
+        enable_pretrain = (
+            self._need_retrain(config, runId, log)
+            and pretrain_epochs > 0
+            and config.model == "extreme_lstm_memo"
+        )
+
+        if enable_pretrain:
             print("*******State Prior Pretraining*******")
 
             self.setup_pretrain_optimizer(config)
