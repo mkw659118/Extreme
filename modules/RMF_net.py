@@ -335,8 +335,8 @@ class ExtremeLSTMMemo(nn.Module):
         d_model: int,
         e_layers: int,
         d_layers: int,
-        dec_in: int = 144,
-        out_dim: int = 144,
+        dec_in: int = 3,
+        out_dim: int = 1,
         config=None,
     ):
         super().__init__()
@@ -472,50 +472,15 @@ class ExtremeLSTMMemo(nn.Module):
         return balance_loss, aux_dict
 
     def construct_index(self, num: int):
-        self.keys = torch.zeros(
-            num,
-            self.seq_len,
-            self.c_in,
-            device=self.device,
-        )
-
-        self.values = torch.zeros(
-            num,
-            self.pred_len,
-            self.out_dim,
-            device=self.device,
-        )
-
+        self.keys = torch.zeros(num, self.seq_len, self.c_in, device=self.device)
+        self.values = torch.zeros(num, self.pred_len, self.dec_in, device=self.device)
         self.index = 0
-
 
     @torch.no_grad()
     def add_key_value(self, x_enc: torch.Tensor, y: torch.Tensor, index: torch.Tensor):
-        """
-        x_enc:
-            [B, seq_len, c_in]
-
-        y:
-            [B, pred_len, out_dim]
-
-        index:
-            [B]
-        """
-
-        if y.size(-1) != self.values.size(-1):
-            raise ValueError(
-                f"Retrieval value dimension mismatch: "
-                f"y.shape={tuple(y.shape)}, "
-                f"self.values.shape={tuple(self.values.shape)}, "
-                f"out_dim={self.out_dim}, dec_in={self.dec_in}. "
-                f"Please set config.out_dim=144 and initialize retrieval values with out_dim."
-            )
-
         self.keys[index, :, :] = x_enc
         self.values[index, :, :] = y
-
         self.index += x_enc.size(0)
-
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
@@ -601,6 +566,7 @@ class ExtremeLSTMMemo(nn.Module):
         x: torch.Tensor,
         x_mark: Optional[torch.Tensor] = None,
         dec_input: Optional[torch.Tensor] = None,
+        dec_mark: Optional[torch.Tensor] = None,
         sample_ids: Optional[torch.Tensor] = None,
         mode: str = 'train',
         return_aux: bool = False,

@@ -3,8 +3,8 @@ import torch
 import collections
 import pandas as pd
 
-from data_provider.DS_abilene import DS
-from exp.exp_model_last import Model
+from data_provider.DS_abilene1 import DS
+from exp.exp_model_net import Model
 import utils.model_efficiency
 import utils.utils
 
@@ -77,11 +77,7 @@ def RunExperiments(log, config):
     )
 
     for key in metrics:
-        if 'COS' in key:
-            log(f'{key}: {np.mean(metrics[key]):.8f} ± {np.std(metrics[key]):.8f}')
-        else:
-            log(f'{key}: {np.mean(metrics[key]):.4f} ± {np.std(metrics[key]):.4f}')
-
+        log(f'{key}: {np.mean(metrics[key]):.8f} ± {np.std(metrics[key]):.8f}')
     try:
         flops, params, inference_time = utils.model_efficiency.get_efficiency(
             datamodule,
@@ -127,5 +123,7 @@ if __name__ == '__main__':
     from utils.exp_config import get_config
 
     # config = get_config('ExtremeLSTMMemoConfig')
-    config = get_config('MCANNConfig')
+    # config = get_config('DLinearConfig')
+    # config = get_config('NetConfig')
+    config = get_config('PMDformerConfig')
     run(config)

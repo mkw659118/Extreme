@@ -8,8 +8,8 @@ from configs.MainConfig import OtherConfig
 
 @dataclass
 class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'extreme_lstm_memo'
-    bs: int = 256
+    model: str = 'net'
+    bs: int = 64
     d_model: int = 64
     epochs: int = 200
     patience: int = 40
@@ -24,9 +24,8 @@ class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     pred_len: int = 96
     c_in: int = 144
     enc_in: int = 144
-    c_in: int = 144
-    dec_in: int = 144
-    out_dim: int = 144
+    dec_in: int = 1
+    out_dim: int = 1
     
     
    

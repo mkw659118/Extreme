@@ -92,74 +92,119 @@ class BasicModel(torch.nn.Module):
             threshold=1e-4,
         )
 
-    def _restore_to_raw(self, pred, label, dataModule, sample_ids):
-        """
-        将标准化一阶差分还原为原始多变量序列。
-
-        pred:
-            [B, pred_len, C]
-            模型输出，表示标准化后的一阶差分。
-
-        label:
-            [B, pred_len, C]
-            标签，表示标准化后的一阶差分。
-
-        dataModule.mean:
-            [C]
-            训练集差分均值。
-
-        dataModule.std:
-            [C]
-            训练集差分标准差。
-
-        dataModule.raw_data:
-            [T, C]
-            原始未差分、未标准化序列。
-
-        sample_ids:
-            [B]
-            当前窗口在原始序列中的起始位置。
-
-        return:
-            pred_raw:
-                [B, pred_len, C]
-            real_raw:
-                [B, pred_len, C]
-        """
-
-        mean_t = torch.as_tensor(
-            dataModule.mean,
-            device=pred.device,
-            dtype=pred.dtype,
-        ).view(1, 1, -1)
-
-        std_t = torch.as_tensor(
-            dataModule.std,
-            device=pred.device,
-            dtype=pred.dtype,
-        ).view(1, 1, -1)
-
-        raw_data_t = torch.as_tensor(
-            dataModule.raw_data,
-            device=pred.device,
-            dtype=pred.dtype,
+    def _select_target_if_needed(self, values, dataModule):
+        target_dim = int(
+            getattr(dataModule, "target_dim", getattr(self.config, "target_dim", 0))
         )
 
+        if target_dim <= 0 or values.shape[-1] == target_dim:
+            return values
+
+        target_col = int(
+            getattr(dataModule, "target_col", getattr(self.config, "target_col", 0))
+        )
+        end_col = target_col + target_dim
+
+        if end_col > values.shape[-1]:
+            raise ValueError(
+                f"Cannot select target columns [{target_col}:{end_col}] from "
+                f"values with shape {tuple(values.shape)}."
+            )
+
+        return values[..., target_col:end_col]
+
+    def _prepare_scaled_prediction_and_label(self, pred, label, dataModule):
+        """
+        Align model prediction and label in the standardized space.
+
+        Training loss should use the returned tensors directly. Validation and
+        testing restore these tensors to the original raw-value space before
+        computing metrics.
+        """
+        pred = pred[:, -self.pred_len:, :]
         future_label = label[:, -self.pred_len:, :]
 
-        # 标准化差分 -> 原始差分
-        pred_diff = pred * std_t + mean_t
-        real_diff = future_label * std_t + mean_t
+        pred = self._select_target_if_needed(pred, dataModule)
+        future_label = self._select_target_if_needed(future_label, dataModule)
 
-        # sample_id 是窗口起点。
-        # 输入窗口为 [sample_id, sample_id + seq_len - 1]。
-        # 累加还原的锚点是输入窗口最后一个真实原始值。
-        anchor_index = sample_ids + self.config.seq_len - 1
-        anchor = raw_data_t[anchor_index]
+        if pred.shape[-1] != future_label.shape[-1]:
+            raise ValueError(
+                f"Prediction and label target dimensions mismatch: "
+                f"{tuple(pred.shape)} vs {tuple(future_label.shape)}."
+            )
 
-        # 对 144 个变量同时做累加还原
-        pred_raw = anchor.unsqueeze(1) + torch.cumsum(pred_diff, dim=1)
-        real_raw = anchor.unsqueeze(1) + torch.cumsum(real_diff, dim=1)
+        return pred, future_label
+
+    def _get_value_mean_std(self, dataModule, out_dim, device, dtype):
+        """Get mean/std for inverse z-score normalization of the target columns."""
+        mean = getattr(dataModule, "mean", None)
+        std = getattr(dataModule, "std", None)
+
+        if mean is None and hasattr(dataModule, "get_mean"):
+            mean = dataModule.get_mean()
+        if std is None and hasattr(dataModule, "get_std"):
+            std = dataModule.get_std()
+
+        if mean is None or std is None:
+            raise AttributeError(
+                "dataModule must provide mean/std or get_mean()/get_std() "
+                "for inverse normalization."
+            )
+
+        mean = np.asarray(mean, dtype=np.float32)
+        std = np.asarray(std, dtype=np.float32)
+
+        target_col = int(
+            getattr(dataModule, "target_col", getattr(self.config, "target_col", 0))
+        )
+        target_dim = int(
+            getattr(dataModule, "target_dim", getattr(self.config, "target_dim", out_dim))
+        )
+
+        if mean.shape[-1] == out_dim:
+            mean = mean[:out_dim]
+            std = std[:out_dim]
+        elif target_dim > 0 and out_dim == target_dim:
+            end_col = target_col + target_dim
+            mean = mean[target_col:end_col]
+            std = std[target_col:end_col]
+        elif out_dim == 1:
+            mean = mean[target_col : target_col + 1]
+            std = std[target_col : target_col + 1]
+        else:
+            raise ValueError(
+                f"Cannot map out_dim={out_dim} to normalizer with "
+                f"mean shape {mean.shape}."
+            )
+
+        mean_t = torch.as_tensor(mean, device=device, dtype=dtype).view(1, 1, -1)
+        std_t = torch.as_tensor(std, device=device, dtype=dtype).view(1, 1, -1)
+
+        return mean_t, std_t
+
+    def _restore_to_raw(self, pred, label, dataModule, sample_ids=None):
+        """
+        Restore standardized predictions/labels to original raw values.
+
+        The inverse transform is only: raw = standardized * std + mean.
+        """
+        del sample_ids
+
+        pred_scaled, real_scaled = self._prepare_scaled_prediction_and_label(
+            pred,
+            label,
+            dataModule,
+        )
+
+        mean_t, std_t = self._get_value_mean_std(
+            dataModule,
+            out_dim=pred_scaled.shape[-1],
+            device=pred_scaled.device,
+            dtype=pred_scaled.dtype,
+        )
+
+        pred_raw = pred_scaled * std_t + mean_t
+        real_raw = real_scaled * std_t + mean_t
 
         return pred_raw, real_raw
 
@@ -208,6 +253,100 @@ class BasicModel(torch.nn.Module):
         df.to_csv(save_path, index=False)
 
         print(f"[Save] model result saved to: {save_path}")
+
+    def save_aggregated_model_result(
+        self,
+        true_series,
+        pred_series,
+        sample_ids,
+        save_path,
+    ):
+        if isinstance(true_series, torch.Tensor):
+            true_series = true_series.detach().cpu().numpy()
+        else:
+            true_series = np.asarray(true_series)
+
+        if isinstance(pred_series, torch.Tensor):
+            pred_series = pred_series.detach().cpu().numpy()
+        else:
+            pred_series = np.asarray(pred_series)
+
+        if isinstance(sample_ids, torch.Tensor):
+            sample_ids = sample_ids.detach().cpu().numpy()
+        else:
+            sample_ids = np.asarray(sample_ids)
+
+        if true_series.shape != pred_series.shape:
+            raise ValueError(
+                f"true and pred shapes do not match: {true_series.shape} vs {pred_series.shape}"
+            )
+
+        if true_series.ndim == 2:
+            true_series = true_series[:, :, None]
+            pred_series = pred_series[:, :, None]
+
+        if true_series.ndim != 3:
+            raise ValueError(
+                f"Expected [N, pred_len, C] series, got shape {true_series.shape}"
+            )
+
+        if len(sample_ids) != true_series.shape[0]:
+            raise ValueError(
+                f"sample_ids length {len(sample_ids)} does not match "
+                f"window count {true_series.shape[0]}"
+            )
+
+        pred_len = true_series.shape[1]
+        out_dim = true_series.shape[2]
+        seq_len = int(self.config.seq_len)
+
+        true_sum = {}
+        pred_sum = {}
+        count = {}
+
+        for window_idx, start in enumerate(sample_ids.astype(np.int64)):
+            base_time_idx = int(start) + seq_len
+
+            for horizon in range(pred_len):
+                time_idx = base_time_idx + horizon
+
+                if time_idx not in count:
+                    true_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    pred_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    count[time_idx] = 0
+
+                true_sum[time_idx] += true_series[window_idx, horizon].astype(np.float64)
+                pred_sum[time_idx] += pred_series[window_idx, horizon].astype(np.float64)
+                count[time_idx] += 1
+
+        time_indices = sorted(count)
+        result_dict = {
+            "time_idx": time_indices,
+            "count": [count[i] for i in time_indices],
+        }
+
+        if out_dim == 1:
+            result_dict["true"] = [
+                true_sum[i][0] / count[i] for i in time_indices
+            ]
+            result_dict["pred"] = [
+                pred_sum[i][0] / count[i] for i in time_indices
+            ]
+        else:
+            for dim_idx in range(out_dim):
+                result_dict[f"true_var_{dim_idx}"] = [
+                    true_sum[i][dim_idx] / count[i] for i in time_indices
+                ]
+                result_dict[f"pred_var_{dim_idx}"] = [
+                    pred_sum[i][dim_idx] / count[i] for i in time_indices
+                ]
+
+        df = pd.DataFrame(result_dict)
+
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        df.to_csv(save_path, index=False)
+
+        print(f"[Save] aggregated model result saved to: {save_path}")
 
     def pretrain_one_epoch(self, dataModule):
         self.train()
@@ -364,23 +503,23 @@ class BasicModel(torch.nn.Module):
                         output, aux_loss = self.forward(
                             x,
                             x_mark,
-                            dec_input=dec_input,
-                            sample_ids=sample_ids,
-                            mode=mode,
+                            dec_input,
+                            None,
+                            sample_ids,
+                            mode,
                         )
 
-                        pred_raw, real_raw = self._restore_to_raw(
+                        pred_scaled, real_scaled = self._prepare_scaled_prediction_and_label(
                             output["point_pred"],
                             label,
                             dataModule,
-                            sample_ids,
                         )
 
                         main_loss = compute_loss(
                             self,
                             x,
-                            pred_raw.float(),
-                            real_raw.float(),
+                            pred_scaled.float(),
+                            real_scaled.float(),
                             self.config,
                         )
 
@@ -398,23 +537,23 @@ class BasicModel(torch.nn.Module):
                     output, aux_loss = self.forward(
                         x,
                         x_mark,
-                        dec_input=dec_input,
-                        sample_ids=sample_ids,
-                        mode=mode,
+                        dec_input,
+                        None,
+                        sample_ids,
+                        mode,
                     )
 
-                    pred_raw, real_raw = self._restore_to_raw(
+                    pred_scaled, real_scaled = self._prepare_scaled_prediction_and_label(
                         output["point_pred"],
                         label,
                         dataModule,
-                        sample_ids,
                     )
 
                     main_loss = compute_loss(
                         self,
                         x,
-                        pred_raw.float(),
-                        real_raw.float(),
+                        pred_scaled.float(),
+                        real_scaled.float(),
                         self.config,
                     )
 
@@ -558,9 +697,10 @@ class BasicModel(torch.nn.Module):
                 output, _ = self.forward(
                     x,
                     x_mark,
-                    dec_input=dec_input,
-                    sample_ids=sample_ids,
-                    mode=mode,
+                    dec_input,
+                    None,
+                    sample_ids,
+                    mode,
                 )
 
                 reals.append(label)
@@ -614,8 +754,9 @@ class BasicModel(torch.nn.Module):
                 output, _ = self.forward(
                     x,
                     x_mark,
-                    dec_input=dec_input,
-                    sample_ids=sample_ids,
+                    dec_input,
+                    None,
+                    sample_ids,
                     mode="test",
                 )
 
@@ -637,15 +778,24 @@ class BasicModel(torch.nn.Module):
         dataset_name = getattr(self.config, "dataset", "Abilene")
         sensor_name = getattr(self.config, "reservoir_sensor", dataset_name)
 
-        save_path = (
+        save_prefix = (
             f"./draw/{self.config.model}_{sensor_name}_"
-            f"PL{self.config.pred_len}_DM{self.config.d_model}.csv"
+            f"PL{self.config.pred_len}_DM{self.config.d_model}"
         )
+        save_path = f"{save_prefix}.csv"
+        aggregated_save_path = f"{save_prefix}_agg.csv"
 
         self.save_single_model_result(
             true_series=real_raw,
             pred_series=pred_raw,
             save_path=save_path,
+        )
+
+        self.save_aggregated_model_result(
+            true_series=real_raw,
+            pred_series=pred_raw,
+            sample_ids=ids,
+            save_path=aggregated_save_path,
         )
 
         return ErrorMetrics(real_raw, pred_raw, self.config, "test")
@@ -834,7 +984,7 @@ class BasicModel(torch.nn.Module):
         enable_pretrain = (
             self._need_retrain(config, runId, log)
             and pretrain_epochs > 0
-            and config.model == "extreme_lstm_memo"
+            and config.model == "net"
         )
 
         if enable_pretrain:

@@ -100,7 +100,7 @@ class Logger:
     def _fmt_metric(self, key, value):
         if 'COS' in str(key):
             return f"{value:.8f}"
-        return f"{value:.4f}"
+        return f"{value:.8f}"
 
     # 终端彩色输出辅助函数
     def only_print(self, string):
@@ -110,7 +110,7 @@ class Logger:
     # 展示一次完整实验结果
     def show_results(self, result_error, sum_time):
         monitor = self.config.monitor_metric
-        summary = f"Valid{monitor}={-result_error[monitor]:.4f} ｜ "
+        summary = f"Valid{monitor}={-result_error[monitor]:.8f} ｜ "
         summary += ' '.join([f"{k}={self._fmt_metric(k, v)}" for k, v in result_error.items()])
         summary += f" time={sum_time:.1f} s"
         self.only_print(summary)

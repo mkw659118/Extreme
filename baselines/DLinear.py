@@ -79,7 +79,7 @@ class Model(nn.Module):
 
 
 
-    def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
+    def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.revin:
             x_enc = self.revin_layer(x_enc, 'norm')
         dec_out = self.forecast(x_enc)
