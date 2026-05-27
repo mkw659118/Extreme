@@ -3,8 +3,8 @@ import torch
 import collections
 import pandas as pd
 
-from data_provider.DS_abilene1 import DS
-from exp.exp_model_net import Model
+from data_provider.DS_abilene_diff import DS
+from exp.exp_model_net_diff import Model
 import utils.model_efficiency
 import utils.utils
 
@@ -120,10 +120,17 @@ def run(config):
 
 
 if __name__ == '__main__':
+    import argparse
     from utils.exp_config import get_config
 
-    # config = get_config('ExtremeLSTMMemoConfig')
-    # config = get_config('DLinearConfig')
-    # config = get_config('NetConfig')
-    config = get_config('PMDformerConfig')
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config',
+        type=str,
+        default='NetConfig'
+    )
+
+    args, _ = parser.parse_known_args()
+
+    config = get_config(args.config)
     run(config)

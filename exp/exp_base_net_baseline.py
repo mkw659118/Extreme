@@ -5,7 +5,6 @@ import pickle
 import time
 
 import numpy as np
-import pandas as pd
 import torch
 from tqdm import trange
 
@@ -125,7 +124,6 @@ class BasicModel(torch.nn.Module):
                         label,
                         self.config,
                     )
-                    print(pred.shape, label.shape)
 
                     total_loss_value = main_loss
                     print(

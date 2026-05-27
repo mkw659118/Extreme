@@ -86,24 +86,12 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         if y_true.shape != y_pred.shape:
             raise ValueError(f"y_true and y_pred must have same shape, got {y_true.shape} vs {y_pred.shape}")
 
-        # For single-target regression, cosine similarity should reflect the
-        # full predicted curve rather than averaging tiny per-window vectors.
-        # This matches the raw-value trend visualization better.
-        if (y_true.ndim == 2 and y_true.shape[-1] == 1) or (
-            y_true.ndim == 3 and y_true.shape[-1] == 1
-        ):
-            y_true = y_true.reshape(-1).astype(float)
-            y_pred = y_pred.reshape(-1).astype(float)
+        if y_true.ndim == 3 and y_true.shape[-1] == 1:
+            y_true = y_true[..., 0]
+            y_pred = y_pred[..., 0]
 
-            y_true = y_true - np.mean(y_true)
-            y_pred = y_pred - np.mean(y_pred)
-
-            dot = float(np.sum(y_true * y_pred))
-            norm_true = float(np.linalg.norm(y_true))
-            norm_pred = float(np.linalg.norm(y_pred))
-            return float(dot / (norm_true * norm_pred + eps_val))
-
-        # Multi-output fallback: keep the per-sample cosine behavior.
+        # Center each sample before computing cosine so that shared level/baseline
+        # does not dominate the similarity score.
         y_true = y_true - np.mean(y_true, axis=-1, keepdims=True)
         y_pred = y_pred - np.mean(y_pred, axis=-1, keepdims=True)
 
@@ -135,11 +123,10 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
     raw_q90 = float(getattr(config, 'raw_q90', fallback_raw_q90))
     raw_q99 = float(getattr(config, 'raw_q99', fallback_raw_q99))
 
-    ecr_alpha = float(getattr(config, 'ecr_alpha', 0.5))
+    ecr_alpha = float(getattr(config, 'ecr_alpha', 0.2))
     ecr_rho = float(getattr(config, 'ecr_rho', 0.02))
     eps_base = max(0.0, ecr_alpha * (raw_q99 - raw_q90))
-    # eps_dyn = np.maximum(eps_base, ecr_rho * np.abs(realVec)) 
-    eps_dyn = eps_base
+    eps_dyn = np.maximum(eps_base, ecr_rho * np.abs(realVec))
 
     extreme_mask_q90 = realVec >= raw_q90
     extreme_mask_q99 = realVec >= raw_q99

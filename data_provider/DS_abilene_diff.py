@@ -1,6 +1,7 @@
 # Author  : mkw
-# Desc    : Abilene dataset loader with raw value standardization only
+# Desc    : Abilene dataset loader with first-order difference normalization
 # Shape   : raw data [T, C] = [3000, 144]
+# 一阶差分版本
 
 from __future__ import annotations
 
@@ -55,7 +56,7 @@ class SplitSizes:
 
 
 class DS:
-    """Abilene multivariate time-series dataset with raw-value z-score standardization only."""
+    """Abilene multivariate time-series dataset with first-order diff normalization."""
 
     def __init__(self, config, trainX=None):
         del trainX
@@ -84,12 +85,13 @@ class DS:
         setattr(self.config, "target_col", self.target_col)
         setattr(self.config, "target_dim", self.target_dim)
 
-        # 原始数据，评估阶段反标准化或对齐原始时间点时可使用
+        # 原始数据，评估阶段累加还原会用到
         self.raw_data = None
 
-        # 标准化参数，形状都是 [C]，只使用训练集拟合
+        # 差分归一化参数，形状都是 [C]
         self.mean = None
         self.std = None
+        self.mini = 0.0
 
         # 训练集阈值，用于 Tail / level 指标
         self.tail_q90 = 0.0
@@ -132,26 +134,50 @@ class DS:
 
         return SplitSizes(train_size, val_size, test_size), (train_end, val_end)
 
+    @staticmethod
+    def _first_order_diff(data: np.ndarray) -> np.ndarray:
+        """
+        模拟你原来的 r_log_std_normalization 做法：
+
+        原单变量逻辑：
+            data1 = data[1:]
+            data2[i] = data[i+1] - data[i]
+            c = np.array([1] + data2)
+
+        多变量版本：
+            data: [T, C]
+            diff: [T, C]
+            diff[0, :] = 1
+            diff[t, :] = data[t, :] - data[t-1, :]
+        """
+        diff = np.zeros_like(data, dtype=np.float32)
+        diff[0, :] = 1.0
+        diff[1:, :] = data[1:, :] - data[:-1, :]
+        return diff
+
     @classmethod
-    def _zscore_normalize(
+    def _diff_std_normalization(
         cls,
         data: np.ndarray,
         mean: np.ndarray | None = None,
         std: np.ndarray | None = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
         """
-        对原始值做 Z-score 标准化。
+        First-order difference followed by z-score normalization.
 
         data: [T, C]
         return:
             norm: [T, C]
             mean: [C]
             std:  [C]
+            mini: kept for compatibility with the old dataset API
         """
+        diff = cls._first_order_diff(data)
+
         if mean is None:
-            mean = np.nanmean(data, axis=0)
+            mean = np.nanmean(diff, axis=0)
         if std is None:
-            std = np.nanstd(data, axis=0)
+            std = np.nanstd(diff, axis=0)
 
         mean = np.asarray(mean, dtype=np.float32)
         std = np.asarray(std, dtype=np.float32)
@@ -159,39 +185,44 @@ class DS:
         mean = np.where(np.isnan(mean), 0.0, mean)
         std = np.where((std == 0) | np.isnan(std), 1.0, std)
 
-        norm = (data - mean) / std
+        norm = (diff - mean) / std
+        mini = 0.0
 
-        return norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32)
+        return norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32), mini
 
-    def _fit_normalizer(self, train_raw: np.ndarray):
-        """只用训练集拟合 mean/std，避免验证集和测试集信息泄漏。"""
-        _, self.mean, self.std = self._zscore_normalize(train_raw)
+    def _fit_diff_normalizer(self, train_raw: np.ndarray):
+        """
+        只用训练集拟合差分归一化参数，避免验证/测试泄漏。
+        """
+        _, self.mean, self.std, self.mini = self._diff_std_normalization(train_raw)
 
-    def _transform_raw_values(self, raw: np.ndarray) -> np.ndarray:
-        """使用训练集 mean/std，把原始序列转成标准化序列。"""
-        norm, _, _ = self._zscore_normalize(
+    def _transform_diff(self, raw: np.ndarray) -> np.ndarray:
+        """
+        使用训练集 mean/std，把原始序列转成标准化一阶差分序列。
+        """
+        norm, _, _, _ = self._diff_std_normalization(
             raw,
             mean=self.mean,
             std=self.std,
         )
         return norm
 
-    def _make_windows(self, norm_data: np.ndarray):
+    def _make_windows(self, diff_norm: np.ndarray):
         """
-        norm_data: [T, C]
+        diff_norm: [T, C]
 
         return:
             x: [N, seq_len, C]
             y: [N, pred_len, 1]
 
-        x 和 y 都是标准化后的原始值。
-        模型预测标准化空间的 y，评估阶段可通过 inverse_value_norm 反标准化回原始值。
+        x 和 y 都是一阶差分归一化后的值。
+        模型预测 y，评估阶段再反归一化并累加还原。
         """
-        total = norm_data.shape[0] - self.seq_len - self.pred_len + 1
+        total = diff_norm.shape[0] - self.seq_len - self.pred_len + 1
 
         if total <= 0:
             raise ValueError(
-                f"Sequence too short: T={norm_data.shape[0]}, "
+                f"Sequence too short: T={diff_norm.shape[0]}, "
                 f"seq_len={self.seq_len}, pred_len={self.pred_len}"
             )
 
@@ -201,8 +232,8 @@ class DS:
         for start in range(0, total, self.stride):
             y_start = start + self.seq_len
             y_end = y_start + self.pred_len
-            x = norm_data[start : start + self.seq_len, :]
-            y = norm_data[y_start:y_end, self.target_col : self.target_col + 1]
+            x = diff_norm[start : start + self.seq_len, :]
+            y = diff_norm[y_start:y_end, self.target_col : self.target_col + 1]
 
             x_list.append(x)
             y_list.append(y)
@@ -216,7 +247,7 @@ class DS:
         data = self._load_csv()
         self.raw_data = data
 
-        _, (train_end, val_end) = self._split_ratio(len(data))
+        split_sizes, (train_end, val_end) = self._split_ratio(len(data))
 
         train_raw = data[:train_end]
 
@@ -227,35 +258,37 @@ class DS:
         val_raw = data[val_start:val_end]
         test_raw = data[test_start:]
 
-        # 只用训练集拟合标准化参数
-        self._fit_normalizer(train_raw)
+        # 只用训练集拟合差分归一化参数
+        self._fit_diff_normalizer(train_raw)
 
-        train_norm = self._transform_raw_values(train_raw)
-        val_norm = self._transform_raw_values(val_raw)
-        test_norm = self._transform_raw_values(test_raw)
+        train_norm = self._transform_diff(train_raw)
+        val_norm = self._transform_diff(val_raw)
+        test_norm = self._transform_diff(test_raw)
 
         x_train, y_train = self._make_windows(train_norm)
         x_val, y_val = self._make_windows(val_norm)
         x_test, y_test = self._make_windows(test_norm)
 
-        # ===== 计算训练集目标值 |value| q90（用于 Tail 指标） =====
-        # y_train 是标准化后的目标值，因此先反标准化成原始值，
-        # 再把所有窗口、所有预测步展开后计算分位数。
-        train_value_raw = self.inverse_value_norm(y_train)
-        all_value_vals = np.abs(train_value_raw).reshape(-1)
-        all_value_vals = all_value_vals[np.isfinite(all_value_vals)]
+        # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
+        # 多变量场景下，y_train 的形状是 [N, pred_len, C]。
+        # y_train 是标准化一阶差分，因此先反归一化成原始差分，
+        # 再把所有窗口、所有预测步、所有变量展开后计算分位数。
+        train_diff_raw = self.inverse_diff_norm(y_train)
+        all_diff_vals = np.abs(train_diff_raw).reshape(-1)
+        all_diff_vals = all_diff_vals[np.isfinite(all_diff_vals)]
 
-        if len(all_value_vals) > 0:
-            self.tail_q90 = float(np.quantile(all_value_vals, 0.90))
+        if len(all_diff_vals) > 0:
+            self.tail_q90 = float(np.quantile(all_diff_vals, 0.90))
         else:
             self.tail_q90 = 0.0
 
         setattr(self.config, "tail_q90", self.tail_q90)
-        print(f"[Tail Threshold] |value| q90={self.tail_q90:.6f}")
+        print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
 
         # ===== 计算训练集点级原始值 q90/q99（用于 level 指标） =====
         # y_train 对应的原始值区间是：
         # raw[start + seq_len : start + seq_len + pred_len]
+        # 多变量场景下同样展开所有窗口、所有预测步、所有变量。
         raw_y_list = []
         total = train_raw.shape[0] - self.seq_len - self.pred_len + 1
 
@@ -355,27 +388,59 @@ class DS:
             f"target_col={self.target_col}, target_dim={self.target_dim}"
         )
         print(
-            f"[Abilene] value norm mean/std shape: "
+            f"[Abilene] diff norm mean/std shape: "
             f"mean={self.mean.shape}, std={self.std.shape}"
         )
 
-    def inverse_value_norm(self, value_norm: np.ndarray) -> np.ndarray:
+    def inverse_diff_norm(self, diff_norm: np.ndarray) -> np.ndarray:
         """
-        将标准化后的值反标准化回原始值。
+        把标准化差分还原成原始差分。
 
-        value_norm: [..., C] or [..., 1]
+        diff_norm: [..., C] or [..., 1]
         return:    [..., C] or [..., 1]
         """
-        value_norm = np.asarray(value_norm)
+        diff_norm = np.asarray(diff_norm)
 
-        if value_norm.shape[-1] == self.target_dim:
+        if diff_norm.shape[-1] == self.target_dim:
             mean = self.mean[self.target_col : self.target_col + 1]
             std = self.std[self.target_col : self.target_col + 1]
         else:
             mean = self.mean
             std = self.std
 
-        return value_norm * std + mean
+        return diff_norm * std + mean
+
+    def recover_level_from_diff(
+        self,
+        diff_norm: np.ndarray,
+        sample_ids: np.ndarray,
+    ) -> np.ndarray:
+        """
+        将预测的标准化差分累加还原成原始值。
+
+        diff_norm:  [B, pred_len, C]
+        sample_ids: [B]，每个窗口在原始序列中的起始位置
+
+        对每个样本：
+            anchor = raw_data[start + seq_len - 1]
+            pred_raw = anchor + cumsum(pred_diff_raw)
+        """
+        diff_raw = self.inverse_diff_norm(diff_norm)
+
+        sample_ids = np.asarray(sample_ids).astype(np.int64)
+        anchor_index = sample_ids + self.seq_len - 1
+
+        if diff_norm.shape[-1] == self.target_dim:
+            anchors = self.raw_data[
+                anchor_index,
+                self.target_col : self.target_col + 1,
+            ]  # [B, 1]
+        else:
+            anchors = self.raw_data[anchor_index]  # [B, C]
+
+        recovered = anchors[:, None, :] + np.cumsum(diff_raw, axis=1)
+
+        return recovered.astype(np.float32)
 
     def get_train_data_loader(self):
         return self.train_data_loader

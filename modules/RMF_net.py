@@ -358,7 +358,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_tau = getattr(self.config, 'retrieval_tau', 0.55)
         self.retrieval_alpha_max = getattr(self.config, 'retrieval_alpha_max', 0.02)
         self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
-        self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.20)
+        self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.7)
         self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
         self.state_balance_weight = float(getattr(self.config, 'state_balance_weight', 0.02))
         self.state_dom_cap = float(getattr(self.config, 'state_dom_cap', 0.8))
@@ -404,7 +404,7 @@ class ExtremeLSTMMemo(nn.Module):
         )
         self.beta_gate = RetrievalBetaGate(
             hidden_dim=self.retrieval_beta_hidden,
-            beta_min=0.0,
+            beta_min=0.4,
             beta_max=self.retrieval_beta_max,
         )
 
