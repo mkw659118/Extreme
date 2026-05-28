@@ -13,6 +13,7 @@ from exp.exp_loss import compute_loss
 from exp.exp_metrics import ErrorMetrics
 from utils.model_monitor import EarlyStopping
 from utils.model_trainer import get_loss_function, get_optimizer
+from torch.utils.data import DataLoader
 
 
 class BasicModel(torch.nn.Module):
@@ -519,50 +520,74 @@ class BasicModel(torch.nn.Module):
 
         return avg_loss, t2 - t1, last_aux
 
-    def prepare_retrieval_index(self, train_data, train_loader):
+    def prepare_retrieval_index(self, train_data, train_loader=None):
         print("*******Constructing the Retrieval Indexes*********")
 
-        time_now = time.time()
-        train_steps = len(train_loader)
+        # 构建检索库时必须固定顺序
+        # 不能直接用 dataModule.train_data_loader，因为它通常 shuffle=True
+        index_loader = DataLoader(
+            train_data,
+            batch_size=int(self.config.bs),
+            shuffle=False,
+            num_workers=int(getattr(self.config, "num_workers", 0)),
+            pin_memory=True,
+        )
 
+        # 检索库容量 = 训练集窗口数量
         self.model.construct_index(len(train_data))
 
+        # 如果模型里 retrieval_stride 存在，就同步成数据集真实 stride
+        # 这样 retrieval() 里 sample_id // retrieval_stride 才能映射到训练窗口下标
+        if hasattr(self.model, "retrieval_stride"):
+            self.model.retrieval_stride = int(
+                getattr(train_data, "stride", getattr(self.config, "stride", 1))
+            )
+
+        write_ptr = 0
+        time_now = time.time()
+        train_steps = len(index_loader)
+
         with torch.no_grad():
-            for epoch in range(1):
-                iter_count = 0
+            for i, batch in enumerate(index_loader):
+                batch_x, x_mark, batch_y, sample_ids = batch
 
-                for i, batch in enumerate(train_loader):
-                    batch_x, x_mark, batch_y, sample_ids = batch
+                batch_x = batch_x.float().to(self.config.device, non_blocking=True)
+                batch_y = batch_y.float().to(self.config.device, non_blocking=True)
 
-                    batch_x = batch_x.float().to(self.config.device)
-                    batch_y = batch_y.float().to(self.config.device)
-                    sample_ids = sample_ids.to(self.config.device).long()
+                batch_size = batch_x.size(0)
 
-                    iter_count += 1
+                # 这里才是检索库真正的写入下标：0,1,2,...,N-1
+                index_ids = torch.arange(
+                    write_ptr,
+                    write_ptr + batch_size,
+                    device=self.config.device,
+                    dtype=torch.long,
+                )
 
-                    self.model.add_key_value(
-                        batch_x,
-                        batch_y[:, -self.config.pred_len:, :],
-                        sample_ids,
+                self.model.add_key_value(
+                    batch_x,
+                    batch_y[:, -self.config.pred_len:, :],
+                    index_ids,
+                )
+
+                write_ptr += batch_size
+
+                if (i + 1) % 100 == 0 or (i + 1) == train_steps:
+                    speed = (time.time() - time_now) / max(i + 1, 1)
+                    left_time = speed * max(train_steps - i - 1, 0)
+
+                    print(
+                        f"\titers: {i + 1}/{train_steps}, "
+                        f"speed: {speed:.4f}s/iter; "
+                        f"left time: {left_time:.4f}s"
                     )
 
-                    if (i + 1) % 100 == 0:
-                        print("\titers: {0}, epoch: {1}".format(i + 1, epoch + 1))
-
-                        speed = (time.time() - time_now) / max(iter_count, 1)
-                        left_time = speed * ((1 - epoch) * train_steps - i)
-
-                        print(
-                            "\tspeed: {:.4f}s/iter; left time: {:.4f}s".format(
-                                speed,
-                                left_time,
-                            )
-                        )
-
-                        iter_count = 0
-                        time_now = time.time()
-
-        print("*******Finishing the Retrieval Indexes*********")
+        print(
+            "*******Finishing the Retrieval Indexes | "
+            f"index={self.model.index}, capacity={len(train_data)}, "
+            f"retrieval_stride={getattr(self.model, 'retrieval_stride', None)}"
+            " *********"
+        )
 
         self.model.value_permute = self.model.values.permute(2, 0, 1)
 
@@ -1025,6 +1050,7 @@ class BasicModel(torch.nn.Module):
             model.prepare_retrieval_index(train_data, train_loader)
 
             gate_time = []
+            gate_trained = False
 
             if gate_epochs > 0:
                 model.model.freeze_backbone_for_gate()
@@ -1067,8 +1093,9 @@ class BasicModel(torch.nn.Module):
                             break
 
                 model.load_state_dict(best_gate_state)
+                gate_trained = True
 
-            model.model.mark_gate_ready(True)
+            model.model.mark_gate_ready(gate_trained)
             model.model.unfreeze_all()
 
             sum_time = sum(train_time[: monitor.best_epoch]) + sum(gate_time)
@@ -1086,7 +1113,7 @@ class BasicModel(torch.nn.Module):
         return results
 
     def RunOnce(self, config, runId, model, datamodule, log):
-        pretrain_epochs = int(getattr(config, "pretrain_epochs", 5))
+        pretrain_epochs = int(getattr(config, "pretrain_epochs", 20))
         freeze_after_pretrain = bool(
             getattr(config, "freeze_prior_after_pretrain", False)
         )

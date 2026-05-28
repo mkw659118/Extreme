@@ -12,7 +12,7 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 
 
-class AbileneDataset(Dataset):
+class TimeSeriesDataset(Dataset):
     def __init__(
         self,
         x: np.ndarray,
@@ -65,21 +65,20 @@ class DS:
         self.pred_len = int(self.config.pred_len)
         self.stride = int(getattr(self.config, "stride", 1))
 
-        self.data_path = getattr(
-            self.config,
-            "data_path",
-            "./datasets/Abilene_12_12_3000_T3000_flat144.csv",
+        self.data_root = getattr(self.config, "path", "./datasets")
+        self.dataset = getattr(self.config, "dataset", "Abilene")
+        self.data_file = getattr(self.config, "data_file", "Abilene_12_12_3000.csv")
+
+        self.data_path = os.path.join(
+            self.data_root,
+            self.dataset,
+            self.data_file,
         )
 
-        self.expected_num_vars = int(getattr(self.config, "enc_in", 144))
+
         self.target_col = int(getattr(self.config, "target_col", 0))
         self.target_dim = 1
-
-        if not 0 <= self.target_col < self.expected_num_vars:
-            raise ValueError(
-                f"target_col={self.target_col} is out of range for "
-                f"enc_in={self.expected_num_vars}."
-            )
+        self.num_vars = None
 
         setattr(self.config, "target_col", self.target_col)
         setattr(self.config, "target_dim", self.target_dim)
@@ -104,21 +103,33 @@ class DS:
 
     def _load_csv(self) -> np.ndarray:
         if not os.path.exists(self.data_path):
-            raise FileNotFoundError(f"Abilene csv not found: {self.data_path}")
+            raise FileNotFoundError(f"CSV file not found: {self.data_path}")
 
         data = np.loadtxt(self.data_path, delimiter=",")
 
-        if data.ndim != 2:
-            raise ValueError(f"Expected 2D array, got shape {data.shape}")
+        # 单变量数据可能被 np.loadtxt 读成 [T]，统一转成 [T, 1]
+        if data.ndim == 1:
+            data = data.reshape(-1, 1)
 
-        if data.shape[1] != self.expected_num_vars:
-            raise ValueError(
-                f"Variable dimension mismatch: data has {data.shape[1]} variables, "
-                f"but config.enc_in={self.expected_num_vars}."
-            )
+        if data.ndim != 2:
+            raise ValueError(f"Expected 2D array [T, C], got shape {data.shape}")
 
         if np.isnan(data).any():
-            raise ValueError("NaN found in Abilene csv.")
+            raise ValueError("NaN found in csv.")
+
+        # 直接从数据本身推断变量数
+        self.num_vars = int(data.shape[1])
+
+        # 回写 config，给后面的模型初始化用
+        setattr(self.config, "enc_in", self.num_vars)
+        setattr(self.config, "num_vars", self.num_vars)
+
+        # 现在才检查 target_col 是否越界
+        if not 0 <= self.target_col < self.num_vars:
+            raise ValueError(
+                f"target_col={self.target_col} is out of range. "
+                f"Data has {self.num_vars} variables."
+            )
 
         return data.astype(np.float32)
 
@@ -291,7 +302,7 @@ class DS:
         num_workers = int(getattr(self.config, "num_workers", 0))
 
         self.train_data_loader = DataLoader(
-            AbileneDataset(
+            TimeSeriesDataset(
                 x_train,
                 y_train,
                 self.config,
@@ -305,7 +316,7 @@ class DS:
         )
 
         self.val_data_loader = DataLoader(
-            AbileneDataset(
+            TimeSeriesDataset(
                 x_val,
                 y_val,
                 self.config,
@@ -319,7 +330,7 @@ class DS:
         )
 
         self.test_data_loader = DataLoader(
-            AbileneDataset(
+            TimeSeriesDataset(
                 x_test,
                 y_test,
                 self.config,
@@ -333,29 +344,29 @@ class DS:
         )
 
         print(
-            f"[Abilene] raw shape: {data.shape}, "
+            f"[Dataset] raw shape: {data.shape}, "
             f"T={data.shape[0]}, C={data.shape[1]}"
         )
         print(
-            f"[Abilene] split points: "
+            f"[Dataset] split points: "
             f"train_end={train_end}, val_end={val_end}"
         )
         print(
-            f"[Abilene] raw split lengths with context: "
+            f"[Dataset] raw split lengths with context: "
             f"train={len(train_raw)}, val={len(val_raw)}, test={len(test_raw)}"
         )
         print(
-            "[Abilene] windows:",
+            "[Dataset] windows:",
             f"x_train={x_train.shape}, y_train={y_train.shape}",
             f"x_val={x_val.shape}, y_val={y_val.shape}",
             f"x_test={x_test.shape}, y_test={y_test.shape}",
         )
         print(
-            f"[Abilene] many-to-one target: "
+            f"[Dataset] many-to-one target: "
             f"target_col={self.target_col}, target_dim={self.target_dim}"
         )
         print(
-            f"[Abilene] value norm mean/std shape: "
+            f"[Dataset] value norm mean/std shape: "
             f"mean={self.mean.shape}, std={self.std.shape}"
         )
 

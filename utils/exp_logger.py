@@ -65,7 +65,7 @@ class Logger:
         with open(f"./{log_path}.log", 'a') as f:
             timestamp = time.strftime('|%Y-%m-%d %H:%M:%S| ')
             f.write(timestamp + self.exper_detail + '\n')
-            metric_str = ' '.join([f"{k} - {np.mean(v):.4f}" for k, v in metrics.items()])
+            metric_str = ' '.join([f"{k} - {np.mean(v):.8f}" for k, v in metrics.items()])
             f.write(timestamp + metric_str + '\n')
 
     # 保存结果到pickle文件
@@ -119,9 +119,9 @@ class Logger:
     def show_epoch_error(self, runId, epoch, monitor, epoch_loss, result_error, train_time):
         if self.config.verbose and epoch % self.config.verbose == 0:
             self.only_print(self.exper_detail)
-            best = f"Best Epoch {monitor.best_epoch} {self.config.monitor_metric} = {-monitor.best_score:.4f}  now = {epoch - monitor.best_epoch}"
+            best = f"Best Epoch {monitor.best_epoch} {self.config.monitor_metric} = {-monitor.best_score:.8f}  now = {epoch - monitor.best_epoch}"
             self.only_print(best)
-            summary = f"Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.4f} "
+            summary = f"Round={runId + 1} Epoch={epoch + 1:03d} Loss={epoch_loss:.8f} "
             summary += ' '.join([f"v{k}={self._fmt_metric(k, v)}" for k, v in result_error.items()])
             summary += f" time={sum(train_time):.1f} s"
             self.only_print(summary)
@@ -129,7 +129,7 @@ class Logger:
     # 展示最终测试结果
     def show_test_error(self, runId, monitor, result_error, sum_time):
         summary = f"Round={runId + 1} BestEpoch={monitor.best_epoch:3d} "
-        summary += f"Valid{self.config.monitor_metric}={-monitor.best_score:.4f} ｜ "
+        summary += f"Valid{self.config.monitor_metric}={-monitor.best_score:.8f} ｜ "
         summary += ' '.join([f"{k}={self._fmt_metric(k, v)}" for k, v in result_error.items()])
         summary += f" time={sum_time:.1f} s"
         self.log(summary)
@@ -194,12 +194,12 @@ class Logger:
         if isinstance(body, dict):
             body_lines = ['*' * 10 + 'Experiment Results:' + '*' * 10]
             for k, v in body.items():
-                body_lines.append(f"{k}: {np.mean(v):.4f} ± {np.std(v):.4f}")
+                body_lines.append(f"{k}: {np.mean(v):.8f} ± {np.std(v):.8f}")
             flops, params, inf_time = get_efficiency(self.config)
             body_lines += [f"Flops: {flops:.0f}", f"Params: {params:.0f}", f"Inference time: {inf_time:.2f} ms"]
             body_lines.append('*' * 10 + 'Experiment Success' + '*' * 10)
             for i in range(self.config.rounds):
-                metrics_str = f"Round {i + 1}: " + ' '.join([f"{k}: {body[k][i]:.4f}" for k in body])
+                metrics_str = f"Round {i + 1}: " + ' '.join([f"{k}: {body[k][i]:.8f}" for k in body])
                 body_lines.append(metrics_str)
             body_lines.append(self._format_config_dict(self.config.__dict__))
         else:

@@ -41,7 +41,7 @@ class BaseModelConfig:
 
 @dataclass
 class DatasetInfo:
-    path: str = './datasets/'
+    path: str = './datasets'
     dataset: str = 'Abilene'
     train_size: int = 500
     use_train_size: bool = False
@@ -67,6 +67,8 @@ class DatasetInfo:
     train_seed: int = 2024
     roll: int = 8
     enc_in: int = 144
+    data_file: str = 'Abilene_12_12_3000.csv'
+    target_col: int = 0
 
 
 @dataclass

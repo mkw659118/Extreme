@@ -4,7 +4,7 @@ import collections
 import pandas as pd
 
 from data_provider.DS_abilene import DS
-from exp.exp_model_net import Model
+from exp.exp_model_net_baseline import Model
 import utils.model_efficiency
 import utils.utils
 

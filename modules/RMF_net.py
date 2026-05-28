@@ -590,7 +590,7 @@ class ExtremeLSTMMemo(nn.Module):
             aux_dict['sim_mean'] = sims.mean().detach()
             out['retrieval_pred'] = retrieval_pred
             out['beta'] = beta
-        elif mode == 'test' and hasattr(self, 'index') and self.index > 0:
+        elif mode == 'test' and hasattr(self, 'index') and self.index > 0:            
             if bool(self.retrieval_gate_ready.item()):
                 fused_point, retrieval_pred, sims, beta = self._gate_fuse(x, point_pred, sample_ids)
                 point_pred = fused_point
@@ -601,6 +601,7 @@ class ExtremeLSTMMemo(nn.Module):
                 out['beta'] = beta
             else:
                 retrieval_results, sims, _ = self.retrieval(x, sample_ids)
+                print("进入检索状态。。。。。。。。。。。。。。。。。。。。。。。。。。。。。")
                 retrieval_pred = retrieval_results[:, :, :self.out_dim]
                 fused_point, dynamic_alpha = self._heuristic_fuse(point_pred, retrieval_pred, sims)
                 point_pred = fused_point
