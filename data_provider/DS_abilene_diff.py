@@ -35,7 +35,7 @@ class TimeSeriesDataset(Dataset):
         y = self.y[idx]
 
         # 当前模型没有真正使用 x_mark，保留占位
-        x_mark = np.zeros((x.shape[0], 1), dtype=np.float32)
+        x_mark = np.zeros((x.shape[0], 4), dtype=np.float32)
 
         # sample_id 表示这个窗口在原始全序列中的起始位置
         sample_id = np.int64(self.id_offset + idx * self.stride)

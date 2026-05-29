@@ -33,6 +33,6 @@ class FEDformerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     task_name: str = 'long_term_forecast'  
     c_out : int = 1  
     label_len: int = 48  
-    dec_in : int = 1  
+    dec_in : int = 144  
     distil: bool = True
     moving_avg: int = 25

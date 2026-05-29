@@ -24,7 +24,7 @@ d_models=(256 512)
 # done
 
 # configs=("DLinearConfig" "NLinearConfig" "PMDformerConfig" "ITransformerConfig" "InformerConfig" "FEDformerConfig" "FeTSConfig" "HMformerConfig")
-configs=("HMformerConfig")
+configs=("InformerConfig" "FEDformerConfig")
 
 for cfg in "${configs[@]}"
 do
