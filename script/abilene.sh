@@ -4,7 +4,7 @@
 pred_lens=(5)
 d_models=(256 512)
 # configs=("DLinearConfig" "NLinearConfig" "PMDformerConfig" "ITransformerConfig" "InformerConfig" "FEDformerConfig" "FeTSConfig" "HMformerConfig")
-configs=("InformerConfig" "FEDformerConfig")
+configs=("FEDformerConfig")
 
 # for pred in "${pred_lens[@]}"
 # do
