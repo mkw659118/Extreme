@@ -13,8 +13,8 @@ do
       --config "NetConfig" \
       --pred_len "$pred" \
       --d_model "$dm" \
-      --dataset 'Abilene' \
-      --data_file 'Abilene_single.csv' \
+      --dataset 'Seattle' \
+      --data_file 'Seattle_single.csv' \
       --epochs 200 \
       --patience 40 \
       --rounds 5 \
@@ -40,8 +40,8 @@ do
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
-        --dataset 'Abilene' \
-        --data_file 'Abilene_single.csv' \
+        --dataset 'Seattle' \
+        --data_file 'Seattle_single.csv' \
         --epochs 200 \
         --patience 40 \
         --seq_len 96 \

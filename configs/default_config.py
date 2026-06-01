@@ -66,8 +66,8 @@ class DatasetInfo:
     val_seed: int = 2025
     train_seed: int = 2024
     roll: int = 8
-    enc_in: int = 144
-    data_file: str = 'Abilene_12_12_3000.csv'
+    enc_in: int = 1
+    data_file: str = 'Abilene_single.csv'
     target_col: int = 0
 
 

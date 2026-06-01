@@ -3,7 +3,7 @@ import torch
 import collections
 import pandas as pd
 
-from data_provider.DS_abilene import DS
+from data_provider.DS_abilene_single import DS
 from exp.exp_model_net_baseline import Model
 import utils.model_efficiency
 import utils.utils
@@ -56,6 +56,9 @@ def RunExperiments(log, config):
         utils.utils.set_seed(config.seed + runId)
 
         datamodule = DS(config)
+        # dataloader 已经根据 CSV 自动设置 config.enc_in
+        if config.model.lower() in ["fedformer", "autoformer"]:
+            config.dec_in = config.enc_in
 
         model = Model(config)
         log.plotter.reset_round()

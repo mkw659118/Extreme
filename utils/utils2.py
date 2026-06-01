@@ -270,3 +270,59 @@ def plot(gt, pre):
     plt.ylabel("water level")
     plt.plot(np.array(gt), "black", label="Ground Truth")
     plt.plot(np.array(pre), "blue", label="Predicted")
+
+import os
+import numpy as np
+
+
+def extract_single_column_csv(
+    src_path: str,
+    save_path: str,
+    target_col: int,
+    delimiter: str = ",",
+    fmt: str = "%.8g",
+) -> np.ndarray:
+    """
+    从多变量 CSV 中抽取指定列，保存为单变量 CSV。
+
+    Args:
+        src_path: 原始多变量 CSV 路径，形状通常为 [T, C]
+        save_path: 单变量 CSV 保存路径
+        target_col: 要抽取的目标列下标，从 0 开始
+        delimiter: CSV 分隔符，默认逗号
+        fmt: 保存数值格式
+
+    Returns:
+        target_series: 抽取后的单变量数组，形状为 [T, 1]
+    """
+    data = np.loadtxt(src_path, delimiter=delimiter)
+
+    # 如果原始文件本身就是单变量，np.loadtxt 可能读成 [T]
+    if data.ndim == 1:
+        data = data.reshape(-1, 1)
+
+    if data.ndim != 2:
+        raise ValueError(f"Expected 2D array [T, C], got shape {data.shape}")
+
+    num_cols = data.shape[1]
+
+    if not 0 <= target_col < num_cols:
+        raise ValueError(
+            f"target_col={target_col} is out of range. "
+            f"CSV has {num_cols} columns."
+        )
+
+    target_series = data[:, target_col:target_col + 1]
+
+    save_dir = os.path.dirname(save_path)
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+
+    np.savetxt(save_path, target_series, delimiter=delimiter, fmt=fmt)
+
+    print("original shape:", data.shape)
+    print("single-variable shape:", target_series.shape)
+    print("target_col:", target_col)
+    print("saved to:", save_path)
+
+    return target_series

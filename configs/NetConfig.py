@@ -22,8 +22,8 @@ class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     seq_len: int = 96
     label_len: int = 0
     pred_len: int = 96
-    c_in: int = 144
-    enc_in: int = 144
+    c_in: int = 1
+    enc_in: int = 1
     dec_in: int = 1
     out_dim: int = 1
     
