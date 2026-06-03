@@ -522,8 +522,9 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         "MSE": MSE,
         "RMSE": RMSE,
         "MAPE": MAPE,
+        "NMAE": NMAE,
+        "NRMSE": NRMSE,
         "COS": COS,
-
         # 新版 ECR：Excess-Mass Extreme Capture Rate
         "ECR_q90": ECR_q90,
         "ECR_q99": ECR_q99,
@@ -548,8 +549,7 @@ def compute_regression_metrics(realVec, estiVec, config, mode):
         "Raw_q99": raw_q99,
 
         # 兼容原有整体指标
-        "NMAE": NMAE,
-        "NRMSE": NRMSE,
+        
         "Acc_10": Acc[2],
     }
 

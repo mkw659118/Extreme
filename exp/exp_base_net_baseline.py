@@ -126,11 +126,11 @@ class BasicModel(torch.nn.Module):
                     )
 
                     total_loss_value = main_loss
-                    print(
-                        f"[{stage}] Batch {batch_idx + 1}/{len(dataModule.train_data_loader)} - "
-                        f"Main Loss: {main_loss.item():.6f}, "
-                        f"Total Loss: {total_loss_value.item():.6f}"
-                    )
+                    # print(
+                    #     f"[{stage}] Batch {batch_idx + 1}/{len(dataModule.train_data_loader)} - "
+                    #     f"Main Loss: {main_loss.item():.6f}, "
+                    #     f"Total Loss: {total_loss_value.item():.6f}"
+                    # )
 
                     total_loss_value.backward()
 
@@ -162,56 +162,13 @@ class BasicModel(torch.nn.Module):
 
         return avg_loss, t2 - t1
 
-    def _metric_config_for_original_space(self):
-        """
-        Metrics are computed after inverse normalization, so ErrorMetrics should
-        treat the input tensors as already being in the original raw-value space.
-        """
-        metric_config = copy.copy(self.config)
-        setattr(metric_config, "eval_space", "original")
-        setattr(metric_config, "metric_space", "original")
-        setattr(metric_config, "already_original_space", True)
-
-        # If ErrorMetrics has optional inverse/recover switches, disable them
-        # here to avoid applying inverse normalization twice.
-        for flag in (
-            "inverse_eval",
-            "denormalize_eval",
-            "recover_level",
-            "recover_level_from_diff",
-            "use_inverse_transform",
-            "use_denormalize",
-        ):
-            if hasattr(metric_config, flag):
-                setattr(metric_config, flag, False)
-
-        return metric_config
-
     def _inverse_to_original_space(self, dataModule, value_scaled: torch.Tensor) -> torch.Tensor:
-        """
-        Convert standardized prediction/label values back to raw-value space.
-
-        The dataset normalizer is fitted only on the training split, so calling
-        dataModule.inverse_value_norm here keeps validation/test evaluation on
-        the original scale without leaking validation/test statistics.
-        """
-        if not hasattr(dataModule, "inverse_value_norm"):
-            raise AttributeError(
-                "dataModule must provide inverse_value_norm() for original-space evaluation."
-            )
-
         value_np = value_scaled.detach().float().cpu().numpy()
         value_original = dataModule.inverse_value_norm(value_np).astype(np.float32)
         return torch.from_numpy(value_original).to(self.config.device)
 
     def _evaluate_original_space(self, dataModule, dataloader, mode: str):
-        """
-        Validation/test metric computation.
-
-        Model outputs and labels are standardized tensors. Before computing
-        MAE/RMSE/MAPE/R2 and other reported metrics, both are inverse-normalized
-        to the original raw-value space.
-        """
+        
         preds = []
         reals = []
 
@@ -257,7 +214,7 @@ class BasicModel(torch.nn.Module):
         return ErrorMetrics(
             reals,
             preds,
-            self._metric_config_for_original_space(),
+            self.config,
             mode,
         )
 
@@ -270,12 +227,288 @@ class BasicModel(torch.nn.Module):
 
         return self._evaluate_original_space(dataModule, dataloader, mode)
 
+    def _build_test_save_paths(self):
+        dataset_name = getattr(self.config, "dataset", "Dataset")
+        model_name = getattr(self.config, "model", "Model")
+
+        data_file = getattr(self.config, "data_file", "data")
+        data_tag = os.path.splitext(os.path.basename(str(data_file)))[0]
+
+        target_col = int(getattr(self.config, "target_col", 0))
+        original_target_col = int(getattr(self.config, "original_target_col", target_col))
+
+        save_dir = os.path.join(
+            "./draw",
+            str(dataset_name),
+            str(data_tag),
+            str(model_name),
+            f"PL{self.config.pred_len}_DM{self.config.d_model}",
+            f"TC{original_target_col}",
+        )
+
+        return (
+            os.path.join(save_dir, "test_raw.csv"),
+            os.path.join(save_dir, "test_agg.csv"),
+        )
+
+    @staticmethod
+    def _to_numpy_array(value):
+        if isinstance(value, torch.Tensor):
+            return value.detach().cpu().numpy()
+        return np.asarray(value)
+
+    def _save_test_raw_result(self, true_series, pred_series, save_path):
+        true_series = self._to_numpy_array(true_series)
+        pred_series = self._to_numpy_array(pred_series)
+
+        if true_series.shape != pred_series.shape:
+            raise ValueError(
+                f"true and pred shapes do not match: {true_series.shape} vs {pred_series.shape}"
+            )
+
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        if true_series.ndim <= 2 or true_series.shape[-1] == 1:
+            true_flat = true_series.reshape(-1)
+            pred_flat = pred_series.reshape(-1)
+            rows = np.column_stack([np.arange(len(true_flat)), true_flat, pred_flat])
+            np.savetxt(
+                save_path,
+                rows,
+                delimiter=",",
+                header="index,true,pred",
+                comments="",
+                fmt=["%d", "%.10g", "%.10g"],
+            )
+        else:
+            true_flat = true_series.reshape(-1, true_series.shape[-1])
+            pred_flat = pred_series.reshape(-1, pred_series.shape[-1])
+            rows = np.concatenate([true_flat, pred_flat], axis=1)
+            header = ",".join(
+                [f"true_var_{i}" for i in range(true_flat.shape[1])]
+                + [f"pred_var_{i}" for i in range(pred_flat.shape[1])]
+            )
+            np.savetxt(save_path, rows, delimiter=",", header=header, comments="", fmt="%.10g")
+
+        print(f"[Save] test raw result saved to: {save_path}")
+
+    def _save_test_aggregated_result(self, true_series, pred_series, sample_ids, save_path):
+        true_series = self._to_numpy_array(true_series)
+        pred_series = self._to_numpy_array(pred_series)
+        sample_ids = self._to_numpy_array(sample_ids).astype(np.int64)
+
+        if true_series.shape != pred_series.shape:
+            raise ValueError(
+                f"true and pred shapes do not match: {true_series.shape} vs {pred_series.shape}"
+            )
+
+        if true_series.ndim == 2:
+            true_series = true_series[:, :, None]
+            pred_series = pred_series[:, :, None]
+
+        if true_series.ndim != 3:
+            raise ValueError(f"Expected [N, pred_len, C], got shape {true_series.shape}")
+
+        if len(sample_ids) != true_series.shape[0]:
+            raise ValueError(
+                f"sample_ids length {len(sample_ids)} does not match window count {true_series.shape[0]}"
+            )
+
+        pred_len = true_series.shape[1]
+        out_dim = true_series.shape[2]
+        seq_len = int(self.config.seq_len)
+
+        true_sum = {}
+        pred_sum = {}
+        count = {}
+
+        for window_idx, start in enumerate(sample_ids):
+            base_time_idx = int(start) + seq_len
+
+            for horizon in range(pred_len):
+                time_idx = base_time_idx + horizon
+
+                if time_idx not in count:
+                    true_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    pred_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    count[time_idx] = 0
+
+                true_sum[time_idx] += true_series[window_idx, horizon].astype(np.float64)
+                pred_sum[time_idx] += pred_series[window_idx, horizon].astype(np.float64)
+                count[time_idx] += 1
+
+        time_indices = sorted(count)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        if out_dim == 1:
+            rows = np.asarray(
+                [
+                    [
+                        time_idx,
+                        count[time_idx],
+                        true_sum[time_idx][0] / count[time_idx],
+                        pred_sum[time_idx][0] / count[time_idx],
+                    ]
+                    for time_idx in time_indices
+                ],
+                dtype=np.float64,
+            )
+            np.savetxt(
+                save_path,
+                rows,
+                delimiter=",",
+                header="time_idx,count,true,pred",
+                comments="",
+                fmt=["%d", "%d", "%.10g", "%.10g"],
+            )
+        else:
+            rows = []
+            for time_idx in time_indices:
+                true_avg = true_sum[time_idx] / count[time_idx]
+                pred_avg = pred_sum[time_idx] / count[time_idx]
+                rows.append(np.concatenate([[time_idx, count[time_idx]], true_avg, pred_avg]))
+
+            rows = np.asarray(rows, dtype=np.float64)
+            header = ",".join(
+                ["time_idx", "count"]
+                + [f"true_var_{i}" for i in range(out_dim)]
+                + [f"pred_var_{i}" for i in range(out_dim)]
+            )
+            fmt = ["%d", "%d"] + ["%.10g"] * (2 * out_dim)
+            np.savetxt(save_path, rows, delimiter=",", header=header, comments="", fmt=fmt)
+
+        print(f"[Save] test aggregated result saved to: {save_path}")
+    
+    def _aggregate_series_by_time_for_metric(self, true_series, pred_series, sample_ids):
+        true_series = self._to_numpy_array(true_series)
+        pred_series = self._to_numpy_array(pred_series)
+        sample_ids = self._to_numpy_array(sample_ids).astype(np.int64)
+
+        if true_series.shape != pred_series.shape:
+            raise ValueError(
+                f"true and pred shapes do not match: {true_series.shape} vs {pred_series.shape}"
+            )
+
+        if true_series.ndim == 2:
+            true_series = true_series[:, :, None]
+            pred_series = pred_series[:, :, None]
+
+        if true_series.ndim != 3:
+            raise ValueError(f"Expected [N, pred_len, C], got shape {true_series.shape}")
+
+        pred_len = true_series.shape[1]
+        out_dim = true_series.shape[2]
+        seq_len = int(self.config.seq_len)
+
+        true_sum = {}
+        pred_sum = {}
+        count = {}
+
+        for window_idx, start in enumerate(sample_ids):
+            base_time_idx = int(start) + seq_len
+
+            for horizon in range(pred_len):
+                time_idx = base_time_idx + horizon
+
+                if time_idx not in count:
+                    true_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    pred_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
+                    count[time_idx] = 0
+
+                true_sum[time_idx] += true_series[window_idx, horizon].astype(np.float64)
+                pred_sum[time_idx] += pred_series[window_idx, horizon].astype(np.float64)
+                count[time_idx] += 1
+
+        time_indices = sorted(count)
+
+        true_agg = np.stack(
+            [true_sum[i] / count[i] for i in time_indices],
+            axis=0,
+        ).astype(np.float32)
+
+        pred_agg = np.stack(
+            [pred_sum[i] / count[i] for i in time_indices],
+            axis=0,
+        ).astype(np.float32)
+
+        return true_agg, pred_agg
+
     def test(self, dataModule):
         self.eval()
         torch.set_grad_enabled(False)
 
         dataloader = dataModule.test_data_loader
-        return self._evaluate_original_space(dataModule, dataloader, "test")
+
+        preds = []
+        reals = []
+        ids = []
+
+        ctx = (
+            torch.autocast(device_type=self.device_type, dtype=torch.float16)
+            if self.config.use_amp
+            else contextlib.nullcontext()
+        )
+
+        with ctx:
+            for batch in dataloader:
+                x, x_mark, label, sample_ids = batch
+
+                x = x.to(self.config.device)
+                x_mark = x_mark.to(self.config.device)
+                label = label.to(self.config.device)
+
+                dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
+                dec_input = torch.cat(
+                    [label[:, :self.label_len, :], dec_input],
+                    dim=1,
+                ).float().to(self.config.device)
+
+                pred = self.forward(
+                    x,
+                    x_mark,
+                    dec_input,
+                    None,
+                )
+
+                pred_scaled = pred[:, -self.pred_len:, 0:1]
+                real_scaled = label[:, -self.pred_len:, 0:1]
+
+                pred_original = self._inverse_to_original_space(dataModule, pred_scaled)
+                real_original = self._inverse_to_original_space(dataModule, real_scaled)
+
+                preds.append(pred_original)
+                reals.append(real_original)
+                ids.append(sample_ids)
+
+        reals = torch.cat(reals, dim=0)
+        preds = torch.cat(preds, dim=0)
+        ids = torch.cat(ids, dim=0)
+
+        save_path, aggregated_save_path = self._build_test_save_paths()
+        self._save_test_raw_result(
+            true_series=reals,
+            pred_series=preds,
+            save_path=save_path,
+        )
+        self._save_test_aggregated_result(
+            true_series=reals,
+            pred_series=preds,
+            sample_ids=ids,
+            save_path=aggregated_save_path,
+        )
+
+        real_agg, pred_agg = self._aggregate_series_by_time_for_metric(
+            true_series=reals,
+            pred_series=preds,
+            sample_ids=ids,
+        )
+
+        return ErrorMetrics(
+            real_agg,
+            pred_agg,
+            self.config,
+            "test",
+        )
 
     def _need_retrain(self, config, runId, log):
         model_path = f"./checkpoints/{config.model}/{log.filename}_round_{runId}.pt"

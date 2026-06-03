@@ -76,7 +76,7 @@ class BasicModel(torch.nn.Module):
     def setup_pretrain_optimizer(self, config):
         self.to(config.device)
 
-        pretrain_lr = getattr(config, "pretrain_lr", config.lr)
+        pretrain_lr = getattr(config, "pretrain_lr", min(float(config.lr), 1e-4))
         pretrain_decay = getattr(config, "pretrain_decay", config.decay)
 
         self.pretrain_optimizer = torch.optim.AdamW(
@@ -454,6 +454,7 @@ class BasicModel(torch.nn.Module):
         t1 = time.time()
 
         total_loss = 0.0
+        total_nll = 0.0
         sample_count = 0
         last_aux = None
 
@@ -463,39 +464,48 @@ class BasicModel(torch.nn.Module):
 
             self.pretrain_optimizer.zero_grad(set_to_none=True)
 
-            if self.config.use_amp:
-                with torch.autocast(device_type=self.device_type, dtype=torch.float16):
-                    loss, aux = self.model.pretrain_state_prior_loss(x)
+            # Student-T prior pretraining is numerically sensitive
+            # (lgamma/log/log1p + mixture logsumexp). Keep this branch in fp32
+            # even when the main backbone uses AMP.
+            with torch.autocast(device_type=self.device_type, enabled=False):
+                loss, aux = self.model.pretrain_state_prior_loss(x.float())
 
-                self.pretrain_scaler.scale(loss).backward()
-                self.pretrain_scaler.unscale_(self.pretrain_optimizer)
-
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.get_state_prior_parameters(),
-                    max_norm=1.0,
+            if not torch.isfinite(loss):
+                raise FloatingPointError(
+                    f"Non-finite state-prior loss at pretrain epoch {self.current_epoch}, "
+                    f"batch {batch_idx + 1}: loss={loss.item()}"
                 )
 
-                self.pretrain_scaler.step(self.pretrain_optimizer)
-                self.pretrain_scaler.update()
+            loss.backward()
 
-            else:
-                loss, aux = self.model.pretrain_state_prior_loss(x)
+            grad_norm = torch.nn.utils.clip_grad_norm_(
+                self.model.get_state_prior_parameters(),
+                max_norm=1.0,
+                error_if_nonfinite=False,
+            )
 
-                loss.backward()
-
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.get_state_prior_parameters(),
-                    max_norm=1.0,
+            if not torch.isfinite(grad_norm):
+                self.pretrain_optimizer.zero_grad(set_to_none=True)
+                raise FloatingPointError(
+                    f"Non-finite state-prior grad norm at pretrain epoch {self.current_epoch}, "
+                    f"batch {batch_idx + 1}: grad_norm={grad_norm.item()}"
                 )
 
-                self.pretrain_optimizer.step()
+            self.pretrain_optimizer.step()
 
             total_loss += loss.item() * x.size(0)
+            total_nll += aux["pretrain_nll"].item() * x.size(0)
             sample_count += x.size(0)
             last_aux = aux
 
             if (batch_idx + 1) % 100 == 0 or (batch_idx + 1) == len(dataModule.train_data_loader):
                 q_mean = aux["q_mean"]
+
+                div = float(aux.get("diversity_loss", torch.tensor(0.0)).item())
+                ent = float(aux.get("assignment_entropy", torch.tensor(0.0)).item())
+                mu_d = float(aux.get("mu_pair_dist_mean", torch.tensor(0.0)).item())
+                sc_d = float(aux.get("scale_pair_dist_mean", torch.tensor(0.0)).item())
+                df_d = float(aux.get("df_pair_dist_mean", torch.tensor(0.0)).item())
 
                 print(
                     f"[pretrain] Batch {batch_idx + 1}/{len(dataModule.train_data_loader)} - "
@@ -503,6 +513,11 @@ class BasicModel(torch.nn.Module):
                     f"NLL: {aux['pretrain_nll'].item():.6f}, "
                     f"KL: {aux['balance_kl'].item():.4f}, "
                     f"Dom: {aux['dominant_penalty'].item():.4f}, "
+                    f"Div: {div:.4f}, "
+                    f"Ent: {ent:.4f}, "
+                    f"MuD: {mu_d:.3f}, "
+                    f"ScaleD: {sc_d:.3f}, "
+                    f"DfD: {df_d:.3f}, "
                     f"q_mean={['%.3f' % v for v in q_mean.tolist()]}"
                 )
 
@@ -512,10 +527,13 @@ class BasicModel(torch.nn.Module):
         t2 = time.time()
 
         avg_loss = total_loss / max(sample_count, 1)
+        avg_nll = total_nll / max(sample_count, 1)
 
         print(
             f"[Train-pretrain] Epoch {self.current_epoch} finished | "
-            f"Avg NLL: {avg_loss:.6f} | Time Cost: {t2 - t1:.2f}s"
+            f"Avg Loss: {avg_loss:.6f} | "
+            f"Avg NLL: {avg_nll:.6f} | "
+            f"Time Cost: {t2 - t1:.2f}s"
         )
 
         return avg_loss, t2 - t1, last_aux
@@ -688,6 +706,7 @@ class BasicModel(torch.nn.Module):
                         q_stat_str = ""
                         q_sample_str = ""
                         alpha_str = ""
+                        prior_reg_str = ""
 
                         if hasattr(self.model, "latest_aux_dict"):
                             latest_aux = self.model.latest_aux_dict
@@ -742,6 +761,41 @@ class BasicModel(torch.nn.Module):
                                     f"{v:.2f}" for v in a.tolist()
                                 ) + "]"
 
+                            if "state_diversity_loss" in latest_aux:
+                                div = float(latest_aux["state_diversity_loss"].item())
+                                ent = float(
+                                    latest_aux.get(
+                                        "state_assignment_entropy",
+                                        torch.tensor(0.0),
+                                    ).item()
+                                )
+                                mu_d = float(
+                                    latest_aux.get(
+                                        "mu_pair_dist_mean",
+                                        torch.tensor(0.0),
+                                    ).item()
+                                )
+                                sc_d = float(
+                                    latest_aux.get(
+                                        "scale_pair_dist_mean",
+                                        torch.tensor(0.0),
+                                    ).item()
+                                )
+                                df_d = float(
+                                    latest_aux.get(
+                                        "df_pair_dist_mean",
+                                        torch.tensor(0.0),
+                                    ).item()
+                                )
+
+                                prior_reg_str = (
+                                    f", StateDiv={div:.4f}"
+                                    f", StateEnt={ent:.4f}"
+                                    f", MuD={mu_d:.3f}"
+                                    f", ScaleD={sc_d:.3f}"
+                                    f", DfD={df_d:.3f}"
+                                )
+
                         print(
                             f"[{stage}] Batch {batch_idx + 1}/{len(dataModule.train_data_loader)} - "
                             f"Main Loss: {main_loss.item():.6f}, "
@@ -750,7 +804,8 @@ class BasicModel(torch.nn.Module):
                             f"{q_mean_str}"
                             f"{q_stat_str}"
                             f"{q_sample_str}"
-                            f"{alpha_str}, "
+                            f"{alpha_str}"
+                            f"{prior_reg_str}, "
                             f"Total Loss: {total_loss_value.item():.6f}"
                         )
 
@@ -1165,17 +1220,31 @@ class BasicModel(torch.nn.Module):
 
                 self.model.state_prior.temperature = t_start + (t_end - t_start) * ratio
 
-                train_nll, _, last_aux = self.pretrain_one_epoch(datamodule)
+                try:
+                    train_pretrain_loss, _, last_aux = self.pretrain_one_epoch(datamodule)
+                except FloatingPointError as e:
+                    print(f"[Pretrain Warning] {e}")
+                    print("[Pretrain Warning] Restore best finite state and stop state-prior pretraining.")
+                    self.model.load_state_dict(best_state)
+                    break
 
-                self.pretrain_scheduler.step(train_nll)
+                if not np.isfinite(train_pretrain_loss):
+                    print(
+                        f"[Pretrain Warning] Non-finite epoch loss {train_pretrain_loss}; "
+                        "restore best finite state and stop state-prior pretraining."
+                    )
+                    self.model.load_state_dict(best_state)
+                    break
+
+                self.pretrain_scheduler.step(train_pretrain_loss)
 
                 print(
                     f"[Pretrain] Current LR: {self.pretrain_optimizer.param_groups[0]['lr']:.6g}, "
                     f"Temp: {self.model.state_prior.temperature:.4f}"
                 )
 
-                if train_nll < best_loss:
-                    best_loss = train_nll
+                if train_pretrain_loss < best_loss:
+                    best_loss = train_pretrain_loss
                     best_state = copy.deepcopy(self.model.state_dict())
 
             self.model.load_state_dict(best_state)
@@ -1188,7 +1257,8 @@ class BasicModel(torch.nn.Module):
             )
 
             if "last_aux" in locals() and last_aux is not None and "q_mean" in last_aux:
-                qmax = float(last_aux["q_mean"].max().item())
+                qmax_value = float(last_aux["q_mean"].max().item())
+                qmax = qmax_value if np.isfinite(qmax_value) else 1.0
 
             if freeze_after_pretrain and qmax < collapse_threshold:
                 self.model.freeze_state_prior()

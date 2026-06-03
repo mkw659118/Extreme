@@ -49,14 +49,24 @@ class StudentTMixturePrior(nn.Module):
 
     def reset_parameters(self):
         # Break permutation symmetry at initialization to avoid uniform posterior collapse.
+        # Also perturb scale/df slightly; if scale_raw and df_raw start exactly
+        # identical, pairwise distance losses can have zero-distance gradients.
         with torch.no_grad():
             nn.init.normal_(self.mu, mean=0.0, std=0.05)
+            nn.init.constant_(self.scale_raw, -1.0)
+            nn.init.constant_(self.df_raw, 1.0)
+
             if self.num_components > 1:
                 comp_offsets = torch.linspace(-0.5, 0.5, steps=self.num_components, device=self.mu.device)
                 self.mu[:, 0] = self.mu[:, 0] + comp_offsets
 
-            nn.init.constant_(self.scale_raw, -1.0)
-            nn.init.constant_(self.df_raw, 1.0)
+                scale_offsets = torch.linspace(-0.12, 0.12, steps=self.num_components, device=self.scale_raw.device)
+                df_offsets = torch.linspace(-0.08, 0.08, steps=self.num_components, device=self.df_raw.device)
+                self.scale_raw.add_(scale_offsets.view(-1, 1))
+                self.df_raw.add_(df_offsets.view(-1, 1))
+
+            self.scale_raw.add_(0.01 * torch.randn_like(self.scale_raw))
+            self.df_raw.add_(0.01 * torch.randn_like(self.df_raw))
             nn.init.normal_(self.mix_logits, mean=0.0, std=0.05)
 
     def extract_state_vector(self, x: torch.Tensor) -> torch.Tensor:
@@ -93,11 +103,103 @@ class StudentTMixturePrior(nn.Module):
         x_patch = x_trim.view(batch_size, usable // patch_len, patch_len, channels).mean(dim=2)
         return x_patch
 
+    def get_component_params(self):
+        """
+        Return valid Student-T mixture parameters.
+
+        mu:    [K, D]
+        scale: [K, D], positive
+        df:    [K, D], larger than min_df
+        """
+        scale = F.softplus(self.scale_raw.float()) + self.min_scale
+        df = F.softplus(self.df_raw.float()) + self.min_df
+        return self.mu.float(), scale, df
+
+    def component_diversity_loss(
+        self,
+        mu_margin: float = 1.0,
+        scale_margin: float = 0.3,
+        df_margin: float = 0.2,
+        scale_weight: float = 0.2,
+        df_weight: float = 0.1,
+        eps: float = 1e-6,
+    ):
+        """
+        Softly separate different Student-T components.
+
+        This loss only penalizes component pairs whose parameters are too close.
+        The mixture likelihood is still responsible for keeping the summed
+        distribution close to the training data.
+        """
+        if self.num_components <= 1:
+            zero = self.mu.new_tensor(0.0)
+            aux = {
+                'mu_sep_loss': zero.detach(),
+                'scale_sep_loss': zero.detach(),
+                'df_sep_loss': zero.detach(),
+                'mu_pair_dist_mean': zero.detach(),
+                'scale_pair_dist_mean': zero.detach(),
+                'df_pair_dist_mean': zero.detach(),
+            }
+            return zero, aux
+
+        mu, scale, df = self.get_component_params()
+
+        idx_i, idx_j = torch.triu_indices(
+            self.num_components,
+            self.num_components,
+            offset=1,
+            device=mu.device,
+        )
+
+        mu_i, mu_j = mu[idx_i], mu[idx_j]
+        scale_i, scale_j = scale[idx_i], scale[idx_j]
+        df_i, df_j = df[idx_i], df[idx_j]
+
+        # Mean separation is normalized by the pooled component scale so that
+        # dimensions with naturally larger scale do not dominate the distance.
+        # The +eps is inside sqrt to avoid the undefined gradient of sqrt(0),
+        # which is a common source of NaNs for pairwise distance losses.
+        pooled_scale = torch.sqrt(0.5 * (scale_i.pow(2) + scale_j.pow(2)) + eps)
+        mu_diff = (mu_i - mu_j) / pooled_scale
+        mu_dist = torch.sqrt(mu_diff.pow(2).sum(dim=-1) + eps)
+
+        # Scale and df are positive, so compare them in log-space.
+        log_scale_diff = torch.log(scale_i + eps) - torch.log(scale_j + eps)
+        log_scale_dist = torch.sqrt(log_scale_diff.pow(2).sum(dim=-1) + eps)
+
+        log_df_diff = torch.log(df_i + eps) - torch.log(df_j + eps)
+        log_df_dist = torch.sqrt(log_df_diff.pow(2).sum(dim=-1) + eps)
+
+        mu_sep_loss = F.relu(mu_margin - mu_dist).pow(2).mean()
+        scale_sep_loss = F.relu(scale_margin - log_scale_dist).pow(2).mean()
+        df_sep_loss = F.relu(df_margin - log_df_dist).pow(2).mean()
+
+        diversity_loss = (
+            mu_sep_loss
+            + scale_weight * scale_sep_loss
+            + df_weight * df_sep_loss
+        )
+
+        aux = {
+            'mu_sep_loss': mu_sep_loss.detach(),
+            'scale_sep_loss': scale_sep_loss.detach(),
+            'df_sep_loss': df_sep_loss.detach(),
+            'mu_pair_dist_mean': mu_dist.mean().detach(),
+            'scale_pair_dist_mean': log_scale_dist.mean().detach(),
+            'df_pair_dist_mean': log_df_dist.mean().detach(),
+        }
+
+        return diversity_loss, aux
+
     def _component_log_prob(self, z: torch.Tensor) -> torch.Tensor:
         # z: [B, D], output: [B, K]
-        mu = self.mu.unsqueeze(0)
-        scale = F.softplus(self.scale_raw).unsqueeze(0) + self.min_scale
-        df = F.softplus(self.df_raw).unsqueeze(0) + self.min_df
+        # Keep Student-T likelihood in fp32 even under AMP; lgamma/log/log1p
+        # are numerically sensitive in fp16.
+        z = z.float()
+        mu = self.mu.float().unsqueeze(0)
+        scale = F.softplus(self.scale_raw.float()).unsqueeze(0) + self.min_scale
+        df = F.softplus(self.df_raw.float()).unsqueeze(0) + self.min_df
         log_pi = self._log_pi.to(device=df.device, dtype=df.dtype)
 
         z_expand = z.unsqueeze(1)
@@ -125,7 +227,8 @@ class StudentTMixturePrior(nn.Module):
         }
 
     def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
-        x_used = x if self.use_all_channels else x[:, :, :1]
+        # Force the probabilistic prior branch to fp32 for numerical stability.
+        x_used = (x if self.use_all_channels else x[:, :, :1]).float()
 
         z_scales = []
         log_comp_scales = []
@@ -358,10 +461,24 @@ class ExtremeLSTMMemo(nn.Module):
         self.retrieval_tau = getattr(self.config, 'retrieval_tau', 0.55)
         self.retrieval_alpha_max = getattr(self.config, 'retrieval_alpha_max', 0.02)
         self.retrieval_beta_hidden = getattr(self.config, 'retrieval_beta_hidden', 32)
-        self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.2)
+        self.retrieval_beta_max = getattr(self.config, 'retrieval_beta_max', 0.1)
         self.retrieval_beta_reg = getattr(self.config, 'retrieval_beta_reg', 1e-4)
         self.state_balance_weight = float(getattr(self.config, 'state_balance_weight', 0.02))
         self.state_dom_cap = float(getattr(self.config, 'state_dom_cap', 0.8))
+
+        # Component-level Student-T diversity constraints.
+        # These are soft constraints: NLL still keeps the mixture distribution
+        # covering the training samples, while these terms prevent different
+        # components from becoming nearly identical.
+        # self.state_diversity_weight = float(getattr(self.config, 'state_diversity_weight', 0.0))
+        # self.state_assignment_entropy_weight = float(getattr(self.config, 'state_assignment_entropy_weight', 0.0))
+        self.state_diversity_weight = float(getattr(self.config, 'state_diversity_weight', 0.001))
+        self.state_assignment_entropy_weight = float(getattr(self.config, 'state_assignment_entropy_weight', 0.0005))
+        self.state_mu_margin = float(getattr(self.config, 'state_mu_margin', 1.0))
+        self.state_scale_margin = float(getattr(self.config, 'state_scale_margin', 0.3))
+        self.state_df_margin = float(getattr(self.config, 'state_df_margin', 0.2))
+        self.state_scale_diversity_weight = float(getattr(self.config, 'state_scale_diversity_weight', 0.2))
+        self.state_df_diversity_weight = float(getattr(self.config, 'state_df_diversity_weight', 0.1))
 
         include_last_value = bool(getattr(self.config, 'pretrain_include_last', True))
         state_dim = 4 if include_last_value else 3
@@ -404,7 +521,7 @@ class ExtremeLSTMMemo(nn.Module):
         )
         self.beta_gate = RetrievalBetaGate(
             hidden_dim=self.retrieval_beta_hidden,
-            beta_min=0.1,
+            beta_min=0.0,
             beta_max=self.retrieval_beta_max,
         )
 
@@ -420,23 +537,49 @@ class ExtremeLSTMMemo(nn.Module):
         q = prior_out['q']
         q_mean = q.mean(dim=0)
 
-        # Minimal anti-collapse regularization for state prior.
+        # 1) Mixture NLL: keep the summed Student-T mixture distribution
+        # covering the training state vectors.
+        nll_loss = prior_out['pretrain_nll']
+
+        # 2) Batch-level state usage balance: prevent all samples from collapsing
+        # into one component.
         uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
         balance_kl = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(uniform + eps)))
         dominant_penalty = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
 
-        loss = (
-            prior_out['pretrain_nll']
-            + self.state_balance_weight * (balance_kl + dominant_penalty)
+        # 3) Component-level diversity: separate mu / scale / df among different
+        # Student-T components.
+        diversity_loss, diversity_aux = self.state_prior.component_diversity_loss(
+            mu_margin=self.state_mu_margin,
+            scale_margin=self.state_scale_margin,
+            df_margin=self.state_df_margin,
+            scale_weight=self.state_scale_diversity_weight,
+            df_weight=self.state_df_diversity_weight,
         )
+
+        # 4) Sample-level confidence: mildly reduce assignment entropy so each
+        # sample has a clearer state responsibility. Keep this weight small.
+        assignment_entropy = -(q * torch.log(q + eps)).sum(dim=-1).mean()
+
+        loss = (
+            nll_loss
+            + self.state_balance_weight * (balance_kl + dominant_penalty)
+            + self.state_diversity_weight * diversity_loss
+            + self.state_assignment_entropy_weight * assignment_entropy
+        )
+
         aux = {
-            'pretrain_nll': prior_out['pretrain_nll'].detach(),
+            'pretrain_nll': nll_loss.detach(),
             'pretrain_total_loss': loss.detach(),
             'q_mean': q_mean.detach(),
             'mix_prob': prior_out['mix_prob'].detach(),
             'balance_kl': balance_kl.detach(),
             'dominant_penalty': dominant_penalty.detach(),
+            'diversity_loss': diversity_loss.detach(),
+            'assignment_entropy': assignment_entropy.detach(),
         }
+        aux.update(diversity_aux)
+
         return loss, aux
 
     def freeze_state_prior(self):
@@ -624,10 +767,31 @@ class ExtremeLSTMMemo(nn.Module):
             state_balance_loss = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(q_uniform + eps)))
             state_dom_loss = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
 
-            total_aux_loss = total_aux_loss + self.state_balance_weight * (state_balance_loss + state_dom_loss)
+            # Keep Student-T components distinguishable during backbone training
+            # as well; otherwise fine-tuning may make the pre-trained prior drift
+            # back toward overlapping components.
+            state_diversity_loss, state_diversity_aux = self.state_prior.component_diversity_loss(
+                mu_margin=self.state_mu_margin,
+                scale_margin=self.state_scale_margin,
+                df_margin=self.state_df_margin,
+                scale_weight=self.state_scale_diversity_weight,
+                df_weight=self.state_df_diversity_weight,
+            )
+            state_assignment_entropy = -(q * torch.log(q + eps)).sum(dim=-1).mean()
+
+            total_aux_loss = (
+                total_aux_loss
+                + self.state_balance_weight * (state_balance_loss + state_dom_loss)
+                + self.state_diversity_weight * state_diversity_loss
+                + self.state_assignment_entropy_weight * state_assignment_entropy
+            )
+
             aux_dict['state_balance_loss'] = state_balance_loss.detach()
             aux_dict['state_dom_loss'] = state_dom_loss.detach()
             aux_dict['state_qmax'] = q_mean.max().detach()
+            aux_dict['state_diversity_loss'] = state_diversity_loss.detach()
+            aux_dict['state_assignment_entropy'] = state_assignment_entropy.detach()
+            aux_dict.update(state_diversity_aux)
 
         out['point_pred'] = point_pred
         out['total_aux_loss'] = total_aux_loss

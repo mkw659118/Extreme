@@ -1,6 +1,6 @@
-from modules.RMF_net import ExtremeLSTMMemo
+from modules.RMF_net2 import ExtremeLSTMMemo
 from baselines import DLinear, PMDformer
-from exp.exp_base_net_diff import BasicModel
+from exp.exp_base_net_diff2 import BasicModel
 
 
 class Model(BasicModel):

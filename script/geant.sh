@@ -2,7 +2,7 @@
 
 # 1) pred_len 第一层
 pred_lens=(5)
-d_models=(16 32 64 128 256 512)
+d_models=(256)
 
 for pred in "${pred_lens[@]}"
 do
@@ -21,7 +21,8 @@ do
       --seq_len 96 \
       --loss_func 'L1Loss' \
       --bs 32 \
-      --retrain True
+      --retrain True \
+      --logger 'geant'
   done
 done
 
@@ -46,9 +47,10 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
+        --logger 'geant' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --retrain True
+        --retrain True \ 
     done
   done
 done

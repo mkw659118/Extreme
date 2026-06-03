@@ -1,4 +1,4 @@
-from baselines import DLinear, PMDformer, NLinear, iTransformer, Informer, FEDformer, FeTS, HMformer
+from baselines import DLinear, PMDformer, NLinear, iTransformer, Informer, FEDformer, FeTS, HMformer, PatchTST, TimesNet
 from baselines.HMformer import HMformer
 from exp.exp_base_net_baseline import BasicModel
 
@@ -33,6 +33,12 @@ class Model(BasicModel):
             
         elif config.model == 'HMformer':
             self.model = HMformer(config)
-        
+        elif config.model == 'PatchTST':
+            self.model = PatchTST.Model(config)
+            
+        elif config.model == 'timesnet':
+            self.model = TimesNet.Model(config)
+    
         else:
             raise ValueError(f'Unsupported model type: {config.model}')
+        
