@@ -9,7 +9,7 @@ do
   for dm in "${d_models[@]}"
   do
     echo ">> Running config='NetConfig', pred_len=${pred}, d_model=${dm}"
-    python "run_train_net.py" \
+    python "run_train_DARNet.py" \
       --config "NetConfig" \
       --pred_len "$pred" \
       --d_model "$dm" \

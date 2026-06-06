@@ -1,7 +1,8 @@
 # Author  : mkw
-# Desc    : Abilene dataset loader with first-order diff normalization + second diff + raw input features
+# Desc    : Abilene dataset loader with missing-aware first-order diff + second diff + raw input features
 # Shape   : raw data [T, C] = [3000, 144]
-# X 特征拼接版本: [一阶差分标准化, 二阶差分原始值, 原始值]
+# X 特征拼接版本:
+#   [一阶差分标准化, 一阶差分掩码, 二阶差分原始值, 二阶差分掩码, 原始值, 原始值掩码]
 
 from __future__ import annotations
 
@@ -18,12 +19,14 @@ class TimeSeriesDataset(Dataset):
         self,
         x: np.ndarray,
         y: np.ndarray,
+        y_mask: np.ndarray,
         config,
         id_offset: int = 0,
         stride: int = 96,
     ):
         self.x = x
         self.y = y
+        self.y_mask = y_mask
         self.id_offset = int(id_offset)
         self.stride = int(stride)
 
@@ -33,9 +36,12 @@ class TimeSeriesDataset(Dataset):
     def __getitem__(self, idx: int):
         x = self.x[idx]
         y = self.y[idx]
+        y_mask = self.y_mask[idx]
 
-        # 当前模型没有真正使用 x_mark，保留占位
-        x_mark = np.zeros((x.shape[0], 4), dtype=np.float32)
+        # 这里沿用原来的返回接口，把 x_mark 用作未来标签有效掩码。
+        # 形状为 [pred_len, target_dim]。
+        # 模型 forward 当前不会使用 x_mark，训练脚本会用它做 masked loss。
+        x_mark = y_mask.astype(np.float32)
 
         # sample_id 表示这个窗口在原始全序列中的起始位置
         sample_id = np.int64(self.id_offset + idx * self.stride)
@@ -56,14 +62,24 @@ class SplitSizes:
 
 
 class DS:
-    """Abilene multivariate time-series dataset with concatenated input features.
+    """Abilene multivariate time-series dataset with missing-aware trend features.
 
     X feature order on the last dimension:
-        [first-order diff normalized, second-order diff raw, raw value]
+        [first-order diff normalized,
+         first-order diff valid mask,
+         second-order diff raw,
+         second-order diff valid mask,
+         raw value placeholder,
+         raw value valid mask]
 
-    For raw data [T, C], model input X becomes [N, seq_len, 3 * C].
+    For raw data [T, C], model input X becomes [N, seq_len, 6 * C].
     Label Y remains first-order diff normalized [N, pred_len, 1], so the
     original recover_level_from_diff() evaluation path is unchanged.
+
+    Missing convention:
+        By default, zero or non-finite values are treated as missing.
+        If zero is a valid traffic value in your data, set
+        config.mask_zero_as_missing = False.
     """
 
     def __init__(self, config, trainX=None):
@@ -73,6 +89,11 @@ class DS:
         self.seq_len = int(self.config.seq_len)
         self.pred_len = int(self.config.pred_len)
         self.stride = int(getattr(self.config, "stride", 1))
+
+        self.mask_zero_as_missing = bool(
+            getattr(self.config, "mask_zero_as_missing", True)
+        )
+        setattr(self.config, "mask_zero_as_missing", self.mask_zero_as_missing)
 
         self.data_root = getattr(self.config, "path", "./datasets")
         self.dataset = getattr(self.config, "dataset", "Abilene")
@@ -84,7 +105,6 @@ class DS:
             self.data_file,
         )
 
-
         self.target_col = int(getattr(self.config, "target_col", 0))
         self.target_dim = 1
         self.num_vars = None
@@ -93,8 +113,10 @@ class DS:
         setattr(self.config, "target_col", self.target_col)
         setattr(self.config, "target_dim", self.target_dim)
 
-        # 原始数据，评估阶段累加还原会用到
+        # 原始数据占位值，评估阶段累加还原会用到。
+        # 缺失位置被置为 0，但是否有效由 raw_mask 标记。
         self.raw_data = None
+        self.raw_mask = None
 
         # 差分归一化参数，形状都是 [C]
         self.mean = None
@@ -125,24 +147,28 @@ class DS:
         if data.ndim != 2:
             raise ValueError(f"Expected 2D array [T, C], got shape {data.shape}")
 
-        if np.isnan(data).any():
-            raise ValueError("NaN found in csv.")
+        if np.isinf(data).any():
+            raise ValueError("Inf found in csv.")
 
         # 直接从数据本身推断变量数
         self.num_vars = int(data.shape[1])
 
-        # X 会在最后一维拼接三类特征：
+        # X 会在最后一维拼接六类特征：
         #   1) 一阶差分标准化值
-        #   2) 二阶差分原始值
-        #   3) 原始值
-        # 因此模型实际输入维度是 3 * C。
-        self.input_feature_dim = self.num_vars * 3
+        #   2) 一阶差分有效掩码
+        #   3) 二阶差分原始值
+        #   4) 二阶差分有效掩码
+        #   5) 原始值占位
+        #   6) 原始值有效掩码
+        # 因此模型实际输入维度是 6 * C。
+        self.input_feature_dim = self.num_vars * 6
 
         # 回写 config，给后面的模型初始化用。
-        # num_vars 保留原始变量数 C；enc_in 表示模型实际输入维度 3C。
+        # num_vars 保留原始变量数 C；enc_in 表示模型实际输入维度 6C。
         setattr(self.config, "num_vars", self.num_vars)
         setattr(self.config, "input_feature_dim", self.input_feature_dim)
         setattr(self.config, "enc_in", self.input_feature_dim)
+        setattr(self.config, "missing_aware_groups", 6)
 
         # 现在才检查 target_col 是否越界
         if not 0 <= self.target_col < self.num_vars:
@@ -163,68 +189,119 @@ class DS:
 
         return SplitSizes(train_size, val_size, test_size), (train_end, val_end)
 
-    @staticmethod
-    def _first_order_diff(data: np.ndarray) -> np.ndarray:
+    def _build_observation_mask(self, data: np.ndarray) -> np.ndarray:
+        """构造原始观测掩码 M。
+
+        m(i,n)=1 表示 x(i,n) 是真实观测；
+        m(i,n)=0 表示该位置缺失。
+
+        默认将 0 和 NaN 都视为缺失；如果 0 是合法真实值，
+        请设置 config.mask_zero_as_missing=False。
         """
-        模拟你原来的 r_log_std_normalization 做法：
+        mask = np.isfinite(data)
+        if self.mask_zero_as_missing:
+            mask = mask & (data != 0)
+        return mask.astype(np.float32)
 
-        原单变量逻辑：
-            data1 = data[1:]
-            data2[i] = data[i+1] - data[i]
-            c = np.array([1] + data2)
+    @staticmethod
+    def _first_order_diff(
+        data: np.ndarray,
+        mask: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Missing-aware first-order difference.
 
-        多变量版本：
-            data: [T, C]
-            diff: [T, C]
-            diff[0, :] = 1
-            diff[t, :] = data[t, :] - data[t-1, :]
+        一阶差分有效掩码：
+            m_delta[t] = m[t] * m[t-1]
+
+        只有相邻两个时间片均真实观测时，才计算：
+            diff[t] = data[t] - data[t-1]
+
+        其他位置置为 0 占位。
         """
         diff = np.zeros_like(data, dtype=np.float32)
-        diff[0, :] = 1.0
-        diff[1:, :] = data[1:, :] - data[:-1, :]
-        return diff
+        diff_mask = np.zeros_like(mask, dtype=np.float32)
+
+        valid = (mask[1:, :] > 0.5) & (mask[:-1, :] > 0.5)
+        diff_mask[1:, :] = valid.astype(np.float32)
+
+        raw_diff = data[1:, :] - data[:-1, :]
+        diff[1:, :] = np.where(valid, raw_diff, 0.0)
+
+        return diff.astype(np.float32), diff_mask.astype(np.float32)
 
     @staticmethod
-    def _second_order_diff(data: np.ndarray) -> np.ndarray:
+    def _second_order_diff(
+        data: np.ndarray,
+        mask: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        计算二阶差分原始值，不做标准化。
+        Missing-aware second-order difference.
 
-        data: [T, C]
-        second_diff: [T, C]
+        二阶差分有效掩码：
+            m_delta2[t] = m[t] * m[t-1] * m[t-2]
 
-        定义：
-            second_diff[t] = (data[t] - data[t-1]) - (data[t-1] - data[t-2])
-                           = data[t] - 2 * data[t-1] + data[t-2]
+        只有连续三个时间片均真实观测时，才计算：
+            second_diff[t] = data[t] - 2 * data[t-1] + data[t-2]
 
-        前两个时间步没有完整二阶差分历史，置为 0。
+        其他位置置为 0 占位。
         """
         second_diff = np.zeros_like(data, dtype=np.float32)
-        second_diff[2:, :] = data[2:, :] - 2.0 * data[1:-1, :] + data[:-2, :]
-        return second_diff
+        second_mask = np.zeros_like(mask, dtype=np.float32)
+
+        valid = (
+            (mask[2:, :] > 0.5)
+            & (mask[1:-1, :] > 0.5)
+            & (mask[:-2, :] > 0.5)
+        )
+        second_mask[2:, :] = valid.astype(np.float32)
+
+        raw_second = data[2:, :] - 2.0 * data[1:-1, :] + data[:-2, :]
+        second_diff[2:, :] = np.where(valid, raw_second, 0.0)
+
+        return second_diff.astype(np.float32), second_mask.astype(np.float32)
 
     @classmethod
     def _diff_std_normalization(
         cls,
         data: np.ndarray,
+        mask: np.ndarray,
         mean: np.ndarray | None = None,
         std: np.ndarray | None = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
         """
-        First-order difference followed by z-score normalization.
+        Missing-aware first-order difference followed by z-score normalization.
 
         data: [T, C]
+        mask: [T, C]
+
         return:
-            norm: [T, C]
-            mean: [C]
-            std:  [C]
+            norm:      [T, C] normalized first-order diff, invalid entries are 0
+            diff_mask: [T, C] valid mask of first-order diff
+            mean:      [C]
+            std:       [C]
             mini: kept for compatibility with the old dataset API
         """
-        diff = cls._first_order_diff(data)
+        diff, diff_mask = cls._first_order_diff(data, mask)
 
-        if mean is None:
-            mean = np.nanmean(diff, axis=0)
-        if std is None:
-            std = np.nanstd(diff, axis=0)
+        if mean is None or std is None:
+            valid = diff_mask > 0.5
+            count = valid.sum(axis=0).astype(np.float32)
+
+            safe_count = np.maximum(count, 1.0)
+            mean_est = (diff * valid).sum(axis=0) / safe_count
+
+            centered = np.where(valid, diff - mean_est.reshape(1, -1), 0.0)
+            var_est = (centered ** 2).sum(axis=0) / safe_count
+            std_est = np.sqrt(var_est)
+
+            mean_est = np.where(count > 0, mean_est, 0.0)
+            std_est = np.where((count > 0) & (std_est > 0), std_est, 1.0)
+
+            if mean is None:
+                mean = mean_est
+            if std is None:
+                std = std_est
 
         mean = np.asarray(mean, dtype=np.float32)
         std = np.asarray(std, dtype=np.float32)
@@ -232,58 +309,87 @@ class DS:
         mean = np.where(np.isnan(mean), 0.0, mean)
         std = np.where((std == 0) | np.isnan(std), 1.0, std)
 
-        norm = (diff - mean) / std
+        norm = np.zeros_like(diff, dtype=np.float32)
+        valid = diff_mask > 0.5
+        norm_valid = (diff - mean.reshape(1, -1)) / std.reshape(1, -1)
+        norm = np.where(valid, norm_valid, 0.0).astype(np.float32)
+
         mini = 0.0
 
-        return norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32), mini
+        return (
+            norm.astype(np.float32),
+            diff_mask.astype(np.float32),
+            mean.astype(np.float32),
+            std.astype(np.float32),
+            mini,
+        )
 
-    def _fit_diff_normalizer(self, train_raw: np.ndarray):
+    def _fit_diff_normalizer(self, train_raw: np.ndarray, train_mask: np.ndarray):
         """
-        只用训练集拟合差分归一化参数，避免验证/测试泄漏。
+        只用训练集有效一阶差分拟合归一化参数，避免验证/测试泄漏。
         """
-        _, self.mean, self.std, self.mini = self._diff_std_normalization(train_raw)
+        _, _, self.mean, self.std, self.mini = self._diff_std_normalization(
+            train_raw,
+            train_mask,
+        )
 
-    def _transform_diff(self, raw: np.ndarray) -> np.ndarray:
+    def _transform_diff(
+        self,
+        raw: np.ndarray,
+        mask: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         使用训练集 mean/std，把原始序列转成标准化一阶差分序列。
+        无效差分位置保持为 0 占位。
         """
-        norm, _, _, _ = self._diff_std_normalization(
+        norm, diff_mask, _, _, _ = self._diff_std_normalization(
             raw,
+            mask,
             mean=self.mean,
             std=self.std,
         )
-        return norm
+        return norm, diff_mask
 
     def _make_windows(
         self,
         diff_norm: np.ndarray,
+        diff_mask: np.ndarray,
         second_diff_raw: np.ndarray,
+        second_diff_mask: np.ndarray,
         raw: np.ndarray,
+        raw_mask: np.ndarray,
     ):
         """
         构造窗口。
 
-        diff_norm:       [T, C] 一阶差分标准化值
-        second_diff_raw: [T, C] 二阶差分原始值，不做标准化
-        raw:             [T, C] 原始值，不做标准化
+        diff_norm:        [T, C] 一阶差分标准化值
+        diff_mask:        [T, C] 一阶差分有效掩码
+        second_diff_raw:  [T, C] 二阶差分原始值，不做标准化
+        second_diff_mask: [T, C] 二阶差分有效掩码
+        raw:              [T, C] 原始值占位，不做标准化
+        raw_mask:         [T, C] 原始值有效掩码
 
         return:
-            x: [N, seq_len, 3 * C]
+            x: [N, seq_len, 6 * C]
                最后一维拼接顺序为：
-               [一阶差分标准化, 二阶差分原始值, 原始值]
+               [一阶差分标准化, 一阶差分掩码,
+                二阶差分原始值, 二阶差分掩码,
+                原始值, 原始值掩码]
             y: [N, pred_len, 1]
                仍然是一阶差分标准化后的目标列。
-
-        注意：这里只增强 X，不改变 Y。
-        模型仍然预测一阶差分标准化值，评估阶段继续通过
-        recover_level_from_diff() 反归一化并累加还原。
+            y_mask: [N, pred_len, 1]
+               未来一阶差分标签有效掩码，用于 masked loss / evaluation。
         """
-        if diff_norm.shape != second_diff_raw.shape or diff_norm.shape != raw.shape:
-            raise ValueError(
-                "diff_norm, second_diff_raw and raw must have the same shape. "
-                f"Got diff_norm={diff_norm.shape}, "
-                f"second_diff_raw={second_diff_raw.shape}, raw={raw.shape}"
-            )
+        shapes = {
+            "diff_norm": diff_norm.shape,
+            "diff_mask": diff_mask.shape,
+            "second_diff_raw": second_diff_raw.shape,
+            "second_diff_mask": second_diff_mask.shape,
+            "raw": raw.shape,
+            "raw_mask": raw_mask.shape,
+        }
+        if len(set(shapes.values())) != 1:
+            raise ValueError(f"All input arrays must have same shape, got {shapes}")
 
         total = diff_norm.shape[0] - self.seq_len - self.pred_len + 1
 
@@ -295,82 +401,123 @@ class DS:
 
         x_list = []
         y_list = []
+        y_mask_list = []
 
         for start in range(0, total, self.stride):
             y_start = start + self.seq_len
             y_end = y_start + self.pred_len
 
             x_diff_norm = diff_norm[start : start + self.seq_len, :]
-            x_second_diff_raw = second_diff_raw[start : start + self.seq_len, :]
-            x_raw = raw[start : start + self.seq_len, :]
+            x_diff_mask = diff_mask[start : start + self.seq_len, :]
 
-            # [seq_len, C] + [seq_len, C] + [seq_len, C]
-            # -> [seq_len, 3C]
+            x_second_diff_raw = second_diff_raw[start : start + self.seq_len, :]
+            x_second_diff_mask = second_diff_mask[start : start + self.seq_len, :]
+
+            x_raw = raw[start : start + self.seq_len, :]
+            x_raw_mask = raw_mask[start : start + self.seq_len, :]
+
+            # [seq_len, C] * 6 -> [seq_len, 6C]
             x = np.concatenate(
-                [x_diff_norm, x_second_diff_raw, x_raw],
+                [
+                    x_diff_norm,
+                    x_diff_mask,
+                    x_second_diff_raw,
+                    x_second_diff_mask,
+                    x_raw,
+                    x_raw_mask,
+                ],
                 axis=-1,
             )
 
             # y 不拼接，仍然只预测目标列的一阶差分标准化值。
             y = diff_norm[y_start:y_end, self.target_col : self.target_col + 1]
+            y_mask = diff_mask[y_start:y_end, self.target_col : self.target_col + 1]
 
             x_list.append(x)
             y_list.append(y)
+            y_mask_list.append(y_mask)
 
         x = np.stack(x_list, axis=0).astype(np.float32)
         y = np.stack(y_list, axis=0).astype(np.float32)
+        y_mask = np.stack(y_mask_list, axis=0).astype(np.float32)
 
-        return x, y
+        return x, y, y_mask
 
     def _load_and_build(self):
-        data = self._load_csv()
+        raw_loaded = self._load_csv()
+
+        full_mask = self._build_observation_mask(raw_loaded)
+        data = np.where(full_mask > 0.5, raw_loaded, 0.0).astype(np.float32)
+
         self.raw_data = data
+        self.raw_mask = full_mask.astype(np.float32)
 
         split_sizes, (train_end, val_end) = self._split_ratio(len(data))
 
         train_raw = data[:train_end]
+        train_mask = full_mask[:train_end]
 
         # 验证集和测试集保留前 seq_len 个历史点作为输入上下文
         val_start = max(0, train_end - self.seq_len)
         test_start = max(0, val_end - self.seq_len)
 
         val_raw = data[val_start:val_end]
+        val_mask = full_mask[val_start:val_end]
+
         test_raw = data[test_start:]
+        test_mask = full_mask[test_start:]
 
-        # 只用训练集拟合差分归一化参数
-        self._fit_diff_normalizer(train_raw)
+        # 只用训练集有效一阶差分拟合归一化参数
+        self._fit_diff_normalizer(train_raw, train_mask)
 
-        train_norm = self._transform_diff(train_raw)
-        val_norm = self._transform_diff(val_raw)
-        test_norm = self._transform_diff(test_raw)
+        train_norm, train_diff_mask = self._transform_diff(train_raw, train_mask)
+        val_norm, val_diff_mask = self._transform_diff(val_raw, val_mask)
+        test_norm, test_diff_mask = self._transform_diff(test_raw, test_mask)
 
         # 二阶差分原始值，不做标准化。
-        train_second_diff = self._second_order_diff(train_raw)
-        val_second_diff = self._second_order_diff(val_raw)
-        test_second_diff = self._second_order_diff(test_raw)
-
-        x_train, y_train = self._make_windows(
-            train_norm,
-            train_second_diff,
+        train_second_diff, train_second_mask = self._second_order_diff(
             train_raw,
+            train_mask,
         )
-        x_val, y_val = self._make_windows(
-            val_norm,
-            val_second_diff,
+        val_second_diff, val_second_mask = self._second_order_diff(
             val_raw,
+            val_mask,
         )
-        x_test, y_test = self._make_windows(
-            test_norm,
-            test_second_diff,
+        test_second_diff, test_second_mask = self._second_order_diff(
             test_raw,
+            test_mask,
+        )
+
+        x_train, y_train, y_train_mask = self._make_windows(
+            train_norm,
+            train_diff_mask,
+            train_second_diff,
+            train_second_mask,
+            train_raw,
+            train_mask,
+        )
+        x_val, y_val, y_val_mask = self._make_windows(
+            val_norm,
+            val_diff_mask,
+            val_second_diff,
+            val_second_mask,
+            val_raw,
+            val_mask,
+        )
+        x_test, y_test, y_test_mask = self._make_windows(
+            test_norm,
+            test_diff_mask,
+            test_second_diff,
+            test_second_mask,
+            test_raw,
+            test_mask,
         )
 
         # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
-        # 多变量场景下，y_train 的形状是 [N, pred_len, C]。
-        # y_train 是标准化一阶差分，因此先反归一化成原始差分，
-        # 再把所有窗口、所有预测步、所有变量展开后计算分位数。
+        # 只使用有效未来一阶差分标签，避免缺失占位 0 污染分位数。
         train_diff_raw = self.inverse_diff_norm(y_train)
-        all_diff_vals = np.abs(train_diff_raw).reshape(-1)
+        valid_train_diff = y_train_mask > 0.5
+        all_diff_vals = np.abs(train_diff_raw[valid_train_diff])
         all_diff_vals = all_diff_vals[np.isfinite(all_diff_vals)]
 
         if len(all_diff_vals) > 0:
@@ -382,20 +529,24 @@ class DS:
         print(f"[Tail Threshold] |diff| q90={self.tail_q90:.6f}")
 
         # ===== 计算训练集点级原始值 q90/q99（用于 level 指标） =====
-        # y_train 对应的原始值区间是：
-        # raw[start + seq_len : start + seq_len + pred_len]
-        # 多变量场景下同样展开所有窗口、所有预测步、所有变量。
+        # 只使用有效原始未来标签。
         raw_y_list = []
+        raw_y_mask_list = []
         total = train_raw.shape[0] - self.seq_len - self.pred_len + 1
 
         for start in range(0, total, self.stride):
             y_start = start + self.seq_len
             y_end = y_start + self.pred_len
             raw_y = train_raw[y_start:y_end, self.target_col : self.target_col + 1]
+            raw_y_mask = train_mask[y_start:y_end, self.target_col : self.target_col + 1]
             raw_y_list.append(raw_y)
+            raw_y_mask_list.append(raw_y_mask)
 
         if len(raw_y_list) > 0:
-            all_raw_vals = np.stack(raw_y_list, axis=0).astype(np.float32).reshape(-1)
+            all_raw_vals = np.stack(raw_y_list, axis=0).astype(np.float32)
+            all_raw_masks = np.stack(raw_y_mask_list, axis=0).astype(np.float32)
+
+            all_raw_vals = all_raw_vals[all_raw_masks > 0.5]
             all_raw_vals = all_raw_vals[np.isfinite(all_raw_vals)]
 
             if len(all_raw_vals) > 0:
@@ -423,6 +574,7 @@ class DS:
             TimeSeriesDataset(
                 x_train,
                 y_train,
+                y_train_mask,
                 self.config,
                 id_offset=0,
                 stride=self.stride,
@@ -437,6 +589,7 @@ class DS:
             TimeSeriesDataset(
                 x_val,
                 y_val,
+                y_val_mask,
                 self.config,
                 id_offset=val_start,
                 stride=self.stride,
@@ -451,6 +604,7 @@ class DS:
             TimeSeriesDataset(
                 x_test,
                 y_test,
+                y_test_mask,
                 self.config,
                 id_offset=test_start,
                 stride=self.stride,
@@ -475,14 +629,17 @@ class DS:
         )
         print(
             "[Dataset] windows:",
-            f"x_train={x_train.shape}, y_train={y_train.shape}",
-            f"x_val={x_val.shape}, y_val={y_val.shape}",
-            f"x_test={x_test.shape}, y_test={y_test.shape}",
+            f"x_train={x_train.shape}, y_train={y_train.shape}, mask_train={y_train_mask.shape}",
+            f"x_val={x_val.shape}, y_val={y_val.shape}, mask_val={y_val_mask.shape}",
+            f"x_test={x_test.shape}, y_test={y_test.shape}, mask_test={y_test_mask.shape}",
         )
         print(
             f"[Dataset] input feature concat: "
             f"num_vars={self.num_vars}, enc_in={self.input_feature_dim}, "
-            f"feature_order=[diff_norm, second_diff_raw, raw]"
+            f"feature_order=[diff_norm, diff_mask, second_diff_raw, second_diff_mask, raw, raw_mask]"
+        )
+        print(
+            f"[Dataset] missing convention: mask_zero_as_missing={self.mask_zero_as_missing}"
         )
         print(
             f"[Dataset] many-to-one target: "
@@ -510,6 +667,17 @@ class DS:
             std = self.std
 
         return diff_norm * std + mean
+
+    @staticmethod
+    def recover_level_valid_mask_from_diff_mask(diff_mask: np.ndarray) -> np.ndarray:
+        """
+        从未来一阶差分有效掩码恢复原始值空间的评估掩码。
+
+        因为第 h 步原始值由前 1..h 个差分累加得到，所以只有当从
+        anchor 到当前步之间的所有差分均有效时，该原始值预测才参与评估。
+        """
+        diff_mask = np.asarray(diff_mask, dtype=np.float32)
+        return np.cumprod(diff_mask, axis=1).astype(np.float32)
 
     def recover_level_from_diff(
         self,
@@ -560,3 +728,6 @@ class DS:
 
     def get_raw_data(self):
         return self.raw_data
+
+    def get_raw_mask(self):
+        return self.raw_mask

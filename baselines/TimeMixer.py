@@ -299,7 +299,15 @@ class Model(nn.Module):
                                   padding_mode='circular',
                                   bias=False)
         else:
-            return x_enc, x_mark_enc
+           
+            # No down-sampling: still return list format for forecast()
+            if x_enc.dim() == 2:
+                x_enc = x_enc.unsqueeze(-1)
+
+            if x_mark_enc is not None:
+                return [x_enc], [x_mark_enc]
+            else:
+                return [x_enc], None
         # B,T,C -> B,C,T
         x_enc = x_enc.permute(0, 2, 1)
 
@@ -500,8 +508,16 @@ class Model(nn.Module):
         return dec_out
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
+        input_was_2d = x_enc is not None and x_enc.dim() == 2
+
         if self.task_name == 'long_term_forecast' or self.task_name == 'short_term_forecast':
             dec_out = self.forecast(x_enc, x_mark_enc, x_dec, x_mark_dec)
+
+            # If external input is [B, L], keep output as [B, pred_len]
+            # to match your existing label/loss/evaluation code.
+            if input_was_2d and dec_out.dim() == 3 and dec_out.size(-1) == 1:
+                dec_out = dec_out.squeeze(-1)
+
             return dec_out
         if self.task_name == 'imputation':
             dec_out = self.imputation(x_enc, x_mark_enc, mask)

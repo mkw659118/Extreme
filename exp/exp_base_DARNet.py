@@ -136,6 +136,111 @@ class BasicModel(torch.nn.Module):
 
         return pred, future_label
 
+    def _prepare_label_mask(self, x_mark, label, dataModule):
+        """
+        Extract future-label valid mask from x_mark.
+
+        In the missing-aware dataset, x_mark is reused as y_mask with shape:
+            [B, pred_len, target_dim]
+
+        The mask indicates whether each future first-order-difference target is
+        valid. Positions with mask=0 do not participate in supervised loss.
+
+        If an old dataset is used and x_mark does not match this convention, we
+        fall back to a finite-value mask. If config.mask_zero_as_missing=True,
+        zero labels are also treated as invalid in this fallback path.
+        """
+        future_label = label[:, -self.pred_len:, :]
+
+        mask = None
+        if x_mark is not None and torch.is_tensor(x_mark):
+            candidate = x_mark
+            if candidate.dim() == 2:
+                candidate = candidate.unsqueeze(-1)
+
+            if candidate.dim() == 3 and candidate.shape[1] >= self.pred_len:
+                candidate = candidate[:, -self.pred_len:, :]
+                try:
+                    mask = self._select_target_if_needed(candidate, dataModule)
+                except Exception:
+                    mask = candidate
+
+                if mask.shape[:2] != future_label.shape[:2]:
+                    mask = None
+
+        if mask is None:
+            mask = torch.isfinite(future_label).float()
+            if bool(getattr(self.config, "mask_zero_as_missing", True)):
+                mask = mask * (future_label != 0).float()
+
+        target_dim = int(
+            getattr(dataModule, "target_dim", getattr(self.config, "target_dim", 0))
+        )
+        if target_dim > 0 and mask.shape[-1] != target_dim:
+            target_col = int(
+                getattr(dataModule, "target_col", getattr(self.config, "target_col", 0))
+            )
+            if mask.shape[-1] > target_col:
+                mask = mask[..., target_col : target_col + target_dim]
+            else:
+                mask = mask[..., :target_dim]
+
+        return mask.to(device=label.device, dtype=label.dtype)
+
+    def _compute_masked_supervised_loss(self, x, pred_scaled, real_scaled, label_mask):
+        """
+        Keep the original supervised objective from compute_loss(), but apply it
+        only on valid future-label positions.
+
+        This does not introduce a new training objective. It only removes
+        missing target positions from the existing objective.
+        """
+        if label_mask is None:
+            return compute_loss(
+                self,
+                x,
+                pred_scaled.float(),
+                real_scaled.float(),
+                self.config,
+            )
+
+        valid = (
+            (label_mask > 0.5)
+            & torch.isfinite(pred_scaled)
+            & torch.isfinite(real_scaled)
+        )
+
+        if valid.shape != pred_scaled.shape:
+            valid = valid.expand_as(pred_scaled)
+
+        if not torch.any(valid):
+            return pred_scaled.sum() * 0.0
+
+        pred_valid = pred_scaled[valid].reshape(1, -1, 1)
+        real_valid = real_scaled[valid].reshape(1, -1, 1)
+
+        return compute_loss(
+            self,
+            x,
+            pred_valid.float(),
+            real_valid.float(),
+            self.config,
+        )
+
+    @staticmethod
+    def _recover_level_mask_from_diff_mask(diff_mask):
+        """
+        Convert future first-diff valid mask to raw-level valid mask.
+
+        Because raw prediction at horizon h is reconstructed by cumulative sum
+        of differences from 1..h, the raw value at h is valid only if all
+        previous future differences used in the cumulative path are valid.
+        """
+        if diff_mask is None:
+            return None
+        return torch.cumprod((diff_mask > 0.5).float(), dim=1)
+
+
     def _get_value_mean_std(self, dataModule, out_dim, device, dtype):
         """Get mean/std for inverse z-score normalization of the target columns."""
         mean = getattr(dataModule, "mean", None)
@@ -376,7 +481,7 @@ class BasicModel(torch.nn.Module):
 
         print(f"[Save] aggregated model result saved to: {save_path}")
 
-    def aggregate_series_by_time(self, true_series, pred_series, sample_ids):
+    def aggregate_series_by_time(self, true_series, pred_series, sample_ids, valid_mask=None):
         if isinstance(true_series, torch.Tensor):
             true_series = true_series.detach().cpu().numpy()
         else:
@@ -392,6 +497,12 @@ class BasicModel(torch.nn.Module):
         else:
             sample_ids = np.asarray(sample_ids)
 
+        if valid_mask is not None:
+            if isinstance(valid_mask, torch.Tensor):
+                valid_mask = valid_mask.detach().cpu().numpy()
+            else:
+                valid_mask = np.asarray(valid_mask)
+
         if true_series.shape != pred_series.shape:
             raise ValueError(
                 f"true and pred shapes do not match: {true_series.shape} vs {pred_series.shape}"
@@ -405,6 +516,20 @@ class BasicModel(torch.nn.Module):
             raise ValueError(
                 f"Expected [N, pred_len, C] series, got shape {true_series.shape}"
             )
+
+        if valid_mask is None:
+            valid_mask = np.ones_like(true_series, dtype=np.float32)
+        else:
+            if valid_mask.ndim == 2:
+                valid_mask = valid_mask[:, :, None]
+            if valid_mask.shape != true_series.shape:
+                if valid_mask.shape[-1] == 1 and true_series.shape[-1] > 1:
+                    valid_mask = np.broadcast_to(valid_mask, true_series.shape)
+                else:
+                    raise ValueError(
+                        f"valid_mask shape {valid_mask.shape} does not match "
+                        f"series shape {true_series.shape}"
+                    )
 
         if len(sample_ids) != true_series.shape[0]:
             raise ValueError(
@@ -425,27 +550,60 @@ class BasicModel(torch.nn.Module):
 
             for horizon in range(pred_len):
                 time_idx = base_time_idx + horizon
+                valid_vec = (
+                    valid_mask[window_idx, horizon].astype(np.float64)
+                    * np.isfinite(true_series[window_idx, horizon]).astype(np.float64)
+                    * np.isfinite(pred_series[window_idx, horizon]).astype(np.float64)
+                )
+
+                if not np.any(valid_vec > 0.5):
+                    continue
 
                 if time_idx not in count:
                     true_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
                     pred_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
-                    count[time_idx] = 0
+                    count[time_idx] = np.zeros(out_dim, dtype=np.float64)
 
-                true_sum[time_idx] += true_series[window_idx, horizon].astype(np.float64)
-                pred_sum[time_idx] += pred_series[window_idx, horizon].astype(np.float64)
-                count[time_idx] += 1
+                true_sum[time_idx] += (
+                    true_series[window_idx, horizon].astype(np.float64) * valid_vec
+                )
+                pred_sum[time_idx] += (
+                    pred_series[window_idx, horizon].astype(np.float64) * valid_vec
+                )
+                count[time_idx] += valid_vec
 
         time_indices = sorted(count)
-        true_agg = np.stack(
-            [true_sum[i] / count[i] for i in time_indices],
-            axis=0,
-        ).astype(np.float32)
-        pred_agg = np.stack(
-            [pred_sum[i] / count[i] for i in time_indices],
-            axis=0,
-        ).astype(np.float32)
 
-        return true_agg, pred_agg, np.asarray(time_indices, dtype=np.int64)
+        if len(time_indices) == 0:
+            return (
+                np.empty((0, out_dim), dtype=np.float32),
+                np.empty((0, out_dim), dtype=np.float32),
+                np.asarray([], dtype=np.int64),
+            )
+
+        true_rows = []
+        pred_rows = []
+        kept_time_indices = []
+
+        for time_idx in time_indices:
+            valid_dim = count[time_idx] > 0
+            if not np.any(valid_dim):
+                continue
+
+            true_row = np.full(out_dim, np.nan, dtype=np.float64)
+            pred_row = np.full(out_dim, np.nan, dtype=np.float64)
+
+            true_row[valid_dim] = true_sum[time_idx][valid_dim] / count[time_idx][valid_dim]
+            pred_row[valid_dim] = pred_sum[time_idx][valid_dim] / count[time_idx][valid_dim]
+
+            true_rows.append(true_row)
+            pred_rows.append(pred_row)
+            kept_time_indices.append(time_idx)
+
+        true_agg = np.stack(true_rows, axis=0).astype(np.float32)
+        pred_agg = np.stack(pred_rows, axis=0).astype(np.float32)
+
+        return true_agg, pred_agg, np.asarray(kept_time_indices, dtype=np.int64)
 
     def pretrain_one_epoch(self, dataModule):
         self.train()
@@ -638,12 +796,17 @@ class BasicModel(torch.nn.Module):
                             dataModule,
                         )
 
-                        main_loss = compute_loss(
-                            self,
+                        label_mask = self._prepare_label_mask(
+                            x_mark,
+                            label,
+                            dataModule,
+                        )
+
+                        main_loss = self._compute_masked_supervised_loss(
                             x,
                             pred_scaled.float(),
                             real_scaled.float(),
-                            self.config,
+                            label_mask.float(),
                         )
 
                         total_loss_value = main_loss + aux_loss
@@ -672,12 +835,17 @@ class BasicModel(torch.nn.Module):
                         dataModule,
                     )
 
-                    main_loss = compute_loss(
-                        self,
+                    label_mask = self._prepare_label_mask(
+                        x_mark,
+                        label,
+                        dataModule,
+                    )
+
+                    main_loss = self._compute_masked_supervised_loss(
                         x,
                         pred_scaled.float(),
                         real_scaled.float(),
-                        self.config,
+                        label_mask.float(),
                     )
 
                     total_loss_value = main_loss + aux_loss
@@ -793,6 +961,7 @@ class BasicModel(torch.nn.Module):
         preds = []
         reals = []
         ids = []
+        masks = []
 
         mode = "valid" if stage == "backbone" else "gate_valid"
 
@@ -826,13 +995,21 @@ class BasicModel(torch.nn.Module):
                     mode,
                 )
 
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                    dataModule,
+                )
+
                 reals.append(label)
                 preds.append(output["point_pred"])
                 ids.append(sample_ids)
+                masks.append(label_mask)
 
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
         ids = torch.cat(ids, dim=0)
+        masks = torch.cat(masks, dim=0)
 
         pred_raw, real_raw = self._restore_to_raw(
             preds,
@@ -841,13 +1018,17 @@ class BasicModel(torch.nn.Module):
             ids,
         )
 
+        raw_eval_mask = self._recover_level_mask_from_diff_mask(masks)
+
         real_agg, pred_agg, _ = self.aggregate_series_by_time(
             real_raw,
             pred_raw,
             ids,
+            valid_mask=raw_eval_mask,
         )
 
         return ErrorMetrics(real_agg, pred_agg, self.config, "valid")
+
 
     def test(self, dataModule):
         self.eval()
@@ -858,6 +1039,7 @@ class BasicModel(torch.nn.Module):
         preds = []
         reals = []
         ids = []
+        masks = []
 
         ctx = (
             torch.autocast(device_type=self.device_type, dtype=torch.float16)
@@ -889,13 +1071,21 @@ class BasicModel(torch.nn.Module):
                     mode="test",
                 )
 
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                    dataModule,
+                )
+
                 reals.append(label)
                 preds.append(output["point_pred"])
                 ids.append(sample_ids)
+                masks.append(label_mask)
 
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
         ids = torch.cat(ids, dim=0)
+        masks = torch.cat(masks, dim=0)
 
         pred_raw, real_raw = self._restore_to_raw(
             preds,
@@ -903,6 +1093,8 @@ class BasicModel(torch.nn.Module):
             dataModule,
             ids,
         )
+
+        raw_eval_mask = self._recover_level_mask_from_diff_mask(masks)
 
         dataset_name = getattr(self.config, "dataset", "Dataset")
         model_name = getattr(self.config, "model", "Model")
@@ -942,6 +1134,7 @@ class BasicModel(torch.nn.Module):
             real_raw,
             pred_raw,
             ids,
+            valid_mask=raw_eval_mask,
         )
 
         return ErrorMetrics(real_agg, pred_agg, self.config, "test")
