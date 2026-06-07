@@ -4,7 +4,7 @@
 pred_lens=(5)
 d_models=(256)
 
-configs=("WPMixerConfig")
+configs=("NetConfig")
 
 
 for cfg in "${configs[@]}"
@@ -15,7 +15,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_net_baseline.py" \
+      python "run_train_DARNet.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
@@ -42,7 +42,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_net_baseline.py" \
+      python "run_train_DARNet.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
@@ -69,7 +69,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_net_baseline.py" \
+      python "run_train_DARNet.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \

@@ -1,5 +1,6 @@
 # Copyright (c) NXAI GmbH and its affiliates 2024
 # Maximilian Beck
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 

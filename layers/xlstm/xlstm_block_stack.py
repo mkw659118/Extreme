@@ -1,5 +1,6 @@
 # Copyright (c) NXAI GmbH and its affiliates 2024
 # Maximilian Beck
+from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Union

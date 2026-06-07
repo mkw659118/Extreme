@@ -1,4 +1,4 @@
-from baselines import DLinear, P_sLSTM, PMDformer, NLinear, TimeMixer, WPMixer, iTransformer, Informer, FEDformer, FeTS, HMformer, PatchTST, TimesNet
+from baselines import DLinear, PMDformer, NLinear, WPMixer, iTransformer, Informer, FEDformer, FeTS, HMformer, PatchTST, TimesNet, P_sLSTM
 from baselines.HMformer import HMformer
 from exp.exp_base_net_baseline import BasicModel
 
@@ -44,10 +44,8 @@ class Model(BasicModel):
 
         elif config.model == 'P_sLSTM':
             self.model = P_sLSTM.Model(config)
-        
-        elif config.model == 'lstm':
-            self.model = LSTM.Model(config)
 
+        
         else:
             raise ValueError(f'Unsupported model type: {config.model}')
         

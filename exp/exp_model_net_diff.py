@@ -1,4 +1,4 @@
-from modules.DARNet import ExtremeLSTMMemo
+from modules.DARNet1 import ExtremeLSTMMemo
 from baselines import DLinear, PMDformer
 from exp.exp_base_DARNet import BasicModel
 

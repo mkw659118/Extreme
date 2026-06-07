@@ -1,5 +1,6 @@
 # Copyright (c) NXAI GmbH and its affiliates 2024
 # Maximilian Beck, Korbinian Pöppel
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
