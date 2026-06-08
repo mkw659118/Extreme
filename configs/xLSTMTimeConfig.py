@@ -4,8 +4,8 @@ from configs.default_config import *
 
 
 @dataclass
-class P_sLSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    model: str = 'P_sLSTM'
+class xLSTMTimeConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
+    model: str = 'xLSTMTime'
     bs: int = 128
     rank: int = 32
     epochs: int = 200

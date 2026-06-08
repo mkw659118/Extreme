@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1) pred_len 第一层
-pred_lens=(5)
+pred_lens=(10 15 20)
 d_models=(256)
 
 configs=("NetConfig")
@@ -25,6 +25,7 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
+        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True
@@ -52,6 +53,7 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
+        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True
@@ -79,6 +81,7 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
+        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True

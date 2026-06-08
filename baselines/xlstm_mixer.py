@@ -4,19 +4,44 @@ from torch import Tensor, nn
 import torch
 
 
+from layers.xlstm.xlstm_block_stack import xLSTMBlockStack, xLSTMBlockStackConfig
+
 from einops.layers.torch import Rearrange
 from layers.Autoformer_EncDec import series_decomp
 from layers.revin import RevIN
 from einops import rearrange, repeat, pack, unpack
-from .xlstm import (
+from layers.xlstm import (
     xLSTMBlockStack,
     xLSTMBlockStackConfig,
     sLSTMBlockConfig,
     sLSTMLayerConfig,
     mLSTMBlockConfig,
 )
+from typing import Optional
 
-from .base_model import BaseModel
+from torch import nn
+import torch
+
+
+class BaseModel(nn.Module):
+
+    def __init__(
+        self,
+        seq_len: int = 96,
+        pred_len: int = 96,
+        enc_in: int = 1,
+    ) -> None:
+        super().__init__()
+
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+        self.enc_in = enc_in
+
+    def forecast(self, x_enc: torch.Tensor, x_mark_enc: Optional[torch.Tensor] = None):
+        raise NotImplementedError
+
+    def forward(self, x_enc, x_mark_enc=None, x_dec=None, x_mark_dec=None, mask=None):
+        return self.forecast(x_enc, x_mark_enc)
 
 
 class AblationMode(enum.Enum):

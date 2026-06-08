@@ -6,7 +6,7 @@ d_models=(256)
 
 
 
-configs=("TimesNetConfig")
+configs=("P_sLSTMConfig")
 
 
 for cfg in "${configs[@]}"
