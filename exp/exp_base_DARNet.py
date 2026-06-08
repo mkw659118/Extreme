@@ -78,6 +78,10 @@ class BasicModel(torch.nn.Module):
         )
 
     def setup_pretrain_optimizer(self, config):
+        if not bool(getattr(config, "use_state_prior", True)):
+            print("[Ablation] setup_pretrain_optimizer skipped because Student-t state prior is disabled.")
+            return
+
         self.to(config.device)
 
         pretrain_lr = getattr(config, "pretrain_lr", config.lr)
@@ -1332,6 +1336,7 @@ class BasicModel(torch.nn.Module):
         return results
 
     def RunOnce(self, config, runId, model, datamodule, log):
+        use_state_prior = bool(getattr(config, "use_state_prior", True))
         pretrain_epochs = int(getattr(config, "pretrain_epochs", 20))
         freeze_after_pretrain = bool(
             getattr(config, "freeze_prior_after_pretrain", False)
@@ -1339,9 +1344,13 @@ class BasicModel(torch.nn.Module):
 
         enable_pretrain = (
             self._need_retrain(config, runId, log)
+            and use_state_prior
             and pretrain_epochs > 0
             and config.model == "net"
         )
+
+        if not use_state_prior:
+            print("[Ablation] Student-t state prior disabled: skip pretraining and use learned embedding router.")
 
         if enable_pretrain:
             print("*******State Prior Pretraining*******")

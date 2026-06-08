@@ -27,6 +27,7 @@ class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     dec_in: int = 1
     out_dim: int = 1
     use_retrieval: bool = True
+    use_state_prior: bool = True
     
     
    

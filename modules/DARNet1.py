@@ -301,6 +301,35 @@ class RouterFromEmbeddingPreTrain(nn.Module):
         return self.net(q_prior)
 
 
+class RouterFromEmbeddingFeatures(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        num_experts: int,
+        hidden: int = 64,
+        dropout: float = 0.0,
+    ):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(3 * d_model, hidden),
+            nn.LayerNorm(hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, num_experts),
+        )
+
+    def forward(self, x_emb: torch.Tensor) -> torch.Tensor:
+        feat = torch.cat(
+            [
+                x_emb[:, -1, :],
+                x_emb.mean(dim=1),
+                x_emb.std(dim=1, unbiased=False),
+            ],
+            dim=-1,
+        )
+        return self.net(feat)
+
+
 class LSTMExpert(nn.Module):
     def __init__(self, d_model: int, expert_layers: int = 1, dropout: float = 0.1):
         super().__init__()
@@ -456,6 +485,7 @@ class ExtremeLSTMMemo(nn.Module):
         self.num_experts = getattr(self.config, 'num_experts', 4)
         self.top_k_experts = min(getattr(self.config, 'top_k_experts', 2), self.num_experts)
         self.use_retrieval = bool(getattr(self.config, 'use_retrieval', True))
+        self.use_state_prior = bool(getattr(self.config, 'use_state_prior', True))
         self.retrieval_num = getattr(self.config, 'retrieval_num', 2)
         self.retrieval_stride = 1
 
@@ -511,6 +541,12 @@ class ExtremeLSTMMemo(nn.Module):
             hidden=getattr(self.config, 'router_hidden', 64),
             dropout=self.dropout,
         )
+        self.learned_router = RouterFromEmbeddingFeatures(
+            d_model=d_model,
+            num_experts=self.num_experts,
+            hidden=getattr(self.config, 'learned_router_hidden', getattr(self.config, 'router_hidden', 64)),
+            dropout=self.dropout,
+        )
         self.backbone = BackboneMoE(
             d_model=d_model,
             pred_len=pred_len,
@@ -533,6 +569,26 @@ class ExtremeLSTMMemo(nn.Module):
         return self.state_prior.parameters()
 
     def pretrain_state_prior_loss(self, x: torch.Tensor):
+        if not self.use_state_prior:
+            zero = x.new_tensor(0.0)
+            uniform = torch.full(
+                (self.num_experts,),
+                1.0 / self.num_experts,
+                device=x.device,
+                dtype=x.dtype,
+            )
+            aux = {
+                'pretrain_nll': zero.detach(),
+                'pretrain_total_loss': zero.detach(),
+                'q_mean': uniform.detach(),
+                'mix_prob': uniform.detach(),
+                'balance_kl': zero.detach(),
+                'dominant_penalty': zero.detach(),
+                'diversity_loss': zero.detach(),
+                'assignment_entropy': zero.detach(),
+            }
+            return zero, aux
+
         # Student-t prior pretraining uses only valid value channels by default.
         # This prevents the prior from learning missingness patterns instead of
         # traffic-state patterns.
@@ -779,11 +835,33 @@ class ExtremeLSTMMemo(nn.Module):
     def _forward_backbone(self, x: torch.Tensor):
         x_emb = self.enc_embedding(x)
 
-        # The backbone uses the full missing-aware input, while the Student-t
-        # prior only uses valid value channels by default.
-        prior_x = self._extract_state_prior_input(x)
-        prior_out = self.state_prior(prior_x)
-        router_logits = self.router(prior_out['q'])
+        if self.use_state_prior:
+            # The backbone uses the full missing-aware input, while the Student-t
+            # prior only uses valid value channels by default.
+            prior_x = self._extract_state_prior_input(x)
+            prior_out = self.state_prior(prior_x)
+            router_logits = self.router(prior_out['q'])
+            state_probs = prior_out['q']
+            state_z = prior_out['z']
+            state_alpha = prior_out['mix_prob']
+            state_pretrain_nll = prior_out['pretrain_nll']
+            router_source = 'student_t_prior'
+        else:
+            router_logits = self.learned_router(x_emb)
+            router_prob_for_aux = torch.softmax(router_logits, dim=-1)
+            state_probs = router_prob_for_aux
+            state_z = torch.cat(
+                [
+                    x_emb[:, -1, :],
+                    x_emb.mean(dim=1),
+                    x_emb.std(dim=1, unbiased=False),
+                ],
+                dim=-1,
+            )
+            state_alpha = router_prob_for_aux.mean(dim=0)
+            state_pretrain_nll = x_emb.new_tensor(0.0)
+            router_source = 'embedding_router'
+
         router_prob = torch.softmax(router_logits, dim=-1)
         topk_probs, topk_experts = torch.topk(router_prob, k=self.top_k_experts, dim=-1)
         head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
@@ -794,10 +872,11 @@ class ExtremeLSTMMemo(nn.Module):
             'router_prob': router_prob,
             'topk_experts': topk_experts,
             'topk_probs': head_mix_weights,
-            'state_probs': prior_out['q'],
-            'state_z': prior_out['z'],
-            'state_alpha': prior_out['mix_prob'],
-            'state_pretrain_nll': prior_out['pretrain_nll'],
+            'state_probs': state_probs,
+            'state_z': state_z,
+            'state_alpha': state_alpha,
+            'state_pretrain_nll': state_pretrain_nll,
+            'router_source': router_source,
         })
         return backbone_out
 
@@ -874,39 +953,42 @@ class ExtremeLSTMMemo(nn.Module):
             total_aux_loss = total_aux_loss + 0.1 * balance_loss
             aux_dict.update(balance_aux_dict)
 
-            # Keep prior states from collapsing during backbone training.
-            eps = 1e-8
-            q = out['state_probs']
-            q_mean = q.mean(dim=0)
-            q_uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
-            state_balance_loss = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(q_uniform + eps)))
-            state_dom_loss = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
+            if self.use_state_prior:
+                # Keep prior states from collapsing during backbone training.
+                eps = 1e-8
+                q = out['state_probs']
+                q_mean = q.mean(dim=0)
+                q_uniform = torch.full_like(q_mean, 1.0 / q_mean.numel())
+                state_balance_loss = torch.sum(q_mean * (torch.log(q_mean + eps) - torch.log(q_uniform + eps)))
+                state_dom_loss = F.relu(q_mean.max() - self.state_dom_cap).pow(2)
 
-            # Keep Student-T components distinguishable during backbone training
-            # as well; otherwise fine-tuning may make the pre-trained prior drift
-            # back toward overlapping components.
-            state_diversity_loss, state_diversity_aux = self.state_prior.component_diversity_loss(
-                mu_margin=self.state_mu_margin,
-                scale_margin=self.state_scale_margin,
-                df_margin=self.state_df_margin,
-                scale_weight=self.state_scale_diversity_weight,
-                df_weight=self.state_df_diversity_weight,
-            )
-            state_assignment_entropy = -(q * torch.log(q + eps)).sum(dim=-1).mean()
+                # Keep Student-T components distinguishable during backbone training
+                # as well; otherwise fine-tuning may make the pre-trained prior drift
+                # back toward overlapping components.
+                state_diversity_loss, state_diversity_aux = self.state_prior.component_diversity_loss(
+                    mu_margin=self.state_mu_margin,
+                    scale_margin=self.state_scale_margin,
+                    df_margin=self.state_df_margin,
+                    scale_weight=self.state_scale_diversity_weight,
+                    df_weight=self.state_df_diversity_weight,
+                )
+                state_assignment_entropy = -(q * torch.log(q + eps)).sum(dim=-1).mean()
 
-            total_aux_loss = (
-                total_aux_loss
-                + self.state_balance_weight * (state_balance_loss + state_dom_loss)
-                + self.state_diversity_weight * state_diversity_loss
-                + self.state_assignment_entropy_weight * state_assignment_entropy
-            )
+                total_aux_loss = (
+                    total_aux_loss
+                    + self.state_balance_weight * (state_balance_loss + state_dom_loss)
+                    + self.state_diversity_weight * state_diversity_loss
+                    + self.state_assignment_entropy_weight * state_assignment_entropy
+                )
 
-            aux_dict['state_balance_loss'] = state_balance_loss.detach()
-            aux_dict['state_dom_loss'] = state_dom_loss.detach()
-            aux_dict['state_qmax'] = q_mean.max().detach()
-            aux_dict['state_diversity_loss'] = state_diversity_loss.detach()
-            aux_dict['state_assignment_entropy'] = state_assignment_entropy.detach()
-            aux_dict.update(state_diversity_aux)
+                aux_dict['state_balance_loss'] = state_balance_loss.detach()
+                aux_dict['state_dom_loss'] = state_dom_loss.detach()
+                aux_dict['state_qmax'] = q_mean.max().detach()
+                aux_dict['state_diversity_loss'] = state_diversity_loss.detach()
+                aux_dict['state_assignment_entropy'] = state_assignment_entropy.detach()
+                aux_dict.update(state_diversity_aux)
+            else:
+                aux_dict['state_prior_disabled'] = point_pred.new_tensor(1.0).detach()
 
         out['point_pred'] = point_pred
         out['total_aux_loss'] = total_aux_loss

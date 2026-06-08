@@ -28,6 +28,7 @@ def get_experiment_name(config):
         'pred_len',
         'enc_in',
         'out_dim',
+        'use_state_prior',
         'use_retrieval',
         'retrieval_num',
         'num_experts',
