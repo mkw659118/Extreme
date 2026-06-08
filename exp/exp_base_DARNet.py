@@ -55,6 +55,10 @@ class BasicModel(torch.nn.Module):
         )
 
     def setup_gate_optimizer(self, config):
+        if not bool(getattr(config, "use_retrieval", True)):
+            print("[Ablation] setup_gate_optimizer skipped because retrieval is disabled.")
+            return
+
         gate_lr = getattr(config, "gate_lr", config.lr)
         gate_decay = getattr(config, "gate_decay", config.decay)
 
@@ -679,6 +683,12 @@ class BasicModel(torch.nn.Module):
         return avg_loss, t2 - t1, last_aux
 
     def prepare_retrieval_index(self, train_data, train_loader=None):
+        if not bool(getattr(self.config, "use_retrieval", True)):
+            if hasattr(self.model, "mark_gate_ready"):
+                self.model.mark_gate_ready(False)
+            print("[Ablation] Retrieval index construction skipped because use_retrieval=False.")
+            return
+
         print("*******Constructing the Retrieval Indexes*********")
 
         # 构建检索库时必须固定顺序
@@ -1164,7 +1174,8 @@ class BasicModel(torch.nn.Module):
             or (not os.path.exists(model_path) and config.continue_train)
         )
 
-        gate_epochs = getattr(config, "gate_epochs", 5)
+        use_retrieval = bool(getattr(config, "use_retrieval", True))
+        gate_epochs = getattr(config, "gate_epochs", 5) if use_retrieval else 0
 
         if not retrain_required:
             try:
@@ -1178,10 +1189,11 @@ class BasicModel(torch.nn.Module):
 
                 model.setup_optimizer(config)
 
-                train_data = datamodule.train_data_loader.dataset
-                train_loader = datamodule.train_data_loader
+                if use_retrieval:
+                    train_data = datamodule.train_data_loader.dataset
+                    train_loader = datamodule.train_data_loader
 
-                model.prepare_retrieval_index(train_data, train_loader)
+                    model.prepare_retrieval_index(train_data, train_loader)
 
                 results = model.test(datamodule)
 
@@ -1248,10 +1260,13 @@ class BasicModel(torch.nn.Module):
 
             model.load_state_dict(monitor.best_model)
 
-            train_data = datamodule.train_data_loader.dataset
-            train_loader = datamodule.train_data_loader
+            if use_retrieval:
+                train_data = datamodule.train_data_loader.dataset
+                train_loader = datamodule.train_data_loader
 
-            model.prepare_retrieval_index(train_data, train_loader)
+                model.prepare_retrieval_index(train_data, train_loader)
+            else:
+                print("[Ablation] Retrieval branch disabled: skip index construction and gate training.")
 
             gate_time = []
             gate_trained = False

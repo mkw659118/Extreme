@@ -455,6 +455,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         self.num_experts = getattr(self.config, 'num_experts', 4)
         self.top_k_experts = min(getattr(self.config, 'top_k_experts', 2), self.num_experts)
+        self.use_retrieval = bool(getattr(self.config, 'use_retrieval', True))
         self.retrieval_num = getattr(self.config, 'retrieval_num', 2)
         self.retrieval_stride = 1
 
@@ -605,7 +606,7 @@ class ExtremeLSTMMemo(nn.Module):
             p.requires_grad = True
 
     def mark_gate_ready(self, ready: bool = True):
-        self.retrieval_gate_ready.fill_(bool(ready))
+        self.retrieval_gate_ready.fill_(bool(ready) and self.use_retrieval)
 
     def compute_sample_level_balance_loss(self, router_logits: torch.Tensor):
         router_prob = torch.softmax(router_logits, dim=-1)
@@ -619,12 +620,17 @@ class ExtremeLSTMMemo(nn.Module):
         return balance_loss, aux_dict
 
     def construct_index(self, num: int):
+        if not self.use_retrieval:
+            self.index = 0
+            return
         self.keys = torch.zeros(num, self.seq_len, self.c_in, device=self.device)
         self.values = torch.zeros(num, self.pred_len, self.dec_in, device=self.device)
         self.index = 0
 
     @torch.no_grad()
     def add_key_value(self, x_enc: torch.Tensor, y: torch.Tensor, index: torch.Tensor):
+        if not self.use_retrieval:
+            return
         self.keys[index, :, :] = x_enc
         self.values[index, :, :] = y
         self.index += x_enc.size(0)
@@ -744,6 +750,8 @@ class ExtremeLSTMMemo(nn.Module):
         raise ValueError(f'Unsupported query shape: {queries.shape}')
 
     def retrieval(self, x: torch.Tensor, index: Optional[torch.Tensor]):
+        if not self.use_retrieval:
+            raise RuntimeError('Retrieval is disabled by config.use_retrieval=False.')
         batch_size = x.shape[0]
         if self.index == 0:
             raise RuntimeError('Retrieval index has not been constructed yet.')
@@ -829,7 +837,9 @@ class ExtremeLSTMMemo(nn.Module):
         total_aux_loss = point_pred.new_tensor(0.0)
         aux_dict = {}
 
-        if mode in {'gate_train', 'gate_valid'}:
+        if not self.use_retrieval:
+            aux_dict['retrieval_disabled'] = point_pred.new_tensor(1.0).detach()
+        elif mode in {'gate_train', 'gate_valid'}:
             fused_point, retrieval_pred, sims, beta = self._gate_fuse(x, point_pred, sample_ids)
             point_pred = fused_point
             total_aux_loss = total_aux_loss + self.retrieval_beta_reg * beta.mean()
