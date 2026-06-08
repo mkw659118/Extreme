@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1) pred_len 第一层
-pred_lens=(10 15 20)
+pred_lens=(5 10 15 20)
 d_models=(256)
 
 configs=("NetConfig")
