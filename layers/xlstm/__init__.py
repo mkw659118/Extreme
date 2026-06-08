@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 __version__ = "1.0.4"
 
-from layers.xlstm.blocks.mlstm.block import mLSTMBlock, mLSTMBlockConfig
-from layers.xlstm.blocks.mlstm.layer import mLSTMLayer, mLSTMLayerConfig
-from layers.xlstm.blocks.slstm.block import sLSTMBlock, sLSTMBlockConfig
-from layers.xlstm.blocks.slstm.layer import sLSTMLayer, sLSTMLayerConfig
-from layers.xlstm.components.feedforward import FeedForwardConfig, GatedFeedForward
-from layers.xlstm.xlstm_block_stack import xLSTMBlockStack, xLSTMBlockStackConfig
-from layers.xlstm.xlstm_lm_model import xLSTMLMModel, xLSTMLMModelConfig
+from .blocks.mlstm.block import mLSTMBlock, mLSTMBlockConfig
+from .blocks.mlstm.layer import mLSTMLayer, mLSTMLayerConfig
+from .blocks.slstm.block import sLSTMBlock, sLSTMBlockConfig
+from .blocks.slstm.layer import sLSTMLayer, sLSTMLayerConfig
+from .components.feedforward import FeedForwardConfig, GatedFeedForward
+from .xlstm_block_stack import xLSTMBlockStack, xLSTMBlockStackConfig
+from .xlstm_lm_model import xLSTMLMModel, xLSTMLMModelConfig

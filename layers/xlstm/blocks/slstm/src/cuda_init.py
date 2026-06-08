@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 # Copyright (c) NXAI GmbH and its affiliates 2023
 # Korbinian Poeppel
-from __future__ import annotations
+
 import os
 from typing import Sequence, Union
 import logging
@@ -14,7 +16,12 @@ from torch.utils.cpp_extension import load as _load
 LOGGER = logging.getLogger(__name__)
 
 
-def defines_to_cflags(defines):
+def defines_to_cflags(
+    defines: Union[
+        dict[str, Union[int, str]],
+        Sequence[tuple[str, Union[str, int]]],
+    ]
+):
     cflags = []
     print(defines)
     if isinstance(defines, dict):

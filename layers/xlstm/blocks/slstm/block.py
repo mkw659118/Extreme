@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Copyright (c) NXAI GmbH and its affiliates 2024
 # Korbininan Pöppel
 

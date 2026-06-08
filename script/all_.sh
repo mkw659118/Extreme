@@ -4,7 +4,8 @@
 pred_lens=(10 15 20)
 d_models=(256)
 
-configs=("NetConfig")
+
+configs=("PMDformerConfig" "ITransformerConfig" "FEDformerConfig" "FeTSConfig" "HMformerConfig" "PatchTSTConfig" "WPMixerConfig" "P_sLSTMConfig" "TimesNetConfig")
 
 
 for cfg in "${configs[@]}"
@@ -15,7 +16,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_DARNet.py" \
+      python "run_train_net_baseline.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
@@ -24,8 +25,8 @@ do
         --epochs 200 \
         --patience 40 \
         --seq_len 96 \
+        --logger 'baseline' \
         --rounds 5 \
-        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True
@@ -43,7 +44,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_DARNet.py" \
+      python "run_train_net_baseline.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
@@ -52,8 +53,8 @@ do
         --epochs 200 \
         --patience 40 \
         --seq_len 96 \
+        --logger 'baseline' \
         --rounds 5 \
-        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True
@@ -71,7 +72,7 @@ do
     do
       echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
-      python "run_train_DARNet.py" \
+      python "run_train_net_baseline.py" \
         --config "$cfg" \
         --pred_len "$pred" \
         --d_model "$dm" \
@@ -80,8 +81,8 @@ do
         --epochs 200 \
         --patience 40 \
         --seq_len 96 \
+        --logger 'baseline' \
         --rounds 5 \
-        --logger 'DARNet' \
         --loss_func 'L1Loss' \
         --bs 32 \
         --retrain True
