@@ -1,5 +1,7 @@
 from baselines import DLinear, PMDformer, NLinear, WPMixer, iTransformer, Informer, FEDformer, FeTS, HMformer, PatchTST, TimesNet, P_sLSTM
 from baselines.HMformer import HMformer
+from baselines.xLSTMTime import xLSTMTime
+from baselines.xlstm_mixer import xLSTMMixer
 from exp.exp_base_net_baseline import BasicModel
 
 class Model(BasicModel):
@@ -44,8 +46,13 @@ class Model(BasicModel):
 
         elif config.model == 'P_sLSTM':
             self.model = P_sLSTM.Model(config)
-
         
+        elif config.model == 'xLSTMTime':
+            self.model = xLSTMTime(pred_len=self.config.pred_len, seq_len=self.config.seq_len, enc_in=self.config.enc_in)
+
+        elif config.model == 'xlstm_mixer':
+            self.model = xLSTMMixer(pred_len=self.config.pred_len, seq_len=self.config.seq_len, enc_in=self.config.enc_in)
+
         else:
             raise ValueError(f'Unsupported model type: {config.model}')
         
