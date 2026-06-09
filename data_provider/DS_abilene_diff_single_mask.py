@@ -89,6 +89,14 @@ class DS:
         self.seq_len = int(self.config.seq_len)
         self.pred_len = int(self.config.pred_len)
         self.stride = int(getattr(self.config, "stride", 1))
+        self.use_missing_aware_encoding = bool(
+            getattr(self.config, "use_missing_aware_encoding", True)
+        )
+        setattr(
+            self.config,
+            "use_missing_aware_encoding",
+            self.use_missing_aware_encoding,
+        )
 
         self.mask_zero_as_missing = bool(
             getattr(self.config, "mask_zero_as_missing", True)
@@ -161,14 +169,24 @@ class DS:
         #   5) 原始值占位
         #   6) 原始值有效掩码
         # 因此模型实际输入维度是 6 * C。
-        self.input_feature_dim = self.num_vars * 6
+        if self.use_missing_aware_encoding:
+            self.input_feature_dim = self.num_vars * 6
+            self.input_feature_order = (
+                "[diff_norm, diff_mask, second_diff_raw, "
+                "second_diff_mask, raw, raw_mask]"
+            )
+            missing_aware_groups = 6
+        else:
+            self.input_feature_dim = self.num_vars * 3
+            self.input_feature_order = "[diff_norm, second_diff_raw, raw]"
+            missing_aware_groups = 0
 
         # 回写 config，给后面的模型初始化用。
         # num_vars 保留原始变量数 C；enc_in 表示模型实际输入维度 6C。
         setattr(self.config, "num_vars", self.num_vars)
         setattr(self.config, "input_feature_dim", self.input_feature_dim)
         setattr(self.config, "enc_in", self.input_feature_dim)
-        setattr(self.config, "missing_aware_groups", 6)
+        setattr(self.config, "missing_aware_groups", missing_aware_groups)
 
         # 现在才检查 target_col 是否越界
         if not 0 <= self.target_col < self.num_vars:
@@ -416,18 +434,27 @@ class DS:
             x_raw = raw[start : start + self.seq_len, :]
             x_raw_mask = raw_mask[start : start + self.seq_len, :]
 
-            # [seq_len, C] * 6 -> [seq_len, 6C]
-            x = np.concatenate(
-                [
-                    x_diff_norm,
-                    x_diff_mask,
-                    x_second_diff_raw,
-                    x_second_diff_mask,
-                    x_raw,
-                    x_raw_mask,
-                ],
-                axis=-1,
-            )
+            if self.use_missing_aware_encoding:
+                x = np.concatenate(
+                    [
+                        x_diff_norm,
+                        x_diff_mask,
+                        x_second_diff_raw,
+                        x_second_diff_mask,
+                        x_raw,
+                        x_raw_mask,
+                    ],
+                    axis=-1,
+                )
+            else:
+                x = np.concatenate(
+                    [
+                        x_diff_norm,
+                        x_second_diff_raw,
+                        x_raw,
+                    ],
+                    axis=-1,
+                )
 
             # y 不拼接，仍然只预测目标列的一阶差分标准化值。
             y = diff_norm[y_start:y_end, self.target_col : self.target_col + 1]
@@ -636,7 +663,8 @@ class DS:
         print(
             f"[Dataset] input feature concat: "
             f"num_vars={self.num_vars}, enc_in={self.input_feature_dim}, "
-            f"feature_order=[diff_norm, diff_mask, second_diff_raw, second_diff_mask, raw, raw_mask]"
+            f"use_missing_aware_encoding={self.use_missing_aware_encoding}, "
+            f"feature_order={self.input_feature_order}"
         )
         print(
             f"[Dataset] missing convention: mask_zero_as_missing={self.mask_zero_as_missing}"

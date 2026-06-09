@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import collections
 import pandas as pd
+import hashlib
 
 from data_provider.DS_abilene_diff_single_mask import DS
 from exp.exp_model_net_diff import Model
@@ -28,6 +29,7 @@ def get_experiment_name(config):
         'pred_len',
         'enc_in',
         'out_dim',
+        'use_missing_aware_encoding',
         'use_state_prior',
         'use_retrieval',
         'retrieval_num',
@@ -50,6 +52,16 @@ def get_experiment_name(config):
 
     exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
     filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
+    if len(filename) > 150:
+        digest = hashlib.sha1(filename.encode("utf-8")).hexdigest()[:8]
+        filename = (
+            f"Dataset{config.dataset}_"
+            f"Model{config.model}_"
+            f"PL{config.pred_len}_"
+            f"DM{config.d_model}_"
+            f"BS{config.bs}_"
+            f"{digest}"
+        )
 
     return filename, exper_detail
 
