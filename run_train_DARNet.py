@@ -31,6 +31,7 @@ def get_experiment_name(config):
         'use_state_prior',
         'use_retrieval',
         'retrieval_num',
+        'state_num',
         'num_experts',
         'top_k_experts',
         'use_memory',
@@ -42,7 +43,10 @@ def get_experiment_name(config):
     for field in optional_fields:
         if hasattr(config, field):
             key = field.replace('_', ' ').title().replace(' ', '_')
-            detail_fields[key] = getattr(config, field)
+            value = getattr(config, field)
+            if field == 'state_num' and int(value) == 0:
+                value = getattr(config, 'num_experts', value)
+            detail_fields[key] = value
 
     exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
     filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())

@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# 1) pred_len 第一层
 pred_lens=(5 10 15 20)
 d_models=(256)
-
 configs=("NetConfig")
-
 
 for cfg in "${configs[@]}"
 do
@@ -13,7 +10,7 @@ do
   do
     for dm in "${d_models[@]}"
     do
-      echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
+      echo ">> Running w/o MoE config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
       python "run_train_DARNet.py" \
         --config "$cfg" \
@@ -25,16 +22,16 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
-        --logger 'DARNet' \
+        --logger 'DARNet_wo_moe' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
-        --retrain True
+        --retrain True \
+        --state_num 4 \
+        --num_experts 1 \
+        --top_k_experts 1
     done
   done
 done
-
-
 
 for cfg in "${configs[@]}"
 do
@@ -42,7 +39,7 @@ do
   do
     for dm in "${d_models[@]}"
     do
-      echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
+      echo ">> Running w/o MoE config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
       python "run_train_DARNet.py" \
         --config "$cfg" \
@@ -54,16 +51,16 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
-        --logger 'DARNet' \
+        --logger 'DARNet_wo_moe' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
-        --retrain True
+        --retrain True \
+        --state_num 4 \
+        --num_experts 1 \
+        --top_k_experts 1
     done
   done
 done
-
-
 
 for cfg in "${configs[@]}"
 do
@@ -71,7 +68,7 @@ do
   do
     for dm in "${d_models[@]}"
     do
-      echo ">> Running config=${cfg}, pred_len=${pred}, d_model=${dm}"
+      echo ">> Running w/o MoE config=${cfg}, pred_len=${pred}, d_model=${dm}"
 
       python "run_train_DARNet.py" \
         --config "$cfg" \
@@ -83,11 +80,13 @@ do
         --patience 40 \
         --seq_len 96 \
         --rounds 5 \
-        --logger 'DARNet' \
+        --logger 'DARNet_wo_moe' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
-        --retrain True
+        --retrain True \
+        --state_num 4 \
+        --num_experts 1 \
+        --top_k_experts 1
     done
   done
-done 
+done

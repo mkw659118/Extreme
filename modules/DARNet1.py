@@ -283,14 +283,14 @@ class StudentTMixturePrior(nn.Module):
 class RouterFromEmbeddingPreTrain(nn.Module):
     def __init__(
         self,
+        num_states: int,
         num_experts: int,
         hidden: int = 64,
         dropout: float = 0.0,
     ):
         super().__init__()
-        in_dim = num_experts
         self.net = nn.Sequential(
-            nn.Linear(in_dim, hidden),
+            nn.Linear(num_states, hidden),
             nn.LayerNorm(hidden),
             nn.GELU(),
             nn.Dropout(dropout),
@@ -482,11 +482,16 @@ class ExtremeLSTMMemo(nn.Module):
         self.dropout = self.config.dropout
         self.device = self.config.device
 
-        self.num_experts = getattr(self.config, 'num_experts', 4)
-        self.top_k_experts = min(getattr(self.config, 'top_k_experts', 2), self.num_experts)
+        self.num_experts = int(getattr(self.config, 'num_experts', 4))
+        self.num_states = int(getattr(self.config, 'state_num', 0) or self.num_experts)
+        if self.num_states < 1:
+            raise ValueError(f'state_num must be >= 1, got {self.num_states}.')
+        if self.num_experts < 1:
+            raise ValueError(f'num_experts must be >= 1, got {self.num_experts}.')
+        self.top_k_experts = min(int(getattr(self.config, 'top_k_experts', 2)), self.num_experts)
         self.use_retrieval = bool(getattr(self.config, 'use_retrieval', True))
         self.use_state_prior = bool(getattr(self.config, 'use_state_prior', True))
-        self.retrieval_num = getattr(self.config, 'retrieval_num', 2)
+        self.retrieval_num = int(getattr(self.config, 'retrieval_num', 2))
         self.retrieval_stride = 1
 
         self.retrieval_tau = getattr(self.config, 'retrieval_tau', 0.55)
@@ -523,7 +528,7 @@ class ExtremeLSTMMemo(nn.Module):
             scales = (1,)
 
         self.state_prior = StudentTMixturePrior(
-            num_components=self.num_experts,
+            num_components=self.num_states,
             state_dim=state_dim,
             use_all_channels=bool(getattr(self.config, 'state_prior_use_all_channels', True)),
             include_last_value=include_last_value,
@@ -537,6 +542,7 @@ class ExtremeLSTMMemo(nn.Module):
 
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
         self.router = RouterFromEmbeddingPreTrain(
+            num_states=self.num_states,
             num_experts=self.num_experts,
             hidden=getattr(self.config, 'router_hidden', 64),
             dropout=self.dropout,
@@ -572,8 +578,8 @@ class ExtremeLSTMMemo(nn.Module):
         if not self.use_state_prior:
             zero = x.new_tensor(0.0)
             uniform = torch.full(
-                (self.num_experts,),
-                1.0 / self.num_experts,
+                (self.num_states,),
+                1.0 / self.num_states,
                 device=x.device,
                 dtype=x.dtype,
             )
@@ -667,6 +673,11 @@ class ExtremeLSTMMemo(nn.Module):
     def compute_sample_level_balance_loss(self, router_logits: torch.Tensor):
         router_prob = torch.softmax(router_logits, dim=-1)
         load = router_prob.mean(dim=0)
+        if load.numel() <= 1:
+            balance_loss = router_logits.sum() * 0.0
+            aux_dict = {'balance_loss': balance_loss.detach(), 'expert_load': load.detach()}
+            return balance_loss, aux_dict
+
         min_load = 0.2
         max_load = 0.5
         low_penalty = F.relu(min_load - load).pow(2)

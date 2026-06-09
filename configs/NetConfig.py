@@ -28,6 +28,10 @@ class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     out_dim: int = 1
     use_retrieval: bool = True
     use_state_prior: bool = True
+    state_num: int = 0
+    num_experts: int = 4
+    top_k_experts: int = 2
+    retrieval_num: int = 2
     
     
    
