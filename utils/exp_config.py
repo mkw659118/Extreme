@@ -1,4 +1,4 @@
-# coding : utf-8
+﻿# coding : utf-8
 # Author : yuxiang Zeng
 import argparse
 import importlib.util
@@ -16,13 +16,13 @@ def get_config(Config='MainConfig'):
     parser.add_argument('--config_path', type=str, default=f'configs/{Config}.py')
     args, unknown_args = parser.parse_known_args()
 
-    # 动态设置 config_path
+    # 鍔ㄦ€佽缃?config_path
     args.config_path = f'configs/{args.exp_name}.py'
     args = load_config(args.config_path, args.exp_name)
     args = update_config_from_args(args, unknown_args)
     
     
-    # 自动清理无效日志和空的 __pycache__ 文件夹
+    # 鑷姩娓呯悊鏃犳晥鏃ュ織鍜岀┖鐨?__pycache__ 鏂囦欢澶?
     clear_useless_logs()
     remove_pycache()
     return args
@@ -59,7 +59,7 @@ def update_config_from_args(config, args):
 
 
 
-# 清理无效日志文件
+# 娓呯悊鏃犳晥鏃ュ織鏂囦欢
 def clear_useless_logs():
     for dirpath, _, _ in os.walk('./results/'):
         if 'log' in dirpath:
@@ -71,12 +71,13 @@ def clear_useless_logs():
                 except Exception as e:
                     print(f"Error processing file {log_file}: {e}")
 
-# 删除空pycache文件夹
+# 鍒犻櫎绌簆ycache鏂囦欢澶?
 def remove_pycache(root_dir="."):
     for dirpath, dirnames, filenames in os.walk(root_dir):
         if "__pycache__" in dirnames:
             pycache_path = os.path.join(dirpath, "__pycache__")
             shutil.rmtree(pycache_path)
-    print("✅ All __pycache__ folders removed")
+    print("All __pycache__ folders removed")
     return True
+
 

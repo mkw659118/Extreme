@@ -1179,7 +1179,7 @@ class BasicModel(torch.nn.Module):
         )
 
         use_retrieval = bool(getattr(config, "use_retrieval", True))
-        gate_epochs = getattr(config, "gate_epochs", 5) if use_retrieval else 0
+        gate_epochs = int(getattr(config, "gate_epochs", 5)) if use_retrieval else 0
 
         if not retrain_required:
             try:
@@ -1282,7 +1282,7 @@ class BasicModel(torch.nn.Module):
                 best_gate_metric = float("inf")
                 best_gate_state = copy.deepcopy(model.state_dict())
 
-                gate_patience = getattr(config, "gate_patience", config.patience)
+                gate_patience = int(getattr(config, "gate_patience", config.patience))
                 gate_wait = 0
 
                 for gate_epoch in trange(gate_epochs, desc="Gate Training"):

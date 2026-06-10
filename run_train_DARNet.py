@@ -36,6 +36,8 @@ def get_experiment_name(config):
         'state_num',
         'num_experts',
         'top_k_experts',
+        'state_prior_scales',
+        'state_prior_include_seq_level',
         'use_memory',
         'share_weights',
         'mem_size',
