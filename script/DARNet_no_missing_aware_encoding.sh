@@ -25,7 +25,6 @@ do
         --logger 'DARNet_no_missing_aware_encoding' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
         --retrain True \
         --use_missing_aware_encoding False
     done
@@ -53,7 +52,6 @@ do
         --logger 'DARNet_no_missing_aware_encoding' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
         --retrain True \
         --use_missing_aware_encoding False
     done
@@ -81,7 +79,6 @@ do
         --logger 'DARNet_no_missing_aware_encoding' \
         --loss_func 'L1Loss' \
         --bs 32 \
-        --seed 2026 \
         --retrain True \
         --use_missing_aware_encoding False
     done
