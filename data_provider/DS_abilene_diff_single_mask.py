@@ -221,6 +221,111 @@ class DS:
             mask = mask & (data != 0)
         return mask.astype(np.float32)
 
+    def _get_artificial_missing_splits(self) -> set[str]:
+        splits = getattr(
+            self.config,
+            "artificial_missing_splits",
+            "train,val,test",
+        )
+        if splits is None:
+            return set()
+        if isinstance(splits, (list, tuple, set)):
+            values = splits
+        else:
+            values = str(splits).replace(";", ",").replace("|", ",").split(",")
+        return {str(item).strip().lower() for item in values if str(item).strip()}
+
+    def _apply_random_artificial_missing(
+        self,
+        mask: np.ndarray,
+        train_end: int,
+        val_end: int,
+    ) -> np.ndarray:
+        """Randomly remove observed entries from the raw observation mask.
+
+        The random missingness is applied on top of naturally missing values:
+        existing missing entries stay missing, and only currently valid entries
+        can be selected for artificial removal.
+        """
+        rate = float(getattr(self.config, "artificial_missing_rate", 0.0))
+        if rate <= 0.0:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+        if rate >= 1.0:
+            raise ValueError(
+                "artificial_missing_rate must be in [0, 1). "
+                f"Got {rate}."
+            )
+
+        splits = self._get_artificial_missing_splits()
+        if not splits:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+
+        seed = int(getattr(self.config, "artificial_missing_seed", 2026))
+        target_only = bool(
+            getattr(self.config, "artificial_missing_target_only", False)
+        )
+        rng = np.random.default_rng(seed)
+
+        split_ranges = {
+            "train": (0, train_end),
+            "val": (train_end, val_end),
+            "valid": (train_end, val_end),
+            "validation": (train_end, val_end),
+            "test": (val_end, mask.shape[0]),
+            "all": (0, mask.shape[0]),
+        }
+
+        candidate = np.zeros_like(mask, dtype=bool)
+        for split in splits:
+            if split not in split_ranges:
+                raise ValueError(
+                    "Unknown artificial_missing_splits item "
+                    f"'{split}'. Use train,val,test or all."
+                )
+            start, end = split_ranges[split]
+            candidate[start:end, :] = True
+
+        if target_only:
+            target_candidate = np.zeros_like(candidate)
+            target_candidate[:, self.target_col] = candidate[:, self.target_col]
+            candidate = target_candidate
+
+        candidate &= mask > 0.5
+        candidate_idx = np.flatnonzero(candidate.reshape(-1))
+        total_candidates = int(candidate_idx.size)
+        if total_candidates == 0:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+
+        remove_count = int(round(total_candidates * rate))
+        remove_count = min(max(remove_count, 0), total_candidates)
+        if remove_count == 0:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+
+        removed_flat = rng.choice(
+            candidate_idx,
+            size=remove_count,
+            replace=False,
+        )
+        new_mask = mask.reshape(-1).copy()
+        new_mask[removed_flat] = 0.0
+        new_mask = new_mask.reshape(mask.shape).astype(np.float32)
+
+        actual_rate = remove_count / total_candidates
+        setattr(self.config, "artificial_missing_actual_rate", actual_rate)
+        print(
+            "[Artificial Missing] "
+            f"rate={rate:.4f}, actual_rate={actual_rate:.4f}, "
+            f"removed={remove_count}/{total_candidates}, "
+            f"splits={','.join(sorted(splits))}, "
+            f"target_only={target_only}, seed={seed}"
+        )
+
+        return new_mask
+
     @staticmethod
     def _first_order_diff(
         data: np.ndarray,
@@ -474,12 +579,16 @@ class DS:
         raw_loaded = self._load_csv()
 
         full_mask = self._build_observation_mask(raw_loaded)
+        split_sizes, (train_end, val_end) = self._split_ratio(len(raw_loaded))
+        full_mask = self._apply_random_artificial_missing(
+            full_mask,
+            train_end,
+            val_end,
+        )
         data = np.where(full_mask > 0.5, raw_loaded, 0.0).astype(np.float32)
 
         self.raw_data = data
         self.raw_mask = full_mask.astype(np.float32)
-
-        split_sizes, (train_end, val_end) = self._split_ratio(len(data))
 
         train_raw = data[:train_end]
         train_mask = full_mask[:train_end]

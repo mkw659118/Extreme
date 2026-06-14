@@ -69,6 +69,10 @@ class DatasetInfo:
     enc_in: int = 1
     data_file: str = 'Abilene_single.csv'
     target_col: int = 0
+    artificial_missing_rate: float = 0.0
+    artificial_missing_seed: int = 2026
+    artificial_missing_splits: str = 'train,val,test'
+    artificial_missing_target_only: bool = False
 
 
 @dataclass
