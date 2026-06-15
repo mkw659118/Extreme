@@ -241,11 +241,11 @@ class DS:
         train_end: int,
         val_end: int,
     ) -> np.ndarray:
-        """Randomly remove observed entries from the raw observation mask.
+        """Randomly remove observed entries from the input observation mask.
 
-        The random missingness is applied on top of naturally missing values:
-        existing missing entries stay missing, and only currently valid entries
-        can be selected for artificial removal.
+        This mask is used only to build model inputs. Label masks are kept from
+        the original observation mask, so artificial input missingness does not
+        change supervised-loss or evaluation positions.
         """
         rate = float(getattr(self.config, "artificial_missing_rate", 0.0))
         if rate <= 0.0:
@@ -481,6 +481,8 @@ class DS:
         second_diff_mask: np.ndarray,
         raw: np.ndarray,
         raw_mask: np.ndarray,
+        label_diff_norm: np.ndarray | None = None,
+        label_diff_mask: np.ndarray | None = None,
     ):
         """
         构造窗口。
@@ -503,6 +505,11 @@ class DS:
             y_mask: [N, pred_len, 1]
                未来一阶差分标签有效掩码，用于 masked loss / evaluation。
         """
+        if label_diff_norm is None:
+            label_diff_norm = diff_norm
+        if label_diff_mask is None:
+            label_diff_mask = diff_mask
+
         shapes = {
             "diff_norm": diff_norm.shape,
             "diff_mask": diff_mask.shape,
@@ -510,6 +517,8 @@ class DS:
             "second_diff_mask": second_diff_mask.shape,
             "raw": raw.shape,
             "raw_mask": raw_mask.shape,
+            "label_diff_norm": label_diff_norm.shape,
+            "label_diff_mask": label_diff_mask.shape,
         }
         if len(set(shapes.values())) != 1:
             raise ValueError(f"All input arrays must have same shape, got {shapes}")
@@ -562,8 +571,8 @@ class DS:
                 )
 
             # y 不拼接，仍然只预测目标列的一阶差分标准化值。
-            y = diff_norm[y_start:y_end, self.target_col : self.target_col + 1]
-            y_mask = diff_mask[y_start:y_end, self.target_col : self.target_col + 1]
+            y = label_diff_norm[y_start:y_end, self.target_col : self.target_col + 1]
+            y_mask = label_diff_mask[y_start:y_end, self.target_col : self.target_col + 1]
 
             x_list.append(x)
             y_list.append(y)
@@ -580,18 +589,21 @@ class DS:
 
         full_mask = self._build_observation_mask(raw_loaded)
         split_sizes, (train_end, val_end) = self._split_ratio(len(raw_loaded))
-        full_mask = self._apply_random_artificial_missing(
+        input_mask = self._apply_random_artificial_missing(
             full_mask,
             train_end,
             val_end,
         )
         data = np.where(full_mask > 0.5, raw_loaded, 0.0).astype(np.float32)
+        input_data = np.where(input_mask > 0.5, raw_loaded, 0.0).astype(np.float32)
 
         self.raw_data = data
         self.raw_mask = full_mask.astype(np.float32)
 
         train_raw = data[:train_end]
         train_mask = full_mask[:train_end]
+        train_input_raw = input_data[:train_end]
+        train_input_mask = input_mask[:train_end]
 
         # 验证集和测试集保留前 seq_len 个历史点作为输入上下文
         val_start = max(0, train_end - self.seq_len)
@@ -599,9 +611,13 @@ class DS:
 
         val_raw = data[val_start:val_end]
         val_mask = full_mask[val_start:val_end]
+        val_input_raw = input_data[val_start:val_end]
+        val_input_mask = input_mask[val_start:val_end]
 
         test_raw = data[test_start:]
         test_mask = full_mask[test_start:]
+        test_input_raw = input_data[test_start:]
+        test_input_mask = input_mask[test_start:]
 
         # 只用训练集有效一阶差分拟合归一化参数
         self._fit_diff_normalizer(train_raw, train_mask)
@@ -609,44 +625,62 @@ class DS:
         train_norm, train_diff_mask = self._transform_diff(train_raw, train_mask)
         val_norm, val_diff_mask = self._transform_diff(val_raw, val_mask)
         test_norm, test_diff_mask = self._transform_diff(test_raw, test_mask)
+        train_input_norm, train_input_diff_mask = self._transform_diff(
+            train_input_raw,
+            train_input_mask,
+        )
+        val_input_norm, val_input_diff_mask = self._transform_diff(
+            val_input_raw,
+            val_input_mask,
+        )
+        test_input_norm, test_input_diff_mask = self._transform_diff(
+            test_input_raw,
+            test_input_mask,
+        )
 
         # 二阶差分原始值，不做标准化。
         train_second_diff, train_second_mask = self._second_order_diff(
-            train_raw,
-            train_mask,
+            train_input_raw,
+            train_input_mask,
         )
         val_second_diff, val_second_mask = self._second_order_diff(
-            val_raw,
-            val_mask,
+            val_input_raw,
+            val_input_mask,
         )
         test_second_diff, test_second_mask = self._second_order_diff(
-            test_raw,
-            test_mask,
+            test_input_raw,
+            test_input_mask,
         )
 
         x_train, y_train, y_train_mask = self._make_windows(
-            train_norm,
-            train_diff_mask,
+            train_input_norm,
+            train_input_diff_mask,
             train_second_diff,
             train_second_mask,
-            train_raw,
-            train_mask,
+            train_input_raw,
+            train_input_mask,
+            label_diff_norm=train_norm,
+            label_diff_mask=train_diff_mask,
         )
         x_val, y_val, y_val_mask = self._make_windows(
-            val_norm,
-            val_diff_mask,
+            val_input_norm,
+            val_input_diff_mask,
             val_second_diff,
             val_second_mask,
-            val_raw,
-            val_mask,
+            val_input_raw,
+            val_input_mask,
+            label_diff_norm=val_norm,
+            label_diff_mask=val_diff_mask,
         )
         x_test, y_test, y_test_mask = self._make_windows(
-            test_norm,
-            test_diff_mask,
+            test_input_norm,
+            test_input_diff_mask,
             test_second_diff,
             test_second_mask,
-            test_raw,
-            test_mask,
+            test_input_raw,
+            test_input_mask,
+            label_diff_norm=test_norm,
+            label_diff_mask=test_diff_mask,
         )
 
         # ===== 计算训练集点级 |diff| q90（用于 Tail 指标） =====
