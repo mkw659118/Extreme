@@ -1,4 +1,4 @@
-from baselines import DLinear, PMDformer, NLinear, WPMixer, iTransformer, Informer, FEDformer, FeTS, HMformer, PatchTST, TimesNet, P_sLSTM
+from baselines import PMDformer, WPMixer, iTransformer, FEDformer, FeTS, HMformer, PatchTST, TimesNet, P_sLSTM
 from baselines.HMformer import HMformer
 from baselines.xLSTMTime import xLSTMTime
 from baselines.xlstm_mixer import xLSTMMixer
@@ -9,21 +9,12 @@ class Model(BasicModel):
         super().__init__(config)
         self.config = config
         
-        if config.model == 'DLinear':
-            self.model = DLinear.Model(config)
-        elif config.model == 'PMDformer':
+        if config.model == 'PMDformer':
             self.model = PMDformer.Model(config)
-        elif config.model == 'DLinear':
-            self.model = DLinear.Model(config)
-            
-        elif config.model == 'NLinear':
-            self.model = NLinear.Model(config)
-        
+       
         elif config.model == 'iTransformer':
             self.model = iTransformer.Model(config)
-        elif config.model == 'informer':
-            self.model = Informer.Model(config)
-            
+        
         elif config.model == 'FEDformer':
             self.model = FEDformer.Model(config)
             

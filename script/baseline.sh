@@ -14,124 +14,38 @@ reservoir_sensors=(
 pred_lens=(8 72)
 d_models=(512)
 # d_models=(128)
+configs=(
+  "FEDformerConfig"
+  "PatchTSTConfig"
+  "WPMixerConfig"
+  "P_sLSTMConfig"
+  "xLSTMTimeConfig"
+  "xlstm_mixerConfig"
+)
 
-# for pred in "${pred_lens[@]}"
-# do
-#   for sensor in "${reservoir_sensors[@]}"
-#   do
-#     for dm in "${d_models[@]}"
-#     do
-#       echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-#       python "run_train.py" \
-#         --config "FEDformerConfig" \
-#         --reservoir_sensor "$sensor" \
-#         --pred_len "$pred" \
-#         --d_model "$dm" \
-#         --epochs 200 \
-#         --patience 40 \
-#         --train_volume 40000 \
-#         --rounds 5 \
-#         --oversampling 40 \
-#         --loss_func 'L1Loss' \
-#         --bs 128 \
-#         --retrain True
-#     done
-#   done
-# done
-
-
-for pred in "${pred_lens[@]}"
+for cfg in "${configs[@]}"
 do
-  for sensor in "${reservoir_sensors[@]}"
+  for pred in "${pred_lens[@]}"
   do
-    for dm in "${d_models[@]}"
+    for sensor in "${reservoir_sensors[@]}"
     do
-      echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train.py" \
-        --config "NLinearConfig" \
-        --reservoir_sensor "$sensor" \
-        --pred_len "$pred" \
-        --d_model "$dm" \
-        --epochs 200 \
-        --patience 40 \
-        --train_volume 40000 \
-        --rounds 5 \
-        --oversampling 40 \
-        --loss_func 'L1Loss' \
-        --bs 128 \
-        --retrain True
-    done
-  done
-done
-
-for pred in "${pred_lens[@]}"
-do
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    for dm in "${d_models[@]}"
-    do
-      echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train.py" \
-        --config "InformerConfig" \
-        --reservoir_sensor "$sensor" \
-        --pred_len "$pred" \
-        --d_model "$dm" \
-        --epochs 200 \
-        --patience 40 \
-        --train_volume 40000 \
-        --rounds 5 \
-        --oversampling 40 \
-        --loss_func 'L1Loss' \
-        --bs 128 \
-        --retrain True
-    done
-  done
-done
-
-for pred in "${pred_lens[@]}"
-do
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    for dm in "${d_models[@]}"
-    do
-      echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train.py" \
-        --config "ITransformerConfig" \
-        --reservoir_sensor "$sensor" \
-        --pred_len "$pred" \
-        --d_model "$dm" \
-        --epochs 200 \
-        --patience 40 \
-        --train_volume 40000 \
-        --rounds 5 \
-        --oversampling 40 \
-        --loss_func 'L1Loss' \
-        --bs 128 \
-        --retrain True
-    done
-  done
-done
-
-for pred in "${pred_lens[@]}"
-do
-  for sensor in "${reservoir_sensors[@]}"
-  do
-    for dm in "${d_models[@]}"
-    do
-      echo ">> Running pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-      python "run_train.py" \
-        --config "PMDformerConfig" \
-        --reservoir_sensor "$sensor" \
-        --pred_len "$pred" \
-        --d_model "$dm" \
-        --epochs 200 \
-        --patience 40 \
-        --train_volume 40000 \
-        --rounds 5 \
-        --oversampling 40 \
-        --loss_func 'L1Loss' \
-        --bs 128 \
-        --retrain True
+      for dm in "${d_models[@]}"
+      do
+        echo ">> Running config=${cfg}, pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
+        python "run_train_last.py" \
+          --config "$cfg" \
+          --reservoir_sensor "$sensor" \
+          --pred_len "$pred" \
+          --d_model "$dm" \
+          --epochs 200 \
+          --patience 40 \
+          --train_volume 40000 \
+          --rounds 5 \
+          --oversampling 40 \
+          --loss_func 'L1Loss' \
+          --bs 8 \
+          --retrain True
+      done
     done
   done
 done
