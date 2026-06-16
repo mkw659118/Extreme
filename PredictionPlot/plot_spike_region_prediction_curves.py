@@ -19,26 +19,28 @@ OUT_DIR = ROOT / "PredictionPlot"
 
 DATASETS = ["Abilene", "Geant", "Seattle"]
 PRED_LENS = [5, 10, 15, 20]
-SELECTED_BASELINES = ["iTransformer", "HMformer", "TimesNet", "WPMixer", "P_sLSTM"]
+SELECTED_BASELINES = ["iTransformer", "TimesNet", "WPMixer", "P_sLSTM"]
 DISPLAY_ORDER = ["True", "DARNet"] + SELECTED_BASELINES
+DISPLAY_LABEL = {
+    "DARNet": "DATP-Net",
+}
 STYLE_SUFFIX = "spike_region_selected_baselines_v1"
 
 TOKENS = {
-    "surface": "#FCFCFD",
+    "surface": "#FFFFFF",
     "panel": "#FFFFFF",
-    "ink": "#1F2430",
-    "grid": "#E6E8F0",
-    "axis": "#D7DBE7",
+    "ink": "#2F3A4A",
+    "grid": "#E2E5EA",
+    "axis": "#AEB4BE",
 }
 
 LINE_STYLE = {
-    "True": dict(color="#4A4F5A", linewidth=2.55, linestyle="-", alpha=0.98, zorder=30),
-    "DARNet": dict(color="#B23A48", linewidth=2.20, linestyle="-", alpha=0.98, zorder=25),
-    "iTransformer": dict(color="#5477C4", linewidth=1.24, linestyle="-", alpha=0.68),
-    "HMformer": dict(color="#8A3A6F", linewidth=1.24, linestyle="-", alpha=0.68),
-    "TimesNet": dict(color="#7A828F", linewidth=1.18, linestyle="-", alpha=0.70),
-    "WPMixer": dict(color="#386411", linewidth=1.22, linestyle="-", alpha=0.68),
-    "P_sLSTM": dict(color="#CC6F47", linewidth=1.22, linestyle="-", alpha=0.68),
+    "True": dict(color="#6E6E6E", linewidth=1.95, linestyle="-", alpha=0.96, zorder=30),
+    "DARNet": dict(color="#F4A261", linewidth=1.95, linestyle="-", alpha=0.96, zorder=25),
+    "iTransformer": dict(color="#6FA8DC", linewidth=1.95, linestyle="-", alpha=0.90),
+    "TimesNet": dict(color="#7BC8A4", linewidth=1.95, linestyle="-", alpha=0.90),
+    "WPMixer": dict(color="#C9A0DC", linewidth=1.95, linestyle="-", alpha=0.90),
+    "P_sLSTM": dict(color="#B08968", linewidth=1.95, linestyle="-", alpha=0.90),
 }
 
 plt.rcParams.update(
@@ -48,6 +50,9 @@ plt.rcParams.update(
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
         "figure.dpi": 180,
+        "axes.labelsize": 17,
+        "xtick.labelsize": 15,
+        "ytick.labelsize": 15,
     }
 )
 
@@ -69,6 +74,10 @@ def load_curve(dataset: str, pred_len: int) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{path} missing columns: {missing}")
     return df
+
+
+def display_label(label: str) -> str:
+    return DISPLAY_LABEL.get(label, label)
 
 
 def choose_spike_region(df: pd.DataFrame) -> dict[str, int | float]:
@@ -98,20 +107,23 @@ def choose_spike_region(df: pd.DataFrame) -> dict[str, int | float]:
 
 def style_axis(ax) -> None:
     ax.set_facecolor(TOKENS["panel"])
-    ax.set_xlabel("Test Time Step", color=TOKENS["ink"])
-    ax.set_ylabel("Value", color=TOKENS["ink"])
+    ax.set_xlabel("Test Time Step", color=TOKENS["ink"], fontsize=17, labelpad=8)
+    ax.set_ylabel("Value", color=TOKENS["ink"], fontsize=17, labelpad=8)
     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
     ax.ticklabel_format(axis="y", style="sci", scilimits=(-3, 4))
-    ax.grid(True, linestyle="--", linewidth=0.6, color=TOKENS["grid"], alpha=0.82)
-    for spine in ["top", "right"]:
-        ax.spines[spine].set_visible(False)
-    for spine in ["left", "bottom"]:
+    ax.grid(True, linestyle="--", linewidth=0.75, color=TOKENS["grid"], alpha=0.86)
+    for spine in ["top", "right", "left", "bottom"]:
+        ax.spines[spine].set_visible(True)
         ax.spines[spine].set_color(TOKENS["axis"])
-        ax.spines[spine].set_linewidth(0.9)
-    ax.tick_params(axis="both", colors=TOKENS["ink"])
+        ax.spines[spine].set_linewidth(1.05)
+    ax.tick_params(axis="both", colors=TOKENS["ink"], labelsize=15, width=1.0, length=4.5)
+    ax.yaxis.get_offset_text().set_fontsize(15)
+    ax.yaxis.get_offset_text().set_color(TOKENS["ink"])
+    ax.xaxis.get_offset_text().set_fontsize(15)
+    ax.xaxis.get_offset_text().set_color(TOKENS["ink"])
 
 
-def add_inside_legend(ax, fontsize: float = 8.5) -> None:
+def add_inside_legend(ax, fontsize: float = 11.5) -> None:
     legend = ax.legend(
         ncol=1,
         loc="upper right",
@@ -119,15 +131,15 @@ def add_inside_legend(ax, fontsize: float = 8.5) -> None:
         frameon=True,
         facecolor=TOKENS["panel"],
         edgecolor=TOKENS["axis"],
-        framealpha=0.86,
+        framealpha=0.92,
         fontsize=fontsize,
-        handlelength=2.2,
-        handletextpad=0.55,
-        labelspacing=0.34,
-        borderpad=0.48,
-        borderaxespad=0.25,
+        handlelength=2.35,
+        handletextpad=0.62,
+        labelspacing=0.42,
+        borderpad=0.58,
+        borderaxespad=0.32,
     )
-    legend.get_frame().set_linewidth(0.8)
+    legend.get_frame().set_linewidth(0.9)
     for text in legend.get_texts():
         text.set_color(TOKENS["ink"])
         text.set_ha("right")
@@ -140,7 +152,7 @@ def plot_region_on_axis(ax, df: pd.DataFrame, region: dict[str, int | float], sh
     for label in DISPLAY_ORDER:
         y = local[label].to_numpy(dtype=np.float64)
         plotted.append(y)
-        ax.plot(x, y, label=label, **LINE_STYLE[label])
+        ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
     style_axis(ax)
     ax.xaxis.set_major_locator(MaxNLocator(nbins=6, integer=True))
     lim = axis_margin(np.concatenate(plotted))
@@ -153,7 +165,7 @@ def plot_region_on_axis(ax, df: pd.DataFrame, region: dict[str, int | float], sh
 def plot_single(dataset: str, pred_len: int) -> dict[str, object]:
     df = load_curve(dataset, pred_len)
     region = choose_spike_region(df)
-    fig, ax = plt.subplots(figsize=(10.4, 4.8), facecolor=TOKENS["surface"])
+    fig, ax = plt.subplots(figsize=(10.8, 5.15), facecolor=TOKENS["surface"])
     plot_region_on_axis(ax, df, region, show_legend=True)
     fig.tight_layout()
 
@@ -194,7 +206,7 @@ def plot_grid(index_rows: list[dict[str, object]]) -> dict[str, object]:
             for label in DISPLAY_ORDER:
                 y = local[label].to_numpy(dtype=np.float64)
                 plotted.append(y)
-                line, = ax.plot(x, y, label=label, **LINE_STYLE[label])
+                line, = ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
                 handles.setdefault(label, line)
             style_axis(ax)
             ax.set_title(f"{dataset} PL{pred_len}", fontsize=10.5, color=TOKENS["ink"], pad=4)
@@ -210,7 +222,7 @@ def plot_grid(index_rows: list[dict[str, object]]) -> dict[str, object]:
 
     legend = fig.legend(
         [handles[x] for x in DISPLAY_ORDER if x in handles],
-        [x for x in DISPLAY_ORDER if x in handles],
+        [display_label(x) for x in DISPLAY_ORDER if x in handles],
         loc="upper right",
         bbox_to_anchor=(0.986, 0.985),
         ncol=1,
@@ -259,7 +271,7 @@ def plot_pred5_three_subplots(index_rows: list[dict[str, object]]) -> dict[str, 
         for label in DISPLAY_ORDER:
             y = local[label].to_numpy(dtype=np.float64)
             plotted.append(y)
-            ax.plot(x, y, label=label, **LINE_STYLE[label])
+            ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
         style_axis(ax)
         ax.patch.set_alpha(0.0)
         ax.set_title(dataset, fontsize=11.0, color=TOKENS["ink"], pad=5)
@@ -292,6 +304,50 @@ def plot_pred5_three_subplots(index_rows: list[dict[str, object]]) -> dict[str, 
         "png": str(png_path.relative_to(OUT_DIR)).replace("\\", "/"),
         "nobg_pdf": str(nobg_pdf_path.relative_to(OUT_DIR)).replace("\\", "/"),
         "nobg_png": str(nobg_png_path.relative_to(OUT_DIR)).replace("\\", "/"),
+    }
+
+
+def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
+    pred_len = 5
+    datasets = ["Abilene", "Geant"]
+    fig, axes = plt.subplots(1, 2, figsize=(17.2, 5.3), facecolor=TOKENS["surface"])
+
+    for c, dataset in enumerate(datasets):
+        ax = axes[c]
+        df = load_curve(dataset, pred_len)
+        region = choose_spike_region(df)
+        local = df.iloc[int(region["start_pos"]) : int(region["end_pos"])].copy()
+        x = local["step"].to_numpy(dtype=np.float64)
+        plotted = []
+        for label in DISPLAY_ORDER:
+            y = local[label].to_numpy(dtype=np.float64)
+            plotted.append(y)
+            ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
+
+        style_axis(ax)
+        ax.set_title(dataset, fontsize=19, color=TOKENS["ink"], pad=10)
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+        lim = axis_margin(np.concatenate(plotted))
+        if lim is not None:
+            ax.set_ylim(*lim)
+        if c > 0:
+            ax.set_ylabel("")
+            add_inside_legend(ax, fontsize=11.5)
+
+    fig.tight_layout(w_pad=2.4)
+
+    stem = "Abilene_Geant_PL5_prediction_curves_spike_region_selected_baselines_1x2_v2"
+    pdf_path = FIG_DIR / f"{stem}.pdf"
+    png_path = FIG_DIR / f"{stem}.png"
+    fig.savefig(pdf_path, bbox_inches="tight")
+    fig.savefig(png_path, bbox_inches="tight", dpi=300)
+    plt.close(fig)
+
+    return {
+        "dataset": "Abilene_Geant",
+        "pred_len": pred_len,
+        "pdf": str(pdf_path.relative_to(OUT_DIR)).replace("\\", "/"),
+        "png": str(png_path.relative_to(OUT_DIR)).replace("\\", "/"),
     }
 
 

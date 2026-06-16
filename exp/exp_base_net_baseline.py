@@ -9,7 +9,7 @@ import torch
 from tqdm import trange
 
 from exp.exp_loss import compute_loss
-from exp.exp_metrics import ErrorMetrics
+from exp.exp_metrics_mask import ErrorMetrics
 from utils.model_monitor import EarlyStopping
 from utils.model_trainer import get_loss_function, get_optimizer
 
@@ -52,6 +52,51 @@ class BasicModel(torch.nn.Module):
             threshold=1e-3,
         )
 
+    def _prepare_label_mask(self, x_mark, label):
+        future_label = label[:, -self.pred_len:, :]
+        mask = None
+
+        if x_mark is not None and torch.is_tensor(x_mark):
+            candidate = x_mark
+            if candidate.dim() == 2:
+                candidate = candidate.unsqueeze(-1)
+            if candidate.dim() == 3 and candidate.shape[1] >= self.pred_len:
+                mask = candidate[:, -self.pred_len:, :]
+                if mask.shape[-1] != future_label.shape[-1]:
+                    mask = mask[..., : future_label.shape[-1]]
+                if mask.shape[:2] != future_label.shape[:2]:
+                    mask = None
+
+        if mask is None:
+            mask = torch.isfinite(future_label).float()
+            if bool(getattr(self.config, "mask_zero_as_missing", True)):
+                mask = mask * (future_label != 0).float()
+
+        return mask.to(device=label.device, dtype=label.dtype)
+
+    def _compute_masked_supervised_loss(self, x, pred_scaled, real_scaled, label_mask):
+        valid = (
+            (label_mask > 0.5)
+            & torch.isfinite(pred_scaled)
+            & torch.isfinite(real_scaled)
+        )
+        if valid.shape != pred_scaled.shape:
+            valid = valid.expand_as(pred_scaled)
+
+        if not torch.any(valid):
+            return pred_scaled.sum() * 0.0
+
+        pred_valid = pred_scaled[valid].reshape(1, -1, 1)
+        real_valid = real_scaled[valid].reshape(1, -1, 1)
+
+        return compute_loss(
+            self,
+            x,
+            pred_valid.float(),
+            real_valid.float(),
+            self.config,
+        )
+
     def train_one_epoch(self, dataModule, stage="backbone"):
         self.train()
         torch.set_grad_enabled(True)
@@ -91,13 +136,19 @@ class BasicModel(torch.nn.Module):
                             None,
                         )
 
-                        main_loss = compute_loss(
-                            self,
-                            pred,
+                        pred_scaled = pred[:, -self.pred_len:, 0:1]
+                        real_scaled = label[:, -self.pred_len:, 0:1]
+                        label_mask = self._prepare_label_mask(
+                            x_mark,
                             label,
-                            self.config,
                         )
-                        print(pred.shape, label.shape)
+
+                        main_loss = self._compute_masked_supervised_loss(
+                            x,
+                            pred_scaled,
+                            real_scaled,
+                            label_mask,
+                        )
 
                         total_loss_value = main_loss
 
@@ -117,12 +168,18 @@ class BasicModel(torch.nn.Module):
                         None,
                     )
 
-                    main_loss = compute_loss(
-                        self,
-                        x,
-                        pred,
+                    pred_scaled = pred[:, -self.pred_len:, 0:1]
+                    real_scaled = label[:, -self.pred_len:, 0:1]
+                    label_mask = self._prepare_label_mask(
+                        x_mark,
                         label,
-                        self.config,
+                    )
+
+                    main_loss = self._compute_masked_supervised_loss(
+                        x,
+                        pred_scaled,
+                        real_scaled,
+                        label_mask,
                     )
 
                     total_loss_value = main_loss
@@ -171,6 +228,7 @@ class BasicModel(torch.nn.Module):
         
         preds = []
         reals = []
+        masks = []
 
         ctx = (
             torch.autocast(device_type=self.device_type, dtype=torch.float16)
@@ -201,21 +259,28 @@ class BasicModel(torch.nn.Module):
 
                 pred_scaled = pred[:, -self.pred_len:, 0:1]
                 real_scaled = label[:, -self.pred_len:, 0:1]
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                )
 
                 pred_original = self._inverse_to_original_space(dataModule, pred_scaled)
                 real_original = self._inverse_to_original_space(dataModule, real_scaled)
 
                 preds.append(pred_original)
                 reals.append(real_original)
+                masks.append(label_mask)
 
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
+        masks = torch.cat(masks, dim=0)
 
         return ErrorMetrics(
             reals,
             preds,
             self.config,
             mode,
+            valid_mask=masks,
         )
 
     def valid(self, dataModule, stage="backbone"):
@@ -379,10 +444,18 @@ class BasicModel(torch.nn.Module):
 
         print(f"[Save] test aggregated result saved to: {save_path}")
     
-    def _aggregate_series_by_time_for_metric(self, true_series, pred_series, sample_ids):
+    def _aggregate_series_by_time_for_metric(
+        self,
+        true_series,
+        pred_series,
+        sample_ids,
+        valid_mask=None,
+    ):
         true_series = self._to_numpy_array(true_series)
         pred_series = self._to_numpy_array(pred_series)
         sample_ids = self._to_numpy_array(sample_ids).astype(np.int64)
+        if valid_mask is not None:
+            valid_mask = self._to_numpy_array(valid_mask)
 
         if true_series.shape != pred_series.shape:
             raise ValueError(
@@ -395,6 +468,20 @@ class BasicModel(torch.nn.Module):
 
         if true_series.ndim != 3:
             raise ValueError(f"Expected [N, pred_len, C], got shape {true_series.shape}")
+
+        if valid_mask is None:
+            valid_mask = np.ones_like(true_series, dtype=np.float32)
+        else:
+            if valid_mask.ndim == 2:
+                valid_mask = valid_mask[:, :, None]
+            if valid_mask.shape != true_series.shape:
+                if valid_mask.shape[-1] == 1 and true_series.shape[-1] > 1:
+                    valid_mask = np.broadcast_to(valid_mask, true_series.shape)
+                else:
+                    raise ValueError(
+                        f"valid_mask shape {valid_mask.shape} does not match "
+                        f"series shape {true_series.shape}"
+                    )
 
         pred_len = true_series.shape[1]
         out_dim = true_series.shape[2]
@@ -410,16 +497,32 @@ class BasicModel(torch.nn.Module):
             for horizon in range(pred_len):
                 time_idx = base_time_idx + horizon
 
+                point_mask = (
+                    (valid_mask[window_idx, horizon] > 0.5)
+                    & np.isfinite(true_series[window_idx, horizon])
+                    & np.isfinite(pred_series[window_idx, horizon])
+                )
+                if not np.any(point_mask):
+                    continue
+
                 if time_idx not in count:
                     true_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
                     pred_sum[time_idx] = np.zeros(out_dim, dtype=np.float64)
-                    count[time_idx] = 0
+                    count[time_idx] = np.zeros(out_dim, dtype=np.float64)
 
-                true_sum[time_idx] += true_series[window_idx, horizon].astype(np.float64)
-                pred_sum[time_idx] += pred_series[window_idx, horizon].astype(np.float64)
-                count[time_idx] += 1
+                true_sum[time_idx][point_mask] += true_series[
+                    window_idx,
+                    horizon,
+                ][point_mask].astype(np.float64)
+                pred_sum[time_idx][point_mask] += pred_series[
+                    window_idx,
+                    horizon,
+                ][point_mask].astype(np.float64)
+                count[time_idx][point_mask] += 1.0
 
-        time_indices = sorted(count)
+        time_indices = [i for i in sorted(count) if np.all(count[i] > 0)]
+        if not time_indices:
+            raise ValueError("No valid entries for aggregated metric computation.")
 
         true_agg = np.stack(
             [true_sum[i] / count[i] for i in time_indices],
@@ -442,6 +545,7 @@ class BasicModel(torch.nn.Module):
         preds = []
         reals = []
         ids = []
+        masks = []
 
         ctx = (
             torch.autocast(device_type=self.device_type, dtype=torch.float16)
@@ -472,6 +576,10 @@ class BasicModel(torch.nn.Module):
 
                 pred_scaled = pred[:, -self.pred_len:, 0:1]
                 real_scaled = label[:, -self.pred_len:, 0:1]
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                )
 
                 pred_original = self._inverse_to_original_space(dataModule, pred_scaled)
                 real_original = self._inverse_to_original_space(dataModule, real_scaled)
@@ -479,10 +587,12 @@ class BasicModel(torch.nn.Module):
                 preds.append(pred_original)
                 reals.append(real_original)
                 ids.append(sample_ids)
+                masks.append(label_mask)
 
         reals = torch.cat(reals, dim=0)
         preds = torch.cat(preds, dim=0)
         ids = torch.cat(ids, dim=0)
+        masks = torch.cat(masks, dim=0)
 
         save_path, aggregated_save_path = self._build_test_save_paths()
         self._save_test_raw_result(
@@ -501,6 +611,7 @@ class BasicModel(torch.nn.Module):
             true_series=reals,
             pred_series=preds,
             sample_ids=ids,
+            valid_mask=masks,
         )
 
         return ErrorMetrics(

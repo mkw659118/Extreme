@@ -43,7 +43,6 @@ do
           --rounds 5 \
           --oversampling 40 \
           --loss_func 'L1Loss' \
-          --bs 8 \
           --retrain True
       done
     done

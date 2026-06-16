@@ -2,8 +2,9 @@ import numpy as np
 import torch
 import collections
 import pandas as pd
+import hashlib
 
-from data_provider.DS_abilene_single import DS
+from data_provider.DS_abilene_single_mask import DS
 from exp.exp_model_net_baseline import Model
 import utils.model_efficiency
 import utils.utils
@@ -31,6 +32,10 @@ def get_experiment_name(config):
         'num_experts',
         'top_k_experts',
         'retrieval_num',
+        'artificial_missing_rate',
+        'artificial_missing_seed',
+        'artificial_missing_splits',
+        'artificial_missing_target_only',
         'use_memory',
         'share_weights',
         'mem_size',
@@ -44,6 +49,16 @@ def get_experiment_name(config):
 
     exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
     filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
+    if len(filename) > 150:
+        digest = hashlib.sha1(filename.encode("utf-8")).hexdigest()[:8]
+        filename = (
+            f"Dataset{config.dataset}_"
+            f"Model{config.model}_"
+            f"PL{config.pred_len}_"
+            f"DM{config.d_model}_"
+            f"BS{config.bs}_"
+            f"{digest}"
+        )
 
     return filename, exper_detail
 
