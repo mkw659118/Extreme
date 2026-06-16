@@ -26,7 +26,7 @@ class Model(BasicModel):
                 config=config,
             )
         
-        if config.model == 'PMDformer':
+        elif config.model == 'PMDformer':
             self.model = PMDformer.Model(config)
        
         elif config.model == 'iTransformer':

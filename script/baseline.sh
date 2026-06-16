@@ -12,15 +12,15 @@ reservoir_sensors=(
 
 # 1) pred_len 第一层
 pred_lens=(8 72)
-d_models=(512)
+d_models=(256)
 # d_models=(128)
 configs=(
-  "FEDformerConfig"
-  "PatchTSTConfig"
-  "WPMixerConfig"
   "P_sLSTMConfig"
   "xLSTMTimeConfig"
   "xlstm_mixerConfig"
+  "WPMixerConfig"
+  "PatchTSTConfig"
+  "FEDformerConfig"
 )
 
 for cfg in "${configs[@]}"
@@ -32,18 +32,20 @@ do
       for dm in "${d_models[@]}"
       do
         echo ">> Running config=${cfg}, pred_len=${pred}, sensor=${sensor}, d_model=${dm}"
-        python "run_train_last.py" \
+        python "run_train.py" \
           --config "$cfg" \
           --reservoir_sensor "$sensor" \
           --pred_len "$pred" \
           --d_model "$dm" \
           --epochs 200 \
           --patience 40 \
+          --dataset 'water' \
           --train_volume 40000 \
-          --rounds 5 \
+          --rounds 1 \
+          --logger 'water_baseline' \
           --oversampling 40 \
           --loss_func 'L1Loss' \
-          --bs 8 \
+          --bs 256 \
           --retrain True
       done
     done
