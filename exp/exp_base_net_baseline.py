@@ -74,6 +74,43 @@ class BasicModel(torch.nn.Module):
 
         return mask.to(device=label.device, dtype=label.dtype)
 
+    def _time_feature_dim(self):
+        freq = str(getattr(self.config, "freq", "h"))
+        freq_map = {
+            "h": 4,
+            "t": 5,
+            "s": 6,
+            "m": 1,
+            "a": 1,
+            "w": 2,
+            "d": 3,
+            "b": 3,
+        }
+        return int(freq_map.get(freq, 4))
+
+    def _prepare_model_x_mark(self, x, x_mark):
+        """Keep label masks out of models that expect time-feature marks."""
+        expected_dim = self._time_feature_dim()
+
+        if x_mark is not None and torch.is_tensor(x_mark):
+            candidate = x_mark
+            if candidate.dim() == 2:
+                candidate = candidate.unsqueeze(-1)
+            if (
+                candidate.dim() == 3
+                and candidate.shape[1] == x.shape[1]
+                and candidate.shape[-1] == expected_dim
+            ):
+                return candidate.to(device=x.device, dtype=x.dtype)
+
+        return torch.zeros(
+            x.shape[0],
+            x.shape[1],
+            expected_dim,
+            device=x.device,
+            dtype=x.dtype,
+        )
+
     def _compute_masked_supervised_loss(self, x, pred_scaled, real_scaled, label_mask):
         valid = (
             (label_mask > 0.5)
@@ -118,6 +155,14 @@ class BasicModel(torch.nn.Module):
                 x_mark = x_mark.to(self.config.device, non_blocking=True)
                 label = label.to(self.config.device, non_blocking=True)
                 sample_ids = sample_ids.to(self.config.device, non_blocking=True).long()
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                )
+                model_x_mark = self._prepare_model_x_mark(
+                    x,
+                    x_mark,
+                )
 
                 dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
                 dec_input = torch.cat(
@@ -131,17 +176,13 @@ class BasicModel(torch.nn.Module):
                     with torch.autocast(device_type=self.device_type, dtype=torch.float16):
                         pred = self.forward(
                             x,
-                            x_mark,
+                            model_x_mark,
                             dec_input,
                             None,
                         )
 
                         pred_scaled = pred[:, -self.pred_len:, 0:1]
                         real_scaled = label[:, -self.pred_len:, 0:1]
-                        label_mask = self._prepare_label_mask(
-                            x_mark,
-                            label,
-                        )
 
                         main_loss = self._compute_masked_supervised_loss(
                             x,
@@ -163,17 +204,13 @@ class BasicModel(torch.nn.Module):
                 else:
                     pred = self.forward(
                         x,
-                        x_mark,
+                        model_x_mark,
                         dec_input,
                         None,
                     )
 
                     pred_scaled = pred[:, -self.pred_len:, 0:1]
                     real_scaled = label[:, -self.pred_len:, 0:1]
-                    label_mask = self._prepare_label_mask(
-                        x_mark,
-                        label,
-                    )
 
                     main_loss = self._compute_masked_supervised_loss(
                         x,
@@ -243,6 +280,14 @@ class BasicModel(torch.nn.Module):
                 x = x.to(self.config.device)
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                )
+                model_x_mark = self._prepare_model_x_mark(
+                    x,
+                    x_mark,
+                )
 
                 dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
                 dec_input = torch.cat(
@@ -252,17 +297,13 @@ class BasicModel(torch.nn.Module):
 
                 pred = self.forward(
                     x,
-                    x_mark,
+                    model_x_mark,
                     dec_input,
                     None,
                 )
 
                 pred_scaled = pred[:, -self.pred_len:, 0:1]
                 real_scaled = label[:, -self.pred_len:, 0:1]
-                label_mask = self._prepare_label_mask(
-                    x_mark,
-                    label,
-                )
 
                 pred_original = self._inverse_to_original_space(dataModule, pred_scaled)
                 real_original = self._inverse_to_original_space(dataModule, real_scaled)
@@ -560,6 +601,14 @@ class BasicModel(torch.nn.Module):
                 x = x.to(self.config.device)
                 x_mark = x_mark.to(self.config.device)
                 label = label.to(self.config.device)
+                label_mask = self._prepare_label_mask(
+                    x_mark,
+                    label,
+                )
+                model_x_mark = self._prepare_model_x_mark(
+                    x,
+                    x_mark,
+                )
 
                 dec_input = torch.zeros_like(label[:, -self.pred_len:, :]).float()
                 dec_input = torch.cat(
@@ -569,17 +618,13 @@ class BasicModel(torch.nn.Module):
 
                 pred = self.forward(
                     x,
-                    x_mark,
+                    model_x_mark,
                     dec_input,
                     None,
                 )
 
                 pred_scaled = pred[:, -self.pred_len:, 0:1]
                 real_scaled = label[:, -self.pred_len:, 0:1]
-                label_mask = self._prepare_label_mask(
-                    x_mark,
-                    label,
-                )
 
                 pred_original = self._inverse_to_original_space(dataModule, pred_scaled)
                 real_original = self._inverse_to_original_space(dataModule, real_scaled)
