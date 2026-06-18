@@ -27,7 +27,7 @@ from exp.exp_model_net_diff import Model
 OUT_DIR = ROOT / "MoEExpertAnalysis"
 FIG_DIR = OUT_DIR / "figures"
 DATA_DIR = OUT_DIR / "data"
-CKPT_DIR = ROOT / "checkpoints" / "net"
+CKPT_ROOT = ROOT / "checkpoints"
 
 DATA_FILES = {
     "Abilene": "Abilene_single.csv",
@@ -71,12 +71,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num_experts", type=int, default=4)
     parser.add_argument("--top_k_experts", type=int, default=2)
     parser.add_argument("--max_rep_per_expert", type=int, default=3)
+    parser.add_argument("--model", default="net", choices=["net", "datp_net"])
+    parser.add_argument("--output_suffix", default=None)
     return parser.parse_args()
 
 
 def build_config(dataset: str, pred_len: int, args: argparse.Namespace) -> NetConfig:
     cfg = NetConfig()
-    cfg.model = "net"
+    cfg.model = args.model
     cfg.dataset = dataset
     cfg.data_file = DATA_FILES[dataset]
     cfg.pred_len = pred_len
@@ -104,9 +106,10 @@ def build_config(dataset: str, pred_len: int, args: argparse.Namespace) -> NetCo
 
 
 def find_checkpoint(dataset: str, pred_len: int, args: argparse.Namespace) -> Path:
-    pattern = f"Dataset{dataset}_Modelnet_PL{pred_len}_DM{args.d_model}_BS{args.batch_size}_*_round_{args.round_id}.pt"
+    ckpt_dir = CKPT_ROOT / args.model
+    pattern = f"Dataset{dataset}_Model{args.model}_PL{pred_len}_DM{args.d_model}_BS{args.batch_size}_*_round_{args.round_id}.pt"
     candidates = [
-        p for p in CKPT_DIR.glob(pattern)
+        p for p in ckpt_dir.glob(pattern)
         if p.is_file() and p.stat().st_size > 0
     ]
     candidates = sorted(candidates, key=lambda p: p.stat().st_mtime, reverse=True)
@@ -118,7 +121,7 @@ def find_checkpoint(dataset: str, pred_len: int, args: argparse.Namespace) -> Pa
         f"epochs200_patience40_SeqLen{args.seq_len}_PredLen{pred_len}_*.pt"
     )
     candidates = [
-        p for p in CKPT_DIR.glob(legacy)
+        p for p in ckpt_dir.glob(legacy)
         if p.is_file() and p.stat().st_size > 0
     ]
     candidates = sorted(candidates, key=lambda p: p.stat().st_mtime, reverse=True)
@@ -372,7 +375,13 @@ def style_axis(ax) -> None:
     ax.tick_params(axis="both", colors=TOKENS["ink"], labelsize=10)
 
 
-def plot_usage(usage: pd.DataFrame, pred_len: int, num_experts: int) -> Path:
+def output_stem(base: str, pred_len: int, suffix: str) -> str:
+    if suffix:
+        return f"{base}_{suffix}_PL{pred_len}"
+    return f"{base}_PL{pred_len}"
+
+
+def plot_usage(usage: pd.DataFrame, pred_len: int, num_experts: int, suffix: str = "") -> Path:
     datasets = list(usage["dataset"].drop_duplicates())
     fig, axes = plt.subplots(1, len(datasets), figsize=(11.2, 4.1), sharey=True)
     axes = np.atleast_1d(axes)
@@ -391,16 +400,16 @@ def plot_usage(usage: pd.DataFrame, pred_len: int, num_experts: int) -> Path:
     axes[0].set_ylabel("Usage Ratio", fontsize=12, color=TOKENS["ink"])
     axes[-1].legend(frameon=True, fontsize=10)
     fig.tight_layout(w_pad=2.0)
-    path = FIG_DIR / f"moe_expert_usage_PL{pred_len}.pdf"
+    path = FIG_DIR / f"{output_stem('moe_expert_usage', pred_len, suffix)}.pdf"
     fig.savefig(path, bbox_inches="tight")
     fig.savefig(path.with_suffix(".png"), bbox_inches="tight", dpi=300)
     plt.close(fig)
     return path
 
 
-def plot_alignment(align: pd.DataFrame, pred_len: int, num_experts: int) -> Path:
+def plot_alignment(align: pd.DataFrame, pred_len: int, num_experts: int, suffix: str = "") -> Path:
     datasets = list(align["dataset"].drop_duplicates())
-    fig, axes = plt.subplots(1, len(datasets), figsize=(10.6, 4.25))
+    fig, axes = plt.subplots(1, len(datasets), figsize=(11.8, 4.25), constrained_layout=True)
     axes = np.atleast_1d(axes)
     for ax, dataset in zip(axes, datasets):
         part = align[(align["dataset"] == dataset) & (align["pred_len"] == pred_len)]
@@ -418,16 +427,22 @@ def plot_alignment(align: pd.DataFrame, pred_len: int, num_experts: int) -> Path
         for i in range(num_experts):
             for j in range(num_experts):
                 ax.text(j, i, f"{mat.iloc[i, j]:.2f}", ha="center", va="center", fontsize=9, color="#1F2430")
-    fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.82, label="Mean Router Probability")
-    fig.tight_layout(w_pad=2.0)
-    path = FIG_DIR / f"moe_state_expert_alignment_PL{pred_len}.pdf"
+    fig.colorbar(
+        im,
+        ax=axes.ravel().tolist(),
+        fraction=0.026,
+        pad=0.035,
+        shrink=0.86,
+        label="Mean Router Probability",
+    )
+    path = FIG_DIR / f"{output_stem('moe_state_expert_alignment', pred_len, suffix)}.pdf"
     fig.savefig(path, bbox_inches="tight")
     fig.savefig(path.with_suffix(".png"), bbox_inches="tight", dpi=300)
     plt.close(fig)
     return path
 
 
-def plot_features(df: pd.DataFrame, pred_len: int, num_experts: int) -> Path:
+def plot_features(df: pd.DataFrame, pred_len: int, num_experts: int, suffix: str = "") -> Path:
     features = [
         ("input_std", "Input Std"),
         ("abs_diff_max", "Max |Input Diff|"),
@@ -457,14 +472,14 @@ def plot_features(df: pd.DataFrame, pred_len: int, num_experts: int) -> Path:
             ax.set_xticklabels([str(i) for i in range(num_experts)])
             style_axis(ax)
     fig.tight_layout(w_pad=1.4, h_pad=1.2)
-    path = FIG_DIR / f"moe_feature_by_topk_expert_PL{pred_len}.pdf"
+    path = FIG_DIR / f"{output_stem('moe_feature_by_topk_expert', pred_len, suffix)}.pdf"
     fig.savefig(path, bbox_inches="tight")
     fig.savefig(path.with_suffix(".png"), bbox_inches="tight", dpi=300)
     plt.close(fig)
     return path
 
 
-def plot_representatives(rep_by_key: dict[tuple[str, int], dict[str, np.ndarray]], pred_len: int, num_experts: int, max_rep: int) -> Path:
+def plot_representatives(rep_by_key: dict[tuple[str, int], dict[str, np.ndarray]], pred_len: int, num_experts: int, max_rep: int, suffix: str = "") -> Path:
     datasets = [key[0] for key in rep_by_key if key[1] == pred_len]
     fig, axes = plt.subplots(len(datasets), num_experts, figsize=(15.4, 6.6), sharex=True)
     axes = np.asarray(axes)
@@ -491,7 +506,7 @@ def plot_representatives(rep_by_key: dict[tuple[str, int], dict[str, np.ndarray]
             if idx.size:
                 ax.legend(frameon=False, fontsize=8, loc="best")
     fig.tight_layout(w_pad=1.2, h_pad=1.3)
-    path = FIG_DIR / f"moe_representative_samples_PL{pred_len}.pdf"
+    path = FIG_DIR / f"{output_stem('moe_representative_samples', pred_len, suffix)}.pdf"
     fig.savefig(path, bbox_inches="tight")
     fig.savefig(path.with_suffix(".png"), bbox_inches="tight", dpi=300)
     plt.close(fig)
@@ -566,7 +581,11 @@ def write_markdown(summary: pd.DataFrame, paths: list[Path], pred_lens: list[int
             "Stronger specialization is indicated by non-uniform state-expert heatmaps, distinct feature distributions by expert, and clear representative-pattern differences.",
         ]
     )
-    path = OUT_DIR / "TopK_MoE_expert_specialization_experiment.md"
+    suffix = args.output_suffix if args.output_suffix is not None else ("DATPNet" if args.model == "datp_net" else "")
+    if suffix:
+        path = OUT_DIR / f"TopK_MoE_expert_specialization_experiment_{suffix}.md"
+    else:
+        path = OUT_DIR / "TopK_MoE_expert_specialization_experiment.md"
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
 
@@ -575,6 +594,8 @@ def main() -> None:
     args = parse_args()
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    suffix = args.output_suffix if args.output_suffix is not None else ("DATPNet" if args.model == "datp_net" else "")
+    data_suffix = f"_{suffix}" if suffix else ""
 
     all_rows = []
     rep_by_key = {}
@@ -584,23 +605,23 @@ def main() -> None:
         for pred_len in args.pred_lens:
             print(f"Collect routing: {dataset} PL{pred_len}", flush=True)
             df, rep = collect_routing(dataset, pred_len, args)
-            df.to_csv(DATA_DIR / f"{dataset}_PL{pred_len}_moe_routing_samples.csv", index=False, encoding="utf-8-sig")
+            df.to_csv(DATA_DIR / f"{dataset}_PL{pred_len}_moe_routing_samples{data_suffix}.csv", index=False, encoding="utf-8-sig")
             all_rows.append(df)
             rep_by_key[(dataset, pred_len)] = rep
 
     routing_df = pd.concat(all_rows, ignore_index=True)
-    routing_df.to_csv(DATA_DIR / "moe_routing_samples_all.csv", index=False, encoding="utf-8-sig")
+    routing_df.to_csv(DATA_DIR / f"moe_routing_samples_all{data_suffix}.csv", index=False, encoding="utf-8-sig")
     summary, usage, align = summarize(routing_df, args.num_experts)
-    summary.to_csv(DATA_DIR / "moe_specialization_summary.csv", index=False, encoding="utf-8-sig")
-    usage.to_csv(DATA_DIR / "moe_expert_usage.csv", index=False, encoding="utf-8-sig")
-    align.to_csv(DATA_DIR / "moe_state_expert_alignment.csv", index=False, encoding="utf-8-sig")
+    summary.to_csv(DATA_DIR / f"moe_specialization_summary{data_suffix}.csv", index=False, encoding="utf-8-sig")
+    usage.to_csv(DATA_DIR / f"moe_expert_usage{data_suffix}.csv", index=False, encoding="utf-8-sig")
+    align.to_csv(DATA_DIR / f"moe_state_expert_alignment{data_suffix}.csv", index=False, encoding="utf-8-sig")
 
     figure_paths = []
     for pred_len in args.pred_lens:
-        figure_paths.append(plot_usage(usage, pred_len, args.num_experts))
-        figure_paths.append(plot_alignment(align, pred_len, args.num_experts))
-        figure_paths.append(plot_features(routing_df, pred_len, args.num_experts))
-        figure_paths.append(plot_representatives(rep_by_key, pred_len, args.num_experts, args.max_rep_per_expert))
+        figure_paths.append(plot_usage(usage, pred_len, args.num_experts, suffix=suffix))
+        figure_paths.append(plot_alignment(align, pred_len, args.num_experts, suffix=suffix))
+        figure_paths.append(plot_features(routing_df, pred_len, args.num_experts, suffix=suffix))
+        figure_paths.append(plot_representatives(rep_by_key, pred_len, args.num_experts, args.max_rep_per_expert, suffix=suffix))
 
     md_path = write_markdown(summary, figure_paths, args.pred_lens, args)
     print(md_path)

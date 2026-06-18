@@ -24,17 +24,17 @@ This experiment checks whether the Top-K MoE router in DATP-Net forms expert spe
 
 ## Visualizations
 
-- [moe_expert_usage_PL5](MoEExpertAnalysis/figures/moe_expert_usage_PL5.pdf)
-- [moe_state_expert_alignment_PL5](MoEExpertAnalysis/figures/moe_state_expert_alignment_PL5.pdf)
-- [moe_feature_by_topk_expert_PL5](MoEExpertAnalysis/figures/moe_feature_by_topk_expert_PL5.pdf)
-- [moe_representative_samples_PL5](MoEExpertAnalysis/figures/moe_representative_samples_PL5.pdf)
+- [moe_expert_usage_DATPNet_PL5](MoEExpertAnalysis/figures/moe_expert_usage_DATPNet_PL5.pdf)
+- [moe_state_expert_alignment_DATPNet_PL5](MoEExpertAnalysis/figures/moe_state_expert_alignment_DATPNet_PL5.pdf)
+- [moe_feature_by_topk_expert_DATPNet_PL5](MoEExpertAnalysis/figures/moe_feature_by_topk_expert_DATPNet_PL5.pdf)
+- [moe_representative_samples_DATPNet_PL5](MoEExpertAnalysis/figures/moe_representative_samples_DATPNet_PL5.pdf)
 
 ## Summary Metrics
 
 | dataset | pred_len | sample_count | mean_routing_entropy | expert_state_mutual_information | dominant_expert_ratio |
 | --- | --- | --- | --- | --- | --- |
-| Abilene | 5 | 596 | 0.954189 | 0 | 1 |
-| Geant | 5 | 596 | 0.990792 | 0 | 1 |
+| Abilene | 5 | 596 | 0.999999 | 0.170213 | 0.681208 |
+| Geant | 5 | 596 | 0.999999 | 0.00608518 | 0.989933 |
 
 ## Interpretation Guide
 
