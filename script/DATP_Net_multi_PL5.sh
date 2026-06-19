@@ -1,9 +1,9 @@
 #!/bin/bash
 
 pred_lens=(5)
-d_models=(256)
+d_models=(64)
 datasets=("Abilene" "Geant")
-data_files=("Abilene_12_12_300.csv" "Geant_23_23_3000.csv")
+data_files=("Abilene_12_12_3000.csv" "Geant_23_23_3000.csv")
 
 for i in "${!datasets[@]}"
 do
