@@ -33,6 +33,7 @@ TOKENS = {
     "grid": "#E2E5EA",
     "axis": "#AEB4BE",
 }
+MATCHED_AXIS_COLOR = "#444444"
 
 LINE_STYLE = {
     "True": dict(color="#6E6E6E", linewidth=1.95, linestyle="-", alpha=0.96, zorder=30),
@@ -121,6 +122,11 @@ def style_axis(ax) -> None:
     ax.yaxis.get_offset_text().set_color(TOKENS["ink"])
     ax.xaxis.get_offset_text().set_fontsize(15)
     ax.xaxis.get_offset_text().set_color(TOKENS["ink"])
+
+
+def match_hyperparameter_border(ax) -> None:
+    for spine in ["top", "right", "left", "bottom"]:
+        ax.spines[spine].set_color(MATCHED_AXIS_COLOR)
 
 
 def add_inside_legend(ax, fontsize: float = 11.5) -> None:
@@ -271,7 +277,11 @@ def plot_pred5_three_subplots(index_rows: list[dict[str, object]]) -> dict[str, 
         for label in DISPLAY_ORDER:
             y = local[label].to_numpy(dtype=np.float64)
             plotted.append(y)
-            ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
+            style = LINE_STYLE[label].copy()
+            if label in {"True", "DARNet"}:
+                style["linewidth"] = 2.4
+                style["solid_capstyle"] = "round"
+            ax.plot(x, y, label=display_label(label), **style)
         style_axis(ax)
         ax.patch.set_alpha(0.0)
         ax.set_title(dataset, fontsize=11.0, color=TOKENS["ink"], pad=5)
@@ -322,9 +332,14 @@ def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
         for label in DISPLAY_ORDER:
             y = local[label].to_numpy(dtype=np.float64)
             plotted.append(y)
-            ax.plot(x, y, label=display_label(label), **LINE_STYLE[label])
+            style = LINE_STYLE[label].copy()
+            if label in {"True", "DARNet"}:
+                style["linewidth"] = 4.8
+                style["solid_capstyle"] = "round"
+            ax.plot(x, y, label=display_label(label), **style)
 
         style_axis(ax)
+        match_hyperparameter_border(ax)
         ax.set_title(dataset, fontsize=19, color=TOKENS["ink"], pad=10)
         ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
         lim = axis_margin(np.concatenate(plotted))
@@ -336,7 +351,7 @@ def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
 
     fig.tight_layout(w_pad=2.4)
 
-    stem = "Abilene_Geant_PL5_prediction_curves_spike_region_selected_baselines_1x2_v2"
+    stem = "Abilene_Geant_PL5_prediction_curves_spike_region_selected_baselines_1x2_v1_dark_border_bold_primary"
     pdf_path = FIG_DIR / f"{stem}.pdf"
     png_path = FIG_DIR / f"{stem}.png"
     fig.savefig(pdf_path, bbox_inches="tight")

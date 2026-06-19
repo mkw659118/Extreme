@@ -330,6 +330,76 @@ class RouterFromEmbeddingFeatures(nn.Module):
         return self.net(feat)
 
 
+class StepRouterFromEmbedding(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        num_experts: int,
+        num_states: int = 0,
+        hidden: int = 64,
+        dropout: float = 0.0,
+    ):
+        super().__init__()
+        self.num_states = int(num_states)
+        in_dim = d_model + max(self.num_states, 0)
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, hidden),
+            nn.LayerNorm(hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, num_experts),
+        )
+
+    def forward(self, x_emb: torch.Tensor, q_prior: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if self.num_states > 0:
+            if q_prior is None:
+                raise ValueError("StepRouterFromEmbedding requires q_prior when num_states > 0.")
+            state_context = q_prior.unsqueeze(1).expand(-1, x_emb.size(1), -1)
+            x_emb = torch.cat([x_emb, state_context], dim=-1)
+        return self.net(x_emb)
+
+
+class HorizonRouterFromEmbedding(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        pred_len: int,
+        num_experts: int,
+        num_states: int = 0,
+        hidden: int = 64,
+        dropout: float = 0.0,
+    ):
+        super().__init__()
+        self.pred_len = int(pred_len)
+        self.num_states = int(num_states)
+        in_dim = 3 * d_model + max(self.num_states, 0)
+        self.context_proj = nn.Linear(in_dim, hidden)
+        self.horizon_embedding = nn.Parameter(torch.randn(self.pred_len, hidden) * 0.02)
+        self.net = nn.Sequential(
+            nn.LayerNorm(hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, num_experts),
+        )
+
+    def forward(self, x_emb: torch.Tensor, q_prior: Optional[torch.Tensor] = None) -> torch.Tensor:
+        feat = torch.cat(
+            [
+                x_emb[:, -1, :],
+                x_emb.mean(dim=1),
+                x_emb.std(dim=1, unbiased=False),
+            ],
+            dim=-1,
+        )
+        if self.num_states > 0:
+            if q_prior is None:
+                raise ValueError("HorizonRouterFromEmbedding requires q_prior when num_states > 0.")
+            feat = torch.cat([feat, q_prior], dim=-1)
+        context = self.context_proj(feat).unsqueeze(1)
+        horizon_context = context + self.horizon_embedding.unsqueeze(0)
+        return self.net(horizon_context)
+
+
 class LSTMExpert(nn.Module):
     def __init__(self, d_model: int, expert_layers: int = 1, dropout: float = 0.1):
         super().__init__()
@@ -378,24 +448,55 @@ class BackboneMoE(nn.Module):
         )
 
     def _build_sparse_topk_weights(self, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> torch.Tensor:
-        batch_size, _ = head_mix_weights.shape
-        full_weights = head_mix_weights.new_zeros((batch_size, self.num_experts))
-        full_weights.scatter_(dim=1, index=topk_experts, src=head_mix_weights)
+        full_shape = (*head_mix_weights.shape[:-1], self.num_experts)
+        full_weights = head_mix_weights.new_zeros(full_shape)
+        full_weights.scatter_(dim=-1, index=topk_experts, src=head_mix_weights)
         return full_weights
 
     def forward(self, x_emb: torch.Tensor, head_mix_weights: torch.Tensor, topk_experts: torch.Tensor) -> Dict[str, torch.Tensor]:
         full_mix_weights = self._build_sparse_topk_weights(head_mix_weights, topk_experts)
         expert_outputs = torch.stack([expert(x_emb) for expert in self.experts], dim=1)
-        mix = full_mix_weights.unsqueeze(-1).unsqueeze(-1)
-        fused_seq = torch.sum(mix * expert_outputs, dim=1)
-        fused_seq = self.fuse_norm(fused_seq)
 
-        summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
-        point_pred = self.forecast_head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+        expert_sequences = self.fuse_norm(expert_outputs)
+        expert_summary = torch.cat(
+            [
+                expert_sequences[:, :, -1, :],
+                expert_sequences.mean(dim=2),
+            ],
+            dim=-1,
+        )
+        expert_predictions = self.forecast_head(expert_summary).view(
+            x_emb.size(0),
+            self.num_experts,
+            self.pred_len,
+            self.out_dim,
+        )
+
+        if full_mix_weights.dim() == 3 and full_mix_weights.size(1) == self.pred_len:
+            pred_mix = full_mix_weights.permute(0, 2, 1).unsqueeze(-1)
+            point_pred = torch.sum(pred_mix * expert_predictions, dim=1)
+            seq_mix = full_mix_weights.mean(dim=1).unsqueeze(-1).unsqueeze(-1)
+            fused_seq = torch.sum(seq_mix * expert_outputs, dim=1)
+            fused_seq = self.fuse_norm(fused_seq)
+        elif full_mix_weights.dim() == 2:
+            mix = full_mix_weights.unsqueeze(-1).unsqueeze(-1)
+            fused_seq = torch.sum(mix * expert_outputs, dim=1)
+            fused_seq = self.fuse_norm(fused_seq)
+            summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
+            point_pred = self.forecast_head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+        elif full_mix_weights.dim() == 3 and full_mix_weights.size(1) == x_emb.size(1):
+            mix = full_mix_weights.permute(0, 2, 1).unsqueeze(-1)
+            fused_seq = torch.sum(mix * expert_outputs, dim=1)
+            fused_seq = self.fuse_norm(fused_seq)
+            summary = torch.cat([fused_seq[:, -1, :], fused_seq.mean(dim=1)], dim=-1)
+            point_pred = self.forecast_head(summary).view(x_emb.size(0), self.pred_len, self.out_dim)
+        else:
+            raise ValueError(f"Unsupported MoE mix weight shape: {tuple(full_mix_weights.shape)}")
 
         return {
             'mix_weights': full_mix_weights,
             'expert_sequences': expert_outputs,
+            'expert_predictions': expert_predictions,
             'fused_sequence': fused_seq,
             'point_pred': point_pred,
         }
@@ -517,10 +618,34 @@ class ExtremeLSTMMemo(nn.Module):
         self.state_df_diversity_weight = float(getattr(self.config, 'state_df_diversity_weight', 0.1))
         self.router_balance_weight = float(getattr(self.config, 'router_balance_weight', 0.1))
         self.topk_coverage_weight = float(getattr(self.config, 'topk_coverage_weight', 0.25))
+        self.router_entropy_weight = float(getattr(self.config, 'router_entropy_weight', 0.0))
         self.topk_min_usage = float(getattr(self.config, 'topk_min_usage', 0.12))
+        self.moe_weight_balance_weight = float(getattr(self.config, 'moe_weight_balance_weight', 0.0))
+        self.moe_min_weight = float(getattr(self.config, 'moe_min_weight', 0.08))
+        self.moe_max_weight = float(getattr(self.config, 'moe_max_weight', 0.55))
+        self.topk_weight_floor_weight = float(getattr(self.config, 'topk_weight_floor_weight', 0.0))
+        self.topk_min_head_weight = float(getattr(self.config, 'topk_min_head_weight', 0.15))
+        self.horizon_diversity_weight = float(getattr(self.config, 'horizon_diversity_weight', 0.0))
+        self.horizon_min_weight_std = float(getattr(self.config, 'horizon_min_weight_std', 0.04))
+        self.horizon_max_cosine = float(getattr(self.config, 'horizon_max_cosine', 0.75))
         self.router_temperature = float(getattr(self.config, 'router_temperature', 1.0))
         self.router_train_noise_std = float(getattr(self.config, 'router_train_noise_std', 0.0))
         self.ensure_all_experts_in_topk = bool(getattr(self.config, 'ensure_all_experts_in_topk', True))
+        self.router_granularity = str(getattr(self.config, 'router_granularity', 'sample')).lower()
+        if self.router_granularity not in {'sample', 'step', 'horizon'}:
+            raise ValueError(
+                f"router_granularity must be 'sample', 'step', or 'horizon', got {self.router_granularity}."
+            )
+        self.step_router_use_state_context = (
+            bool(getattr(self.config, 'step_router_use_state_context', True))
+            and self.use_state_prior
+            and self.router_granularity == 'step'
+        )
+        self.horizon_router_use_state_context = (
+            bool(getattr(self.config, 'horizon_router_use_state_context', True))
+            and self.use_state_prior
+            and self.router_granularity == 'horizon'
+        )
 
         include_last_value = bool(getattr(self.config, 'pretrain_include_last', True))
         state_dim = 4 if include_last_value else 3
@@ -547,12 +672,30 @@ class ExtremeLSTMMemo(nn.Module):
         )
 
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
-        self.router = RouterFromEmbeddingPreTrain(
-            num_states=self.num_states,
-            num_experts=self.num_experts,
-            hidden=getattr(self.config, 'router_hidden', 64),
-            dropout=self.dropout,
-        )
+        if self.router_granularity == 'step':
+            self.router = StepRouterFromEmbedding(
+                d_model=d_model,
+                num_experts=self.num_experts,
+                num_states=self.num_states if self.step_router_use_state_context else 0,
+                hidden=getattr(self.config, 'router_hidden', 64),
+                dropout=self.dropout,
+            )
+        elif self.router_granularity == 'horizon':
+            self.router = HorizonRouterFromEmbedding(
+                d_model=d_model,
+                pred_len=pred_len,
+                num_experts=self.num_experts,
+                num_states=self.num_states if self.horizon_router_use_state_context else 0,
+                hidden=getattr(self.config, 'router_hidden', 64),
+                dropout=self.dropout,
+            )
+        else:
+            self.router = RouterFromEmbeddingPreTrain(
+                num_states=self.num_states,
+                num_experts=self.num_experts,
+                hidden=getattr(self.config, 'router_hidden', 64),
+                dropout=self.dropout,
+            )
         self.learned_router = RouterFromEmbeddingFeatures(
             d_model=d_model,
             num_experts=self.num_experts,
@@ -678,7 +821,8 @@ class ExtremeLSTMMemo(nn.Module):
 
     def compute_sample_level_balance_loss(self, router_logits: torch.Tensor):
         router_prob = torch.softmax(router_logits, dim=-1)
-        load = router_prob.mean(dim=0)
+        flat_prob = router_prob.reshape(-1, router_prob.size(-1))
+        load = flat_prob.mean(dim=0)
         if load.numel() <= 1:
             balance_loss = router_logits.sum() * 0.0
             aux_dict = {'balance_loss': balance_loss.detach(), 'expert_load': load.detach()}
@@ -697,16 +841,18 @@ class ExtremeLSTMMemo(nn.Module):
             zero = router_prob.sum() * 0.0
             return zero, {'topk_coverage_loss': zero.detach(), 'topk_usage': router_prob.mean(dim=0).detach()}
 
-        selected = F.one_hot(topk_experts, num_classes=self.num_experts).sum(dim=1).clamp(max=1).float()
+        flat_prob = router_prob.reshape(-1, router_prob.size(-1))
+        flat_topk = topk_experts.reshape(-1, topk_experts.size(-1))
+        selected = F.one_hot(flat_topk, num_classes=self.num_experts).sum(dim=1).clamp(max=1).float()
         topk_usage = selected.mean(dim=0)
-        soft_load = router_prob.mean(dim=0)
-        uniform = torch.full_like(soft_load, 1.0 / soft_load.numel())
+        soft_load = flat_prob.mean(dim=0)
+        soft_floor_penalty = F.relu(self.topk_min_usage - soft_load).pow(2).sum()
+        hard_floor_penalty = F.relu(self.topk_min_usage - topk_usage).pow(2).sum()
 
-        eps = 1e-8
-        soft_balance = torch.sum(soft_load * (torch.log(soft_load + eps) - torch.log(uniform + eps)))
-        floor_penalty = F.relu(self.topk_min_usage - soft_load).pow(2).sum()
-
-        loss = soft_balance + floor_penalty
+        # The hard Top-K indicator is not differentiable, so it is mainly a
+        # monitoring/weak regularization signal. The differentiable soft floor
+        # keeps every expert competitive enough to enter Top-K naturally.
+        loss = soft_floor_penalty + 0.1 * hard_floor_penalty
         aux_dict = {
             'topk_coverage_loss': loss.detach(),
             'topk_usage': topk_usage.detach(),
@@ -714,11 +860,76 @@ class ExtremeLSTMMemo(nn.Module):
         }
         return loss, aux_dict
 
+    def compute_moe_weight_balance_loss(self, mix_weights: torch.Tensor, head_mix_weights: torch.Tensor):
+        if mix_weights.size(-1) <= 1:
+            zero = mix_weights.sum() * 0.0
+            return zero, {
+                'moe_weight_balance_loss': zero.detach(),
+                'moe_weight_load': mix_weights.reshape(-1, mix_weights.size(-1)).mean(dim=0).detach(),
+                'topk_weight_floor_loss': zero.detach(),
+            }
+
+        flat_mix = mix_weights.reshape(-1, mix_weights.size(-1))
+        moe_load = flat_mix.mean(dim=0)
+        low_penalty = F.relu(self.moe_min_weight - moe_load).pow(2).sum()
+        high_penalty = F.relu(moe_load - self.moe_max_weight).pow(2).sum()
+        moe_loss = low_penalty + high_penalty
+
+        flat_head = head_mix_weights.reshape(-1, head_mix_weights.size(-1))
+        min_selected_weight = flat_head.min(dim=-1).values
+        head_floor_loss = F.relu(self.topk_min_head_weight - min_selected_weight).pow(2).mean()
+
+        loss = (
+            self.moe_weight_balance_weight * moe_loss
+            + self.topk_weight_floor_weight * head_floor_loss
+        )
+        aux_dict = {
+            'moe_weight_balance_loss': moe_loss.detach(),
+            'moe_weight_load': moe_load.detach(),
+            'topk_weight_floor_loss': head_floor_loss.detach(),
+        }
+        return loss, aux_dict
+
+    def compute_horizon_diversity_loss(self, router_prob: torch.Tensor):
+        if (
+            self.router_granularity != 'horizon'
+            or router_prob.dim() != 3
+            or router_prob.size(1) <= 1
+        ):
+            zero = router_prob.sum() * 0.0
+            return zero, {
+                'horizon_diversity_loss': zero.detach(),
+                'horizon_weight_std': zero.detach(),
+                'horizon_offdiag_cosine': zero.detach(),
+            }
+
+        horizon_load = router_prob.mean(dim=0)  # [pred_len, num_experts]
+        horizon_weight_std = horizon_load.std(dim=0, unbiased=False).mean()
+        std_floor_loss = F.relu(self.horizon_min_weight_std - horizon_weight_std).pow(2)
+
+        centered = horizon_load - horizon_load.mean(dim=-1, keepdim=True)
+        normed = F.normalize(centered, p=2, dim=-1, eps=1e-8)
+        cosine = torch.matmul(normed, normed.t())
+        eye = torch.eye(cosine.size(0), device=cosine.device, dtype=torch.bool)
+        offdiag = cosine.masked_select(~eye)
+        cosine_penalty = F.relu(offdiag - self.horizon_max_cosine).pow(2).mean()
+
+        loss = std_floor_loss + cosine_penalty
+        return loss, {
+            'horizon_diversity_loss': loss.detach(),
+            'horizon_weight_std': horizon_weight_std.detach(),
+            'horizon_offdiag_cosine': offdiag.mean().detach(),
+        }
+
     def _select_topk_experts(self, router_logits: torch.Tensor):
+        original_shape = router_logits.shape[:-1]
+        num_experts = router_logits.size(-1)
+        flat_logits = router_logits.reshape(-1, num_experts)
+
         if self.router_temperature > 0:
-            selection_logits = router_logits / self.router_temperature
+            selection_logits = flat_logits / self.router_temperature
         else:
-            selection_logits = router_logits
+            selection_logits = flat_logits
 
         if self.training and self.router_train_noise_std > 0:
             selection_logits = selection_logits + torch.randn_like(selection_logits) * self.router_train_noise_std
@@ -728,15 +939,23 @@ class ExtremeLSTMMemo(nn.Module):
 
         if not self.ensure_all_experts_in_topk:
             head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
-            return router_prob, topk_experts, head_mix_weights
+            return (
+                router_prob.reshape(*original_shape, num_experts),
+                topk_experts.reshape(*original_shape, self.top_k_experts),
+                head_mix_weights.reshape(*original_shape, self.top_k_experts),
+            )
 
-        batch_size = router_prob.size(0)
-        if batch_size <= 0 or self.top_k_experts >= self.num_experts:
+        item_count = router_prob.size(0)
+        if item_count <= 0 or self.top_k_experts >= self.num_experts:
             head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
-            return router_prob, topk_experts, head_mix_weights
+            return (
+                router_prob.reshape(*original_shape, num_experts),
+                topk_experts.reshape(*original_shape, self.top_k_experts),
+                head_mix_weights.reshape(*original_shape, self.top_k_experts),
+            )
 
         # Quota repair: keep normal router probabilities, but ensure every expert
-        # appears in the batch-level Top-K set when the batch is large enough.
+        # appears at least once in the current batch/token Top-K set when possible.
         repaired = topk_experts.clone()
         repaired_probs = topk_probs.clone()
         for expert_id in range(self.num_experts):
@@ -749,7 +968,7 @@ class ExtremeLSTMMemo(nn.Module):
                 continue
 
             replace_slot = repaired_probs.argmin(dim=1)
-            row_ids = torch.arange(batch_size, device=router_prob.device)
+            row_ids = torch.arange(item_count, device=router_prob.device)
             current_min_prob = repaired_probs[row_ids, replace_slot]
             candidate_prob = router_prob[:, expert_id]
             cost = current_min_prob - candidate_prob
@@ -763,7 +982,11 @@ class ExtremeLSTMMemo(nn.Module):
         topk_experts = torch.gather(repaired, dim=1, index=order)
         topk_probs = torch.gather(repaired_probs, dim=1, index=order)
         head_mix_weights = topk_probs / (topk_probs.sum(dim=-1, keepdim=True) + 1e-8)
-        return router_prob, topk_experts, head_mix_weights
+        return (
+            router_prob.reshape(*original_shape, num_experts),
+            topk_experts.reshape(*original_shape, self.top_k_experts),
+            head_mix_weights.reshape(*original_shape, self.top_k_experts),
+        )
 
     def construct_index(self, num: int):
         if not self.use_retrieval:
@@ -930,16 +1153,30 @@ class ExtremeLSTMMemo(nn.Module):
             # prior only uses valid value channels by default.
             prior_x = self._extract_state_prior_input(x)
             prior_out = self.state_prior(prior_x)
-            router_logits = self.router(prior_out['q'])
+            if self.router_granularity == 'step':
+                router_logits = self.router(
+                    x_emb,
+                    prior_out['q'] if self.step_router_use_state_context else None,
+                )
+            elif self.router_granularity == 'horizon':
+                router_logits = self.router(
+                    x_emb,
+                    prior_out['q'] if self.horizon_router_use_state_context else None,
+                )
+            else:
+                router_logits = self.router(prior_out['q'])
             state_probs = prior_out['q']
             state_z = prior_out['z']
             state_alpha = prior_out['mix_prob']
             state_pretrain_nll = prior_out['pretrain_nll']
             router_source = 'student_t_prior'
         else:
-            router_logits = self.learned_router(x_emb)
+            if self.router_granularity in {'step', 'horizon'}:
+                router_logits = self.router(x_emb, None)
+            else:
+                router_logits = self.learned_router(x_emb)
             router_prob_for_aux = torch.softmax(router_logits, dim=-1)
-            state_probs = router_prob_for_aux
+            state_probs = router_prob_for_aux.mean(dim=1) if router_prob_for_aux.dim() == 3 else router_prob_for_aux
             state_z = torch.cat(
                 [
                     x_emb[:, -1, :],
@@ -1039,9 +1276,31 @@ class ExtremeLSTMMemo(nn.Module):
         if mode in {'train', 'valid'}:
             balance_loss, balance_aux_dict = self.compute_sample_level_balance_loss(out['router_logits'])
             coverage_loss, coverage_aux_dict = self.compute_topk_coverage_loss(out['router_prob'], out['topk_experts'])
-            total_aux_loss = total_aux_loss + self.router_balance_weight * balance_loss + self.topk_coverage_weight * coverage_loss
+            moe_weight_loss, moe_weight_aux_dict = self.compute_moe_weight_balance_loss(
+                out['mix_weights'],
+                out['topk_probs'],
+            )
+            horizon_diversity_loss, horizon_diversity_aux_dict = self.compute_horizon_diversity_loss(
+                out['router_prob'],
+            )
+            total_aux_loss = (
+                total_aux_loss
+                + self.router_balance_weight * balance_loss
+                + self.topk_coverage_weight * coverage_loss
+                + moe_weight_loss
+                + self.horizon_diversity_weight * horizon_diversity_loss
+            )
+            if self.router_entropy_weight > 0:
+                flat_router_prob = out['router_prob'].reshape(-1, out['router_prob'].size(-1))
+                router_entropy = -(
+                    flat_router_prob * torch.log(flat_router_prob.clamp_min(1e-8))
+                ).sum(dim=-1).mean()
+                total_aux_loss = total_aux_loss + self.router_entropy_weight * router_entropy
+                aux_dict['router_entropy_loss'] = router_entropy.detach()
             aux_dict.update(balance_aux_dict)
             aux_dict.update(coverage_aux_dict)
+            aux_dict.update(moe_weight_aux_dict)
+            aux_dict.update(horizon_diversity_aux_dict)
 
             if self.use_state_prior:
                 # Keep prior states from collapsing during backbone training.

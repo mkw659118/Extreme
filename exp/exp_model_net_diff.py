@@ -24,7 +24,7 @@ class Model(BasicModel):
                 out_dim=out_dim,
                 config=config,
             )
-        elif config.model == 'datp_net':
+        elif config.model in {'datp_net', 'datp_net_step', 'datp_net_horizon'}:
             input_dim = getattr(config, 'enc_in', config.c_in)
             dec_in = getattr(config, 'dec_in', input_dim)
             out_dim = getattr(config, 'out_dim', dec_in)

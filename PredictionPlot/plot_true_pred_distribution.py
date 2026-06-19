@@ -19,11 +19,14 @@ DATASETS = ["Abilene", "Geant"]
 PRED_LENS = [5, 10, 15, 20]
 MODEL_COLUMN = "DARNet"
 MODEL_LABEL = "DATP-Net"
+TIMESNET_COLUMN = "TimesNet"
+TIMESNET_LABEL = "TimesNet"
 STYLE_SUFFIX = "distribution_true_vs_DATPNet_v1"
 
 COLORS = {
-    "True": "#6E6E6E",
-    MODEL_LABEL: "#F4A261",
+    "True": "#0072B2",
+    MODEL_LABEL: "#D55E00",
+    TIMESNET_LABEL: "#009E73",
 }
 
 TOKENS = {
@@ -33,6 +36,7 @@ TOKENS = {
     "grid": "#E2E5EA",
     "axis": "#AEB4BE",
 }
+MATCHED_AXIS_COLOR = "#444444"
 
 plt.rcParams.update(
     {
@@ -56,10 +60,14 @@ def finite_values(values: pd.Series | np.ndarray) -> np.ndarray:
 def load_curve(dataset: str, pred_len: int) -> pd.DataFrame:
     path = PLOT_DATA_DIR / f"{dataset}_PL{pred_len}_merged_prediction_curves.csv"
     df = pd.read_csv(path)
-    missing = [col for col in ["True", MODEL_COLUMN] if col not in df.columns]
+    missing = [col for col in ["True", MODEL_COLUMN, TIMESNET_COLUMN] if col not in df.columns]
     if missing:
         raise ValueError(f"{path} missing columns: {missing}")
     return df
+
+
+def display_dataset_name(dataset: str) -> str:
+    return "G\u00c9ANT" if dataset == "Geant" else dataset
 
 
 def kde_curve(values: np.ndarray, xs: np.ndarray) -> np.ndarray | None:
@@ -106,16 +114,36 @@ def style_axis(ax, title: str | None = None) -> None:
     ax.xaxis.get_offset_text().set_color(TOKENS["ink"])
 
 
-def plot_distribution_on_axis(ax, true_values: np.ndarray, pred_values: np.ndarray, title: str) -> None:
-    xmin, xmax = axis_range(true_values, pred_values)
+def match_hyperparameter_border(ax) -> None:
+    for spine in ["top", "right", "left", "bottom"]:
+        ax.spines[spine].set_color(MATCHED_AXIS_COLOR)
+
+
+def plot_distribution_on_axis(
+    ax,
+    true_values: np.ndarray,
+    pred_values: np.ndarray,
+    timesnet_values: np.ndarray,
+    title: str,
+    model_on_top: bool = False,
+) -> None:
+    xmin, xmax = axis_range(true_values, pred_values, timesnet_values)
     bins = np.linspace(xmin, xmax, 32)
     xs = np.linspace(xmin, xmax, 360)
 
-    series = [
-        ("Ground Truth", finite_values(true_values), COLORS["True"]),
-        (MODEL_LABEL, finite_values(pred_values), COLORS[MODEL_LABEL]),
-    ]
-    for label, values, color in series:
+    if model_on_top:
+        series = [
+            ("Ground Truth", finite_values(true_values), COLORS["True"], 1, 4),
+            (TIMESNET_LABEL, finite_values(timesnet_values), COLORS[TIMESNET_LABEL], 2, 5),
+            (MODEL_LABEL, finite_values(pred_values), COLORS[MODEL_LABEL], 3, 7),
+        ]
+    else:
+        series = [
+            ("Ground Truth", finite_values(true_values), COLORS["True"], 1, 4),
+            (MODEL_LABEL, finite_values(pred_values), COLORS[MODEL_LABEL], 2, 5),
+            (TIMESNET_LABEL, finite_values(timesnet_values), COLORS[TIMESNET_LABEL], 3, 7),
+        ]
+    for label, values, color, hist_zorder, kde_zorder in series:
         clipped = values[(values >= xmin) & (values <= xmax)]
         ax.hist(
             clipped,
@@ -127,13 +155,28 @@ def plot_distribution_on_axis(ax, true_values: np.ndarray, pred_values: np.ndarr
             edgecolor=color,
             linewidth=1.15,
             label=f"{label} Hist.",
+            zorder=hist_zorder,
         )
         density = kde_curve(clipped, xs)
         if density is not None:
-            ax.plot(xs, density, color=color, linewidth=2.2, label=f"{label} KDE")
+            ax.plot(xs, density, color=color, linewidth=2.2, label=f"{label} KDE", zorder=kde_zorder)
 
     style_axis(ax, title)
     ax.set_xlim(xmin, xmax)
+
+
+def ordered_legend(handles, labels):
+    wanted = [
+        "Ground Truth Hist.",
+        "Ground Truth KDE",
+        f"{MODEL_LABEL} Hist.",
+        f"{MODEL_LABEL} KDE",
+        f"{TIMESNET_LABEL} Hist.",
+        f"{TIMESNET_LABEL} KDE",
+    ]
+    by_label = dict(zip(labels, handles))
+    ordered_labels = [label for label in wanted if label in by_label]
+    return [by_label[label] for label in ordered_labels], ordered_labels
 
 
 def distribution_stats(dataset: str, pred_len: int, label: str, values: np.ndarray) -> dict[str, object]:
@@ -153,7 +196,7 @@ def distribution_stats(dataset: str, pred_len: int, label: str, values: np.ndarr
     }
 
 
-def plot_abilene_geant_pl5() -> dict[str, str]:
+def plot_abilene_geant_pl5(*, model_on_top: bool = False, stem: str | None = None) -> dict[str, str]:
     fig, axes = plt.subplots(1, 2, figsize=(11.8, 5.0), facecolor=TOKENS["surface"])
     for ax, dataset in zip(axes, ["Abilene", "Geant"]):
         df = load_curve(dataset, 5)
@@ -161,9 +204,12 @@ def plot_abilene_geant_pl5() -> dict[str, str]:
             ax,
             df["True"].to_numpy(dtype=np.float64),
             df[MODEL_COLUMN].to_numpy(dtype=np.float64),
-            dataset,
+            df[TIMESNET_COLUMN].to_numpy(dtype=np.float64),
+            display_dataset_name(dataset),
+            model_on_top=model_on_top,
         )
-    handles, labels = axes[-1].get_legend_handles_labels()
+        match_hyperparameter_border(ax)
+    handles, labels = ordered_legend(*axes[-1].get_legend_handles_labels())
     axes[-1].legend(
         handles,
         labels,
@@ -175,7 +221,8 @@ def plot_abilene_geant_pl5() -> dict[str, str]:
         fontsize=10.5,
     )
     fig.tight_layout(w_pad=2.6)
-    stem = "Abilene_Geant_PL5_distribution_true_vs_DATPNet_1x2_v1"
+    if stem is None:
+        stem = "Abilene_Geant_PL5_distribution_true_vs_DATPNet_1x2_v1_dark_border_high_contrast"
     pdf_path = FIG_DIR / f"{stem}.pdf"
     png_path = FIG_DIR / f"{stem}.png"
     fig.savefig(pdf_path, bbox_inches="tight")
@@ -199,14 +246,16 @@ def plot_all_grid() -> dict[str, str]:
                 ax,
                 df["True"].to_numpy(dtype=np.float64),
                 df[MODEL_COLUMN].to_numpy(dtype=np.float64),
-                f"{dataset} PL{pred_len}",
+                df[TIMESNET_COLUMN].to_numpy(dtype=np.float64),
+                f"{display_dataset_name(dataset)} PL{pred_len}",
+                model_on_top=False,
             )
             if r < len(DATASETS) - 1:
                 ax.set_xlabel("")
             if c > 0:
                 ax.set_ylabel("")
 
-    handles, labels = axes[0, -1].get_legend_handles_labels()
+    handles, labels = ordered_legend(*axes[0, -1].get_legend_handles_labels())
     fig.legend(
         handles,
         labels,
@@ -233,6 +282,7 @@ def write_stats() -> str:
             df = load_curve(dataset, pred_len)
             rows.append(distribution_stats(dataset, pred_len, "True", df["True"].to_numpy(dtype=np.float64)))
             rows.append(distribution_stats(dataset, pred_len, MODEL_LABEL, df[MODEL_COLUMN].to_numpy(dtype=np.float64)))
+            rows.append(distribution_stats(dataset, pred_len, TIMESNET_LABEL, df[TIMESNET_COLUMN].to_numpy(dtype=np.float64)))
     path = PLOT_DATA_DIR / f"{STYLE_SUFFIX}_stats.csv"
     pd.DataFrame(rows).to_csv(path, index=False, encoding="utf-8-sig")
     return str(path)
@@ -241,7 +291,14 @@ def write_stats() -> str:
 def main() -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     PLOT_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    outputs = [plot_abilene_geant_pl5(), plot_all_grid()]
+    outputs = [
+        plot_abilene_geant_pl5(),
+        plot_abilene_geant_pl5(
+            model_on_top=True,
+            stem="Abilene_Geant_PL5_distribution_true_vs_DATPNet_1x2_v1_dark_border_high_contrast_DATPNet_on_top",
+        ),
+        plot_all_grid(),
+    ]
     stats_path = write_stats()
     for output in outputs:
         print(output["pdf"])
