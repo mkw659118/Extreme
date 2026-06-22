@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" width="1100" height="520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#37474F"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="520" fill="#FFFFFF"/>
+
+  <g transform="translate(70,70)">
+    <rect x="0" y="0" width="960" height="150" rx="8" fill="#FAFAFA" stroke="#CFD8DC"/>
+
+    <rect x="24" y="26" width="144" height="78" rx="5" fill="#E3F2FD" stroke="#64B5F6"/>
+    <rect x="170" y="26" width="144" height="78" rx="5" fill="#E8F5E9" stroke="#81C784"/>
+    <rect x="316" y="26" width="144" height="78" rx="5" fill="#FFF8E1" stroke="#FFD54F"/>
+    <rect x="462" y="26" width="144" height="78" rx="5" fill="#FCE4EC" stroke="#F06292"/>
+    <rect x="608" y="26" width="144" height="78" rx="5" fill="#EDE7F6" stroke="#9575CD"/>
+    <rect x="754" y="26" width="144" height="78" rx="5" fill="#E0F2F1" stroke="#4DB6AC"/>
+
+    <polyline points="
+      30,82 46,80 62,86 78,78 94,83 110,79 126,84 142,81 162,83
+      176,78 192,72 208,66 224,58 240,52 256,45 272,40 288,34 308,29
+      322,79 338,62 354,91 370,48 386,100 402,42 418,88 434,61 454,78
+      468,84 484,76 500,63 516,42 532,14 548,55 564,75 580,83 600,86
+      614,57 630,67 646,49 662,62 678,45 694,63 710,51 726,68 746,56
+      760,69 776,74 792,78 808,82 824,86 840,89 856,92 872,95 892,99"
+      fill="none" stroke="#263238" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+
+    <text x="96" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 1</text>
+    <text x="242" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 2</text>
+    <text x="388" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 3</text>
+    <text x="534" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 4</text>
+    <text x="680" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 5</text>
+    <text x="826" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 6</text>
+  </g>
+
+  <g stroke="#78909C" stroke-width="1.8" fill="none" marker-end="url(#arrow)">
+    <path d="M166,224 C166,252 166,270 166,300"/>
+    <path d="M312,224 C312,252 312,270 312,300"/>
+    <path d="M458,224 C458,252 458,270 458,300"/>
+    <path d="M604,224 C604,252 604,270 604,300"/>
+    <path d="M750,224 C750,252 750,270 750,300"/>
+    <path d="M896,224 C896,252 896,270 896,300"/>
+  </g>
+
+  <g transform="translate(80,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#BBDEFB"/>
+    <path d="M18.0,89.9 C19.2,89.9 22.7,89.9 25.1,89.8 C27.5,89.7 29.8,89.6 32.2,89.4 C34.6,89.2 36.9,89.1 39.3,88.6 C41.7,88.1 44.0,87.6 46.4,86.4 C48.8,85.2 51.1,84.0 53.5,81.4 C55.9,78.8 58.2,75.6 60.6,70.9 C63.0,66.2 65.3,59.3 67.7,53.3 C70.1,47.2 72.4,38.8 74.8,34.6 C77.2,30.4 79.5,27.3 81.9,28.2 C84.3,29.1 86.6,34.9 89.0,40.2 C91.4,45.5 93.7,54.0 96.1,59.8 C98.5,65.6 100.8,71.2 103.2,75.2 C105.6,79.2 107.9,81.6 110.3,83.6 C112.7,85.6 115.0,86.5 117.4,87.4 C119.8,88.3 122.1,88.5 124.5,88.9 C126.9,89.3 129.2,89.4 131.6,89.6 C134.0,89.8 136.3,89.8 138.7,89.8 C141.1,89.8 143.4,89.9 145.8,89.9 C148.2,89.9 150.5,90.0 152.9,90.0 C155.3,90.0 158.8,90.0 160.0,90.0"
+      fill="none" stroke="#1976D2" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 1</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=-0.35, &#963;=0.55, df=9.0</text>
+  </g>
+
+  <g transform="translate(226,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#C8E6C9"/>
+    <path d="M18.0,89.8 C19.2,89.8 22.7,89.8 25.1,89.7 C27.5,89.6 29.8,89.5 32.2,89.4 C34.6,89.3 36.9,89.2 39.3,88.9 C41.7,88.7 44.0,88.4 46.4,87.9 C48.8,87.4 51.1,86.9 53.5,85.9 C55.9,84.9 58.2,83.8 60.6,82.1 C63.0,80.4 65.3,78.3 67.7,75.5 C70.1,72.7 72.4,69.2 74.8,65.5 C77.2,61.8 79.5,56.9 81.9,53.3 C84.3,49.7 86.6,45.6 89.0,43.7 C91.4,41.8 93.7,41.1 96.1,42.1 C98.5,43.1 100.8,46.3 103.2,49.5 C105.6,52.7 107.9,57.6 110.3,61.5 C112.7,65.3 115.0,69.5 117.4,72.6 C119.8,75.7 122.1,78.2 124.5,80.3 C126.9,82.3 129.2,83.7 131.6,84.9 C134.0,86.1 136.3,86.8 138.7,87.4 C141.1,88.0 143.4,88.3 145.8,88.6 C148.2,88.9 150.5,89.1 152.9,89.3 C155.3,89.5 158.8,89.5 160.0,89.6"
+      fill="none" stroke="#43A047" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 2</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.20, &#963;=0.70, df=7.5</text>
+  </g>
+
+  <g transform="translate(372,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#FFE082"/>
+    <path d="M18.0,87.3 C19.2,87.2 22.7,86.8 25.1,86.4 C27.5,86.0 29.8,85.6 32.2,85.1 C34.6,84.6 36.9,84.1 39.3,83.4 C41.7,82.7 44.0,81.9 46.4,81.1 C48.8,80.2 51.1,79.3 53.5,78.3 C55.9,77.3 58.2,76.1 60.6,74.9 C63.0,73.7 65.3,72.4 67.7,71.2 C70.1,70.0 72.4,68.6 74.8,67.6 C77.2,66.5 79.5,65.6 81.9,64.9 C84.3,64.2 86.6,63.7 89.0,63.6 C91.4,63.5 93.7,63.8 96.1,64.3 C98.5,64.8 100.8,65.6 103.2,66.5 C105.6,67.4 107.9,68.7 110.3,69.9 C112.7,71.1 115.0,72.5 117.4,73.7 C119.8,74.9 122.1,76.1 124.5,77.2 C126.9,78.3 129.2,79.4 131.6,80.3 C134.0,81.2 136.3,82.0 138.7,82.7 C141.1,83.4 143.4,84.0 145.8,84.6 C148.2,85.1 150.5,85.6 152.9,86.0 C155.3,86.4 158.8,86.8 160.0,87.0"
+      fill="none" stroke="#F9A825" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 3</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.05, &#963;=1.25, df=4.0</text>
+  </g>
+
+  <g transform="translate(518,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#F8BBD0"/>
+    <path d="M18.0,89.5 C19.2,89.5 22.7,89.4 25.1,89.3 C27.5,89.2 29.8,89.2 32.2,89.1 C34.6,89.0 36.9,88.8 39.3,88.7 C41.7,88.6 44.0,88.5 46.4,88.3 C48.8,88.1 51.1,87.9 53.5,87.6 C55.9,87.3 58.2,87.0 60.6,86.5 C63.0,86.0 65.3,85.6 67.7,84.9 C70.1,84.2 72.4,83.5 74.8,82.5 C77.2,81.5 79.5,80.4 81.9,78.9 C84.3,77.5 86.6,75.7 89.0,73.8 C91.4,71.9 93.7,69.6 96.1,67.3 C98.5,65.0 100.8,62.2 103.2,60.2 C105.6,58.2 107.9,56.0 110.3,55.0 C112.7,54.0 115.0,53.7 117.4,54.2 C119.8,54.7 122.1,56.4 124.5,58.2 C126.9,60.0 129.2,62.6 131.6,64.9 C134.0,67.2 136.3,69.7 138.7,71.8 C141.1,73.9 143.4,75.8 145.8,77.4 C148.2,79.0 150.5,80.4 152.9,81.5 C155.3,82.6 158.8,83.8 160.0,84.2"
+      fill="none" stroke="#D81B60" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 4</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=1.10, &#963;=0.90, df=3.2</text>
+  </g>
+
+  <g transform="translate(664,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#D1C4E9"/>
+    <path d="M18.0,89.9 C19.2,89.9 22.7,89.8 25.1,89.8 C27.5,89.8 29.8,89.8 32.2,89.7 C34.6,89.7 36.9,89.6 39.3,89.5 C41.7,89.4 44.0,89.2 46.4,89.0 C48.8,88.8 51.1,88.5 53.5,88.0 C55.9,87.5 58.2,87.0 60.6,86.1 C63.0,85.1 65.3,84.1 67.7,82.3 C70.1,80.5 72.4,78.3 74.8,75.3 C77.2,72.3 79.5,68.4 81.9,64.2 C84.3,60.0 86.6,54.3 89.0,50.2 C91.4,46.1 93.7,41.4 96.1,39.6 C98.5,37.8 100.8,37.8 103.2,39.6 C105.6,41.4 107.9,46.1 110.3,50.2 C112.7,54.3 115.0,60.0 117.4,64.2 C119.8,68.4 122.1,72.3 124.5,75.3 C126.9,78.3 129.2,80.5 131.6,82.3 C134.0,84.1 136.3,85.1 138.7,86.1 C141.1,87.0 143.4,87.5 145.8,88.0 C148.2,88.5 150.5,88.8 152.9,89.0 C155.3,89.2 158.8,89.4 160.0,89.5"
+      fill="none" stroke="#7E57C2" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 5</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.45, &#963;=0.65, df=6.5</text>
+  </g>
+
+  <g transform="translate(810,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#B2DFDB"/>
+    <path d="M18.0,89.5 C19.2,89.4 22.7,89.2 25.1,89.0 C27.5,88.8 29.8,88.7 32.2,88.3 C34.6,87.9 36.9,87.5 39.3,86.8 C41.7,86.1 44.0,85.4 46.4,84.3 C48.8,83.2 51.1,81.9 53.5,80.1 C55.9,78.3 58.2,76.1 60.6,73.6 C63.0,71.1 65.3,68.0 67.7,65.0 C70.1,62.0 72.4,58.4 74.8,55.7 C77.2,53.0 79.5,50.2 81.9,48.9 C84.3,47.6 86.6,47.1 89.0,47.8 C91.4,48.5 93.7,50.7 96.1,53.0 C98.5,55.3 100.8,58.8 103.2,61.8 C105.6,64.8 107.9,68.2 110.3,70.9 C112.7,73.6 115.0,76.2 117.4,78.2 C119.8,80.2 122.1,81.8 124.5,83.1 C126.9,84.4 129.2,85.3 131.6,86.1 C134.0,86.9 136.3,87.5 138.7,87.9 C141.1,88.4 143.4,88.6 145.8,88.8 C148.2,89.0 150.5,89.2 152.9,89.3 C155.3,89.4 158.8,89.5 160.0,89.6"
+      fill="none" stroke="#00897B" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 6</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=-0.10, &#963;=0.80, df=8.0</text>
+  </g>
+</svg>

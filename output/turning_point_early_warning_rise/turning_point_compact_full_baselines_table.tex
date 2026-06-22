@@ -1,0 +1,30 @@
+% Requires: \usepackage{graphicx}
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.8pt}
+\renewcommand{\arraystretch}{0.95}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\hline
+\textbf{Method} & \multicolumn{2}{c}{\textbf{Abilene}} & \multicolumn{2}{c}{\textbf{G\'EANT}} & \textbf{Avg. FAR}\tabularnewline
+ & \textbf{Mean Lead $\uparrow$} & \textbf{FAR (\%) $\downarrow$} & \textbf{Mean Lead $\uparrow$} & \textbf{FAR (\%) $\downarrow$} & \textbf{(\%) $\downarrow$}\tabularnewline
+\hline
+DATP-Net & 30.0 & 27.69 & \underline{28.0} & \textbf{21.15} & \textbf{24.42}\tabularnewline
+PMDformer & 9.0 & \underline{16.67} & 14.7 & 52.63 & \underline{34.65}\tabularnewline
+HMformer & 30.0 & 22.92 & 18.5 & 69.51 & 46.21\tabularnewline
+FeTS & 30.0 & \textbf{15.79} & \textbf{30.0} & 54.12 & 34.95\tabularnewline
+TimesNet & 25.0 & 54.00 & 14.3 & 54.05 & 54.03\tabularnewline
+iTransformer & 25.0 & 42.31 & 16.3 & 43.02 & 42.67\tabularnewline
+PatchTST & 30.0 & 48.53 & 23.5 & \underline{34.00} & 41.26\tabularnewline
+WPMixer & 30.0 & 48.05 & 27.5 & 55.00 & 51.53\tabularnewline
+P-sLSTM & \underline{37.0} & 76.19 & - & 75.00 & 75.60\tabularnewline
+xLSTMTime & \textbf{38.0} & 81.82 & - & 100.00 & 90.91\tabularnewline
+xLSTM-Mixer & 30.0 & 53.33 & \underline{28.0} & 45.76 & 49.55\tabularnewline
+FEDformer & 31.0 & 32.00 & 27.3 & 45.31 & 38.66\tabularnewline
+\hline
+\end{tabular}%
+}
+\caption{Compact neutral turning-point early-warning comparison without averaging baselines. Mean Lead measures the average number of time slots by which successful alarms are triggered before the true threshold crossing. FAR is the false alarm rate among alarm windows. Higher Mean Lead and lower FAR are better. The best result in each metric is highlighted in bold and the second-best result is underlined.}
+\label{tab:turning_point_compact_full_baselines}
+\end{table*}

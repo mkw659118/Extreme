@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" width="1100" height="520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#37474F"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="520" fill="#FFFFFF"/>
+
+  <g transform="translate(70,70)">
+    <rect x="0" y="0" width="960" height="150" rx="8" fill="#FAFAFA" stroke="#CFD8DC"/>
+
+    <rect x="24" y="26" width="144" height="78" rx="5" fill="#E3F2FD" stroke="#64B5F6"/>
+    <rect x="170" y="26" width="144" height="78" rx="5" fill="#E8F5E9" stroke="#81C784"/>
+    <rect x="316" y="26" width="144" height="78" rx="5" fill="#FFF8E1" stroke="#FFD54F"/>
+    <rect x="462" y="26" width="144" height="78" rx="5" fill="#FCE4EC" stroke="#F06292"/>
+    <rect x="608" y="26" width="144" height="78" rx="5" fill="#EDE7F6" stroke="#9575CD"/>
+    <rect x="754" y="26" width="144" height="78" rx="5" fill="#E0F2F1" stroke="#4DB6AC"/>
+
+    <polyline points="
+      30,82 46,80 62,86 78,78 94,83 110,79 126,84 142,81 162,83
+      176,78 192,72 208,66 224,58 240,52 256,45 272,40 288,34 308,29
+      322,79 338,62 354,91 370,48 386,100 402,42 418,88 434,61 454,78
+      468,84 484,76 500,63 516,42 532,14 548,55 564,75 580,83 600,86
+      614,57 630,67 646,49 662,62 678,45 694,63 710,51 726,68 746,56
+      760,69 776,74 792,78 808,82 824,86 840,89 856,92 872,95 892,99"
+      fill="none" stroke="#263238" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+
+    <text x="96" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 1</text>
+    <text x="242" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 2</text>
+    <text x="388" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 3</text>
+    <text x="534" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 4</text>
+    <text x="680" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 5</text>
+    <text x="826" y="128" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#455A64">Patch 6</text>
+  </g>
+
+  <g stroke="#78909C" stroke-width="1.8" fill="none" marker-end="url(#arrow)">
+    <path d="M166,224 C166,252 166,270 166,300"/>
+    <path d="M312,224 C312,252 312,270 312,300"/>
+    <path d="M458,224 C458,252 458,270 458,300"/>
+    <path d="M604,224 C604,252 604,270 604,300"/>
+    <path d="M750,224 C750,252 750,270 750,300"/>
+    <path d="M896,224 C896,252 896,270 896,300"/>
+  </g>
+
+  <g transform="translate(80,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#BBDEFB"/>
+    <path d="M18,86 C42,86 47,54 66,54 C86,54 92,86 116,86 C138,86 148,86 160,86" fill="none" stroke="#1976D2" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 1</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=-0.35, &#963;=0.55, df=9.0</text>
+  </g>
+
+  <g transform="translate(226,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#C8E6C9"/>
+    <path d="M18,86 C42,86 52,66 72,66 C92,66 100,86 124,86 C144,86 154,86 160,86" fill="none" stroke="#43A047" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 2</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.20, &#963;=0.70, df=7.5</text>
+  </g>
+
+  <g transform="translate(372,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#FFE082"/>
+    <path d="M18,86 C42,86 48,43 72,43 C96,43 102,86 126,86 C146,86 154,86 160,86" fill="none" stroke="#F9A825" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 3</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.05, &#963;=1.25, df=4.0</text>
+  </g>
+
+  <g transform="translate(518,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#F8BBD0"/>
+    <path d="M18,86 C48,86 58,72 82,72 C106,72 116,86 160,86" fill="none" stroke="#D81B60" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 4</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=1.10, &#963;=0.90, df=3.2</text>
+  </g>
+
+  <g transform="translate(664,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#D1C4E9"/>
+    <path d="M18,86 C40,86 46,52 66,52 C86,52 92,86 112,86 C136,86 150,86 160,86" fill="none" stroke="#7E57C2" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 5</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=0.45, &#963;=0.65, df=6.5</text>
+  </g>
+
+  <g transform="translate(810,315)">
+    <rect x="0" y="0" width="172" height="122" rx="8" fill="#FFFFFF" stroke="#B2DFDB"/>
+    <path d="M18,86 C46,86 54,62 78,62 C102,62 110,86 138,86 C150,86 156,86 160,86" fill="none" stroke="#00897B" stroke-width="3"/>
+    <line x1="18" y1="90" x2="160" y2="90" stroke="#B0BEC5"/>
+    <text x="86" y="106" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#455A64">Student-t 6</text>
+    <text x="86" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10.5" fill="#607D8B">&#956;=-0.10, &#963;=0.80, df=8.0</text>
+  </g>
+</svg>

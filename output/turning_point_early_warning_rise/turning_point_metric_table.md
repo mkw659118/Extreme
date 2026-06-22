@@ -1,0 +1,26 @@
+| Dataset | Model        | Early | Miss | Delay | Mean Lead | Median Lead | FAR (%) |
+| ------- | ------------ | ----- | ---- | ----- | --------- | ----------- | ------- |
+| Abilene | DATP-Net     | 1/3   | 2    | 0     | 30.0      | 30.0        | 27.69   |
+| Abilene | PMDformer    | 1/3   | 2    | 0     | 9.0       | 9.0         | 16.67   |
+| Abilene | HMformer     | 1/3   | 2    | 0     | 30.0      | 30.0        | 22.92   |
+| Abilene | FeTS         | 1/3   | 2    | 0     | 30.0      | 30.0        | 15.79   |
+| Abilene | TimesNet     | 1/3   | 2    | 0     | 25.0      | 25.0        | 54.00   |
+| Abilene | iTransformer | 1/3   | 2    | 0     | 25.0      | 25.0        | 42.31   |
+| Abilene | PatchTST     | 1/3   | 2    | 0     | 30.0      | 30.0        | 48.53   |
+| Abilene | WPMixer      | 1/3   | 2    | 0     | 30.0      | 30.0        | 48.05   |
+| Abilene | P-sLSTM      | 1/3   | 2    | 0     | 37.0      | 37.0        | 76.19   |
+| Abilene | xLSTMTime    | 1/3   | 2    | 0     | 38.0      | 38.0        | 81.82   |
+| Abilene | xLSTM-Mixer  | 1/3   | 2    | 0     | 30.0      | 30.0        | 53.33   |
+| Abilene | FEDformer    | 1/3   | 2    | 0     | 31.0      | 31.0        | 32.00   |
+| GÉANT   | DATP-Net     | 2/3   | 1    | 0     | 28.0      | 28.0        | 21.15   |
+| GÉANT   | PMDformer    | 3/3   | 0    | 0     | 14.7      | 16.0        | 52.63   |
+| GÉANT   | HMformer     | 2/3   | 1    | 0     | 18.5      | 18.5        | 69.51   |
+| GÉANT   | FeTS         | 3/3   | 0    | 0     | 30.0      | 33.0        | 54.12   |
+| GÉANT   | TimesNet     | 3/3   | 0    | 0     | 14.3      | 17.0        | 54.05   |
+| GÉANT   | iTransformer | 3/3   | 0    | 0     | 16.3      | 17.0        | 43.02   |
+| GÉANT   | PatchTST     | 2/3   | 1    | 0     | 23.5      | 23.5        | 34.00   |
+| GÉANT   | WPMixer      | 2/3   | 1    | 0     | 27.5      | 27.5        | 55.00   |
+| GÉANT   | P-sLSTM      | 0/3   | 3    | 0     | -         | -           | 75.00   |
+| GÉANT   | xLSTMTime    | 0/3   | 3    | 0     | -         | -           | 100.00  |
+| GÉANT   | xLSTM-Mixer  | 3/3   | 0    | 0     | 28.0      | 29.0        | 45.76   |
+| GÉANT   | FEDformer    | 3/3   | 0    | 0     | 27.3      | 28.0        | 45.31   |

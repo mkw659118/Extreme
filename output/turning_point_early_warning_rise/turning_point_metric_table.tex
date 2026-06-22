@@ -1,0 +1,41 @@
+% Requires: \usepackage{graphicx}
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{0.95}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccc}
+\hline
+\textbf{Dataset} & \textbf{Model} & \textbf{Early} & \textbf{Miss} & \textbf{Delay} & \textbf{Mean Lead} & \textbf{Median Lead} & \textbf{FAR (\%)}\tabularnewline
+\hline
+Abilene & DATP-Net & 1/3 & 2 & 0 & 30.0 & 30.0 & 27.69\tabularnewline
+Abilene & PMDformer & 1/3 & 2 & 0 & 9.0 & 9.0 & 16.67\tabularnewline
+Abilene & HMformer & 1/3 & 2 & 0 & 30.0 & 30.0 & 22.92\tabularnewline
+Abilene & FeTS & 1/3 & 2 & 0 & 30.0 & 30.0 & 15.79\tabularnewline
+Abilene & TimesNet & 1/3 & 2 & 0 & 25.0 & 25.0 & 54.00\tabularnewline
+Abilene & iTransformer & 1/3 & 2 & 0 & 25.0 & 25.0 & 42.31\tabularnewline
+Abilene & PatchTST & 1/3 & 2 & 0 & 30.0 & 30.0 & 48.53\tabularnewline
+Abilene & WPMixer & 1/3 & 2 & 0 & 30.0 & 30.0 & 48.05\tabularnewline
+Abilene & P-sLSTM & 1/3 & 2 & 0 & 37.0 & 37.0 & 76.19\tabularnewline
+Abilene & xLSTMTime & 1/3 & 2 & 0 & 38.0 & 38.0 & 81.82\tabularnewline
+Abilene & xLSTM-Mixer & 1/3 & 2 & 0 & 30.0 & 30.0 & 53.33\tabularnewline
+Abilene & FEDformer & 1/3 & 2 & 0 & 31.0 & 31.0 & 32.00\tabularnewline
+G\'EANT & DATP-Net & 2/3 & 1 & 0 & 28.0 & 28.0 & 21.15\tabularnewline
+G\'EANT & PMDformer & 3/3 & 0 & 0 & 14.7 & 16.0 & 52.63\tabularnewline
+G\'EANT & HMformer & 2/3 & 1 & 0 & 18.5 & 18.5 & 69.51\tabularnewline
+G\'EANT & FeTS & 3/3 & 0 & 0 & 30.0 & 33.0 & 54.12\tabularnewline
+G\'EANT & TimesNet & 3/3 & 0 & 0 & 14.3 & 17.0 & 54.05\tabularnewline
+G\'EANT & iTransformer & 3/3 & 0 & 0 & 16.3 & 17.0 & 43.02\tabularnewline
+G\'EANT & PatchTST & 2/3 & 1 & 0 & 23.5 & 23.5 & 34.00\tabularnewline
+G\'EANT & WPMixer & 2/3 & 1 & 0 & 27.5 & 27.5 & 55.00\tabularnewline
+G\'EANT & P-sLSTM & 0/3 & 3 & 0 & - & - & 75.00\tabularnewline
+G\'EANT & xLSTMTime & 0/3 & 3 & 0 & - & - & 100.00\tabularnewline
+G\'EANT & xLSTM-Mixer & 3/3 & 0 & 0 & 28.0 & 29.0 & 45.76\tabularnewline
+G\'EANT & FEDformer & 3/3 & 0 & 0 & 27.3 & 28.0 & 45.31\tabularnewline
+\hline
+\end{tabular}%
+}
+\caption{Neutral turning-point early-warning results. Early indicates alarms triggered before or at the true threshold crossing. Mean Lead and Median Lead are measured in time slots. FAR is the false alarm rate among alarm windows.}
+\label{tab:turning_point_early_warning}
+\end{table*}

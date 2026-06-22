@@ -320,7 +320,9 @@ def plot_pred5_three_subplots(index_rows: list[dict[str, object]]) -> dict[str, 
 def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
     pred_len = 5
     datasets = ["Abilene", "Geant"]
-    fig, axes = plt.subplots(1, 2, figsize=(17.2, 5.3), facecolor=TOKENS["surface"])
+    dataset_display = {"Abilene": "Abilene", "Geant": "GÉANT"}
+    label_color = "#000000"
+    fig, axes = plt.subplots(1, 2, figsize=(16.8, 6.6), facecolor=TOKENS["surface"])
 
     for c, dataset in enumerate(datasets):
         ax = axes[c]
@@ -333,25 +335,101 @@ def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
             y = local[label].to_numpy(dtype=np.float64)
             plotted.append(y)
             style = LINE_STYLE[label].copy()
+            style["linewidth"] = 4.2 if label in {"True", "DARNet"} else 2.15
             if label in {"True", "DARNet"}:
-                style["linewidth"] = 4.8
                 style["solid_capstyle"] = "round"
             ax.plot(x, y, label=display_label(label), **style)
 
         style_axis(ax)
         match_hyperparameter_border(ax)
-        ax.set_title(dataset, fontsize=19, color=TOKENS["ink"], pad=10)
+        ax.set_title(dataset_display.get(dataset, dataset), fontsize=22, color=label_color, pad=10)
+        ax.set_xlabel("Test Time Step", color=label_color, fontsize=20, labelpad=8)
+        ax.set_ylabel("Value", color=label_color, fontsize=20, labelpad=8)
+        ax.tick_params(axis="both", colors=label_color, labelsize=18, width=1.0, length=4.5)
+        ax.yaxis.get_offset_text().set_fontsize(18)
+        ax.yaxis.get_offset_text().set_color(label_color)
+        ax.xaxis.get_offset_text().set_fontsize(18)
+        ax.xaxis.get_offset_text().set_color(label_color)
         ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
         lim = axis_margin(np.concatenate(plotted))
         if lim is not None:
             ax.set_ylim(*lim)
         if c > 0:
             ax.set_ylabel("")
-            add_inside_legend(ax, fontsize=11.5)
+            add_inside_legend(ax, fontsize=15)
+            legend = ax.get_legend()
+            if legend is not None:
+                for text in legend.get_texts():
+                    text.set_color(label_color)
 
     fig.tight_layout(w_pad=2.4)
 
-    stem = "Abilene_Geant_PL5_prediction_curves_spike_region_selected_baselines_1x2_v1_dark_border_bold_primary"
+    stem = "Abilene_Geant_PL5_prediction_curves_spike_region_selected_baselines_1x2_v1"
+    pdf_path = FIG_DIR / f"{stem}.pdf"
+    png_path = FIG_DIR / f"{stem}.png"
+    alias_pdf_path = FIG_DIR / "Abilene_Geant_PL5_prediction.pdf"
+    alias_png_path = FIG_DIR / "Abilene_Geant_PL5_prediction.png"
+    fig.savefig(pdf_path, bbox_inches="tight")
+    fig.savefig(png_path, bbox_inches="tight", dpi=300)
+    fig.savefig(alias_pdf_path, bbox_inches="tight")
+    fig.savefig(alias_png_path, bbox_inches="tight", dpi=300)
+    plt.close(fig)
+
+    return {
+        "dataset": "Abilene_Geant",
+        "pred_len": pred_len,
+        "pdf": str(pdf_path.relative_to(OUT_DIR)).replace("\\", "/"),
+        "png": str(png_path.relative_to(OUT_DIR)).replace("\\", "/"),
+    }
+
+
+def plot_pred5_abilene_geant_full_test_two_subplots() -> dict[str, object]:
+    pred_len = 5
+    datasets = ["Abilene", "Geant"]
+    dataset_display = {"Abilene": "Abilene", "Geant": "GÉANT"}
+    label_color = "#000000"
+    fig, axes = plt.subplots(1, 2, figsize=(16.8, 6.6), facecolor=TOKENS["surface"])
+
+    for c, dataset in enumerate(datasets):
+        ax = axes[c]
+        df = load_curve(dataset, pred_len)
+        local = df.copy()
+        x = local["step"].to_numpy(dtype=np.float64)
+        plotted = []
+        for label in DISPLAY_ORDER:
+            y = local[label].to_numpy(dtype=np.float64)
+            plotted.append(y)
+            style = LINE_STYLE[label].copy()
+            style["linewidth"] = 4.2 if label in {"True", "DARNet"} else 2.15
+            if label in {"True", "DARNet"}:
+                style["solid_capstyle"] = "round"
+            ax.plot(x, y, label=display_label(label), **style)
+
+        style_axis(ax)
+        match_hyperparameter_border(ax)
+        ax.set_title(dataset_display.get(dataset, dataset), fontsize=22, color=label_color, pad=10)
+        ax.set_xlabel("Test Time Step", color=label_color, fontsize=20, labelpad=8)
+        ax.set_ylabel("Value", color=label_color, fontsize=20, labelpad=8)
+        ax.tick_params(axis="both", colors=label_color, labelsize=18, width=1.0, length=4.5)
+        ax.yaxis.get_offset_text().set_fontsize(18)
+        ax.yaxis.get_offset_text().set_color(label_color)
+        ax.xaxis.get_offset_text().set_fontsize(18)
+        ax.xaxis.get_offset_text().set_color(label_color)
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+        lim = axis_margin(np.concatenate(plotted))
+        if lim is not None:
+            ax.set_ylim(*lim)
+        if c > 0:
+            ax.set_ylabel("")
+            add_inside_legend(ax, fontsize=15)
+            legend = ax.get_legend()
+            if legend is not None:
+                for text in legend.get_texts():
+                    text.set_color(label_color)
+
+    fig.tight_layout(w_pad=2.4)
+
+    stem = "Abilene_Geant_PL5_prediction_full_test"
     pdf_path = FIG_DIR / f"{stem}.pdf"
     png_path = FIG_DIR / f"{stem}.png"
     fig.savefig(pdf_path, bbox_inches="tight")
@@ -361,6 +439,68 @@ def plot_pred5_abilene_geant_two_subplots() -> dict[str, object]:
     return {
         "dataset": "Abilene_Geant",
         "pred_len": pred_len,
+        "region": "full_test",
+        "pdf": str(pdf_path.relative_to(OUT_DIR)).replace("\\", "/"),
+        "png": str(png_path.relative_to(OUT_DIR)).replace("\\", "/"),
+    }
+
+
+def plot_pred5_abilene_geant_full_test_no_bold_two_subplots() -> dict[str, object]:
+    pred_len = 5
+    datasets = ["Abilene", "Geant"]
+    dataset_display = {"Abilene": "Abilene", "Geant": "GÉANT"}
+    label_color = "#000000"
+    fig, axes = plt.subplots(1, 2, figsize=(16.8, 6.6), facecolor=TOKENS["surface"])
+
+    for c, dataset in enumerate(datasets):
+        ax = axes[c]
+        df = load_curve(dataset, pred_len)
+        local = df.copy()
+        x = local["step"].to_numpy(dtype=np.float64)
+        plotted = []
+        for label in DISPLAY_ORDER:
+            y = local[label].to_numpy(dtype=np.float64)
+            plotted.append(y)
+            style = LINE_STYLE[label].copy()
+            style["linewidth"] = 2.15
+            ax.plot(x, y, label=display_label(label), **style)
+
+        style_axis(ax)
+        match_hyperparameter_border(ax)
+        ax.set_title(dataset_display.get(dataset, dataset), fontsize=22, color=label_color, pad=10)
+        ax.set_xlabel("Test Time Step", color=label_color, fontsize=20, labelpad=8)
+        ax.set_ylabel("Value", color=label_color, fontsize=20, labelpad=8)
+        ax.tick_params(axis="both", colors=label_color, labelsize=18, width=1.0, length=4.5)
+        ax.yaxis.get_offset_text().set_fontsize(18)
+        ax.yaxis.get_offset_text().set_color(label_color)
+        ax.xaxis.get_offset_text().set_fontsize(18)
+        ax.xaxis.get_offset_text().set_color(label_color)
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+        lim = axis_margin(np.concatenate(plotted))
+        if lim is not None:
+            ax.set_ylim(*lim)
+        if c > 0:
+            ax.set_ylabel("")
+            add_inside_legend(ax, fontsize=15)
+            legend = ax.get_legend()
+            if legend is not None:
+                for text in legend.get_texts():
+                    text.set_color(label_color)
+
+    fig.tight_layout(w_pad=2.4)
+
+    stem = "Abilene_Geant_PL5_prediction_full_test_no_bold"
+    pdf_path = FIG_DIR / f"{stem}.pdf"
+    png_path = FIG_DIR / f"{stem}.png"
+    fig.savefig(pdf_path, bbox_inches="tight")
+    fig.savefig(png_path, bbox_inches="tight", dpi=300)
+    plt.close(fig)
+
+    return {
+        "dataset": "Abilene_Geant",
+        "pred_len": pred_len,
+        "region": "full_test",
+        "style": "no_bold_true_datp",
         "pdf": str(pdf_path.relative_to(OUT_DIR)).replace("\\", "/"),
         "png": str(png_path.relative_to(OUT_DIR)).replace("\\", "/"),
     }
@@ -379,6 +519,12 @@ def main() -> None:
     pd.DataFrame([grid_row]).to_csv(OUT_DIR / f"{STYLE_SUFFIX}_grid_index.csv", index=False, encoding="utf-8-sig")
     pd.DataFrame([pred5_grid_row]).to_csv(
         OUT_DIR / "spike_region_selected_baselines_pred5_three_subplots_no_pred_label_v1_grid_index.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+    pred5_abilene_geant_row = plot_pred5_abilene_geant_two_subplots()
+    pd.DataFrame([pred5_abilene_geant_row]).to_csv(
+        OUT_DIR / "spike_region_selected_baselines_pred5_abilene_geant_1x2_v1_index.csv",
         index=False,
         encoding="utf-8-sig",
     )

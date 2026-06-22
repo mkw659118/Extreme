@@ -1,0 +1,36 @@
+% Requires: \usepackage{graphicx}
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{7.0pt}
+\renewcommand{\arraystretch}{0.98}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\hline
+\textbf{Method}
+& \multicolumn{2}{c}{\textbf{Abilene}}
+& \multicolumn{2}{c}{\textbf{G\'EANT}}
+& \textbf{Avg. FAR}
+\tabularnewline
+& \textbf{Mean Lead $\uparrow$} & \textbf{FAR (\%) $\downarrow$}
+& \textbf{Mean Lead $\uparrow$} & \textbf{FAR (\%) $\downarrow$}
+& \textbf{(\%) $\downarrow$}
+\tabularnewline
+\hline
+DATP-Net
+& \textbf{30.0} & \textbf{27.69}
+& \textbf{28.0} & \textbf{21.15}
+& \textbf{24.42}
+\tabularnewline
+Baseline Avg.
+& 28.6 & 44.69
+& 22.2 & 57.13
+& 50.91
+\tabularnewline
+\hline
+\end{tabular}%
+}
+\caption{Compact neutral turning-point early-warning comparison. Mean Lead measures the average number of time slots by which successful alarms are triggered before the true threshold crossing. FAR is the false alarm rate among alarm windows. Baseline Avg. is averaged over all compared baseline models. Higher Mean Lead and lower FAR are better.}
+\label{tab:turning_point_compact}
+\end{table*}
+

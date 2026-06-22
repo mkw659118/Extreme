@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>容量预留下游任务说明文档</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.1/github-markdown.min.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">容量预留下游任务说明文档</h1>
+</header>
+<h1 id="容量预留下游任务说明文档">容量预留下游任务说明文档</h1>
+<p>本文档说明以下两张容量预留下游任务图：</p>
+<ul>
+<li><code>abilene_all_provisioning_tradeoff.pdf</code></li>
+<li><code>geant_all_provisioning_tradeoff.pdf</code></li>
+</ul>
+<p>这两张图对应 Abilene 和 GÉANT 两个数据集上的测试集整体结果。这里的 <code>all</code> 表示使用测试集中的全部时间点进行统计。</p>
+<h2 id="实验目的">1. 实验目的</h2>
+<p>这个下游任务的目标是评估预测模型在网络运维中的实际价值。传统预测指标，例如 MAE、RMSE 或 NMAE，主要衡量预测值和真实值之间的平均误差；但在网络容量管理中，更关键的问题通常是：</p>
+<ul>
+<li>预测结果能不能帮助提前预留足够容量？</li>
+<li>在控制 SLA 违约率的同时，是否能减少过度预留带来的带宽浪费？</li>
+<li>模型是否会因为过度平滑而低估突发流量，从而导致预留不足？</li>
+</ul>
+<p>因此，本实验把流量预测结果转化为容量预留决策。一个好的预测模型不仅应该平均误差低，还应该能够在同样 SLA 违约目标下使用更少的额外容量。</p>
+<h2 id="容量预留规则">2. 容量预留规则</h2>
+<p>对于每个测试时间点 <code>t</code>，模型会给出一个流量预测值：</p>
+<pre class="text"><code>y_hat_t</code></pre>
+<p>根据预测值和安全裕度 <code>alpha</code>，预留容量定义为：</p>
+<pre class="text"><code>C_t = y_hat_t * (1 + alpha)</code></pre>
+<p>其中：</p>
+<ul>
+<li><code>y_hat_t</code> 是模型预测的流量需求。</li>
+<li><code>alpha</code> 是安全裕度，也可以理解为 over-provisioning margin。</li>
+<li><code>C_t</code> 是根据预测结果实际预留的容量。</li>
+<li><code>y_t</code> 是该时间点的真实流量需求。</li>
+</ul>
+<p>例如，当 <code>alpha = 0.2</code> 时，表示在预测值基础上额外预留 20% 的容量：</p>
+<pre class="text"><code>C_t = 1.2 * y_hat_t</code></pre>
+<p>如果模型预测偏低，尤其是在突发流量或快速上升趋势中低估真实需求，那么即使加上安全裕度，也可能出现容量不足。</p>
+<h2 id="sla-违约如何计算">3. SLA 违约如何计算</h2>
+<p>如果真实流量需求超过预留容量，则认为该时间点发生 SLA 违约：</p>
+<pre class="text"><code>y_t &gt; C_t</code></pre>
+<p>SLA 违约率定义为：</p>
+<pre class="text"><code>SLA violation rate
+= count(y_t &gt; C_t) / number_of_test_slots</code></pre>
+<p>也就是：</p>
+<pre class="text"><code>违约时间点数量 / 测试时间点总数</code></pre>
+<p>这个指标越低，说明模型驱动的容量预留越可靠，越不容易出现 under-provisioning。</p>
+<h2 id="过度预留成本如何计算">4. 过度预留成本如何计算</h2>
+<p>如果预留容量超过真实需求，多出来的部分可以理解为被浪费的带宽资源：</p>
+<pre class="text"><code>max(0, C_t - y_t)</code></pre>
+<p>所有测试时间点上的总过度预留成本为：</p>
+<pre class="text"><code>sum(max(0, C_t - y_t))</code></pre>
+<p>为了让不同数据集之间更容易比较，图中使用的是归一化过度预留成本：</p>
+<pre class="text"><code>normalized over-provisioning cost
+= sum(max(0, C_t - y_t)) / sum(y_t)</code></pre>
+<p>也就是：</p>
+<pre class="text"><code>总浪费容量 / 总真实流量需求</code></pre>
+<p>这个值越低，说明为了保证 SLA 所付出的额外容量成本越低。</p>
+<h2 id="图中横轴和纵轴含义">5. 图中横轴和纵轴含义</h2>
+<p>两张图的横轴是：</p>
+<pre class="text"><code>Normalized over-provisioning cost</code></pre>
+<p>含义是归一化过度预留成本。横轴越靠左，说明带宽浪费越少。</p>
+<p>两张图的纵轴是：</p>
+<pre class="text"><code>SLA violation rate</code></pre>
+<p>含义是 SLA 违约率。纵轴越靠下，说明容量不足的情况越少。</p>
+<p>因此，这类图的核心判断标准是：</p>
+<pre class="text"><code>曲线越靠左下角越好。</code></pre>
+<p>左下角代表：</p>
+<ul>
+<li>过度预留成本低；</li>
+<li>SLA 违约率也低；</li>
+<li>即用更少的额外容量实现更可靠的服务保障。</li>
+</ul>
+<h2 id="曲线是怎么得到的">6. 曲线是怎么得到的</h2>
+<p>每条曲线对应一个预测模型。实验中对安全裕度 <code>alpha</code> 进行扫描：</p>
+<pre class="text"><code>alpha = 0.00, 0.01, 0.02, ..., 2.00</code></pre>
+<p>对于每一个 <code>alpha</code>，都计算一组容量预留结果：</p>
+<pre class="text"><code>C_t = y_hat_t * (1 + alpha)</code></pre>
+<p>然后统计该 <code>alpha</code> 下的：</p>
+<ul>
+<li>SLA violation rate；</li>
+<li>normalized over-provisioning cost。</li>
+</ul>
+<p>把不同 <code>alpha</code> 对应的点连起来，就得到图中的一条 trade-off 曲线。</p>
+<p>随着 <code>alpha</code> 增大，模型预留的容量会变多，因此通常会出现：</p>
+<ul>
+<li>SLA 违约率下降；</li>
+<li>过度预留成本上升。</li>
+</ul>
+<p>也就是说，沿着一条曲线从左上走向右下，本质上是在用更多额外容量换取更低违约率。</p>
+<h2 id="如何比较两个模型">7. 如何比较两个模型</h2>
+<p>比较两个模型时，不能只看某一个点，而应该看整条曲线的位置。</p>
+<p>如果模型 A 的曲线整体比模型 B 更靠左下角，说明：</p>
+<pre class="text"><code>在相同 SLA 违约率下，模型 A 需要更少的过度预留成本；
+或者在相同过度预留成本下，模型 A 能达到更低的 SLA 违约率。</code></pre>
+<p>这就是容量预留下游任务的核心意义：它不只是比较预测误差，而是比较预测结果转化成运维决策之后的实际代价。</p>
+<h2 id="datp-net-在图中的标识">8. DATP-Net 在图中的标识</h2>
+<p>在两张图中，DATP-Net 使用橙色粗线并带有圆点标记。其他 baseline 使用较细的普通曲线。</p>
+<p>这样设计是为了突出本文方法和其他模型之间的下游 trade-off 差异。</p>
+<h2 id="datp-net-的优势在哪里">9. DATP-Net 的优势在哪里</h2>
+<p>从 Abilene 和 GÉANT 两张图可以看到，DATP-Net 的橙色曲线整体位于更靠左下的位置。这说明 DATP-Net 在容量预留下游任务中具有更好的 SLA-cost trade-off。</p>
+<p>具体来说，DATP-Net 的优势体现在两个方面。</p>
+<p>第一，在相同 SLA 违约目标下，DATP-Net 需要的过度预留成本更低。例如，当要求 SLA violation rate 不超过某个目标值时，DATP-Net 通常可以用更小的 normalized over-provisioning cost 达到该目标。这意味着在达到相同可靠性要求的情况下，DATP-Net 可以减少额外带宽预留，降低资源浪费。</p>
+<p>第二，在相同过度预留成本下，DATP-Net 往往能取得更低的 SLA 违约率。也就是说，如果运维系统只能接受一定程度的额外容量开销，DATP-Net 可以更有效地把这些容量用在需要的地方，从而减少 under-provisioning。</p>
+<p>这种优势说明 DATP-Net 并不是简单地把预测值整体抬高来减少违约。如果一个模型只是系统性高估流量，它也可以降低 SLA 违约率，但会导致横轴上的 over-provisioning cost 很大。DATP-Net 的优势在于，它能够在较低过度预留成本下取得较低违约率，因此曲线更靠近左下角。</p>
+<h2 id="为什么这个结果能体现趋势保持的价值">10. 为什么这个结果能体现趋势保持的价值</h2>
+<p>容量预留任务尤其关注模型是否会低估高峰和上升趋势。对于过度平滑的模型，即使它的平均误差不一定很差，也可能出现以下问题：</p>
+<pre class="text"><code>突发或上升趋势被抹平
+-&gt; 预测值偏低
+-&gt; 预留容量不足
+-&gt; SLA 违约增加</code></pre>
+<p>为了弥补这种低估，过度平滑模型只能依赖更大的 <code>alpha</code>，也就是整体提高安全裕度。然而这样会带来更高的过度预留成本。</p>
+<p>DATP-Net 的曲线更靠左下，说明它在趋势变化和峰值区域的预测更有运维价值：它不需要依靠非常大的全局安全裕度，也能更好地控制 SLA 违约。这与 DATP-Net 强调的 trend-preserving 能力是一致的。</p>
+<h2 id="可以在论文中如何表述">11. 可以在论文中如何表述</h2>
+<p>这两张图可以支撑如下结论：</p>
+<pre class="text"><code>DATP-Net achieves a better capacity provisioning trade-off than strong forecasting baselines. Under the same SLA violation target, DATP-Net requires less over-provisioned capacity; under the same provisioning cost, it leads to fewer SLA violations.</code></pre>
+<p>对应中文表述为：</p>
+<pre class="text"><code>DATP-Net 在容量预留下游任务中取得了更优的 SLA-cost 权衡。在相同 SLA 违约率目标下，DATP-Net 所需的过度预留容量更少；在相同容量开销下，DATP-Net 带来的 SLA 违约率更低。</code></pre>
+<p>如果要强调运维意义，可以写成：</p>
+<pre class="text"><code>These results show that DATP-Net&#39;s forecasting improvements translate into practical operational benefits, reducing bandwidth waste while maintaining SLA reliability.</code></pre>
+<p>对应中文表述为：</p>
+<pre class="text"><code>这些结果表明，DATP-Net 的预测优势能够转化为实际运维收益，即在维持 SLA 可靠性的同时减少带宽浪费。</code></pre>
+<h2 id="总结">12. 总结</h2>
+<p><code>abilene_all_provisioning_tradeoff.pdf</code> 和 <code>geant_all_provisioning_tradeoff.pdf</code> 展示的是预测模型驱动容量预留时的成本和可靠性权衡。</p>
+<p>读图时需要关注：</p>
+<ul>
+<li>横轴越小越好，表示过度预留成本越低；</li>
+<li>纵轴越小越好，表示 SLA 违约率越低；</li>
+<li>曲线越靠左下角越好；</li>
+<li>DATP-Net 的橙色曲线整体更靠左下，说明它在相同 SLA 目标下更省容量，在相同容量成本下更少违约。</li>
+</ul>
+<p>因此，这两张图可以作为下游任务证据，说明 DATP-Net 的预测结果不仅在误差指标上有效，而且能带来更好的容量预留决策价值。</p>
+</body>
+</html>

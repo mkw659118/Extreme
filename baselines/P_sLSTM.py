@@ -18,7 +18,7 @@ class Model(nn.Module):
         self.channel = configs.channel
         self.embedding_dim = configs.embedding_dim
         self.patch_size = configs.patch_size  # patch size
-        self.stride = configs.stride  # the stride
+        self.stride = getattr(configs, "patch_stride", configs.stride)  # model patch stride
         self.patch_num = (configs.seq_len - self.patch_size) // self.stride + 1  # the number of patches
 
         # xLSTM configuration

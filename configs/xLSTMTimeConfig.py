@@ -15,7 +15,10 @@ class xLSTMTimeConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetIn
     channel: int = 7
     embedding_dim: int = 256
     patch_size: int = 16
-    stride: int = 8
+    # Dataset window stride. Keep this at 1 so evaluation covers every test time step.
+    stride: int = 1
+    # Reserved for models that need an internal patch stride; not used by xLSTMTime.
+    patch_stride: int = 8
     num_heads: int = 4
     conv1d_kernel_size: int = 4
     num_blocks: int = 2
