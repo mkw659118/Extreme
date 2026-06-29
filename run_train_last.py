@@ -23,7 +23,21 @@ def get_experiment_name(config):
         'dropout': config.dropout,
     }
 
-    optional_fields = ['use_memory', 'seq_len', 'pred_len', 'share_weights', 'mem_size', 'pretrain_epochs']
+    optional_fields = [
+        'use_memory',
+        'seq_len',
+        'pred_len',
+        'share_weights',
+        'mem_size',
+        'pretrain_epochs',
+        'state_prior_distribution',
+        'state_prior_scales',
+        'state_prior_include_seq_level',
+        'num_experts',
+        'top_k_experts',
+        'retrieval_num',
+        'experiment_tag',
+    ]
     for field in optional_fields:
         if hasattr(config, field):
             key = field.replace('_', ' ').title().replace(' ', '_')
