@@ -1,5 +1,5 @@
 from modules.RMF_net import ExtremeLSTMMemo
-from modules.RMF_net_prior_compare import ExtremeLSTMMemo as ExtremeLSTMMemoPriorCompare
+from modules.RMF_last_prior_compare import ExtremeLSTMMemo as ExtremeLSTMMemoPriorCompare
 from baselines import PMDformer, WPMixer, iTransformer, FEDformer, FeTS, HMformer, PatchTST, TimesNet, P_sLSTM
 from baselines.HMformer import HMformer
 from baselines.xLSTMTime import xLSTMTime
