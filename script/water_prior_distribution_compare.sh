@@ -28,6 +28,10 @@ do
           --seq_len 360 \
           --pred_len "$pred" \
           --d_model "$dm" \
+          --c_in 3 \
+          --enc_in 3 \
+          --dec_in 3 \
+          --out_dim 3 \
           --epochs 200 \
           --patience 40 \
           --train_volume 40000 \

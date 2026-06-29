@@ -7,6 +7,10 @@ from configs.ExtremeLSTMMemoConfig import ExtremeLSTMMemoConfig
 @dataclass
 class ExtremeLSTMMemoPriorCompareConfig(ExtremeLSTMMemoConfig):
     model: str = 'extreme_lstm_memo_prior_compare'
+    c_in: int = 3
+    enc_in: int = 3
+    dec_in: int = 3
+    out_dim: int = 3
     num_experts: int = 4
     top_k_experts: int = 2
     retrieval_num: int = 2
