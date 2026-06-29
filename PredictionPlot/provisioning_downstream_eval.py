@@ -372,8 +372,8 @@ def plot_combined_tradeoff(curves: pd.DataFrame, output_dir: Path, subset: str =
         if subset != "all":
             title = f"{title} ({subset})"
         ax.set_title(title, fontsize=22)
-        ax.set_xlabel("Normalized over-provisioning cost", fontsize=20)
-        ax.set_ylabel("SLA violation rate", fontsize=20)
+        ax.set_xlabel("Cost", fontsize=20)
+        ax.set_ylabel("SLA", fontsize=20)
         ax.tick_params(axis="both", labelsize=18)
         ax.yaxis.set_major_formatter(
             FuncFormatter(lambda value, pos: "" if abs(value) < 1e-12 else f"{value:.1f}")

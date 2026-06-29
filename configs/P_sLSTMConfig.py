@@ -19,6 +19,8 @@ class P_sLSTMConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo
     stride: int = 1
     # Model-internal patch stride used by P_sLSTM.
     patch_stride: int = 8
+    # Use "cuda" for the fused xLSTM extension; it requires Ninja and MSVC cl.exe on Windows.
+    slstm_backend: str = "vanilla"
     num_heads: int = 4
     conv1d_kernel_size: int = 4
     num_blocks: int = 2

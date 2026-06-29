@@ -37,6 +37,7 @@ def get_experiment_name(config):
         'artificial_missing_splits',
         'artificial_missing_target_only',
         'use_memory',
+        'slstm_backend',
         'share_weights',
         'mem_size',
         'pretrain_epochs',

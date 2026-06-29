@@ -33,6 +33,7 @@ class NetConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, Tr
     num_experts: int = 4
     top_k_experts: int = 2
     retrieval_num: int = 2
+    state_prior_distribution: str = 'student_t'
     state_prior_scales: str = '1,4,8,16'
     state_prior_include_seq_level: bool = True
     

@@ -30,7 +30,8 @@ class Model(nn.Module):
             slstm_block=sLSTMBlockConfig(
                 slstm=sLSTMLayerConfig(num_heads=configs.num_heads, 
                                        conv1d_kernel_size=configs.conv1d_kernel_size,
-                                       bias_init="powerlaw_blockdependent"),
+                                       bias_init="powerlaw_blockdependent",
+                                       backend=getattr(configs, "slstm_backend", "cuda")),
                 feedforward=FeedForwardConfig(proj_factor=1.3, act_fn="gelu"),
             ),
             context_length=self.seq_len,

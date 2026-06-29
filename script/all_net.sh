@@ -5,7 +5,7 @@ pred_lens=(5)
 d_models=(256)
 
 
-configs=("P_sLSTMConfig" "xLSTMTimeConfig")
+configs=("P_sLSTMConfig")
 
 
 for cfg in "${configs[@]}"

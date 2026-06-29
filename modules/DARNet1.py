@@ -280,6 +280,230 @@ class StudentTMixturePrior(nn.Module):
         return out
 
 
+class GaussianMixturePrior(nn.Module):
+    def __init__(
+        self,
+        num_components: int,
+        state_dim: int,
+        use_all_channels: bool = True,
+        include_last_value: bool = True,
+        scales: Sequence[int] = (1, 4, 8, 16),
+        include_seq_level: bool = True,
+        learnable_scale_weights: bool = True,
+        min_scale: float = 1e-4,
+        temperature: float = 1.0,
+    ):
+        super().__init__()
+        self.num_components = num_components
+        self.state_dim = state_dim
+        self.use_all_channels = use_all_channels
+        self.include_last_value = include_last_value
+        self.scales = tuple(scales)
+        self.include_seq_level = include_seq_level
+        self.min_scale = min_scale
+        self.temperature = temperature
+
+        self.mu = nn.Parameter(torch.zeros(num_components, state_dim))
+        self.scale_raw = nn.Parameter(torch.zeros(num_components, state_dim))
+        self.mix_logits = nn.Parameter(torch.zeros(num_components))
+        self.register_buffer('_log_two_pi', torch.log(torch.tensor(2.0 * torch.pi, dtype=torch.float32)), persistent=False)
+
+        num_scale_terms = len(self.scales) + (1 if self.include_seq_level else 0)
+        alpha_init = torch.zeros(num_scale_terms, dtype=torch.float32)
+        if learnable_scale_weights:
+            self.alpha_logits = nn.Parameter(alpha_init)
+        else:
+            self.register_buffer('alpha_logits', alpha_init, persistent=True)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        with torch.no_grad():
+            nn.init.normal_(self.mu, mean=0.0, std=0.05)
+            nn.init.constant_(self.scale_raw, -1.0)
+
+            if self.num_components > 1:
+                comp_offsets = torch.linspace(-0.5, 0.5, steps=self.num_components, device=self.mu.device)
+                self.mu[:, 0] = self.mu[:, 0] + comp_offsets
+
+                scale_offsets = torch.linspace(-0.12, 0.12, steps=self.num_components, device=self.scale_raw.device)
+                self.scale_raw.add_(scale_offsets.view(-1, 1))
+
+            self.scale_raw.add_(0.01 * torch.randn_like(self.scale_raw))
+            nn.init.normal_(self.mix_logits, mean=0.0, std=0.05)
+
+    def extract_state_vector(self, x: torch.Tensor) -> torch.Tensor:
+        x_used = x if self.use_all_channels else x[:, :, :1]
+        std = x_used.std(dim=1, unbiased=False).mean(dim=-1, keepdim=True)
+
+        if x_used.size(1) > 1:
+            dx = x_used[:, 1:, :] - x_used[:, :-1, :]
+        else:
+            dx = torch.zeros_like(x_used)
+
+        max_abs_dx = dx.abs().amax(dim=1).mean(dim=-1, keepdim=True)
+        mean_abs_dx = dx.abs().mean(dim=1).mean(dim=-1, keepdim=True)
+
+        if self.include_last_value:
+            last = x_used[:, -1, :].mean(dim=-1, keepdim=True)
+            z = torch.cat([std, max_abs_dx, mean_abs_dx, last], dim=-1)
+        else:
+            z = torch.cat([std, max_abs_dx, mean_abs_dx], dim=-1)
+        return z
+
+    @staticmethod
+    def _window_to_patches(x_used: torch.Tensor, patch_len: int) -> torch.Tensor:
+        batch_size, length, channels = x_used.shape
+        if patch_len <= 1:
+            return x_used
+
+        usable = (length // patch_len) * patch_len
+        if usable == 0:
+            return x_used.mean(dim=1, keepdim=True)
+
+        x_trim = x_used[:, :usable, :].contiguous()
+        x_patch = x_trim.view(batch_size, usable // patch_len, patch_len, channels).mean(dim=2)
+        return x_patch
+
+    def get_component_params(self):
+        scale = F.softplus(self.scale_raw.float()) + self.min_scale
+        return self.mu.float(), scale
+
+    def component_diversity_loss(
+        self,
+        mu_margin: float = 1.0,
+        scale_margin: float = 0.3,
+        df_margin: float = 0.2,
+        scale_weight: float = 0.2,
+        df_weight: float = 0.1,
+        eps: float = 1e-6,
+    ):
+        if self.num_components <= 1:
+            zero = self.mu.new_tensor(0.0)
+            aux = {
+                'mu_sep_loss': zero.detach(),
+                'scale_sep_loss': zero.detach(),
+                'df_sep_loss': zero.detach(),
+                'mu_pair_dist_mean': zero.detach(),
+                'scale_pair_dist_mean': zero.detach(),
+                'df_pair_dist_mean': zero.detach(),
+            }
+            return zero, aux
+
+        mu, scale = self.get_component_params()
+
+        idx_i, idx_j = torch.triu_indices(
+            self.num_components,
+            self.num_components,
+            offset=1,
+            device=mu.device,
+        )
+
+        mu_i, mu_j = mu[idx_i], mu[idx_j]
+        scale_i, scale_j = scale[idx_i], scale[idx_j]
+
+        pooled_scale = torch.sqrt(0.5 * (scale_i.pow(2) + scale_j.pow(2)) + eps)
+        mu_diff = (mu_i - mu_j) / pooled_scale
+        mu_dist = torch.sqrt(mu_diff.pow(2).sum(dim=-1) + eps)
+
+        log_scale_diff = torch.log(scale_i + eps) - torch.log(scale_j + eps)
+        log_scale_dist = torch.sqrt(log_scale_diff.pow(2).sum(dim=-1) + eps)
+
+        mu_sep_loss = F.relu(mu_margin - mu_dist).pow(2).mean()
+        scale_sep_loss = F.relu(scale_margin - log_scale_dist).pow(2).mean()
+        zero = mu_sep_loss.new_tensor(0.0)
+
+        diversity_loss = mu_sep_loss + scale_weight * scale_sep_loss
+
+        aux = {
+            'mu_sep_loss': mu_sep_loss.detach(),
+            'scale_sep_loss': scale_sep_loss.detach(),
+            'df_sep_loss': zero.detach(),
+            'mu_pair_dist_mean': mu_dist.mean().detach(),
+            'scale_pair_dist_mean': log_scale_dist.mean().detach(),
+            'df_pair_dist_mean': zero.detach(),
+        }
+
+        return diversity_loss, aux
+
+    def _component_log_prob(self, z: torch.Tensor) -> torch.Tensor:
+        z = z.float()
+        mu = self.mu.float().unsqueeze(0)
+        scale = F.softplus(self.scale_raw.float()).unsqueeze(0) + self.min_scale
+        log_two_pi = self._log_two_pi.to(device=scale.device, dtype=scale.dtype)
+
+        z_expand = z.unsqueeze(1)
+        standardized = (z_expand - mu) / scale
+        log_prob = -0.5 * (standardized.pow(2) + 2.0 * torch.log(scale) + log_two_pi)
+        return log_prob.sum(dim=-1)
+
+    def posterior_from_z(self, z: torch.Tensor) -> Dict[str, torch.Tensor]:
+        log_comp = self._component_log_prob(z)
+        log_pi = torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)
+        log_joint = log_comp + log_pi
+        log_mix = torch.logsumexp(log_joint, dim=-1)
+        q = torch.softmax(log_joint / self.temperature, dim=-1)
+        return {
+            'log_component': log_comp,
+            'log_joint': log_joint,
+            'log_mix': log_mix,
+            'q': q,
+            'mix_prob': torch.softmax(self.mix_logits, dim=0),
+        }
+
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+        x_used = (x if self.use_all_channels else x[:, :, :1]).float()
+
+        z_scales = []
+        log_comp_scales = []
+        q_scales = []
+
+        for patch_len in self.scales:
+            x_scale = self._window_to_patches(x_used, patch_len=patch_len)
+            z_scale = self.extract_state_vector(x_scale)
+            z_scales.append(z_scale)
+
+            log_comp_scale = self._component_log_prob(z_scale)
+            log_comp_scales.append(log_comp_scale)
+
+            q_scale = torch.softmax((log_comp_scale + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature, dim=-1)
+            q_scales.append(q_scale)
+
+        if self.include_seq_level:
+            x_seq = x_used.mean(dim=1, keepdim=True)
+            z_seq = self.extract_state_vector(x_seq)
+            z_scales.append(z_seq)
+
+            log_comp_seq = self._component_log_prob(z_seq)
+            log_comp_scales.append(log_comp_seq)
+
+            q_seq = torch.softmax((log_comp_seq + torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)) / self.temperature, dim=-1)
+            q_scales.append(q_seq)
+
+        alpha = torch.softmax(self.alpha_logits, dim=0)
+        log_comp_stack = torch.stack(log_comp_scales, dim=1)
+        fused_log_comp = torch.sum(log_comp_stack * alpha.view(1, -1, 1), dim=1)
+
+        log_pi = torch.log_softmax(self.mix_logits, dim=0).unsqueeze(0)
+        log_joint = fused_log_comp + log_pi
+        log_mix = torch.logsumexp(log_joint, dim=-1)
+        q = torch.softmax(log_joint / self.temperature, dim=-1)
+
+        out = {
+            'log_component': fused_log_comp,
+            'log_joint': log_joint,
+            'log_mix': log_mix,
+            'q': q,
+            'mix_prob': torch.softmax(self.mix_logits, dim=0),
+            'z': torch.stack(z_scales, dim=1).mean(dim=1),
+            'z_scales': torch.stack(z_scales, dim=1),
+            'q_scales': torch.stack(q_scales, dim=1),
+            'alpha': alpha,
+        }
+        out['pretrain_nll'] = -log_mix.mean()
+        return out
+
+
 class RouterFromEmbeddingPreTrain(nn.Module):
     def __init__(
         self,
@@ -527,7 +751,10 @@ class ExtremeLSTMMemo(nn.Module):
         if len(scales) == 0:
             scales = (1,)
 
-        self.state_prior = StudentTMixturePrior(
+        self.state_prior_distribution = str(
+            getattr(self.config, 'state_prior_distribution', 'student_t')
+        ).lower()
+        prior_kwargs = dict(
             num_components=self.num_states,
             state_dim=state_dim,
             use_all_channels=bool(getattr(self.config, 'state_prior_use_all_channels', True)),
@@ -536,9 +763,22 @@ class ExtremeLSTMMemo(nn.Module):
             include_seq_level=bool(getattr(self.config, 'state_prior_include_seq_level', True)),
             learnable_scale_weights=bool(getattr(self.config, 'state_prior_learnable_scale_weights', True)),
             min_scale=float(getattr(self.config, 'pretrain_min_scale', 1e-4)),
-            min_df=float(getattr(self.config, 'pretrain_min_df', 2.1)),
             temperature=float(getattr(self.config, 'state_prior_temperature', 1.0)),
         )
+        if self.state_prior_distribution in {'student_t', 'student-t', 't'}:
+            self.state_prior = StudentTMixturePrior(
+                **prior_kwargs,
+                min_df=float(getattr(self.config, 'pretrain_min_df', 2.1)),
+            )
+            self.state_prior_distribution = 'student_t'
+        elif self.state_prior_distribution in {'gaussian', 'normal'}:
+            self.state_prior = GaussianMixturePrior(**prior_kwargs)
+            self.state_prior_distribution = 'gaussian'
+        else:
+            raise ValueError(
+                "state_prior_distribution must be one of "
+                f"'student_t' or 'gaussian', got {self.state_prior_distribution!r}."
+            )
 
         self.enc_embedding = DataEmbedding(c_in=c_in, d_model=d_model, dropout=self.dropout)
         self.router = RouterFromEmbeddingPreTrain(
