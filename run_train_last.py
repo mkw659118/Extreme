@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import collections
+import hashlib
 from data_provider.DS3 import DS
 from exp.exp_model_last import Model
 import utils.model_efficiency
@@ -45,6 +46,17 @@ def get_experiment_name(config):
 
     exper_detail = ', '.join(f"{k} : {v}" for k, v in detail_fields.items())
     filename = '_'.join(f"{k.replace('_', '')}{v}" for k, v in detail_fields.items())
+    if len(filename) > 140:
+        digest = hashlib.sha1(filename.encode('utf-8')).hexdigest()[:8]
+        filename = (
+            f"Dataset{config.dataset}_"
+            f"Model{config.model}_"
+            f"Reservoir{config.reservoir_sensor}_"
+            f"PL{config.pred_len}_"
+            f"DM{config.d_model}_"
+            f"BS{config.bs}_"
+            f"{digest}"
+        )
     return filename, exper_detail
 
 
