@@ -20,7 +20,8 @@ class Logger:
         self.exper_detail = exper_detail
         self.plotter = plotter
         self.config = config
-        self._clear_useless_logs()
+        if not bool(getattr(config, "skip_startup_cleanup", False)):
+            self._clear_useless_logs()
         self._init_log_file()
         if config.hyper_search:
             self.exper_filename += '_hyper_search'

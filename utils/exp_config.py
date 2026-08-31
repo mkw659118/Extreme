@@ -23,8 +23,11 @@ def get_config(Config='MainConfig'):
     
     
     # 鑷姩娓呯悊鏃犳晥鏃ュ織鍜岀┖鐨?__pycache__ 鏂囦欢澶?
-    clear_useless_logs()
-    remove_pycache()
+    # A full ablation matrix starts this entrypoint repeatedly; rescanning all
+    # historical results for every child run is both noisy and expensive.
+    if not bool(getattr(args, "skip_startup_cleanup", False)):
+        clear_useless_logs()
+        remove_pycache()
     return args
 
 

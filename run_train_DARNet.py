@@ -43,6 +43,9 @@ def get_experiment_name(config):
         'artificial_missing_seed',
         'artificial_missing_splits',
         'artificial_missing_target_only',
+        'artificial_missing_pattern',
+        'artificial_missing_block_length',
+        'artificial_missing_column_rate',
         'experiment_tag',
         'router_granularity',
         'router_balance_weight',
@@ -65,6 +68,7 @@ def get_experiment_name(config):
         'share_weights',
         'mem_size',
         'pretrain_epochs',
+        'gate_epochs',
     ]
 
     for field in optional_fields:

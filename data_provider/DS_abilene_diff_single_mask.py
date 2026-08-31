@@ -125,6 +125,9 @@ class DS:
         # 缺失位置被置为 0，但是否有效由 raw_mask 标记。
         self.raw_data = None
         self.raw_mask = None
+        # Input-only mask after optional artificial corruption. Exposed for
+        # reproducibility checks; labels continue to use ``raw_mask``.
+        self.input_mask = None
 
         # 差分归一化参数，形状都是 [C]
         self.mean = None
@@ -325,6 +328,218 @@ class DS:
         )
 
         return new_mask
+
+    def _apply_block_artificial_missing(
+        self,
+        mask: np.ndarray,
+        train_end: int,
+        val_end: int,
+    ) -> np.ndarray:
+        """Remove contiguous time-by-variable blocks from model inputs.
+
+        ``artificial_missing_rate`` is the target fraction of originally
+        observed entries removed independently inside each selected split.
+        Every sampled block spans ``artificial_missing_block_length`` adjacent
+        time steps and ``artificial_missing_column_rate`` of the variables.
+        Artificial corruption never changes the label mask.
+        """
+        rate = float(getattr(self.config, "artificial_missing_rate", 0.0))
+        if rate <= 0.0:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+        if rate >= 1.0:
+            raise ValueError(
+                "artificial_missing_rate must be in [0, 1). "
+                f"Got {rate}."
+            )
+
+        block_length = int(
+            getattr(self.config, "artificial_missing_block_length", 12)
+        )
+        column_rate = float(
+            getattr(self.config, "artificial_missing_column_rate", 1.0)
+        )
+        if block_length < 1:
+            raise ValueError(
+                "artificial_missing_block_length must be >= 1. "
+                f"Got {block_length}."
+            )
+        if not 0.0 < column_rate <= 1.0:
+            raise ValueError(
+                "artificial_missing_column_rate must be in (0, 1]. "
+                f"Got {column_rate}."
+            )
+
+        requested_splits = self._get_artificial_missing_splits()
+        if not requested_splits:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+
+        aliases = {
+            "train": "train",
+            "val": "val",
+            "valid": "val",
+            "validation": "val",
+            "test": "test",
+        }
+        if "all" in requested_splits:
+            selected_splits = {"train", "val", "test"}
+        else:
+            unknown = requested_splits.difference(aliases)
+            if unknown:
+                raise ValueError(
+                    "Unknown artificial_missing_splits item(s) "
+                    f"{sorted(unknown)}. Use train,val,test or all."
+                )
+            selected_splits = {aliases[name] for name in requested_splits}
+
+        split_ranges = {
+            "train": (0, train_end),
+            "val": (train_end, val_end),
+            "test": (val_end, mask.shape[0]),
+        }
+        seed = int(getattr(self.config, "artificial_missing_seed", 2026))
+        target_only = bool(
+            getattr(self.config, "artificial_missing_target_only", False)
+        )
+        rng = np.random.default_rng(seed)
+        new_mask = mask.copy().astype(np.float32)
+        eligible_global = np.zeros_like(mask, dtype=bool)
+        split_stats = []
+
+        for split_name in ("train", "val", "test"):
+            if split_name not in selected_splits:
+                continue
+
+            split_start, split_end = split_ranges[split_name]
+            split_length = split_end - split_start
+            if split_length < block_length:
+                raise ValueError(
+                    f"Split '{split_name}' has length {split_length}, shorter "
+                    f"than artificial_missing_block_length={block_length}."
+                )
+
+            eligible = np.zeros_like(mask, dtype=bool)
+            if target_only:
+                eligible[split_start:split_end, self.target_col] = True
+                selectable_columns = np.asarray([self.target_col], dtype=np.int64)
+                columns_per_block = 1
+            else:
+                eligible[split_start:split_end, :] = True
+                selectable_columns = np.arange(mask.shape[1], dtype=np.int64)
+                columns_per_block = max(
+                    1,
+                    int(round(mask.shape[1] * column_rate)),
+                )
+
+            eligible &= mask > 0.5
+            eligible_global |= eligible
+            total_candidates = int(eligible.sum())
+            target_remove = int(round(total_candidates * rate))
+            if total_candidates == 0 or target_remove == 0:
+                split_stats.append((split_name, 0, total_candidates, 0))
+                continue
+
+            removed_count = 0
+            block_count = 0
+            # Overlap and pre-existing missing values can make a sampled block
+            # add no new removals. The generous bound prevents an accidental
+            # infinite loop while retaining deterministic masks.
+            estimated_blocks = int(
+                np.ceil(
+                    target_remove
+                    / max(block_length * columns_per_block, 1)
+                )
+            )
+            max_attempts = max(1000, estimated_blocks * 50)
+            attempts = 0
+
+            while removed_count < target_remove and attempts < max_attempts:
+                attempts += 1
+                block_start = int(
+                    rng.integers(
+                        split_start,
+                        split_end - block_length + 1,
+                    )
+                )
+                block_end = block_start + block_length
+                columns = rng.choice(
+                    selectable_columns,
+                    size=min(columns_per_block, selectable_columns.size),
+                    replace=False,
+                )
+
+                rows = np.arange(block_start, block_end, dtype=np.int64)
+                block_index = np.ix_(rows, columns)
+                before = new_mask[block_index] > 0.5
+                allowed = eligible[block_index]
+                newly_removed = before & allowed
+                added = int(newly_removed.sum())
+                if added == 0:
+                    continue
+
+                block_values = new_mask[block_index]
+                block_values[allowed] = 0.0
+                new_mask[block_index] = block_values
+                removed_count += added
+                block_count += 1
+
+            if removed_count < target_remove:
+                raise RuntimeError(
+                    f"Unable to reach block-missing target in split "
+                    f"'{split_name}': removed={removed_count}, "
+                    f"target={target_remove}, attempts={attempts}."
+                )
+
+            split_stats.append(
+                (split_name, removed_count, total_candidates, block_count)
+            )
+
+        removed_global = eligible_global & (new_mask <= 0.5)
+        total_global = int(eligible_global.sum())
+        actual_rate = (
+            float(removed_global.sum()) / total_global
+            if total_global > 0
+            else 0.0
+        )
+        setattr(self.config, "artificial_missing_actual_rate", actual_rate)
+
+        split_text = "; ".join(
+            f"{name}:removed={removed}/{total},blocks={blocks}"
+            for name, removed, total, blocks in split_stats
+        )
+        print(
+            "[Block Missing] "
+            f"target_rate={rate:.4f}, actual_rate={actual_rate:.4f}, "
+            f"block_length={block_length}, column_rate={column_rate:.4f}, "
+            f"target_only={target_only}, seed={seed}, {split_text}"
+        )
+
+        return new_mask.astype(np.float32)
+
+    def _apply_artificial_missing(
+        self,
+        mask: np.ndarray,
+        train_end: int,
+        val_end: int,
+    ) -> np.ndarray:
+        """Dispatch the configured input-only artificial missing pattern."""
+        rate = float(getattr(self.config, "artificial_missing_rate", 0.0))
+        if rate <= 0.0:
+            setattr(self.config, "artificial_missing_actual_rate", 0.0)
+            return mask.astype(np.float32)
+
+        pattern = str(
+            getattr(self.config, "artificial_missing_pattern", "random_point")
+        ).strip().lower().replace("-", "_")
+        if pattern in {"random", "random_point", "point"}:
+            return self._apply_random_artificial_missing(mask, train_end, val_end)
+        if pattern in {"block", "time_block", "structured_block"}:
+            return self._apply_block_artificial_missing(mask, train_end, val_end)
+        raise ValueError(
+            "artificial_missing_pattern must be random_point or time_block. "
+            f"Got {pattern!r}."
+        )
 
     @staticmethod
     def _first_order_diff(
@@ -589,7 +804,7 @@ class DS:
 
         full_mask = self._build_observation_mask(raw_loaded)
         split_sizes, (train_end, val_end) = self._split_ratio(len(raw_loaded))
-        input_mask = self._apply_random_artificial_missing(
+        input_mask = self._apply_artificial_missing(
             full_mask,
             train_end,
             val_end,
@@ -599,6 +814,7 @@ class DS:
 
         self.raw_data = data
         self.raw_mask = full_mask.astype(np.float32)
+        self.input_mask = input_mask.astype(np.float32)
 
         train_raw = data[:train_end]
         train_mask = full_mask[:train_end]

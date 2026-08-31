@@ -73,6 +73,12 @@ class DatasetInfo:
     artificial_missing_seed: int = 2026
     artificial_missing_splits: str = 'train,val,test'
     artificial_missing_target_only: bool = False
+    # Artificial input-missingness pattern. ``random_point`` preserves the
+    # historical behavior when artificial_missing_rate > 0. ``time_block``
+    # removes contiguous rectangles on the time x variable input mask.
+    artificial_missing_pattern: str = 'random_point'
+    artificial_missing_block_length: int = 12
+    artificial_missing_column_rate: float = 1.0
 
 
 @dataclass
@@ -81,6 +87,9 @@ class ExperimentConfig:
     rounds: int = 1
     debug: bool = False
     record: bool = True
+    # Large experiment matrices launch this entrypoint many times. They can
+    # explicitly skip the legacy full-results cleanup performed at startup.
+    skip_startup_cleanup: bool = False
     hyper_search: bool = False
     continue_train: bool = False
     outf: str = './output'
