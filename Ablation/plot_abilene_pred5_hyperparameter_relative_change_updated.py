@@ -53,7 +53,7 @@ def parse_log(path):
                     "Pred_Len": extract_value(r"Pred_Len\s*:\s*(\d+)", line, int),
                     "Retrieval_Num": extract_value(r"Retrieval_Num\s*:\s*(\d+)", line, int),
                     "Num_Experts": extract_value(r"Num_Experts\s*:\s*(\d+)", line, int),
-                    "Top_K_Experts": extract_value(r"Top_K_Experts\s*:\s*(\d+)", line, int),
+                    "Top_M_Experts": extract_value(r"Top_K_Experts\s*:\s*(\d+)", line, int),
                     "State_Prior_Scales": extract_value(
                         r"State_Prior_Scales\s*:\s*(.*?),\s*State_Prior_Include_Seq_Level",
                         line,
@@ -426,7 +426,7 @@ def draw_combined_nmae(datasets=("Abilene", "Geant")):
     })
 
     experiments = ["num_experts", "retrieval_topk", "state_prior_scales"]
-    panel_titles = ["Number of Experts", "Retrieval Top-K", "State Prior Scales"]
+    panel_titles = ["Number of Experts", "Retrieval Top-m", "State Prior Scales"]
     line_color = "#E9C46A"
     main_color = "#F4A261"
     baseline_color = line_color

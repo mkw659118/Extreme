@@ -1,0 +1,1777 @@
+
+
+===== PAGE 1 =====
+Operation-Aware Network Traffic Forecasting under
+Incomplete Telemetry: A Distribution-Aware and
+Trend-Preserving Approach
+Xiaocan Li∗, Kewei Mu ∗, Kun Xie ∗¶, Lele Wang∗, Yuxiang Zeng∗, Jigang Wen†, Guangxing Zhang ‡, Gaogang Xie §
+∗College of Computer Science and Electronic Engineering, Hunan University, Changsha, China
+†School of Computer Science and Engineering, Hunan University of Science and Technology, Xiangtan, China
+‡Institute of Computing Technology Chinese Academy of Sciences, Beijing, China
+§Institute of Computer Network Information Center, Chinese Academy of Sciences, Beijing, China
+¶Corresponding author
+Abstract—Network traffic forecasting is a key enabler for
+proactive network operations such as capacity provisioning and
+traffic engineering. In production networks, however, forecasting
+inputs are often incomplete due to sampled flow records, sketch-
+based counters, in-band telemetry loss, telemetry throttling, and
+device or collector failures. Moreover, low average prediction
+error does not necessarily imply operationally useful forecasts,
+because SLA-aware provisioning is sensitive to under-prediction
+during growth and peak periods, while traffic engineering
+depends on accurately capturing high-load OD demands and
+traffic regimes. Existing forecasting models usually assume fully
+observed inputs, optimize pointwise errors, and apply a globally
+shared prediction behavior to heterogeneous traffic dynamics.
+This paper proposes DATP-Net, an operation-aware traffic fore-
+casting framework that directly works with incomplete telemetry.
+DATP-Net constructs a missing-aware trend representation by
+jointly encoding raw observations, temporal differences, and
+validity masks. It then estimates multi-scale latent traffic-state
+distributions using Student’stmixtures and fuses them into a
+unified routing vector for Top-Kexpert forecasting. To compen-
+sate for missing temporal context, DATP-Net retrieves similar
+historical patterns through mask-aware matching and incorpo-
+rates the retrieval-based prediction with a reliability-bounded
+fusion gate. We also formulate forecasting from incomplete
+telemetry as an operation-aware problem and derive analytical
+bounds that connect forecasting errors to SLA violation risk and
+maximum-link-utilization degradation. Extensive experiments on
+Abilene, G ´EANT, and three hydrological time-series datasets
+show that DATP-Net consistently improves forecasting accuracy,
+trend preservation, and robustness. On network traffic datasets,
+DATP-Net reduces short-horizon NMAE by up to 17.1% and im-
+proves long-horizon COS by up to 81.6% over the best baselines.
+Under structured time-block missingness, it reduces NMAE by
+up to 16.0% and improves COS by up to 28.6%. Downstream
+evaluations further show that DATP-Net yields better SLA–Cost
+trade-offs and achieves average MLU ratios of 1.075 and 1.047
+on Abilene and G ´EANT, respectively, demonstrating its practical
+value for network operations.
+Index Terms—Network traffic forecasting, distribution-aware
+modeling, trend preservation, capacity provisioning, traffic engi-
+neering.
+I. INTRODUCTION
+P
+ROACTIVE network management increasingly depends
+on accurate forecasts of future traffic. Operators rely on
+traffic prediction to support traffic engineering [1], capacity
+planning [2], congestion mitigation, load balancing, network
+slicing, and energy-aware resource allocation [3], [4]. In these
+scenarios, a forecaster is not an isolated time-series predictor.
+It serves as the front end of a closed-loop network management
+pipeline that transforms raw measurements into predictions
+and then into operational decisions, and its practical value
+is ultimately determined by the quality of the operational
+decisions enabled by its predictions. This raises a fundamental
+question:what properties should a traffic forecaster have
+in order to be operationally useful under realistic network
+conditions?
+We argue that answering this question requires addressing
+three networking-specific challenges that are not jointly han-
+dled by existing traffic forecasting models.
+First, network telemetry is intrinsically incomplete, and
+its missingness is often structured.Production measurement
+systems continuously trade accuracy for overhead. Sampled
+NetFlow/sFlow observes only a fraction of packets [5], [6];
+sketch-based counters compress per-flow states and may lose
+information under memory pressure [7]; in-band network
+telemetry (INT) reports can be dropped under congestion [8];
+and device reboots, link flaps, and collector failures often
+create contiguous missing blocks rather than isolated random
+holes. A practical forecaster therefore needs to operate di-
+rectly on incomplete observations. This motivates forecasting
+directly from incomplete telemetry while being robust to both
+random and structured missingness.
+Second, low average prediction error does not necessar-
+ily imply good network operation.In capacity provisioning,
+under-prediction during traffic growth or peak periods is often
+more harmful than small errors during low-load periods. An
+over-smoothed forecast may achieve competitive MAE or
+MSE, yet still underestimate high-load regimes and cause
+SLA violations unless operators reserve excessive backup
+capacity [2]. Similarly, in traffic engineering, the decision
+
+
+===== PAGE 2 =====
+/uni00000013 /uni00000015/uni00000017 /uni00000017/uni0000001b /uni0000001a/uni00000015 /uni0000001c/uni00000018
+/uni00000013
+/uni0000001b/uni0000000f/uni00000013/uni00000013/uni00000013
+/uni00000014/uni00000019/uni0000000f/uni00000013/uni00000013/uni00000013
+/uni00000015/uni00000017/uni0000000f/uni00000013/uni00000013/uni00000013/uni00000039/uni00000044/uni0000004f/uni00000058/uni00000048
+/uni00000033/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000014/uni00000033/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000015/uni00000033/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000016/uni00000033/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000017
+/uni0000002a/uni00000065/uni00000024/uni00000031/uni00000037/uni00000003/uni0000004b/uni00000048/uni00000044/uni00000059/uni0000005c/uni00000010/uni00000057/uni00000044/uni0000004c/uni0000004f/uni00000003/uni00000057/uni00000055/uni00000044/uni0000004c/uni00000051/uni0000004c/uni00000051/uni0000004a/uni00000003/uni0000005a/uni0000004c/uni00000051/uni00000047/uni00000052/uni0000005a/uni00000003/uni00000056/uni00000044/uni00000050/uni00000053/uni0000004f/uni00000048
+/uni00000036/uni00000057/uni00000058/uni00000047/uni00000048/uni00000051/uni00000057/uni00000010/uni00000057/uni00000003/uni00000014
+/uni00000020/uni00000016/uni0000001b/uni00000018/uni00000011/uni0000001c/uni00000013/uni0000000f/uni00000003/uni00000020/uni00000018/uni00000014/uni00000016/uni00000011/uni00000018/uni00000018
+/uni00000047/uni00000049/uni00000020/uni00000015/uni00000011/uni00000014
+/uni00000036/uni00000057/uni00000058/uni00000047/uni00000048/uni00000051/uni00000057/uni00000010/uni00000057/uni00000003/uni00000015
+/uni00000020/uni00000014/uni0000001a/uni00000017/uni00000011/uni0000001a/uni00000015/uni0000000f/uni00000003/uni00000020/uni00000014/uni00000016/uni00000013/uni00000011/uni00000017/uni00000013
+/uni00000047/uni00000049/uni00000020/uni00000015/uni00000011/uni00000014
+/uni00000036/uni00000057/uni00000058/uni00000047/uni00000048/uni00000051/uni00000057/uni00000010/uni00000057/uni00000003/uni00000016
+/uni00000020/uni00000016/uni00000013/uni00000015/uni00000011/uni00000014/uni00000018/uni0000000f/uni00000003/uni00000020/uni00000015/uni0000001b/uni0000001b/uni00000011/uni00000018/uni00000017
+/uni00000047/uni00000049/uni00000020/uni00000015/uni00000011/uni00000014
+/uni00000036/uni00000057/uni00000058/uni00000047/uni00000048/uni00000051/uni00000057/uni00000010/uni00000057/uni00000003/uni00000017
+/uni00000020/uni00000019/uni00000019/uni00000015/uni00000011/uni00000018/uni0000001b/uni0000000f/uni00000003/uni00000020/uni00000017/uni0000001b/uni0000001c/uni00000011/uni00000015/uni00000019
+/uni00000047/uni00000049/uni00000020/uni00000015/uni00000011/uni00000014
+Fig. 1. Multi-distribution traffic behavior in the G ´EANT dataset. Different
+segments are fitted by different Student’s (t) components, indicating that
+network traffic is not well characterized by a single global distribution.
+quality depends on the joint demand matrix and on correctly
+identifying heavily loaded OD pairs. A forecast that is accurate
+on average but misranks peak OD pairs can still lead to
+a significantly larger maximum link utilization [9] (MLU).
+Hence, an operation-aware forecaster should not only reduce
+pointwise errors, but also preserve the direction, rate, and turn-
+ing points of traffic evolution. More importantly, its statistical
+error should be explicitly connected to the operational cost it
+induces.
+Third, network traffic is governed by multiple latent
+regimes rather than a single stationary process.Traffic
+dynamics are jointly shaped by user behavior, application
+workloads, routing policies, diurnal periodicity, and sudden
+demand shifts. As a result, traffic windows may alternate
+among stable low-load states, periodic fluctuations, sustained
+growth or decline, and bursty transitions. As illustrated in
+Fig. 1, different segments in the G´EANT dataset [10] are better
+characterized by different Student’s (t) components [11]. These
+segments are often heavy-tailed and contaminated by bursts. A
+Gaussian description can be overly sensitive to such outliers,
+whereas the heavier-tailed Student’s (t) distribution provides
+more stable state estimates. A globally shared predictor has
+to compromise across these heterogeneous regimes, allowing
+frequent patterns to dominate infrequent but operationally
+critical ones.
+Existing traffic forecasting studies have advanced from
+recurrent networks to graph neural networks, attention mech-
+anisms, and Transformer-style architectures, improving the
+modeling of temporal dependency, spatial correlation, and
+long-range patterns. However, most of them still follow a
+generic time-series forecasting paradigm: inputs are usually
+assumed to be fully observed, models are mainly optimized for
+pointwise prediction accuracy, and performance is evaluated
+primarily by statistical metrics such as MAE, RMSE, or
+MAPE.
+This paradigm is insufficient for operational network
+forecasting. Real telemetry can be incomplete and struc-
+turally missing, while imputation-then-forecasting pipelines
+may propagate reconstruction errors. Traffic dynamics are
+heterogeneous and regime-dependent, yet a single globally
+shared predictor may overfit frequent patterns and under-
+represent infrequent but critical high-load states. Moreover,
+low average error does not necessarily translate into good
+operational decisions, because SLA-aware provisioning and
+traffic engineering are sensitive to peak under-prediction, trend
+distortion, and OD-pair misranking. This leaves a gap between
+prediction accuracy and operational usefulness.
+To address the above challenges, we proposeDATP-Net,
+an operation-aware,Distribution-Aware andTrend-Preserving
+forecasting framework for incomplete network telemetry.
+DATP-Net moves beyond a single shared predictor by first
+estimating the latent traffic regime of the input and then adapt-
+ing its prediction behavior accordingly. It estimates multi-scale
+Student’s (t) state posteriors and uses the fused posterior to
+route inputs to specialized experts through a top-(K) mixture-
+of-experts mechanism. To preserve operation-critical dynam-
+ics, DATP-Net encodes raw observations, temporal differences,
+and validity masks, and constrains predicted variations with
+a trend-consistency objective. To compensate for missing
+context, it retrieves similar historical segments via mask-aware
+matching and incorporates them through a reliability-bounded
+fusion gate. Finally, we establish an error-to-cost analysis that
+links forecasting errors to SLA violation and MLU deviation,
+making the operation-aware objective explicit and quantifiable.
+The main contributions of this paper are as follows.
+•Operation-aware forecasting formulation for incom-
+plete telemetry.We formulate network traffic forecasting as an
+operation-aware problem under incomplete observations. The
+formulation explicitly connects traffic prediction with SLA-
+aware provisioning and traffic engineering, rather than treating
+forecasting as a standalone time-series task.
+•Multi-scale distribution-aware expert routing.DATP-
+Net estimates Student’s (t) state posteriors at multiple temporal
+scales and uses the fused posterior as the routing signal for a
+top-(K) mixture of forecasting experts. This enables the model
+to adapt to heterogeneous traffic regimes.
+•Trend-preserving prediction with reliability-bounded
+historical retrieval.DATP-Net encodes raw values, first-order
+and second-order temporal differences, and observation masks,
+and optimizes a trend-consistency objective to reduce over-
+smoothing. It further retrieves similar historical segments via
+mask-aware similarity and fuses them with a confidence-scaled
+bounded gate.
+•Theoretical error-to-cost analysis.We analyze how fore-
+casting errors affect downstream network operations, includ-
+ing SLA-aware capacity provisioning and traffic engineering.
+The analysis derives conditional upper bounds on the SLA
+violation rate and the MLU ratio, explaining why low average
+prediction error alone is insufficient for operation-aware traffic
+forecasting.
+•Extensive evaluation on network traffic and general
+time-series datasets.We evaluate DATP-Net on two real-
+world network traffic datasets, Abilene and G ´EANT, and
+three hydrological time-series datasets. For the network traffic
+datasets, we further examine operation-oriented outcomes,
+including SLA-aware provisioning and traffic engineering.
+Across random and structured missingness settings, DATP-Net
+is compared with SOTA forecasting models. The results show
+that DATP-Net consistently improves forecasting accuracy and
+
+
+===== PAGE 3 =====
+trend preservation, while its gains on network traffic translate
+into concrete operational benefits.
+II. RELATEDWORK
+Network traffic forecasting has been studied using a wide
+range of sequence modeling architectures, many of which
+share common foundations with general time-series forecast-
+ing. Recurrent neural networks are among the earliest deep
+models used to characterize the temporal evolution of net-
+work traffic. For example, NeuTM employs LSTM to predict
+future traffic matrices from historical observations [12]. Recent
+recurrent architectures further strengthen long-range sequence
+modeling. xLSTM extends conventional LSTM with exponen-
+tial gating and enhanced memory structures [13], [14], while
+P-sLSTM combines patch-based representations, channel-
+independent processing, and structured recurrent memory for
+time-series forecasting [15]. These models provide effective
+mechanisms for capturing sequential dependencies. However,
+their hidden-state transitions are generally shared across input
+samples, making it difficult to explicitly adapt the forecasting
+process to traffic windows governed by different latent distri-
+butions.
+Transformer-based forecasting models have subsequently
+become strong alternatives because of their ability to capture
+long-range and multi-scale dependencies. FEDformer inte-
+grates seasonal–trend decomposition with frequency-enhanced
+attention to model global temporal patterns [16]. PatchTST
+divides time series into temporal patches and applies channel-
+independent modeling [17], while iTransformer represents
+individual variables as tokens to capture multivariate depen-
+dencies [18]. More recent studies further improve temporal
+representation learning through patch-mean decoupling in
+PMDformer [19] and hierarchical multi-scale modeling in
+HMformer [20]. These methods have substantially advanced
+long-term forecasting and can be directly applied to network
+traffic sequences. Nevertheless, their multi-scale representa-
+tions are primarily constructed to enrich temporal features,
+rather than to explicitly estimate the latent distributional state
+of each input window and use it to guide adaptive prediction.
+Convolutional, graph-based, and feature-mixing architec-
+tures provide complementary mechanisms for capturing local,
+spatial, periodic, and time-frequency characteristics. In net-
+work traffic forecasting, D-STN jointly models spatial and
+temporal dependencies for mobile traffic prediction [21], while
+MVSTGN exploits multi-view graph structures to characterize
+heterogeneous spatial correlations [22]. For general time-series
+forecasting, TimesNet transforms one-dimensional sequences
+into multi-period two-dimensional representations to extract
+intraperiod and interperiod variations [23]. WPMixer com-
+bines wavelet decomposition, temporal patching, and MLP-
+based feature mixing [24], whereas FeTS learns feature-aware
+temporal representations from local sequence segments [25].
+Although these methods improve the modeling of spatial corre-
+lations, periodicity, and time-frequency patterns, graph-based
+network models often depend on predefined topology or spatial
+structures, while general forecasting models mainly focus on
+reducing pointwise errors. As a result, traffic evolution trends,
+including sustained increases, decreases, turning points, and
+recovery processes, may not be explicitly preserved during
+prediction.
+In summary, most existing forecasting models focus on
+improving temporal representation and minimizing pointwise
+prediction errors. Although they achieve strong overall accu-
+racy, they rarely characterize the latent distribution of each
+traffic window explicitly, rarely impose direct constraints
+on traffic evolution, and commonly assume that historical
+inputs are fully observed. These limitations are particularly
+problematic in practical networks, where traffic alternates
+among heterogeneous regimes and where missing measure-
+ments are frequent. DATP-Net addresses these jointly through
+distribution-aware expert forecasting, trend-preserving learn-
+ing, and reliability-controlled historical enhancement, all op-
+erating directly on incomplete observations.
+III. OPERATION-AWAREPROBLEMFORMULATION
+This section formulates traffic forecasting as an operation-
+aware problem under incomplete telemetry. Different from
+generic time-series forecasting, the forecast in our setting
+is used by downstream network operations such as capacity
+provisioning and traffic engineering. We therefore define not
+only the prediction target and the missingness model, but
+also the operational costs induced by the forecast. We further
+provide theoretical observations that motivate the main design
+choices of DATP-Net.
+A. Forecasting from Incomplete Telemetry
+Consider a network withNmonitored traffic entities, such
+as links, OD pairs, or aggregated flows. LetX∈R T×N denote
+the traffic matrix, wherex τ,n is the traffic volume of entityn
+at time slotτ. At forecasting timet, the complete historical
+input window and the future target are
+Xin
+t =X t−L+1:t,Y t =X t+1:t+H,(1)
+whereLis the input length andHis the prediction horizon.
+In production systems, the historical telemetry window is
+often incomplete. We introduce a binary observation mask
+Mt ∈ {0,1}L×N , wherem τ,n = 1ifx τ,n is observed and
+mτ,n = 0otherwise. The available input is
+˜Xin
+t =M t ⊙X in
+t .(2)
+The forecasting problem is then defined as
+ˆYt =f Θ
+
+˜Xin
+t ,M t
+
+, ˆYt ∈R H×N .(3)
+The mask is explicitly retained so that the model can dis-
+tinguish missing entries from valid zero-valued traffic. In
+this paper, incompleteness occurs in the input window, while
+the future targetY t is assumed to be fully observed during
+training and evaluation.
+Telemetry-driven missingness model.We consider two
+missingness regimes that reflect production measurement sys-
+tems.(i) Sampling/loss missingnessrandomly removes in-
+dividual observations, abstracting packet sampling, sampled
+
+
+===== PAGE 4 =====
+flow records, compact counter losses, and occasional telemetry
+loss.(ii) Structured block missingnessremoves continuous
+observations from a subset of traffic entities over a period
+of time, which captures collector failures, device reboots, link
+flaps, telemetry throttling, and other non-random disruptions.
+Compared with entry-wise random missingness, structured
+block missingness is more challenging because it eliminates
+temporally correlated context that is critical for forecasting.
+B. SLA-Aware Provisioning: Trend Preservation
+We first consider SLA-aware capacity provisioning. For a
+forecasted demandy q, whereqindexes a forecasted entry in an
+evaluation setQ, the reserved capacity under a safety margin
+α≥0is
+Cq = (1 +α)ˆyq.(4)
+An SLA violation occurs when the realized demand exceeds
+the reserved capacity, i.e.,y q > Cq. We evaluate the violation
+rate and the normalized over-provisioning cost as
+SLA(α) = 1
+|Q|
+X
+q∈Q
+I(y q > Cq),(5)
+and
+Cost(α) =
+P
+q∈Q (Cq −y q)+P
+q∈Q yq
+,(6)
+where(z) + = max(z,0). This task highlights a limitation
+of average prediction error: over-prediction mainly wastes
+capacity, whereas under-prediction may directly cause SLA
+violations.
+Theorem 1. SLA violations are governed by under-
+prediction.Consider capacity provisioning with marginα >
+0. (i) Average error alone cannot determine the SLA outcome.
+For a constant demandy q =y >0, chooseδsuch that
+α
+1 +α y < δ < y.(7)
+The two forecastsˆy+
+q =y+δandˆy −
+q =y−δhave the same
+MAE, butˆy+
+q causes no SLA violation, whileˆy−
+q violates the
+SLA at every entry.
+(ii) Assumey q ≥y 0 >0for allq∈ Q. Define the average
+under-prediction error as
+UPE = 1
+|Q|
+X
+q∈Q
+(yq −ˆyq)+ .(8)
+Then the SLA violation rate satisfies
+SLA(α)≤ (1 +α)UPE
+αy0
+≤ (1 +α)MAE
+αy0
+.(9)
+Equivalently, with¯y= 1
+|Q|
+P
+q∈Q yq andNMAE = MAE/¯y,
+we have
+SLA(α)≤ (1 +α)¯y
+αy0
+NMAE.(10)
+Proof.For part (i), both forecasts have absolute errorδat
+every entry and thus have the sameMAE. Forˆy +
+q =y+δ,
+we have
+(1 +α)ˆy+
+q = (1 +α)(y+δ)> y,(11)
+so no violation occurs. Forˆy −
+q =y−δ, the conditionδ >
+α
+1+α yimplies
+(1 +α)ˆy−
+q = (1 +α)(y−δ)< y,(12)
+so every entry violates the SLA.
+For part (ii), a violation at entryqimplies
+yq >(1 +α)ˆyq,(13)
+and therefore
+(yq −ˆyq)+ > α
+1 +α yq ≥ α
+1 +α y0.(14)
+Thus,
+I(y q > Cq)≤
+(yq −ˆyq)+
+α
+1+α y0
+.(15)
+Averaging overQgives the first bound. The second bound
+follows from(y q −ˆyq)+ ≤ |yq −ˆyq|. SubstitutingMAE =
+¯y·NMAEgives the normalized form.□
+Theorem 1shows that lowMAEis not sufficient for
+SLA-aware provisioning. A model that over-smooths growth
+periods or traffic peaks may still incur high SLA risk be-
+cause it produces large one-sided under-prediction errors. This
+motivates the trend-aware representation (i.e., Eq.(25)) and
+trend-consistency objective (i.e., Eq.(50)) in DATP-Net, which
+explicitly preserve the direction, rate, and turning points of
+traffic evolution.
+C. Traffic Engineering: Regime Awareness
+We next consider traffic engineering. In this task, the
+monitored entities are OD pairs. LetD∈R N
++ and ˆD∈R N
++
+denote the true and predicted OD-demand vectors at a given
+prediction horizon. A routingRsplits each OD demand over
+paths. Given link capacityc e, the utilization of linkeis
+ue(R, D) =1
+ce
+NX
+k=1
+Re,kDk,(16)
+and the maximum link utilization is
+MLU(R, D) = max
+e
+ue(R, D).(17)
+TheMLU-optimal routing for demandDis
+R⋆(D) = arg min
+R∈R
+MLU(R, D),(18)
+whereRdenotes the feasible routing set. In practice, routing is
+optimized according to the predicted demand ˆD, but is applied
+to the true demandD. The resulting TE quality is measured
+by theMLUratio
+r=
+MLU
+
+R⋆( ˆD), D
+
+MLU (R⋆(D), D).(19)
+The ideal value isr= 1.
+Theorem 2. TE quality under demand perturbation.
+AssumeD k >0for all considered OD pairs. If the maximum
+relative OD-demand prediction error satisfies
+ϵ= max
+k
+|Dk − ˆDk|
+Dk
+<1,(20)
+
+
+===== PAGE 5 =====
+then the routing optimized on ˆDand applied toDsatisfies
+1≤r≤ 1 +ϵ
+1−ϵ .(21)
+Proof.The condition onϵimplies that every predicted OD
+demand is within a multiplicative factor of the true demand:
+(1−ϵ)D k ≤ ˆDk ≤(1 +ϵ)D k.(22)
+Because link utilization is a nonnegative linear function of OD
+demands, the same multiplicative perturbation bound holds for
+theMLUof any fixed routingR:
+(1−ϵ)MLU(R, D)≤MLU(R, ˆD)≤(1 +ϵ)MLU(R, D).
+(23)
+Let ˆR=R ⋆( ˆD)andR ⋆ =R ⋆(D). Combining the above
+perturbation bound with the optimality of ˆRunder ˆDgives
+MLU( ˆR, D)≤ 1 +ϵ
+1−ϵ MLU(R⋆, D).(24)
+Dividing both sides byMLU(R ⋆, D)gives the upper bound.
+The lower bound follows from the optimality ofR ⋆(D)under
+the true demand.□
+Theorem 2shows that TE quality is controlled by
+bottleneck-weighted relative errors rather than by average
+prediction error alone. An OD pair may contribute little to
+the global average error, but if it has a large weight on a
+bottleneck link, its prediction error can be amplified into a
+largeMLUdegradation. This motivates DATP-Net to adapt
+its prediction behavior to heterogeneous traffic regimes (i.e.,
+Eq.(30)), especially infrequent but operationally important
+high-load states that may shift bottlenecks and change OD
+contribution weights.
+D. Design Requirements
+The above formulation and analysis lead to four require-
+ments for operation-aware traffic forecasting from incomplete
+telemetry.
+R1: Missingness robustness.The model should forecast
+directly from
+
+˜Xin
+t ,M t
+
+without relying on a separate impu-
+tation stage. This is important because structured telemetry
+gaps remove temporally correlated context, and imputation
+errors may be propagated to downstream prediction.
+R2: Trend preservation.The model should preserve the
+direction, rate, and turning points of traffic evolution. The SLA
+analysis shows that under-prediction during growth periods
+and peaks, rather thanMAEalone, directly drives violation
+risk.
+R3: Regime adaptivity.The model should adapt to hetero-
+geneous traffic regimes instead of using one globally shared
+prediction behavior. The TE analysis shows that localized
+relative errors on critical OD pairs can be amplified into
+MLUdegradation, which motivates regime-aware prediction
+for infrequent but operationally important traffic states.
+R4: Reliability-bounded context compensation.The
+model should compensate for missing temporal context using
+historical evidence, but the contribution of such evidence
+should be controlled by its matching reliability. This pre-
+vents loosely matched historical patterns from dominating
+the prediction when the current telemetry window is severely
+incomplete or distributionally shifted.
+IV. METHODOLOGY
+A. Overview
+DATP-Net is designed for operation-aware traffic fore-
+casting from incomplete telemetry. Instead of mapping all
+traffic windows through one globally shared predictor, DATP-
+Net first identifies the latent traffic regime of the current
+input and then adapts the forecasting behavior accordingly.
+Meanwhile, it explicitly encodes traffic evolution and uses
+reliability-controlled historical evidence to compensate for
+the contextual information lost under missing observations.
+This design addresses the four requirements in Section III:
+missingness robustness, trend preservation, regime adaptivity,
+and reliability-bounded context compensation.
+As shown in Fig. 2, DATP-Net contains six components.
+First,Missing-Aware Trend Encodingbuilds a unified rep-
+resentation from raw traffic values, temporal differences,
+and validity masks. Second,Multi-Scale Student’stState
+Estimationextracts scale-specific descriptors and estimates
+their posterior probabilities over latent traffic states. Third,
+Adaptive Multi-Scale State Fusionintegrates state evidence
+from different temporal scales into a unified routing vector.
+Fourth,Distribution-Guided Top-KExpert Forecastingac-
+tivates only the most relevant forecasting experts according
+to the fused state distribution. Fifth,Mask-Aware Historical
+Pattern Enhancementretrieves similar historical windows
+over jointly observed positions and produces a retrieval-based
+prediction. Finally,Reliability-Bounded Prediction Fusion
+combines the expert-based and historical predictions with a
+bounded adaptive weight.
+B. Missing-Aware Trend Encoding
+Traffic forecasting should preserve not only traffic magni-
+tude but also temporal evolution. However, under incomplete
+telemetry, directly computing temporal differences after zero
+filling may introduce artificial jumps, which can be mistakenly
+treated as bursts or turning points. DATP-Net therefore com-
+putes trend features only when the required raw observations
+are valid, and attaches a validity mask to each feature channel.
+For simplicity, we denote the incomplete historical window
+and its mask by ˜Xt andM t. Based onM t, we construct the
+first-order difference∆X t, the second-order difference∆ 2Xt,
+and their validity masksM ∆
+t andM ∆2
+t . Invalid difference
+entries are set to zero but are explicitly identified by their
+masks. The model input is
+Ut = Concat
+
+˜Xt,∆X t,∆ 2Xt,M t,M ∆
+t ,M ∆2
+t
+
+.(25)
+An embedding layer projects the concatenated input into a
+shared hidden space:
+Ht = Embed (Ut)∈R L×d.(26)
+
+
+===== PAGE 6 =====
+Top-K
+Expert 1
+Expert 2
+Expert 3
+Expert M
+MultivariateInput Distributions
+...
+...
+...
+Probability
+Multi-scale 
+WindowedInput Block
+MaskFeatures
+Raw-valueFeatures
+DifferenceFeatures
+Mask-Aware Historical Pattern Enhancement
+Router
+Top-KSelection
+Reliability-BoundedPredictionFusion
+Assets
+Key ValueKey1Value 1Key2Value 2... ...Key nValue n
+Distribution-Guided Top-K ExpertForecasting
+Final Prediction 
+Top-KSelection
+Miss-aware Trend Encoding
+Student-t State Prior
+Training FlowPrior Pretraining Backbone Training Gate Fine-tuning Evaluation
+Training SupervisionTraining SupervisionTraining Supervision
+distribution-guidedexpert prediction
+historical prediction
+Adaptive Multi-Scale State Fusion
+Fig. 2. Overview of DATP-Net. A missing-aware encoder builds a trend-aware representation from raw values, temporal differences, and validity masks.
+Multi-scale Student’stmixtures estimate latent traffic-state probabilities, which are adaptively fused into a unified routing vector for Top-Kexpert forecasting.
+In parallel, a mask-aware retrieval module produces a historical prediction, and a reliability-bounded gate fuses the two predictions.
+The representationH t jointly encodes traffic magnitude,
+local evolution, and observation availability. It is shared
+by the state-estimation, expert-forecasting, and historical-
+enhancement modules.
+C. Multi-Scale Student’stState Estimation
+Traffic windows may correspond to different latent regimes,
+such as low-load, periodic, increasing, decreasing, or bursty
+high-load states. These regimes may also appear differently
+across temporal scales. Fine scales preserve short-term fluc-
+tuations, while coarse scales capture sustained evolution. To
+obtain robust state evidence, DATP-Net estimates latent traffic-
+state distributions at multiple temporal scales.
+LetSdenote the set of temporal scales. For each scale
+s∈ S, DATP-Net segmentsH t into local temporal blocks
+and obtains the segment representation sequence
+Q(s)
+t = SegmentPools (Ht)∈R Js×d,(27)
+whereJ s is the number of segments. A scale-specific attentive
+summarizer then produces a scale descriptor:
+z(s)
+t = AttnPools
+
+Q(s)
+t
+
+∈R d.(28)
+To avoid component-permutation ambiguity across indepen-
+dently estimated scales, each scale descriptor is projected into
+a shared latent-state space:
+¯z(s)
+t =ϕ s
+
+z(s)
+t
+
+.(29)
+All projected descriptors are evaluated by a shared Student’s
+tmixture withClatent-state components. The posterior prob-
+ability of statecat scalesis
+p(s)
+t,c =
+πcT
+
+¯z(s)
+t |µ c,Σ c, νc
+
+PC
+c′=1 πc′ T
+
+¯z(s)
+t |µ c′ ,Σ c′ , νc′
+.(30)
+This yields the scale-specific state distribution
+p(s)
+t =
+h
+p(s)
+t,1 , . . . , p(s)
+t,C
+i
+.(31)
+The Student’stmixture is used because its heavy-tailed
+density reduces the influence of isolated bursts and outliers on
+state estimation. It characterizes the learned latent representa-
+tions, rather than imposing a distributional assumption directly
+on raw traffic values.
+D. Adaptive Multi-Scale State Fusion
+Different temporal scales may provide different levels of
+evidence for the current traffic regime. For example, a short-
+term burst may be more visible at a fine scale, whereas a
+sustained trend may be more reliable at a coarse scale. DATP-
+Net therefore learns an input-adaptive fusion weight for each
+scale.
+For each scales, the fusion module takes the projected
+descriptor and its state distribution as input and computes a
+scale score:
+a(s)
+t =g ms
+
+¯z(s)
+t ,p (s)
+t
+
+,(32)
+
+
+===== PAGE 7 =====
+whereg ms(·)is a learnable scoring function. The normalized
+scale weight is
+α(s)
+t =
+exp
+
+a(s)
+t
+
+P
+s′∈S exp
+
+a(s′)
+t
+.(33)
+The fused state distribution is then
+pt =
+X
+s∈S
+α(s)
+t p(s)
+t .(34)
+Since all scales share the same Student’stmixture compo-
+nents, the dimensions ofp (s)
+t are semantically aligned across
+scales. Thus,p t provides a unified state representation and
+serves as the routing vector for expert forecasting.
+E. Distribution-Guided Top-KExpert Forecasting
+A single predictor must compromise among heterogeneous
+traffic regimes. As a result, frequent patterns may dominate
+training, while rare but operationally important high-load
+states may be under-modeled. DATP-Net addresses this issue
+with a sparse mixture-of-experts forecasting module guided by
+the fused state distribution.
+DATP-Net constructsKforecasting experts{E k}K
+k=1. Each
+expert predicts the future trajectory from the shared represen-
+tation:
+ˆYt,k =E k (Ht), k= 1, . . . , K.(35)
+We use LSTM as the default expert because it is lightweight
+and effective for sequence modeling. The contribution of this
+module lies in distribution-guided sparse routing, and the
+expert backbone can be replaced by other forecasting models.
+Given the fused state distributionp t, a learnable router
+produces expert scores:
+qt = Softmax (Wrpt +b r)∈R K.(36)
+Only theK r experts with the largest scores are activated:
+Tt = TopK (qt, Kr).(37)
+The selected scores are renormalized as
+rt,k = qt,kP
+j∈Tt qt,j
+, k∈ T t.(38)
+The expert-based prediction is
+ˆYmoe
+t =
+X
+k∈Tt
+rt,k ˆYt,k.(39)
+Sparse routing encourages different experts to specialize
+in different regions of the traffic-state space, while activating
+only a small subset of experts for each input keeps inference
+efficient.
+F . Mask-Aware Historical Pattern Enhancement
+Incomplete telemetry reduces the temporal context available
+to the parametric forecasting branch. However, network traf-
+fic often exhibits recurring patterns, and historical windows
+with similar observed behavior can provide complementary
+evidence. The key challenge is to retrieve similar historical
+cases without allowing missing entries to distort the similarity
+measurement.
+DATP-Net builds a key–value memory from the training set:
+B={(κ i,v i,Ω i)}B
+i=1 ,(40)
+whereκ i is the key representation of a historical input window,
+vi ∈R H×N is its subsequent trajectory, andΩ i is the
+validity mask of the key. For the current input, the query is
+constructed from the observed values, temporal differences,
+and their masks.
+For each historical key, DATP-Net computes a mask-aware
+similarity score¯s t,i only over positions valid in both the
+current query and the historical key. Candidates whose jointly
+valid proportion is below a threshold are excluded. Them
+most similar historical cases are selected as
+Nt = TopMi (¯st,i, m).(41)
+Their aggregation weights are computed by
+βt,i = exp (¯st,i/τ)P
+j∈Nt exp (¯st,j/τ) , i∈ N t,(42)
+whereτcontrols the sharpness of the retrieval distribution.
+The historical prediction is
+ˆYhis
+t =
+X
+i∈Nt
+βt,ivi.(43)
+The reliability of retrieval is measured by the concentration
+of the aggregation weights. We define the matching confidence
+as
+ct = 1 +
+P
+i∈Nt
+βt,i log (βt,i +ε)
+logm ,(44)
+wherec t ∈[0,1]. A largerc t indicates that the retrieved cases
+are concentrated and more reliable. If no candidate satisfies
+the valid-overlap requirement, we setc t = 0and disable the
+historical branch. During training, the query window itself
+and temporally overlapping windows are excluded from the
+candidate set to avoid information leakage.
+G. Reliability-Bounded Prediction Fusion
+Historical retrieval can be highly useful when the current
+input is incomplete, but unreliable retrieval may also introduce
+misleading evidence. DATP-Net therefore controls the contri-
+bution of the historical prediction according to both retrieval
+confidence and input completeness.
+Letc t denote the matching confidence. The observation ratio
+of the current input is
+ρt = ∥Mt∥1
+LN .(45)
+
+
+===== PAGE 8 =====
+A fusion gate generates an adaptive score:
+ηt =σ(g fus (Pool (Ht), ct,1−ρ t)),(46)
+whereg fus(·)is a learnable gating network. The historical
+fusion weight is
+λt =λ maxctηt,(47)
+whereλ max <1is a predefined upper bound. Therefore,0≤
+λt ≤λ max, and the historical branch is automatically disabled
+whenc t = 0.
+The final prediction is
+ˆYt = (1−λ t) ˆYmoe
+t +λ t ˆYhis
+t .(48)
+This bounded design allows DATP-Net to exploit reliable
+historical evidence while preventing loosely matched retrieval
+results from dominating the parametric prediction.
+H. Training Objective and Optimization
+Forecasting loss.In our setting, the historical input may
+be incomplete, while the future supervision target is fully
+observed. The main forecasting loss is
+Lmain = 1
+HN
+ˆYt −Y t
+
+2
+F
+.(49)
+To preserve future traffic evolution, we further constrain the
+first-order temporal differences:
+Ltrend = 1
+(H−1)N
+∆ ˆYt −∆Y t
+
+2
+F
+,(50)
+where∆ ˆYt = ˆYt,2:H − ˆYt,1:H−1 and∆Y t =Y t,2:H −
+Yt,1:H−1. The forecasting objective is
+Lforecast =L main +λ trendLtrend.(51)
+Auxiliary regularization.The state-estimation lossL state
+is the negative log-likelihood of the shared Student’stmixture
+over multi-scale descriptors. It keeps the latent-state space
+structured during training. The balance lossL bal discourages
+expert collapse by preventing only a few experts from being
+repeatedly selected.
+Three-stage optimization.DATP-Net is trained in three
+stages. First, the missing-aware encoder, scale projections, and
+Student’stmixture are pretrained usingL state, establishing
+a meaningful latent-state space. Second, the encoder, state-
+estimation module, multi-scale fusion module, router, and
+experts are jointly trained using
+Lstage2 =L moe
+forecast +λ sLstate +λ bLbal,(52)
+whereL moe
+forecast is computed from ˆYmoe
+t . KeepingL state in this
+stage prevents the learned state space from drifting away while
+allowing the representation to adapt to forecasting. Third, after
+the backbone is fixed and the memory is built, only the fusion
+gateg fus is fine-tuned usingL forecast. This allows the gate to
+learn when historical evidence is beneficial without disturbing
+expert specialization.
+Algorithm 1Three-Stage Training of DATP-Net
+Require:training windows with masks; scalesS; number of
+expertsK; activated expertsK r; retrieved casesm; fusion
+boundλ max
+1:Stage 1: State pretraining
+2:foreach training batchdo
+3:buildU t and encodeH t
+4:construct multi-scale descriptors{ ¯z(s)
+t }s∈S
+5:update the encoder, scale projections, and Student’st
+mixture by minimizingL state
+6:end for
+7:Stage 2: State-constrained expert training
+8:foreach training batchdo
+9:estimate scale-specific distributions{p (s)
+t }s∈S and fuse
+them intop t
+10:routep t to the top-K r experts and compute ˆYmoe
+t
+11:update the encoder, state estimator, multi-scale fusion
+module, router, and experts using Eq.(52)
+12:end for
+13:Freeze the encoder, state estimator, multi-scale fusion
+module, router, and experts
+14:Build the historical memoryBfrom the training set
+15:Stage 3: Fusion-gate fine-tuning
+16:foreach training batchdo
+17:retrieve historical cases fromBand compute ˆYhis
+t and
+ct
+18:computeρ t,λ t, and the fused prediction ˆYt
+19:update onlyg fus by minimizingL forecast
+20:end for
+21:returntrained parametersΘand memoryB
+Algorithm 2Online Rolling Prediction
+Require:latest incomplete window ˜Xt−L+1:t, maskM t;
+trained parametersΘ; memoryB
+1:construct missing-aware trend inputU t and encodeH t
+2:estimate multi-scale state distributions and fuse them into
+pt
+3:routep t to the top-K r experts and compute ˆYmoe
+t
+4:retrieve admissible historical cases with sufficient valid
+overlap and compute ˆYhis
+t andc t
+5:computeρ t =∥M t∥1 /(LN)
+6:computeλ t =λ maxctσ(gfus(Pool(Ht), ct,1−ρ t))
+7:fuse predictions:
+ˆYt = (1−λ t) ˆYmoe
+t +λ t ˆYhis
+t
+8:shift the window forward when new telemetry arrives
+9:return ˆYt
+I. Training and Online Deployment
+DATP-Net is trained in three stages, as summarized in
+Algorithm 1. We first pretrain the missing-aware encoder and
+Student’stmixture to establish a latent traffic-state space. We
+then jointly train the state estimator, router, and forecasting ex-
+perts with the state-constrained forecasting objective. Finally,
+
+
+===== PAGE 9 =====
+after the backbone is fixed, we build the historical memory
+from the training set and fine-tune only the reliability-bounded
+fusion gate.
+During online deployment, DATP-Net directly consumes
+the latest incomplete telemetry window and its mask, without
+requiring a separate imputation module. At each time slot, it
+estimates the latent traffic state, activates the top-K r experts,
+retrieves reliable historical cases, and fuses the two predictions
+as summarized in Algorithm 2. The output forecast is then
+passed to downstream operation modules, such as SLA-aware
+provisioning and traffic engineering.
+V. EVALUATION
+We evaluate DATP-Net along accuracy, generalization, ro-
+bustness, trend preservation, routing behavior, operational util-
+ity, ablation, sensitivity, efficiency, and statistical significance.
+The research questions are:
+•RQ1:Forecasting accuracy vs. state-of-the-art methods?
+•RQ2:Generalization to hydrological time series?
+•RQ3:Robustness under Random and Structured Missing
+Observations?
+•RQ4:Trend preservation?
+•RQ5:Distribution-guided expert routing behavior?
+•RQ6:Translation into operational benefits (SLA provi-
+sioning, TE)?
+•RQ7:Component ablation, including Student’stvs.
+Gaussian?
+•RQ8:Hyperparameter Sensitivity Analysis.
+Datasets.We evaluate DATP-Net on two real-world net-
+work traffic datasets and one hydrological dataset. (1)Abilene
+[26] records traffic demands among 12 nodes in the U.S.
+Abilene backbone network, sampled every 5 minutes over 24
+weeks. (2)G ´EANT[10] contains traffic measurements among
+23 nodes in the pan-European G ´EANT backbone network,
+sampled every 15 minutes over 15 months. (3) To evaluate the
+cross-domain robustness of DATP-Net beyond network traffic
+forecasting, we additionally use threehydrological datasets
+[27] containing hourly reservoir water-level observations col-
+lected in Santa Clara County, California. Among the five
+reservoirs in the original dataset, we select Almaden, Coyote,
+and Lexington, using their records from 1991 to 2019.
+Baselines.We compare DATP-Net with eleven represen-
+tative time-series forecasting models covering Transformer-
+based, recurrent, feature-mixing, and multi-scale architec-
+tures.PMDformerdecouples patch-level mean information
+from residual shape patterns, whileHMformercaptures tem-
+poral dependencies through hierarchical multi-scale model-
+ing.FEDformer,PatchTST, andiTransformerrepresent
+strong Transformer-based baselines that model temporal de-
+pendencies through frequency-enhanced attention, patch-wise
+representations, and variable-wise tokenization, respectively.
+TimesNettransforms one-dimensional sequences into multi-
+period two-dimensional representations, whereasFeTSand
+WPMixerenhance forecasting through feature-aware repre-
+sentation learning and wavelet-based feature mixing. We also
+include several recent recurrent forecasting models, including
+P-sLSTM, which combines patching with structured LSTM
+memory,xLSTMTime, which adapts xLSTM to time-series
+forecasting, andxLSTM-Mixer, which integrates xLSTM-
+based sequence modeling with feature-mixing operations.
+Metrics.Pointwise accuracy is measured by NMAE and
+NRMSE, trend consistency is measured by centered cosine
+similarity (COS), and operational utility is evaluated by the
+SLA–Cost trade-off and the MLU ratio defined in Section III.
+Given ground-truth valuesy i and predictionsˆyi overNpoints,
+NMAE and NRMSE are computed as
+NMAE =
+P
+i |ˆyi −y i|P
+i |yi|+ϵ ,NRMSE =
+qP
+i (ˆyi −y i)2
+pP
+i y2
+i +ϵ
+.
+(53)
+For COS, lety j and ˆyj denote the ground-truth and predicted
+sequences of entityj, respectively. After removing their tem-
+poral means, COS is computed as
+COS = 1
+Ne
+NeX
+j=1
+(yj −mean (yj))⊤ (ˆyj −mean ( ˆyj))
+∥yj −mean (yj)∥2 ∥ˆyj −mean ( ˆyj)∥2 +ϵ ,
+(54)
+whereN e is the number of traffic entities or time-series
+variables. Lower NMAE and NRMSE indicate better pointwise
+accuracy, while higher COS indicates better preservation of
+temporal trends and fluctuation patterns.
+Implementation.All experiments are implemented in Py-
+Torch on an NVIDIA RTX 4090 GPU. We use Adam with
+learning rate5×10 −4, batch size 32, and train for at most
+200 epochs with early stopping on the validation loss.
+For Abilene and G ´EANT, we setL= 96, withH short = 5,
+Hlong = 20, andd∈ {256,512}. For the hydrology datasets,
+we setL= 360, withH short = 8,H long = 72, and
+d∈ {64,128,256,512}. Unless otherwise specified, DATP-
+Net usesK= 4experts, activates top-K= 2experts, retrieves
+m= 2historical cases, and adopts scales1,4,8,16. Parameter
+sensitivity is discussed in Section V-I. To reduce the impact
+of randomness, each experiment is repeated 10 times, and the
+average result is reported.
+TE setup.We formulate traffic engineering as a multi-
+commodity flow (MCF) problem. For each OD pair, we
+first construct a candidate path set using theK-shortest-path
+algorithm, withK= 4paths per OD pair. The TE solver then
+determines the traffic splitting ratios over these candidate paths
+by minimizing the maximum link utilization. The optimization
+problem is solved by Gurobi.
+A. Overall Network Traffic Forecasting Performance (RQ1)
+To answer RQ1, we evaluate DATP-Net on Abilene and
+G ´EANT under both short- and long-horizon settings. The
+results are reported in Tables I and II. DATP-Net achieves the
+best NMAE, NRMSE, and COS on both datasets and under
+both forecasting horizons, showing consistent advantages in
+point-wise accuracy and trend preservation.
+Under short-horizon forecasting, DATP-Net reduces
+NMAE/NRMSE by 17.1%/12.7% on Abilene and 10.8%/6.7%
+on G ´EANT compared with the best competing results. It
+
+
+===== PAGE 10 =====
+TABLE I
+SHORT-HORIZON FORECASTING PERFORMANCE ON THE NETWORK TRAFFIC AND HYDROLOGICAL DATASETS. LOWERNMAEANDNRMSEARE
+BETTER,WHILE HIGHERCOSIS BETTER. THE BEST RESULTS ARE HIGHLIGHTED IN BOLD,AND THE SECOND-BEST RESULTS ARE UNDERLINED.
+Model Abilene G´EANT Almaden Coyote Lexington
+NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS
+DATP-Net 0.5198 0.5889 0.6430 0.3893 0.5032 0.6869 0.0016 0.0062 0.3196 0.0010 0.0041 0.1762 0.0016 0.0209 0.4017
+PMDformer [19] 0.6333 0.6745 0.4907 0.4757 0.5912 0.5193 0.0036 0.0115 0.1835 0.0014 0.0052 0.1394 0.0028 0.0288 0.3713
+HMformer [20] 0.7532 0.7751 0.3001 0.5757 0.6719 0.4207 0.0026 0.0079 0.2345 0.0018 0.0056 0.1491 0.0031 0.0263 0.3778
+FeTS [25] 0.7137 0.6956 0.4475 0.5160 0.6015 0.5066 0.0053 0.0110 0.2218 0.0060 0.0126 0.1549 0.0070 0.0257 0.3613
+TimesNet [23] 0.7388 0.7484 0.3571 0.5155 0.6155 0.4858 0.0034 0.0107 0.1960 0.0019 0.0066 0.1551 0.0040 0.0296 0.3498
+iTransformer [18] 0.7411 0.7402 0.3875 0.5107 0.5970 0.5254 0.0042 0.0105 0.2232 0.0036 0.0079 0.1619 0.0051 0.0276 0.3822
+FEDformer [16] 0.7742 0.6891 0.4874 0.5216 0.5684 0.5714 0.0377 0.0745 0.0275 0.0481 0.1031 -0.0856 0.0588 0.1236 -0.0112
+PatchTST [17] 0.6455 0.6790 0.4731 0.4364 0.5391 0.6164 0.0031 0.0083 0.2303 0.0044 0.0099 0.1472 0.0050 0.0276 0.3742
+WPMixer [24] 0.6736 0.6865 0.4657 0.4868 0.5695 0.5688 0.0025 0.0078 0.2386 0.0025 0.0065 0.1325 0.0027 0.0224 0.3666
+P-sLSTM [15] 0.8972 0.8217 0.4016 0.6483 0.6872 0.3868 0.0027 0.0075 0.2405 0.0016 0.0048 0.1592 0.0043 0.0259 0.3743
+xLSTMTime [13] 0.7503 0.7569 0.4081 0.5895 0.6336 0.5493 0.0027 0.0092 0.2508 0.0014 0.0050 0.1453 0.0029 0.0283 0.3686
+xLSTM-Mixer [14]0.6272 0.6797 0.4884 0.4392 0.5464 0.6029 0.0031 0.0080 0.2188 0.0026 0.0064 0.1115 0.0037 0.0243 0.3665
+TABLE II
+LONG-HORIZON FORECASTING PERFORMANCE ON THE NETWORK TRAFFIC AND HYDROLOGICAL DATASETS. LOWERNMAEANDNRMSEARE BETTER,
+WHILE HIGHERCOSIS BETTER. THE BEST RESULTS ARE HIGHLIGHTED IN BOLD,AND THE SECOND-BEST RESULTS ARE UNDERLINED.
+Model Abilene G´EANT Almaden Coyote Lexington
+NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS NMAE NRMSE COS
+DATP-Net 0.7032 0.7176 0.4143 0.4939 0.6138 0.4529 0.0159 0.0511 0.5009 0.0120 0.0466 0.4853 0.0119 0.0570 0.7636
+PMDformer [19] 0.7849 0.7987 0.1717 0.5352 0.6422 0.3705 0.0161 0.0523 0.4314 0.0123 0.0482 0.2640 0.0130 0.0605 0.7450
+HMformer [20] 1.0459 1.0252 0.0053 0.6645 0.7770 0.2410 0.0182 0.0577 0.3925 0.0136 0.0515 0.4083 0.0154 0.0648 0.6953
+FeTS [25] 0.9170 0.8570 0.1217 0.6273 0.7405 0.1771 0.0176 0.0524 0.4125 0.0133 0.0481 0.4281 0.0164 0.0633 0.7359
+TimesNet [23] 0.9204 0.8730 0.0944 0.5689 0.6566 0.3808 0.0187 0.0605 0.3646 0.0145 0.0495 0.4334 0.0193 0.0792 0.6668
+iTransformer [18] 0.9591 0.9118 0.0847 0.6058 0.7005 0.3257 0.0190 0.0598 0.4139 0.0143 0.0502 0.4141 0.0162 0.0658 0.7270
+FEDformer [16] 0.8396 0.7752 0.2281 0.6087 0.6776 0.3691 0.0488 0.0958 0.4016 0.0621 0.1307 0.4017 0.0651 0.1184 0.3328
+PatchTST [17] 0.8507 0.8435 0.1617 0.5925 0.6883 0.2983 0.0168 0.0539 0.3900 0.0135 0.0482 0.4313 0.0174 0.0653 0.7136
+WPMixer [24] 0.9019 0.8717 0.1182 0.6245 0.7343 0.3127 0.0183 0.0581 0.4168 0.0162 0.0595 0.3381 0.0149 0.0584 0.7033
+P-sLSTM [15] 1.1198 0.9949 0.1036 0.6951 0.7349 0.2396 0.0190 0.0568 0.4669 0.0149 0.0537 0.4114 0.0203 0.0661 0.6820
+xLSTMTime [13] 0.8590 0.8504 0.1557 0.6279 0.6978 0.2713 0.0176 0.0551 0.3679 0.0143 0.0526 0.4132 0.0144 0.0634 0.6877
+xLSTM-Mixer [14]0.9155 0.8580 0.1405 0.5824 0.6730 0.3570 0.0179 0.0556 0.3733 0.0124 0.0481 0.4433 0.0157 0.0727 0.7352
+also improves COS by 31.0% and 11.4%, respectively. Under
+long-horizon forecasting, DATP-Net still maintains clear
+advantages: it reduces NMAE/NRMSE by 10.4%/7.4% on
+Abilene and 7.7%/4.4% on G ´EANT. More importantly, its
+COS improves by 81.6% on Abilene and 18.9% on G ´EANT,
+indicating that DATP-Net better preserves traffic evolution
+when the prediction horizon increases.
+Overall, these results answer RQ1 by showing that DATP-
+Net consistently outperforms representative forecasting base-
+lines on network traffic forecasting.
+B. Generalization to Hydrological Forecasting (RQ2)
+To answer RQ2, we further evaluate DATP-Net on three
+hydrological datasets, including Almaden, Coyote, and Lex-
+ington. These datasets differ from network traffic in sampling
+granularity, temporal dynamics, and generation mechanisms,
+and are used to examine the cross-domain generalization
+ability of DATP-Net. The results are also reported in Tables I
+and II.
+DATP-Net achieves the best results on all three metrics
+across all hydrological datasets and both forecasting horizons.
+Under short-horizon forecasting, DATP-Net reduces NMAE
+by 36.0%, 28.6%, and 40.7% on Almaden, Coyote, and
+Lexington, respectively, compared with the best baselines.
+Under long-horizon forecasting, DATP-Net still obtains the
+lowest NMAE/NRMSE and the highest COS on all three
+datasets. These results show that the proposed distribution-
+aware and trend-preserving design is not limited to network
+traffic, but also generalizes well to other time-series domains,
+thereby answering RQ2.
+C. Robustness under Incomplete Historical Observations
+(RQ3)
+To answer RQ3, we evaluate DATP-Net on Abilene and
+G ´EANT under two incomplete-input settings: 5% random
+missing observations and structured time-block missing obser-
+vations. The former represents scattered telemetry loss, while
+the latter removes a continuous segment of the historical win-
+dow and is more challenging because it disrupts local temporal
+context. Future labels remain complete for evaluation. The
+results are reported in Table III.
+DATP-Net achieves the best NMAE, NRMSE, and COS un-
+der both missing settings on both datasets. Under 5% random
+missingness, it reduces NMAE/NRMSE by 11.9%/8.3% on
+Abilene and 9.9%/7.1% on G ´EANT, while improving COS
+by 20.6% and 10.0%, respectively. Under structured time-
+block missingness, DATP-Net remains robust and reduces
+NMAE/NRMSE by 12.6%/9.4% on Abilene and 16.0%/11.1%
+on G ´EANT. Its COS improvements further reach 28.6% and
+21.8%.
+These results verify that DATP-Net can effectively handle
+both scattered and structured missing observations. The im-
+provement mainly comes from the missing-aware trend encod-
+ing, mask-aware historical retrieval, and reliability-bounded
+
+
+===== PAGE 11 =====
+TABLE III
+FORECASTING PERFORMANCE ONABILENE ANDG ´EANTUNDER
+INCOMPLETE HISTORICAL OBSERVATIONS.
+Model Abilene G´EANT
+NMAE NRMSE COS NMAE NRMSE COS
+Random Missing Rate = 5%
+DATP-Net 0.5383 0.6023 0.6367 0.3921 0.5030 0.6894
+PMDformer [19] 0.6262 0.6673 0.5018 0.4779 0.6015 0.4961
+HMformer [20] 0.6839 0.7329 0.3547 0.5362 0.6295 0.4811
+FeTS [25] 0.7355 0.7240 0.3718 0.5426 0.6247 0.4669
+TimesNet [23] 0.7569 0.7532 0.3776 0.5235 0.5927 0.5294
+iTransformer [18] 0.7979 0.7838 0.2994 0.4902 0.5696 0.5623
+FEDformer [16] 0.6939 0.6571 0.5281 0.4920 0.5711 0.5517
+PatchTST [17] 0.6111 0.6789 0.4898 0.4353 0.5417 0.6265
+WPMixer [24] 0.7490 0.7417 0.3438 0.4948 0.5751 0.5503
+P-sLSTM [15] 0.9764 0.8794 0.3585 0.6675 0.7184 0.3584
+xLSTMTime [13] 0.7405 0.7385 0.4112 0.5470 0.6198 0.5370
+xLSTM-Mixer [14] 0.6399 0.6794 0.4743 0.4391 0.5544 0.5917
+Structured Time-Block Missing
+DATP-Net 0.5571 0.6062 0.6405 0.3891 0.5016 0.6931
+PMDformer [19] 0.7427 0.7461 0.3325 0.5037 0.6083 0.4732
+HMformer [20] 0.8691 0.8376 0.1431 0.5375 0.6371 0.4933
+FeTS [25] 0.7451 0.7214 0.3851 0.5887 0.6480 0.4226
+TimesNet [23] 0.7589 0.7436 0.3206 0.5633 0.6872 0.4316
+iTransformer [18] 0.7861 0.7537 0.3438 0.5749 0.6795 0.3981
+FEDformer [16] 0.7555 0.7056 0.4084 0.5341 0.5916 0.5280
+PatchTST [17] 0.6520 0.6944 0.4387 0.5009 0.6077 0.4628
+WPMixer [24] 0.7534 0.7381 0.3399 0.5822 0.7184 0.3648
+P-sLSTM [15] 0.9155 0.8386 0.3061 0.6594 0.7024 0.3135
+xLSTMTime [13] 0.7884 0.8101 0.3050 0.5610 0.6009 0.5370
+xLSTM-Mixer [14] 0.6373 0.6688 0.4979 0.4630 0.5639 0.5691
+0 150 300 450 600
+T est Time Step
+−2
+0
+2
+4
+6
+8
+Value
+×10−4 Abilene
+True
+DATP-Net (0.6430)
+PMDformer (0.4907)
+HMformer (0.3001)
+FeTS (0.4475)
+TimesNet (0.3571)
+iTransformer (0.3875)
+PatchTST (0.4731)
+WPMixer (0.4657)
+P_sLSTM (0.4016)
+xLSTMTime (0.4081)
+xLSTM-Mixer (0.4884)
+FEDformer (0.4874)
+0 150 300 450 600
+T est Time Step
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+Value
+×105 GÉANT
+True
+DATP-Net (0.6869)
+PMDformer (0.5193)
+HMformer (0.4207)
+FeTS (0.5066)
+TimesNet (0.4858)
+iTransformer (0.5254)
+PatchTST (0.6164)
+WPMixer (0.5688)
+P_sLSTM (0.3868)
+xLSTMTime (0.5493)
+xLSTM-Mixer (0.6029)
+FEDformer (0.5714)
+Fig. 3. Representative trend-preservation visualization on Abilene and
+G ´EANT. The legend reports the COS value of each forecasting method on
+the displayed case. A higher COS indicates that the predicted trajectory better
+preserves the evolution trend of the ground truth.
+fusion, which jointly prevent missing entries from introducing
+misleading temporal patterns. Thus, RQ3 is answered.
+D. Trend Preservation Analysis (RQ4)
+To answer RQ4, we evaluate the trend-preservation capa-
+bility of DATP-Net using the COS metric and representative
+visual cases. As shown in Tables I and II, DATP-Net achieves
+the highest COS on Abilene and G´EANT under both short- and
+long-horizon settings. The advantage is especially clear under
+long-horizon forecasting, where DATP-Net improves COS by
+81.6% on Abilene and 18.9% on G ´EANT compared with the
+best baselines.
+Fig. 3 further illustrates representative forecasting cases.
+DATP-Net follows the ground-truth evolution more closely,
+especially around rapid increases, peak regions, and subse-
+quent decreases. In contrast, several baselines produce over-
+smoothed trajectories, delayed responses, or inconsistent local
+E1 E2 E3 E4
+S1
+S2
+S3
+S4
+S5
+0.812 0.186 0.001 0.001
+0.563 0.435 0.001 0.001
+0.208 0.371 0.144 0.277
+0.001 0.001 0.467 0.532
+0.001 0.001 0.800 0.199
+Abilene Expert Weight
+E1 E2 E3 E4
+S1
+S2
+S3
+S4
+S5
+0.208 0.165 0.209 0.418
+0.217 0.214 0.183 0.386
+0.189 0.195 0.238 0.377
+0.178 0.200 0.221 0.402
+0.176 0.193 0.245 0.385
+GÉANT Expert Weight
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+Fig. 4. Expert routing weights of DATP-Net on Abilene and G ´EANT over five
+consecutive forecasting steps. Darker colors indicate larger routing weights.
+0.0 0.5 1.0 1.5 2.0 2.5 3.0
+Cost
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6SLA
+Abilene capacity provisioning trade-off
+DATP-Net
+PMDformer
+HMformer
+FeTS
+TimesNet
+iTransformer
+PatchTST
+WPMixer
+P-sLSTM
+xLSTMTime
+xLSTM-Mixer
+FEDformer
+0.0 0.5 1.0 1.5 2.0
+Cost
+0.1
+0.2
+0.3
+0.4
+0.5SLA
+GÉANT capacity provisioning trade-off
+DATP-Net
+PMDformer
+HMformer
+FeTS
+TimesNet
+iTransformer
+PatchTST
+WPMixer
+P-sLSTM
+xLSTMTime
+xLSTM-Mixer
+FEDformer
+Fig. 5. SLA-aware capacity provisioning trade-off on Abilene and G ´EANT.
+The x-axis denotes the normalized over-provisioning cost, and the y-axis
+denotes the SLA violation rate. A curve closer to the lower-left corner
+indicates a better trade-off between capacity cost and service reliability.
+fluctuations. Although DATP-Net does not exactly recover
+every peak value, it better preserves the overall direction and
+temporal variation of traffic changes.
+These quantitative and qualitative results are consistent
+with the design of the trend-consistency objective, showing
+that DATP-Net better preserves traffic evolution patterns and
+thereby answering RQ4.
+E. Distribution-Guided Expert Routing Analysis (RQ5)
+To answer RQ5, we visualize the routing weights of four
+experts over five consecutive forecasting steps on Abilene and
+G ´EANT. The results are shown in Fig. 4.
+DATP-Net assigns different routing weights to different
+inputs, showing that expert selection is state-dependent rather
+than fixed. On Abilene, the dominant experts change across
+consecutive steps, indicating that the router can adapt as the
+traffic state evolves. On G ´EANT, the routing weights are more
+stable, but non-dominant experts still receive non-negligible
+weights, suggesting that the routing does not collapse to a
+single expert.
+Overall, Fig. 4 verifies that the distribution-guided Top-K
+MoE can perform adaptive expert selection and encourage ex-
+pert specialization for heterogeneous traffic dynamics, thereby
+answering RQ5.
+F . SLA-Aware Capacity Provisioning (RQ6)
+To answer RQ6, we evaluate whether the forecasting results
+can improve SLA-aware capacity provisioning. Following the
+cost model in Section III, each model reserves capacity
+according to its predicted demand and an over-provisioning
+
+
+===== PAGE 12 =====
+0 150 300 450 600
+T est Time Step
+1.0
+1.2
+1.4
+1.6
+1.8
+2.0
+2.2
+2.4MLU Ratio
+Abilene
+True
+DATP-Net (1.075)
+PMDformer (1.083)
+HMformer (1.081)
+FeTS (1.078)
+TimesNet (1.160)
+iTransformer (1.083)
+PatchTST (1.078)
+WPMixer (1.088)
+P_sLSTM (1.076)
+xLSTMTime (1.082)
+xLSTM-Mixer (1.081)
+FEDformer (1.190)
+0 150 300 450 600
+T est Time Step
+1.0
+1.1
+1.2
+1.3
+1.4MLU Ratio
+GÉANT
+True
+DATP-Net (1.047)
+PMDformer (1.052)
+HMformer (1.052)
+FeTS (1.054)
+TimesNet (1.088)
+iTransformer (1.053)
+PatchTST (1.051)
+WPMixer (1.052)
+P_sLSTM (1.058)
+xLSTMTime (1.051)
+xLSTM-Mixer (1.053)
+FEDformer (1.089)
+Fig. 6. Traffic engineering results on Abilene and G ´EANT. The dashed black
+line denotes the reference result obtained using ground-truth traffic, whose
+MLU ratio is 1. The colored curves show the MLU ratios obtained using the
+predicted traffic of different forecasting models. The value in parentheses in
+the legend is the average MLU ratio over all test time slots.
+margin. We report the trade-off between SLA violation rate
+and normalized over-provisioning cost in Fig. 5. A curve closer
+to the lower-left corner indicates a better balance between
+service reliability and capacity cost.
+DATP-Net consistently achieves better trade-off curves on
+both Abilene and G ´EANT. Under the same SLA violation
+target, DATP-Net requires less redundant capacity; under the
+same capacity cost, it achieves a lower violation rate. This
+improvement is important because capacity provisioning is
+highly sensitive to underestimation during traffic growth and
+peak periods. By better preserving traffic trends, DATP-Net
+reduces the need for excessive safety margins and provides
+more reliable support for capacity management. Thus, the
+provisioning results answer RQ6 by showing that DATP-Net’s
+forecasting gains translate into operational benefits.
+G. Traffic Engineering (RQ6)
+We further answer RQ6 by applying the predicted traffic to
+traffic engineering. Following Section III, we use the MLU
+ratio to measure the gap between prediction-driven TE and
+ground-truth-driven TE. The ideal ratio is 1, and a smaller
+deviation from 1 indicates better decision consistency. The
+results are shown in Fig. 6.
+DATP-Net achieves the average MLU ratio closest to 1 on
+both datasets. On Abilene, DATP-Net obtains an average ratio
+of 1.075, outperforming all baselines. On G ´EANT, it also
+achieves the best average ratio of 1.047, while the baselines
+show larger deviations. The temporal curves further show that
+DATP-Net avoids large MLU spikes and produces more stable
+TE outcomes over time.
+These results demonstrate that forecasting errors can be am-
+plified in downstream TE decisions, especially when high-load
+OD demands are misestimated. DATP-Net better preserves the
+traffic patterns relevant to TE, leading to decisions that are
+more consistent with those derived from ground-truth traffic.
+Therefore, the TE results further answer RQ6.
+H. Ablation Study (RQ7)
+To answer RQ7, we conduct ablation studies on Abilene
+and G ´EANT under the short-horizon setting. We remove the
+Top-KMoE, historical retrieval, distributional state prior, and
+TABLE IV
+ABLATION STUDY ONABILENE ANDG ´EANTUNDER THE
+SHORT-HORIZON SETTING.
+Variant Abilene G´EANT
+NMAE NRMSE COS NMAE NRMSE COS
+DATP-Net 0.5198 0.5889 0.6430 0.3893 0.5032 0.6869
+w/o MoE 0.5281 0.5897 0.6278 0.3909 0.5036 0.6861
+w/o Retrieval 0.5230 0.5950 0.6383 0.3902 0.5034 0.6864
+w/o State Prior 0.5234 0.5900 0.6415 0.3895 0.5069 0.6818
+w/o Missing-Aware Encoding0.5252 0.5922 0.6406 0.3911 0.5036 0.6861
+TABLE V
+COMPARISON BETWEENSTUDENT’StANDGAUSSIAN STATE PRIORS ON
+ABILENE ANDG ´EANTUNDER THE SHORT-HORIZON SETTING.
+Model Abilene G´EANT
+NMAE NRMSE COS NMAE NRMSE COS
+Student’stPrior 0.5198 0.5889 0.6430 0.3893 0.5032 0.6869
+Gaussian Prior 0.5282 0.5914 0.6404 0.4008 0.5076 0.6821
+missing-aware input encoding separately while keeping the
+remaining settings unchanged. The results are reported in
+Table IV.
+The complete DATP-Net achieves the best overall perfor-
+mance on both datasets. Removing any major component
+degrades at least one metric, confirming that the proposed
+modules provide complementary benefits. Removing MoE
+weakens the model’s ability to adapt to heterogeneous traffic
+states, increasing NMAE on Abilene from 0.5198 to 0.5281
+and reducing COS from 0.6430 to 0.6278. Removing the
+state prior also causes performance degradation, especially on
+G ´EANT, where COS decreases from 0.6869 to 0.6818. These
+results show that explicit state estimation and distribution-
+guided expert routing are both useful for adaptive forecasting.
+Historical retrieval and missing-aware encoding are also
+important. Removing retrieval increases NRMSE on Abilene
+from 0.5889 to 0.5950, showing that similar historical tra-
+jectories provide useful complementary evidence. Removing
+missing-aware encoding consistently increases errors on both
+datasets, confirming the importance of jointly modeling ob-
+served values, temporal variations, and validity masks.
+Student’stvs. Gaussian prior.We further replace the
+Student’stmixture with a Gaussian mixture while keeping
+all other components unchanged. The results are reported in
+Table V. The Student’stprior consistently outperforms the
+Gaussian prior on both datasets and across all metrics. On Abi-
+lene, it reduces NMAE from 0.5282 to 0.5198 and improves
+COS from 0.6404 to 0.6430. On G ´EANT, the improvement is
+more evident, with NMAE reduced from 0.4008 to 0.3893 and
+COS improved from 0.6821 to 0.6869. These results indicate
+that the heavy-tailed Student’stmixture provides more robust
+latent-state estimation than the Gaussian mixture, which is
+beneficial for traffic windows containing bursts or outlier-like
+fluctuations.
+Overall, the ablation results answer RQ7 by verifying the
+effectiveness of each major component in DATP-Net.
+
+
+===== PAGE 13 =====
+1 2 4 6 8
+0.520
+0.525
+0.530
+0.535
+0.540NMAE
+Number of Experts
+1 2 3 5 8
+0.520
+0.525
+0.530
+0.535
+0.540
+Retrieval T op-K
+A B C D E F
+0.520
+0.525
+0.530
+0.535
+0.540
+State Prior Scales
+1 2 4 6 8
+0.388
+0.390
+0.392NMAE
+1 2 3 5 8
+0.388
+0.390
+0.392
+A B C D E F
+0.388
+0.390
+0.392
+AbileneGÉANT
+Fig. 7. Sensitivity analysis of the number of expertsK, the number of
+retrieved historical casesm, and the multi-scale state-prior configuration on
+Abilene and G ´EANT. The highlighted markers denote the default settings
+selected according to the validation-set performance.
+I. Hyperparameter Sensitivity (RQ8)
+To answer RQ8, we study the sensitivity of DATP-Net to
+three key hyperparameters: the number of expertsK, the
+number of retrieved historical casesm, and the multi-scale
+state-prior configuration. We vary one hyperparameter at a
+time and report the NMAE on Abilene and G ´EANT in Fig. 7.
+DATP-Net achieves the best performance withK= 4.
+Using too few experts limits specialization, while using too
+many experts divides training samples among excessive rout-
+ing branches and may weaken expert updates. For historical
+retrieval,m= 2gives the lowest NMAE on both datasets.
+A single case is less stable, whereas retrieving too many
+cases may introduce less relevant trajectories and dilute the
+most similar patterns. For temporal scales, the configuration
+{1,4,8,16}performs best, balancing fine-grained variations
+and longer-term evolution. Adding an overly coarse scale does
+not further improve performance and may introduce redundant
+information.
+Overall, DATP-Net is not sensitive to unnecessarily large
+model or memory configurations. The validation results sup-
+port the default settingsK= 4,m= 2, and scales
+{1,4,8,16}, thereby answering RQ8.
+VI. CONCLUSION
+This paper proposed DATP-Net, an operation-aware traf-
+fic forecasting framework for incomplete network telemetry.
+Different from generic forecasting methods, DATP-Net di-
+rectly models missing observations, preserves traffic evolu-
+tion trends, and adapts prediction behavior to heterogeneous
+traffic regimes. We formulated forecasting under incomplete
+telemetry and analyzed its impact on SLA-aware provisioning
+and traffic engineering, showing that average error alone
+is insufficient to reflect operational utility. DATP-Net inte-
+grates missing-aware trend encoding, multi-scale Student’st
+state estimation, distribution-guided Top-Kexpert forecasting,
+and reliability-bounded historical retrieval. These components
+jointly improve robustness to missing telemetry, reduce over-
+smoothing, and provide adaptive forecasting for different traf-
+fic states. Experiments on Abilene, G ´EANT, and three hydro-
+logical datasets show that DATP-Net consistently outperforms
+representative baselines. It reduces short-horizon NMAE by
+up to 17.1%, improves long-horizon COS by up to 81.6%,
+and remains robust under structured time-block missingness.
+Downstream evaluations further demonstrate better SLA–Cost
+trade-offs and MLU ratios closer to the ideal value, confirm-
+ing that DATP-Net improves both forecasting accuracy and
+operational decision quality.
+REFERENCES
+[1] Y . Zhang, N. Han, T. Zhu, J. Zhang, M. Ye, S. Dou, and
+Z. Guo, “Prophet: Traffic engineering-centric traffic matrix prediction,”
+IEEE/ACM Transactions on Networking, vol. 32, no. 1, pp. 822–832,
+2023.
+[2] A. Kiani, N. Ansari, and A. Khreishah, “Hierarchical capacity provision-
+ing for fog computing,”IEEE/ACM transactions on networking, vol. 27,
+no. 3, pp. 962–971, 2019.
+[3] Q. Wu, K. He, X. Chen, S. Yu, and J. Zhang, “Deep transfer learning
+across cities for mobile traffic prediction,”IEEE/ACM transactions on
+networking, vol. 30, no. 3, pp. 1255–1267, 2021.
+[4] O. Aouedi, V . A. Le, K. Piamrat, and Y . Ji, “Deep learning on network
+traffic prediction: Recent advances, analysis, and future directions,”ACM
+computing surveys, vol. 57, no. 6, pp. 1–37, 2025.
+[5] N. Hohn and D. Veitch, “Inverting sampled traffic,” inProceedings of
+the 3rd ACM SIGCOMM conference on Internet measurement, 2003,
+pp. 222–233.
+[6] C. Estan, K. Keys, D. Moore, and G. Varghese, “Building a better
+netflow,”ACM SIGCOMM Computer Communication Review, vol. 34,
+no. 4, pp. 245–256, 2004.
+[7] T. Yang, J. Jiang, P. Liu, Q. Huang, J. Gong, Y . Zhou, R. Miao,
+X. Li, and S. Uhlig, “Elastic sketch: Adaptive and fast network-wide
+measurements,” inProceedings of the 2018 Conference of the ACM
+Special Interest Group on Data Communication, 2018, pp. 561–575.
+[8] Y . Zhou, C. Sun, H. H. Liu, R. Miao, S. Bai, B. Li, Z. Zheng,
+L. Zhu, Z. Shen, Y . Xiet al., “Flow event telemetry on programmable
+data plane,” inProceedings of the Annual conference of the ACM
+Special Interest Group on Data Communication on the applications,
+technologies, architectures, and protocols for computer communication,
+2020, pp. 76–89.
+[9] H. Zhang, X. Yin, X. Shi, J. Wang, Z. Wang, Y . Guo, T. Lan, Y . Li,
+Y . Zhu, K. Ruanet al., “Achieving high availability in inter-dc wan
+traffic engineering,”IEEE/ACM Transactions on Networking, vol. 31,
+no. 6, pp. 2406–2421, 2022.
+[10] S. Uhlig, B. Quoitin, J. Lepropre, and S. Balon, “Providing public in-
+tradomain traffic matrices to the research community,”ACM SIGCOMM
+Computer Communication Review, vol. 36, no. 1, pp. 83–86, 2006.
+[11] D. Peel and G. J. McLachlan, “Robust mixture modelling using the
+t distribution,”Statistics and computing, vol. 10, no. 4, pp. 339–348,
+2000.
+[12] A. Azzouni and G. Pujolle, “Neutm: A neural network-based framework
+for traffic matrix prediction in sdn,” inNOMS 2018-2018 IEEE/IFIP
+Network Operations and Management Symposium. IEEE, 2018, pp.
+1–5.
+[13] M. Alharthi and A. Mahmood, “xlstmtime: Long-term time series
+forecasting with xlstm,”Ai, vol. 5, no. 3, pp. 1482–1495, 2024.
+[14] M. Kraus, F. Divo, D. S. Dhami, and K. Kersting, “xlstm-mixer:
+Multivariate time series forecasting by mixing via scalar memories,”
+Advances in Neural Information Processing Systems, vol. 38, pp. 6547–
+6581, 2026.
+[15] Y . Kong, Z. Wang, Y . Nie, T. Zhou, S. Zohren, Y . Liang, P. Sun, and
+Q. Wen, “Unlocking the power of LSTM for long term time series
+forecasting,” inAAAI. AAAI Press, 2025, pp. 11 968–11 976.
+[16] T. Zhou, Z. Ma, Q. Wen, X. Wang, L. Sun, and R. Jin, “Fedformer:
+Frequency enhanced decomposed transformer for long-term series fore-
+casting,” inICML, ser. Proceedings of Machine Learning Research, vol.
+162. PMLR, 2022, pp. 27 268–27 286.
+[17] Y . Nie, N. H. Nguyen, P. Sinthong, and J. Kalagnanam, “A time series
+is worth 64 words: Long-term forecasting with transformers,” inICLR.
+OpenReview.net, 2023.
+
+
+===== PAGE 14 =====
+[18] Y . Liu, T. Hu, H. Zhang, H. Wu, S. Wang, L. Ma, and M. Long, “itrans-
+former: Inverted transformers are effective for time series forecasting,”
+inICLR. OpenReview.net, 2024.
+[19] A. Hu, L. Wen, J. Duan, Y . Dai, Y . HE, D. Wang, J. Wang, Y . Zhang,
+R. Jiang, and Z. Xu, “Pmdformer: Patch-mean decoupling information
+transformer for long-term forecasting,” inThe Fourteenth International
+Conference on Learning Representations.
+[20] R. Huang, H. Xiao, B. Li, B. Zhang, and J. Lyu, “Hmformer: Unleashing
+transformer’s potential for time series forecasting via hierarchical multi-
+scale modeling,” inAAAI. AAAI Press, 2026, pp. 22 012–22 020.
+[21] C. Zhang and P. Patras, “Long-term mobile traffic forecasting using deep
+spatio-temporal neural networks,” inProceedings of the eighteenth ACM
+international symposium on mobile Ad Hoc networking and computing,
+2018, pp. 231–240.
+[22] Y . Yao, B. Gu, Z. Su, and M. Guizani, “Mvstgn: A multi-view spatial-
+temporal graph network for cellular traffic prediction,”IEEE Transac-
+tions on Mobile Computing, vol. 22, no. 5, pp. 2837–2849, 2021.
+[23] H. Wu, T. Hu, Y . Liu, H. Zhou, J. Wang, and M. Long, “Timesnet:
+Temporal 2d-variation modeling for general time series analysis,” in
+ICLR. OpenReview.net, 2023.
+[24] M. M. N. Murad, M. Aktukmak, and Y . Yilmaz, “Wpmixer: Efficient
+multi-resolution mixing for long-term time series forecasting,” inAAAI.
+AAAI Press, 2025, pp. 19 581–19 588.
+[25] L. Wang, J. Chen, and S. Liu, “Fets: A feature-aware framework for time
+series forecasting,” inAAAI. AAAI Press, 2026, pp. 26 328–26 336.
+[26] Y . Zhang, M. Roughan, N. Duffield, and A. Greenberg, “Fast accurate
+computation of large-scale ip traffic matrices from link loads,”ACM
+SIGMETRICS Performance Evaluation Review, vol. 31, no. 1, pp. 206–
+217, 2003.
+[27] R. T. Hanson, “Hydrologic framework of the santa clara valley, califor-
+nia,”Geosphere, vol. 11, no. 3, pp. 606–637, 2015.
+Xiaocan Lireceived PhD degree in the college
+of computer science and electronics engineering,
+Hunan University, in 2020. He was also an exchange
+PhD student in the Department of Electrical and
+Computer Engineering of the State University of
+New York at Stony Brook, Stony Brook, New York.
+He is now a postdoctoral fellow in the college
+of computer science and electronics engineering,
+Hunan University. His research interests include
+network measurement, network security, and ma-
+trix/tensor decomposition. He has published over 30
+papers in major journals and conference proceedings (including IEEE/ACM
+ToN, IEEE TMC IEEE TPDS, and conferences SIGMOD, INFOCOM)
+Kewei Muis studying for a master’s degree at
+Hunan University, Changsha, China. His major is
+computer science and technology. His research in-
+terests include time series forecasting, deep learning
+and large language models.
+Kun Xiereceived her Ph.D. in Computer Appli-
+cations from Hunan University in 2007 and sub-
+sequently conducted postdoctoral research at The
+Hong Kong Polytechnic University. She is currently
+a second-level professor and doctoral supervisor at
+Hunan University. She serves as the Director of
+the Ministry of Education Key Laboratory for Su-
+percomputing and Artificial Intelligence Converged
+Computing, and as Chair of both the Academic
+Committee and the Degree Committee of the School
+of Information Science and Engineering at Hunan
+University. She has published over 130 papers in top-tier conferences and
+journals, including SIGMOD, CCS, INFOCOM, ICDE, SIGMETRICS, TON,
+TMC, TPDS, TSC, TKDE, and TDSC. Her research has long focused on
+computer networks, network security, big data, and artificial intelligence.
+Lele Wangis currently pursuing the M.S. degree
+with the College of Computer Science and Elec-
+tronics Engineering, Hunan University. His research
+interests include traffic engineering.
+Yuxiang Zengis studying for a Ph.D’s degree at
+Hunan University, China. He has published seven
+papers. His research interests include deep learning,
+data mining, time-series forecasting, and web ser-
+vices.
+Jigang Wenreceived the Ph.D. degree in computer
+application from Hunan University, China, in 2011.
+He was a Research Assistant with the Department of
+Computing, The Hong Kong Polytechnic University,
+from 2008 to 2010. He is currently a Professor with
+the School of Computer Science and Engineering,
+Hunan University of Science and Technology. His
+research interests include wireless networks and
+mobile computing, as well as high-speed network
+measurement and management.
+Guangxing Zhangborn in 1978. Ph.D. Associate
+Professor. His main research interests include the
+research and development of Internet measurement,
+network protocols, advanced persistent threats, IoT
+security, and network security.
+Gaogang Xie(Member, IEEE) received his B.S.
+degree in Physics, M.S. degree and Ph.D. degree
+in computer science all from Hunan University re-
+spectively in 1996, 1999 and 2002. respectively. He
+is currently a Professor with the Computer Net-
+work Information Center(CNIC), Chinese Academy
+of Sciences(CAS) and the University of Chinese
+Academy of Sciences, and the Vice President of
+CNIC. His research interests include Internet ar-
+chitecture, packet processing and forwarding, and
+Internet measurement.

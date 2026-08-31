@@ -59,6 +59,8 @@ def use_chart_theme() -> None:
 def format_compact_value(value: float) -> str:
     value = float(value)
     abs_value = abs(value)
+    if abs_value < 1e-12:
+        return "0"
     if abs_value >= 1000.0:
         return f"{value:,.0f}"
     if abs_value >= 1.0:
@@ -208,8 +210,19 @@ def plot_mapping(
     src: int,
     dst: int,
     stride: int,
+    bold_fonts: bool = False,
+    bottom_text_inside: bool = False,
+    transparent_background: bool = False,
 ) -> None:
     use_chart_theme()
+    font_weight = "bold" if bold_fonts else "normal"
+    patch_label_size = 9.2 if bold_fonts else 8.0
+    axis_label_size = 9.4 if bold_fonts else 8.0
+    x_tick_size = 8.4 if bold_fonts else 7.2
+    y_tick_size = 8.3 if bold_fonts else 7.0
+    title_size = 9.8 if bold_fonts else 8.4
+    student_title_size = 9.0 if bold_fonts else 7.8
+    student_param_size = 7.3 if bold_fonts else 6.4
 
     fig = plt.figure(figsize=(7.4, 3.25), dpi=220)
     gs = GridSpec(
@@ -241,7 +254,8 @@ def plot_mapping(
             transform=ax_top.get_xaxis_transform(),
             ha="center",
             va="center",
-            fontsize=8.0,
+            fontsize=patch_label_size,
+            fontweight=font_weight,
             color=TOKENS["ink"],
             bbox={
                 "boxstyle": "round,pad=0.16",
@@ -261,12 +275,14 @@ def plot_mapping(
         mticker.FuncFormatter(lambda value, _: format_compact_value(value))
     )
     ax_top.set_xlabel("")
-    ax_top.set_ylabel("Value", fontsize=8.0, color=TOKENS["muted"], labelpad=4)
+    ax_top.set_ylabel("Value", fontsize=axis_label_size, fontweight=font_weight, color=TOKENS["muted"], labelpad=4)
     ax_top.grid(axis="y", color=TOKENS["grid"], linewidth=0.65)
     ax_top.spines["left"].set_visible(True)
     ax_top.spines["left"].set_color(TOKENS["axis"])
-    ax_top.tick_params(axis="x", labelsize=7.2, length=0, colors=TOKENS["muted"])
-    ax_top.tick_params(axis="y", labelsize=7.0, length=0, colors=TOKENS["muted"])
+    ax_top.tick_params(axis="x", labelsize=x_tick_size, length=0, colors=TOKENS["muted"])
+    ax_top.tick_params(axis="y", labelsize=y_tick_size, length=0, colors=TOKENS["muted"])
+    for label in ax_top.get_xticklabels() + ax_top.get_yticklabels():
+        label.set_fontweight(font_weight)
     ax_top.text(
         0.0,
         1.08,
@@ -274,7 +290,8 @@ def plot_mapping(
         transform=ax_top.transAxes,
         ha="left",
         va="bottom",
-        fontsize=8.4,
+        fontsize=title_size,
+        fontweight=font_weight,
         color=TOKENS["muted"],
     )
 
@@ -301,26 +318,65 @@ def plot_mapping(
             ax.spines[spine].set_color(TOKENS["axis"])
             ax.spines[spine].set_linewidth(0.6)
 
+        if bottom_text_inside:
+            text_x = 0.59
+            title_y, title_va = 0.40, "bottom"
+            params_y, params_va = 0.26, "bottom"
+            params_ha = "right"
+            params_x = 0.96
+        else:
+            text_x = 0.5
+            title_y, title_va = -0.16, "top"
+            params_y, params_va = -0.34, "top"
+            params_ha = "center"
+            params_x = text_x
         ax.text(
-            0.5,
-            -0.16,
+            text_x,
+            title_y,
             f"Student-t {idx + 1}",
             transform=ax.transAxes,
             ha="center",
-            va="top",
-            fontsize=7.8,
+            va=title_va,
+            fontsize=student_title_size,
+            fontweight=font_weight,
             color=TOKENS["ink"],
         )
-        ax.text(
-            0.5,
-            -0.34,
-            rf"$\mu$={format_compact_value(mu)}, $\sigma$={format_compact_value(sigma)}, df={df:.1f}",
-            transform=ax.transAxes,
-            ha="center",
-            va="top",
-            fontsize=6.4,
-            color=TOKENS["muted"],
-        )
+        if bottom_text_inside and bold_fonts:
+            ax.text(
+                0.62,
+                params_y,
+                f"\u03bc={format_compact_value(mu)}, \u03c3={format_compact_value(sigma)}",
+                transform=ax.transAxes,
+                ha="center",
+                va=params_va,
+                fontsize=student_param_size,
+                fontweight=font_weight,
+                color=TOKENS["muted"],
+            )
+            ax.text(
+                0.62,
+                0.15,
+                f"df={df:.1f}",
+                transform=ax.transAxes,
+                ha="center",
+                va=params_va,
+                fontsize=student_param_size,
+                fontweight=font_weight,
+                color=TOKENS["muted"],
+            )
+        else:
+            param_text = rf"$\mu$={format_compact_value(mu)}, $\sigma$={format_compact_value(sigma)}, df={df:.1f}"
+            ax.text(
+                params_x,
+                params_y,
+                param_text,
+                transform=ax.transAxes,
+                ha=params_ha,
+                va=params_va,
+                fontsize=student_param_size,
+                fontweight=font_weight,
+                color=TOKENS["muted"],
+            )
 
     for idx, ax in enumerate(bottom_axes):
         left = idx * patch_len + patch_len / 2.0 - 0.5
@@ -340,9 +396,12 @@ def plot_mapping(
 
     fig.subplots_adjust(left=0.035, right=0.99, top=0.91, bottom=0.23)
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_pdf, bbox_inches="tight", pad_inches=0.025)
-    fig.savefig(output_png, bbox_inches="tight", pad_inches=0.025)
-    fig.savefig(output_svg, bbox_inches="tight", pad_inches=0.025)
+    savefig_kwargs = {"bbox_inches": "tight", "pad_inches": 0.025}
+    if transparent_background:
+        savefig_kwargs.update({"transparent": True, "facecolor": "none", "edgecolor": "none"})
+    fig.savefig(output_pdf, **savefig_kwargs)
+    fig.savefig(output_png, **savefig_kwargs)
+    fig.savefig(output_svg, **savefig_kwargs)
     plt.close(fig)
 
 
