@@ -28,5 +28,7 @@ class xlstm_mixerConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, Dataset
     dropout: float = 0.1
     patch_len: int = 16
     type: str = 'cuda'
+    # Portable default; "cuda" requires Ninja and a local C++/CUDA compiler.
+    slstm_backend: str = 'vanilla'
       
     

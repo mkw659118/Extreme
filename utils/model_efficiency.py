@@ -4,6 +4,7 @@
 
 import sys
 import os
+import torch
 from exp.exp_model import Model
 import run_train
 
@@ -11,10 +12,52 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(project_root)
 
+
+def _prepare_model_inputs(model, sample_input, config):
+    """Convert a training batch into forecasting-model arguments."""
+    batch = tuple(sample_input)
+    if len(batch) < 3:
+        raise ValueError(
+            f"Expected at least x, x_mark and label, got {len(batch)} batch items"
+        )
+
+    x, x_mark, label = (item.to(config.device) for item in batch[:3])
+    if hasattr(model, "_prepare_model_x_mark"):
+        x_mark = model._prepare_model_x_mark(x, x_mark)
+        pred_len = int(config.pred_len)
+        label_len = int(config.label_len)
+        dec_input = torch.zeros_like(label[:, -pred_len:, :]).float()
+        dec_input = torch.cat(
+            [label[:, :label_len, :], dec_input],
+            dim=1,
+        ).to(config.device)
+        return x, x_mark, dec_input, None
+
+    return tuple(item.to(config.device) for item in batch[:-1])
+
+
+def _get_train_loader(datamodule):
+    loader = getattr(datamodule, "train_loader", None)
+    if loader is None:
+        loader = getattr(datamodule, "train_data_loader", None)
+    if loader is None:
+        raise AttributeError(
+            "Data module must provide train_loader or train_data_loader"
+        )
+    return loader
+
 def calculate_flops_params(model, sample_input, config):
-    from thop import profile
-    sample_input = tuple([item.to(config.device) for item in sample_input][:-1])
-    flops, params = profile(model.to(config.device), inputs=sample_input, verbose=False)
+    model_inputs = _prepare_model_inputs(model, sample_input, config)
+    model = model.to(config.device)
+    params = sum(parameter.numel() for parameter in model.parameters())
+    try:
+        from thop import profile
+    except ModuleNotFoundError as exc:
+        if exc.name != "thop":
+            raise
+        return float("nan"), float(params)
+
+    flops, params = profile(model, inputs=model_inputs, verbose=False)
     # config.log.only_print(f"Flops: {flops} Params: {params}")
     return flops, params
 
@@ -24,8 +67,8 @@ def calculate_inference_time(model, sample_input, config):
     import numpy as np
     step = 100
     all_time = []
+    inputs = _prepare_model_inputs(model, sample_input, config)
     for i in range(step):
-        inputs = [item.to(config.device) for item in sample_input][:-1]
         t1 = time()
         model(*inputs)  # 动态解包传递所有输入到模型
         t2 = time()
@@ -36,7 +79,7 @@ def calculate_inference_time(model, sample_input, config):
 
 
 def get_efficiency(datamodule, model, config):
-    sample_inputs = next(iter(datamodule.train_loader))
+    sample_inputs = next(iter(_get_train_loader(datamodule)))
     flops, params = calculate_flops_params(model, sample_inputs, config)
     inference_time = calculate_inference_time(model, sample_inputs, config)
     return flops, params, inference_time

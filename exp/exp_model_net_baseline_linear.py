@@ -49,6 +49,7 @@ class Model(BasicModel):
                 pred_len=config.pred_len,
                 seq_len=config.seq_len,
                 enc_in=config.enc_in,
+                slstm_backend=getattr(config, "slstm_backend", "vanilla"),
             )
         else:
             self.model = module.Model(config)

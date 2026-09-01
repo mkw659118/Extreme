@@ -130,5 +130,7 @@ class MetricsPlotter:
         plt.rcParams['font.size'] = 12  # 调整字体大小（原24可能过大）
         plt.figtext(0.5, -0.1, metrics_text, ha='center', va='center')
         plt.tight_layout()
+        # 并发运行实验时，保存前再次确认输出目录存在。
+        os.makedirs(os.path.dirname(self.exper_filename), exist_ok=True)
         plt.savefig(f'{self.exper_filename}.pdf', bbox_inches='tight', pad_inches=0.5)
         plt.close()  # 关闭画布释放资源

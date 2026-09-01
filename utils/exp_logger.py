@@ -223,6 +223,6 @@ class Logger:
     def end_the_experiment(self, model):
         self.logger.info(f'\n{str(model)}')
         self.logger.info('```')
-        self._delete_empty_directories('./results/')
+        # 不在这里清理共享的 results 目录，避免误删其他并发实验尚未写入文件的目录。
 
 

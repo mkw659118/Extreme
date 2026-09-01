@@ -125,6 +125,7 @@ class xLSTMMixer(BaseModel):
         packing: int = 1,
         backbone: Literal["nlinear"] = "nlinear",
         ablation_mode: AblationMode = AblationMode.FULL,
+        slstm_backend: Literal["vanilla", "cuda"] = "cuda",
     ) -> None:
         super().__init__(seq_len=seq_len, pred_len=pred_len, enc_in=enc_in)
         self.xlstm_embedding_dim = xlstm_embedding_dim
@@ -138,7 +139,9 @@ class xLSTMMixer(BaseModel):
 
         slstm_config = sLSTMBlockConfig(
             slstm=sLSTMLayerConfig(
-                num_heads=xlstm_num_heads, conv1d_kernel_size=xlstm_conv1d_kernel_size
+                num_heads=xlstm_num_heads,
+                conv1d_kernel_size=xlstm_conv1d_kernel_size,
+                backend=slstm_backend,
             )
         )
         self.ablation_mode = ablation_mode
